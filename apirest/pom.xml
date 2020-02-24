@@ -48,13 +48,14 @@
             <version>2.1.0</version>
         </dependency>
 
+        <!-- === Crea conflitto con l'app ===
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>1.2.3</version>
             <scope>test</scope>
         </dependency>
-
+        -->
     </dependencies>
 
     <build>
