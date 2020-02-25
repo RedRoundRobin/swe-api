@@ -7,10 +7,8 @@ import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.time.Duration;
 import com.google.gson.JsonObject;
 
@@ -29,6 +27,7 @@ public class Consumatore {
         //Imposto le proprietà del consumatore da creare
         final Properties props = new Properties();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, boostrapServers);
+        props.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 1000);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, nomeConsumatore);
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class.getName());
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
@@ -48,19 +47,30 @@ public class Consumatore {
 
         List<JsonObject> datiDispositivi = new ArrayList<JsonObject>();
 
-        final ConsumerRecords<Long, String> recordConsumatore = consumatore.consumatore.poll(Duration.ofSeconds(5));
+        final ConsumerRecords<Long, String> recordConsumatore = consumatore.consumatore.poll(Duration.ofSeconds(3));
+
         if (recordConsumatore.count()==0) {
             System.out.println("Nessun record trovato");
         }
 
+        long tempoRichiesta;
         for(ConsumerRecord<Long, String> record : recordConsumatore) {
-            //produco il file JSON
-            JsonArray dati = new JsonParser().parseString(record.value()).getAsJsonArray();
-            for (JsonElement elemento: dati) {
-                JsonObject datiDispositivo = elemento.getAsJsonObject();
-                datiDispositivi.add(datiDispositivo);
+            tempoRichiesta = System.currentTimeMillis();
+
+            //Per ogni record trovato controllo se il timestamp della chiave è più recente di 5 secondi
+            if(tempoRichiesta - record.key() <= 5000){
+                //System.out.println("Trovato");
+                JsonArray dati = new JsonParser().parseString(record.value()).getAsJsonArray();
+                for (JsonElement elemento: dati) {
+                    JsonObject datiDispositivo = elemento.getAsJsonObject();
+                    //System.out.println(datiDispositivo);
+                   // System.out.println();
+                    datiDispositivi.add(datiDispositivo);
+                }
             }
+
         };
+
 
 
 //        for(ConsumerRecord<Long, String> record : recordConsumatore) {
@@ -71,12 +81,13 @@ public class Consumatore {
 //        };
 
         System.out.println("Messaggi disponibili consumati!");
+        //System.out.println(datiDispositivi);
         return datiDispositivi;
     }
 
     public static void main(String args[]) throws Exception {
 
-        Consumatore test = new Consumatore("TopicDiProva1","consumatoreTest", "localhost:29092");
+        Consumatore test = new Consumatore("Aiuto","consumatoreTest", "localhost:29092");
 
         Consumatore.rispostaConsumatore(test);
     }

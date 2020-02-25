@@ -6,14 +6,15 @@ import static com.redroundrobin.apirest.Consumatore.rispostaConsumatore;
 import com.redroundrobin.apirest.DataFilter;
 
 import java.time.Duration;
+import java.util.List;
 
 public class DataFetch {
 
-    public static JsonElement getForTopic(String topic) throws InterruptedException {
+    public static List<JsonObject> getForTopic(String topic) throws InterruptedException {
         Consumatore cons = new Consumatore(topic, "MyConsumer", "localhost:29092");
-        DataFilter data = new DataFilter();
-        data.setJsonData(rispostaConsumatore(cons));
-        data.filterByTime(Duration.ofSeconds(5));
-        return data.get();
+        List<JsonObject> lista = rispostaConsumatore(cons);
+        System.out.println(lista);
+        return lista;
+
     }
 }
