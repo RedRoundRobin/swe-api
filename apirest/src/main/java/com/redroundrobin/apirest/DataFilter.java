@@ -10,13 +10,12 @@ public class DataFilter {
 
     List<JsonObject> jsonData = new ArrayList<JsonObject>();
 
-    public DataFilter(){ }
 
     public void setJsonData(List<JsonObject> jd) {
         jsonData = jd;
     }
 
-    public List<JsonObject> filterByTime(Duration delay) {
+    public void filterByTime(Duration delay) {
 
         long time = System.currentTimeMillis();
 
@@ -24,7 +23,11 @@ public class DataFilter {
                                                 .filter(x -> x.get("timestamp").getAsLong() >= time - delay.toMillis())
                                                 .collect(Collectors.toList());
 
-        return filteredData;
+         jsonData = filteredData;
+    }
+
+    public JsonObject get() {
+        return jsonData.size() > 0 ? jsonData.get(0) : new JsonObject();
     }
 
 }

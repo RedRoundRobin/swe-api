@@ -17,6 +17,7 @@ public class RequestsController {
 
     @RequestMapping(value = {"/topic/{topicid:.+}"})
     public Topic topic(@PathVariable("topicid") long ID) {
+
         return new Topic(ID);
     }
 

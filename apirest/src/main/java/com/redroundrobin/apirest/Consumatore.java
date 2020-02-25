@@ -1,7 +1,7 @@
 package com.redroundrobin.apirest;
 
+import com.google.gson.JsonParser;
 import org.apache.kafka.clients.consumer.*;
-import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 
@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
-//import java.time.duration;
+import java.time.Duration;
 import com.google.gson.JsonObject;
 
 public class Consumatore {
@@ -41,7 +41,7 @@ public class Consumatore {
     }
 
     //mi collego a kafka e prendo i records del consumatore
-    public List<JsonObject> rispostaConsumatore(Consumatore consumatore) throws InterruptedException {
+    public static List<JsonObject> rispostaConsumatore(Consumatore consumatore) throws InterruptedException {
         System.out.println("Consumatore "+consumatore.nome+" richiesta dati avviata");
 
         List<JsonObject> jsonObject = new ArrayList<JsonObject>();
@@ -53,7 +53,7 @@ public class Consumatore {
 
         for(ConsumerRecord<Long, String> record : recordConsumatore) {
             //produco il file JSON
-            JsonObject dato = new JsonParser().parse("{ Valore: "+record.value()+ " }").getAsJsonObject();
+            JsonObject dato = new JsonParser().parse(record.value()).getAsJsonObject();
             jsonObject.add(dato);
         };
 
