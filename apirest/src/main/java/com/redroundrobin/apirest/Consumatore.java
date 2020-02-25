@@ -36,10 +36,10 @@ public class Consumatore {
     }
 
     //mi collego a kafka e prendo i records del consumatore
-    static String rispostaConsumatore(Consumatore consumatore) throws InterruptedException {
+    static JsonObject rispostaConsumatore(Consumatore consumatore) throws InterruptedException {
         System.out.println("Consumatore "+consumatore.nome+" richiesta dati avviata");
 
-        final ConsumerRecords<Long, String> recordConsumatore = consumatore.consumatore.poll(1000);
+        final ConsumerRecords<Long, String> recordConsumatore = consumatore.consumatore.poll(Duration.ofSeconds(1));
         if (recordConsumatore.count()==0) {
             System.out.println("Nessun record trovato");
         }
@@ -47,22 +47,20 @@ public class Consumatore {
 
         for(ConsumerRecord<Long, String> record : recordConsumatore) {
             //produco il file JSON
-            datiJson+="{";
-            datiJson+="nome: "+consumatore.nome+"; Chiave: "+record.key()+"; Valore: "+record.value()+"; Partizione: "
-                    +record.partition()+"; Offeset: "+record.offset()+"; }";
+            datiJson+="{ Valore: "+record.value()+ " }";
         };
+        JsonObject jsonObject = new JsonParser().parse(datiJson).getAsJsonObject();
 
-//        recordConsumatore.forEach((record) -> {
+
+//        for(ConsumerRecord<Long, String> record : recordConsumatore) {
+//            //produco il file JSON
 //            datiJson+="{";
 //            datiJson+="nome: "+consumatore.nome+"; Chiave: "+record.key()+"; Valore: "+record.value()+"; Partizione: "
-//                +record.partition()+"; Offeset: "+record.offset()+"; }";
-//
-//        });
-//        consumatore.consumatore.commitAsync();
+//                    +record.partition()+"; Offeset: "+record.offset()+"; }";
+//        };
+
         System.out.println("Messaggi disponibili consumati!");
-        return datiJson;
-
-
+        return jsonObject;
     }
 
     public static void main(String args[]) throws Exception {
