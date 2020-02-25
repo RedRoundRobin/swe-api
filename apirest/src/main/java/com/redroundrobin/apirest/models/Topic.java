@@ -9,7 +9,7 @@ import com.google.gson.JsonObject;
 
 public class Topic {
     public final String id;
-    public JsonObject message;
+    public String message;
 
     public Topic(String id) {
         this.id = id;
@@ -17,5 +17,5 @@ public class Topic {
     public String getId() {
         return id;
     }
-    public void setMessage(JsonObject s) { message = s; }
+    public void setMessage(JsonObject s) { message = s.toString(); }
 }
