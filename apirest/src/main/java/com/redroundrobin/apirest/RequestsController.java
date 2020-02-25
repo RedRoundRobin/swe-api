@@ -3,6 +3,8 @@ package com.redroundrobin.apirest;
 import com.redroundrobin.apirest.models.*;
 import org.springframework.web.bind.annotation.*;
 
+import static com.redroundrobin.apirest.Consumatore.rispostaConsumatore;
+
 
 /*
     Il RequestsController possiamo provare a tenerlo unico, ma se serve
@@ -18,7 +20,8 @@ public class RequestsController {
     @RequestMapping(value = {"/topic/{topicid:.+}"})
     public Topic topic(@PathVariable("topicid") String ID) throws InterruptedException {
         Topic t = new Topic(ID);
-        t.setMessage(DataFetch.getForTopic("TopicDiProva"));
+        Consumatore cons = new Consumatore(ID, "ConsumatoreBello", "localhost:29092");
+        t.setMessage(rispostaConsumatore(cons));
         return t;
     }
 

@@ -1,5 +1,7 @@
 package com.redroundrobin.apirest;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.serialization.LongDeserializer;
@@ -44,7 +46,7 @@ public class Consumatore {
     public static List<JsonObject> rispostaConsumatore(Consumatore consumatore) throws InterruptedException {
         System.out.println("Consumatore "+consumatore.nome+" richiesta dati avviata");
 
-        List<JsonObject> jsonObject = new ArrayList<JsonObject>();
+        List<JsonObject> datiDispositivi = new ArrayList<JsonObject>();
 
         final ConsumerRecords<Long, String> recordConsumatore = consumatore.consumatore.poll(Duration.ofSeconds(5));
         if (recordConsumatore.count()==0) {
@@ -53,8 +55,11 @@ public class Consumatore {
 
         for(ConsumerRecord<Long, String> record : recordConsumatore) {
             //produco il file JSON
-            JsonObject dato = new JsonParser().parse(record.value()).getAsJsonObject();
-            jsonObject.add(dato);
+            JsonArray dati = new JsonParser().parseString(record.value()).getAsJsonArray();
+            for (JsonElement elemento: dati) {
+                JsonObject datiDispositivo = elemento.getAsJsonObject();
+                datiDispositivi.add(datiDispositivo);
+            }
         };
 
 
@@ -66,12 +71,12 @@ public class Consumatore {
 //        };
 
         System.out.println("Messaggi disponibili consumati!");
-        return jsonObject;
+        return datiDispositivi;
     }
 
     public static void main(String args[]) throws Exception {
 
-        Consumatore test = new Consumatore("TopicDiProva","consumatoreTest", "localhost:29092");
+        Consumatore test = new Consumatore("TopicDiProva1","consumatoreTest", "localhost:29092");
 
         Consumatore.rispostaConsumatore(test);
     }

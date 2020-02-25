@@ -7,6 +7,8 @@ package com.redroundrobin.apirest.models;
 
 import com.google.gson.JsonObject;
 
+import java.util.List;
+
 public class Topic {
     public final String id;
     public String message;
@@ -17,5 +19,5 @@ public class Topic {
     public String getId() {
         return id;
     }
-    public void setMessage(JsonObject s) { message = s.toString(); }
+    public void setMessage(List<JsonObject> s) { message = s.toString(); }
 }
