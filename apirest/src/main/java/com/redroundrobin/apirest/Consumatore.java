@@ -4,8 +4,13 @@ import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
+
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
+//import java.time.duration;
+import com.google.gson.JsonObject;
 
 public class Consumatore {
     private String topic;
@@ -36,20 +41,24 @@ public class Consumatore {
     }
 
     //mi collego a kafka e prendo i records del consumatore
-    static JsonObject rispostaConsumatore(Consumatore consumatore) throws InterruptedException {
+    public List<JsonObject> rispostaConsumatore(Consumatore consumatore) throws InterruptedException {
         System.out.println("Consumatore "+consumatore.nome+" richiesta dati avviata");
 
-        final ConsumerRecords<Long, String> recordConsumatore = consumatore.consumatore.poll(Duration.ofSeconds(1));
+        List<JsonObject> jsonObject = new ArrayList<JsonObject>();
+
+        final ConsumerRecords<Long, String> recordConsumatore = consumatore.consumatore.poll(Duration.ofSeconds(5));
         if (recordConsumatore.count()==0) {
             System.out.println("Nessun record trovato");
         }
-        String datiJson=null;
 
         for(ConsumerRecord<Long, String> record : recordConsumatore) {
             //produco il file JSON
-            datiJson+="{ Valore: "+record.value()+ " }";
+            JsonObject dato = new JsonParser().parse("{ Valore: "+record.value()+ " }").getAsJsonObject();
+            jsonObject.add(dato);
         };
-        JsonObject jsonObject = new JsonParser().parse(datiJson).getAsJsonObject();
+
+
+
 
 
 //        for(ConsumerRecord<Long, String> record : recordConsumatore) {
