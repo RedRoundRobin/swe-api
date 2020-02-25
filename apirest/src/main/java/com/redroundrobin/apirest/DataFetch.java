@@ -7,7 +7,7 @@ import java.time.Duration;
 
 public class DataFetch {
 
-    public JsonObject getForTopic(String topic) throws InterruptedException {
+    public static JsonObject getForTopic(String topic) throws InterruptedException {
         Consumatore cons = new Consumatore(topic, "MyConsumer", "localhost:29092");
         DataFilter data = new DataFilter();
         data.setJsonData(rispostaConsumatore(cons));

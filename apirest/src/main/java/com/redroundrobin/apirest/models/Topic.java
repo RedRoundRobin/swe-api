@@ -5,15 +5,17 @@ package com.redroundrobin.apirest.models;
    e Prima implementazione
  */
 
-public class Topic {
-    public final long id;
-    public final String message = "Watch out for the corona virus. lmao";
+import com.google.gson.JsonObject;
 
-    public Topic(long id) {
+public class Topic {
+    public final String id;
+    public JsonObject message;
+
+    public Topic(String id) {
         this.id = id;
     }
-
-    public long getId() {
+    public String getId() {
         return id;
     }
+    public void setMessage(JsonObject s) { message = s; }
 }
