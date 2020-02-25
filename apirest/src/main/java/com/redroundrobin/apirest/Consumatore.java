@@ -48,7 +48,15 @@ public class Consumatore {
 
         List<JsonObject> datiDispositivi = new ArrayList<JsonObject>();
 
-        final ConsumerRecords<Long, String> recordConsumatore = consumatore.consumatore.poll(Duration.ofSeconds(5));
+        ConsumerRecords<Long, String> recordConsumatore = null;
+        recordConsumatore = consumatore.consumatore.poll(Duration.ofSeconds(5));
+
+        while(!recordConsumatore.isEmpty()) {
+            // recordConsumatore.records()
+            recordConsumatore = consumatore.consumatore.poll(Duration.ofSeconds(5));
+
+        }
+
         if (recordConsumatore.count()==0) {
             System.out.println("Nessun record trovato");
         }
