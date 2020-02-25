@@ -19,11 +19,13 @@ public class DataFilter {
 
         long time = System.currentTimeMillis();
 
+        System.out.println("- Before size: " + jsonData.size());
+
         List<JsonObject> filteredData = jsonData.stream()
                                                 .filter(x -> x.get("timestamp").getAsLong() >= time - delay.toMillis())
                                                 .collect(Collectors.toList());
-
-         jsonData = filteredData;
+        jsonData = filteredData;
+        System.out.println("- After size: " + jsonData.size());
     }
 
     public JsonObject get() {

@@ -58,9 +58,6 @@ public class Consumatore {
         };
 
 
-
-
-
 //        for(ConsumerRecord<Long, String> record : recordConsumatore) {
 //            //produco il file JSON
 //            datiJson+="{";
