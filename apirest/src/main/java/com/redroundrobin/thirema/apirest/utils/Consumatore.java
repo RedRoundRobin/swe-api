@@ -80,7 +80,7 @@ public class Consumatore {
 
     public static void main(String args[]) throws Exception {
 
-        Consumatore test = new Consumatore("Aiuto", "localhost:29092");
+        Consumatore test = new Consumatore(new String[] {"Aiuto"} , "localhost:29092");
 
         Consumatore.fetchMessage(test);
     }

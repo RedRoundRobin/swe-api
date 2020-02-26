@@ -20,7 +20,7 @@ public class RequestsController {
     @RequestMapping(value = {"/topic/{topicid:.+}"})
     public Topic topic(@PathVariable("topicid") String ID) throws InterruptedException {
         Topic t = new Topic(ID);
-        t.setMessage(DataFetch.getForTopics(ID));
+        t.setMessage(DataFetch.getForTopics(new String[] {ID}));
         return t;
     }
 
