@@ -81,11 +81,8 @@ public class Consumatore {
     public static void main(String args[]) throws Exception {
 
         Consumatore test = new Consumatore(new String[] {"Aiuto"} , "localhost:29092");
-
-<<<<<<< HEAD
+        
         test.fetchMessage();
-=======
-        test.fetchMessage(test);
->>>>>>> springApi
+
     }
 }
