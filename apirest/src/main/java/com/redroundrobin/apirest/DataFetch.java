@@ -1,13 +1,8 @@
 package com.redroundrobin.apirest;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import static com.redroundrobin.apirest.Consumatore.rispostaConsumatore;
-import com.redroundrobin.apirest.DataFilter;
 
-import java.time.Duration;
 import java.util.List;
-import java.util.Random;
 
 public class DataFetch {
 
