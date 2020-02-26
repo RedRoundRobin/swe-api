@@ -42,7 +42,7 @@ public class Consumatore {
     }
 
     public void chiudi(){
-        consumatore.close();
+        consumatore.close(); // dioooooooooooooooooooooooooooooo
     }
 
     //mi collego a kafka e prendo i records del consumatore
@@ -71,10 +71,10 @@ public class Consumatore {
                     System.out.println();
                     datiDispositivi.add(datiDispositivo);
                 }
+                break;
             }
 
-        };
-
+        }
 
         System.out.println("Messaggi disponibili consumati!");
         //System.out.println(datiDispositivi);
