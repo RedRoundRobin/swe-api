@@ -45,12 +45,12 @@ public class Consumatore {
     }
 
 
-    public List<JsonObject> fetchMessage(Consumatore consumatore) throws InterruptedException {
+    public List<JsonObject> fetchMessage() throws InterruptedException {
         System.out.println("[Consumatore] Avvio");
 
         List<JsonObject> datiDispositivi = new ArrayList<JsonObject>();
 
-        final ConsumerRecords<Long, String> consumerRecords = consumatore.consumatore.poll(Duration.ofSeconds(3));
+        final ConsumerRecords<Long, String> consumerRecords = consumatore.poll(Duration.ofSeconds(3));
 
         if (consumerRecords.count()==0) {
             System.out.println("[Consumatore] Nessun messaggio trovato");
@@ -82,6 +82,6 @@ public class Consumatore {
 
         Consumatore test = new Consumatore(new String[] {"Aiuto"} , "localhost:29092");
 
-        Consumatore.fetchMessage(test);
+        test.fetchMessage();
     }
 }
