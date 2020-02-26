@@ -14,16 +14,16 @@ import com.google.gson.JsonObject;
 import static org.apache.kafka.server.quota.ClientQuotaEntity.ConfigEntityType.CLIENT_ID;
 
 public class Consumatore {
-    private String topic;
-    private String bootstrapServers; //Lista di indirizzoIP:porta separati da una virgola.
+    private String[] topics;
+    private String bootstrapServers;
     private Consumer<Long, String> consumatore;
 
-    //definisco la classe consumatore e ne istanzio uno
-    Consumatore(String topic, String boostrapServers) {
-        this.topic = topic;
+
+    Consumatore(String [] topics, String boostrapServers) {
+        this.topics = topics;
         this.bootstrapServers = boostrapServers;
 
-        //Imposto le proprietà del consumatore da creare
+
         final Properties props = new Properties();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, boostrapServers);
         props.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 1000);
@@ -34,26 +34,26 @@ public class Consumatore {
 
         Consumer<Long, String> cons = new KafkaConsumer<>(props);
 
-        //Sottoscrivo il consumatore al topic
-        cons.subscribe(Collections.singletonList(topic));
+        cons.subscribe(Arrays.asList(topics));
 
         this.consumatore = cons;
     }
 
     public void chiudi(){
-        consumatore.close(); // dioooooooooooooooooooooooooooooo
+        System.out.println("[Consumatore] Chiuso");
+        consumatore.close();
     }
 
-    //mi collego a kafka e prendo i records del consumatore
-    public static List<JsonObject> rispostaConsumatore(Consumatore consumatore) throws InterruptedException {
-        System.out.println("Consumatore richiesta dati avviata");
+
+    public static List<JsonObject> fetchMessage(Consumatore consumatore) throws InterruptedException {
+        System.out.println("[Consumatore] Avvio");
 
         List<JsonObject> datiDispositivi = new ArrayList<JsonObject>();
 
         final ConsumerRecords<Long, String> recordConsumatore = consumatore.consumatore.poll(Duration.ofSeconds(3));
 
         if (recordConsumatore.count()==0) {
-            System.out.println("Nessun record trovato");
+            System.out.println("[Consumatore] Nessun messaggio trovato");
         }
 
         long tempoRichiesta;
@@ -62,12 +62,9 @@ public class Consumatore {
 
             //Per ogni record trovato controllo se il timestamp della chiave è più recente di 5 secondi
             if(tempoRichiesta - record.key() <= 5000){
-                System.out.println("Trovato");
                 JsonArray dati = new JsonParser().parseString(record.value()).getAsJsonArray();
                 for (JsonElement elemento: dati) {
                     JsonObject datiDispositivo = elemento.getAsJsonObject();
-                    System.out.println(datiDispositivo);
-                    System.out.println();
                     datiDispositivi.add(datiDispositivo);
                 }
                 break;
@@ -75,8 +72,6 @@ public class Consumatore {
 
         }
 
-        System.out.println("Messaggi disponibili consumati!");
-        //System.out.println(datiDispositivi);
         return datiDispositivi;
     }
 
@@ -84,6 +79,6 @@ public class Consumatore {
 
         Consumatore test = new Consumatore("Aiuto", "localhost:29092");
 
-        Consumatore.rispostaConsumatore(test);
+        Consumatore.fetchMessage(test);
     }
 }
