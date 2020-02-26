@@ -41,6 +41,10 @@ public class Consumatore {
         this.consumatore = cons;
     }
 
+    public void chiudi(){
+        consumatore.close();
+    }
+
     //mi collego a kafka e prendo i records del consumatore
     public static List<JsonObject> rispostaConsumatore(Consumatore consumatore) throws InterruptedException {
         System.out.println("Consumatore richiesta dati avviata");

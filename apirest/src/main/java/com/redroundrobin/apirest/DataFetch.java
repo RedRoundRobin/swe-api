@@ -14,7 +14,7 @@ public class DataFetch {
     public static List<JsonObject> getForTopic(String topic) throws InterruptedException {
         Consumatore cons = new Consumatore(topic, "localhost:29092");
         List<JsonObject> lista = rispostaConsumatore(cons);
-        System.out.println(lista);
+        cons.chiudi();
         return lista;
 
     }
