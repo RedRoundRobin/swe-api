@@ -1,13 +1,12 @@
-#HELP.md
-#.DS_Store
-#*.class
+.DS_Store
+*.class
 
 ### IntelliJ IDEA ###
-#.idea
-#target/
-#*.iws
-#*.iml
-#*.ipr
+.idea
+target/
+*.iws
+*.iml
+*.ipr
 
 ### VS Code ###
-#.vscode/
+.vscode/
