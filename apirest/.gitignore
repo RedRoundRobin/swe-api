@@ -5,7 +5,7 @@
 .idea
 target/
 *.iws
-#*.iml
+*.iml
 *.ipr
 
 ### VS Code ###
