@@ -82,6 +82,6 @@ public class Consumatore {
 
         Consumatore test = new Consumatore(new String[] {"Aiuto"} , "localhost:29092");
 
-        Consumatore.fetchMessage(test);
+        test.fetchMessage(test);
     }
 }
