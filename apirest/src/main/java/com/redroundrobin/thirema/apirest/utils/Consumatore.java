@@ -45,30 +45,34 @@ public class Consumatore {
     }
 
 
-    public static List<JsonObject> fetchMessage(Consumatore consumatore) throws InterruptedException {
+    public List<JsonObject> fetchMessage(Consumatore consumatore) throws InterruptedException {
         System.out.println("[Consumatore] Avvio");
 
         List<JsonObject> datiDispositivi = new ArrayList<JsonObject>();
 
-        final ConsumerRecords<Long, String> recordConsumatore = consumatore.consumatore.poll(Duration.ofSeconds(3));
+        final ConsumerRecords<Long, String> consumerRecords = consumatore.consumatore.poll(Duration.ofSeconds(3));
 
-        if (recordConsumatore.count()==0) {
+        if (consumerRecords.count()==0) {
             System.out.println("[Consumatore] Nessun messaggio trovato");
+            return datiDispositivi;
         }
 
-        long tempoRichiesta;
-        for(ConsumerRecord<Long, String> record : recordConsumatore) {
-            tempoRichiesta = System.currentTimeMillis();
+        Map<String, Boolean> checkTopic = new HashMap<>();
+        for(String topic : topics)
+        {
+            checkTopic.put(topic, false);
+        }
 
-            if(tempoRichiesta - record.key() <= 5000){
+        for(ConsumerRecord<Long, String> record : consumerRecords) {
+
+            if(System.currentTimeMillis() - record.key() <= 5000 && checkTopic.get(record.topic()) == false) {
                 JsonArray dati = new JsonParser().parseString(record.value()).getAsJsonArray();
-                for (JsonElement elemento: dati) {
+                for (JsonElement elemento : dati) {
                     JsonObject datiDispositivo = elemento.getAsJsonObject();
                     datiDispositivi.add(datiDispositivo);
+                    checkTopic.replace(record.topic(), true);
                 }
-                break;
             }
-
         }
 
         return datiDispositivi;
