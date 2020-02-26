@@ -1,6 +1,8 @@
-package com.redroundrobin.apirest;
+package com.redroundrobin.thirema.apirest.utils;
 import com.google.gson.JsonObject;
-import static com.redroundrobin.apirest.Consumatore.rispostaConsumatore;
+import com.redroundrobin.thirema.apirest.utils.Consumatore;
+
+import static com.redroundrobin.thirema.apirest.utils.Consumatore.rispostaConsumatore;
 
 import java.util.List;
 

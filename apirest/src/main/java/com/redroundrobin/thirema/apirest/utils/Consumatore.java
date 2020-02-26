@@ -1,4 +1,4 @@
-package com.redroundrobin.apirest;
+package com.redroundrobin.thirema.apirest.utils;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -7,7 +7,6 @@ import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.time.Duration;
 import com.google.gson.JsonObject;

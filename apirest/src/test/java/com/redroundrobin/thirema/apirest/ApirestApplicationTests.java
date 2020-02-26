@@ -1,4 +1,4 @@
-package com.redroundrobin.apirest;
+package com.redroundrobin.thirema.apirest;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

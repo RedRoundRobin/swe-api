@@ -1,4 +1,4 @@
-package com.redroundrobin.apirest;
+package com.redroundrobin.thirema.apirest;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

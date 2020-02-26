@@ -1,11 +1,8 @@
-package com.redroundrobin.apirest;
+package com.redroundrobin.thirema.apirest.controller;
 
-import com.redroundrobin.apirest.models.*;
+import com.redroundrobin.thirema.apirest.utils.DataFetch;
+import com.redroundrobin.thirema.apirest.models.Topic;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Random;
-
-import static com.redroundrobin.apirest.Consumatore.rispostaConsumatore;
 
 
 /*

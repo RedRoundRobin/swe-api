@@ -1,4 +1,4 @@
-package com.redroundrobin.apirest.models;
+package com.redroundrobin.thirema.apirest.models;
 
 /*
    Questa classe va usata solamente per Debugging
