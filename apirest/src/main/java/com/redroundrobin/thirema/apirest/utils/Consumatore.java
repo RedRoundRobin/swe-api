@@ -60,7 +60,6 @@ public class Consumatore {
         for(ConsumerRecord<Long, String> record : recordConsumatore) {
             tempoRichiesta = System.currentTimeMillis();
 
-            //Per ogni record trovato controllo se il timestamp della chiave è più recente di 5 secondi
             if(tempoRichiesta - record.key() <= 5000){
                 JsonArray dati = new JsonParser().parseString(record.value()).getAsJsonArray();
                 for (JsonElement elemento: dati) {
@@ -77,7 +76,7 @@ public class Consumatore {
 
     public static void main(String args[]) throws Exception {
 
-        Consumatore test = new Consumatore("Aiuto", "localhost:29092");
+        Consumatore test = new Consumatore(new String[] {"Aiuto"} , "localhost:29092");
 
         Consumatore.fetchMessage(test);
     }
