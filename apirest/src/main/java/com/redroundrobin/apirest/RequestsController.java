@@ -3,6 +3,8 @@ package com.redroundrobin.apirest;
 import com.redroundrobin.apirest.models.*;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Random;
+
 import static com.redroundrobin.apirest.Consumatore.rispostaConsumatore;
 
 
@@ -17,10 +19,11 @@ import static com.redroundrobin.apirest.Consumatore.rispostaConsumatore;
 @RestController
 public class RequestsController {
 
+
     @RequestMapping(value = {"/topic/{topicid:.+}"})
     public Topic topic(@PathVariable("topicid") String ID) throws InterruptedException {
         Topic t = new Topic(ID);
-        t.setMessage(DataFetch.getForTopic(ID));
+        t.setMessage(DataFetch.getForTopic("Aiuto"));
         return t;
     }
 
