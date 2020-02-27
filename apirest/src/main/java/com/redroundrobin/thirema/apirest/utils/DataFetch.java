@@ -14,4 +14,13 @@ public class DataFetch {
         cons.chiudi();
         return mex;
     }
+    public static List<JsonObject> getDevices(){
+        return null;
+    }
+    public static JsonObject getDevice(String deviceId){
+
+    }
+//    JsonObject getSensor(String deviceId, String sensorId)
+
+
 }
