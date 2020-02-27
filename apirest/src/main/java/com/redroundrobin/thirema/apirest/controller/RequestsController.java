@@ -24,6 +24,29 @@ public class RequestsController {
         return t;
     }
 
+    //Richiesta lista dispositivi
+    @RequestMapping(value = {"/devices"})
+    public Devices devices() {
+        Devices devs = new Devices();
+        devs.setMessage(DataFetch.getDevices());
+        return devs;
+    }
+
+    //Richiesta lista sensori ed info di un device sapendo l'id del device
+    @RequestMapping(value = {"/device/{deviceid:.+}"})
+    public Device device(@PathVariable("deviceid") String ID) {
+        Device dev = new Device(ID);
+        dev.setMessage(DataFetch.getDevice(ID));
+        return dev;
+    }
+
+    //Richiesta informazioni sensore sapendo id del device ed id del sensore
+    @RequestMapping(value = {"/sensor/{??????}"})
+    public Sensor sensor(@PathVariable("") String ID) {
+        Sensor s = new Sensor(IDDevice, IDSensor);
+        s.setMessage(DataFetch.getSensor(IDDevice, IDSensor));
+        return s;
+    }
 
 
 }
