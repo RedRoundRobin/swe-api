@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 public class RequestsController {
 
 
+
     @RequestMapping(value = {"/topic/{topicid:.+}"})
     public Topic topic(@PathVariable("topicid") String ID) throws InterruptedException {
         Topic t = new Topic(ID);
@@ -25,6 +26,7 @@ public class RequestsController {
     }
 
     //Richiesta lista dispositivi
+    //Le info richieste sono un array con gli ID del dispositivi
     @RequestMapping(value = {"/devices"})
     public Devices devices() {
         Devices devs = new Devices();
@@ -33,6 +35,7 @@ public class RequestsController {
     }
 
     //Richiesta lista sensori ed info di un device sapendo l'id del device
+    //Le informazioni richieste sono ID del dispositivo, timestamp del dispositivo ed array con (ID sensore, timestamp e dato)
     @RequestMapping(value = {"/device/{deviceid:.+}"})
     public Device device(@PathVariable("deviceid") String ID) {
         Device dev = new Device(ID);
@@ -41,8 +44,9 @@ public class RequestsController {
     }
 
     //Richiesta informazioni sensore sapendo id del device ed id del sensore
-    @RequestMapping(value = {"/sensor/{??????}"})
-    public Sensor sensor(@PathVariable("") String ID) {
+    //Le informazioni richieste sono: ID del sensore, timestamp ed il dato
+    @RequestMapping(value = {"/sensor/{deviceid:.+}/{sensorid:.+}"})
+    public Sensor sensor(@PathVariable("deviceid") String IDDevice, @PathVariable("sensorid") String IDSensor) {
         Sensor s = new Sensor(IDDevice, IDSensor);
         s.setMessage(DataFetch.getSensor(IDDevice, IDSensor));
         return s;

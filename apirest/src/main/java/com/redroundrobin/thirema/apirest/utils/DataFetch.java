@@ -6,8 +6,9 @@ import java.util.List;
 
 public class DataFetch {
 
-    public static List<JsonObject> getForTopics(String [] topics) throws InterruptedException {
+    final String[] topics = new String[] {"US-GATEWAY-1", "SG-GATEWAY-2", "DE-GATEWAY-3"};
 
+    public static List<JsonObject> getForTopics(String [] topics) throws InterruptedException {
         Consumatore cons = new Consumatore(topics, "localhost:29092");
         List<JsonObject> mex = cons.fetchMessage();
         cons.chiudi();
