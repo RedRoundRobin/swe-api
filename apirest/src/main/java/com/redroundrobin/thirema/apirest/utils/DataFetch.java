@@ -24,31 +24,23 @@ public class DataFetch {
         return mex;
     }
 
-    public static List<JsonObject> getDevices(){
+    public Devices getDevices(){
         List<JsonObject> all = testMessage();
-        List<JsonObject> devices = new ArrayList<JsonObject>();
-        devices = test.stream()
-                .filter(jsonObject -> jsonObject.get("deviceId").getAsString() != "").collect(Collectors.toList());
-        return devices;
+        List<Device> devices = null;
+
+        for(JsonObject jo : all)
+        {
+            devices.add(createDeviceFromJsonObject(jo));
+        }
+        return new Devices(devices);
     }
 
-    public static Device getDevice(String deviceId){
+    public Device getDevice(String deviceId){
         List<JsonObject> mex = testMessage();
         Optional<JsonObject> deviceObj;
         deviceObj = mex.stream().filter(jo -> jo.get("deviceId").getAsString().equals(deviceId)).findFirst();
 
-        List<Sensor> sensors = null;
-        JsonArray sensorsArray = deviceObj.get().get("sensors").getAsJsonArray();
-
-        for(JsonElement jo : sensorsArray)
-        {
-            JsonObject joo = jo.getAsJsonObject();
-            sensors.add(new Sensor(joo.get("sensorId").getAsInt(), joo.get("timestamp").getAsLong(), joo.get("data").getAsInt()));
-        }
-
-        return new Device(deviceObj.get().get("deviceId").getAsInt(),
-                            deviceObj.get().get("timestamp").getAsLong(),
-                            sensors);
+        return createDeviceFromJsonObject(deviceObj.get());
     }
 
     public Sensor getSensor(String deviceId, String sensorId) throws InterruptedException {
@@ -66,6 +58,21 @@ public class DataFetch {
 
         return new Sensor(senId, timestamp, value);
     }
+
+    protected Device createDeviceFromJsonObject(JsonObject jo)
+    {
+        List<Sensor> sensors = null;
+        JsonArray sensorsArray = jo.get("sensors").getAsJsonArray();
+
+        for(JsonElement je : sensorsArray)
+        {
+            JsonObject joo = je.getAsJsonObject();
+            sensors.add(new Sensor(joo.get("sensorId").getAsInt(), joo.get("timestamp").getAsLong(), joo.get("data").getAsInt()));
+        }
+
+        return new Device(jo.get("deviceId").getAsInt(), jo.get("timestamp").getAsLong(), sensors);
+    }
+
 
     public static List<JsonObject> testMessage() {
         // TEST STRING GENERATOR
