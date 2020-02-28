@@ -42,7 +42,7 @@ public class DataFetch {
         List<JsonObject> test = testMessage();
         List<JsonObject> devices = new ArrayList<JsonObject>();
         devices = test.stream()
-                .filter(jsonObject -> jsonObject.get("deviceId").getAsString().equals("5")).collect(Collectors.toList());
+            .filter(jsonObject -> jsonObject.get("deviceId").getAsString() != "").collect(Collectors.toList());
         return devices;
     }
     public static List<JsonObject> getDevice(String deviceId){
@@ -55,12 +55,15 @@ public class DataFetch {
     public static List<JsonObject> getSensor(String deviceId, String sensorId){
         List<JsonObject> test = testMessage();
         List<JsonObject> sensor = new ArrayList<JsonObject>();
+
         sensor = test.stream()
-                .filter(jsonObject -> jsonObject.get("deviceId").getAsString().equals(deviceId) &&
-                        jsonObject.get("sensorId").getAsString().equals(sensorId))
+                .filter(jsonObject -> jsonObject.get("deviceId").getAsString().equals(deviceId) ).collect(Collectors.toList());
+
+        sensor = sensor.get("sensors").getAsJsonArray();
+
+        sensor = sensor.stream() .filter(jsonObject -> {
+                jsonObject.get("sensorId").getAsString().equals(sensorId)})
                 .collect(Collectors.toList());
         return sensor;
     }
-
-
 }
