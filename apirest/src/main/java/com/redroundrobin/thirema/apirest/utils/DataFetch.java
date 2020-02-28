@@ -8,7 +8,9 @@ import com.redroundrobin.thirema.apirest.models.*;
 
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class DataFetch {
@@ -32,13 +34,21 @@ public class DataFetch {
 
     public static Device getDevice(String deviceId){
         List<JsonObject> mex = testMessage();
-        List<JsonObject> deviceFilter = new ArrayList<JsonObject>();
-        Optional<>
-        deviceFilter = mex.stream()
-                            .filter(jo -> jo.get("deviceId").getAsString().equals(deviceId)).findFirst());
+        Optional<JsonObject> deviceObj;
+        deviceObj = mex.stream().filter(jo -> jo.get("deviceId").getAsString().equals(deviceId)).findFirst();
 
+        List<Sensor> sensors = null;
+        JsonArray sensorsArray = deviceObj.get().get("sensors").getAsJsonArray();
 
-        return new Device(deviceFilter.get(0).get("deviceId").getAsInt());
+        for(JsonElement jo : sensorsArray)
+        {
+            JsonObject joo = jo.getAsJsonObject();
+            sensors.add(new Sensor(joo.get("sensorId").getAsInt(), joo.get("timestamp").getAsLong(), joo.get("data").getAsInt()));
+        }
+
+        return new Device(deviceObj.get().get("deviceId").getAsInt(),
+                            deviceObj.get().get("timestamp").getAsLong(),
+                            sensors);
     }
 
     public Sensor getSensor(String deviceId, String sensorId) throws InterruptedException {
