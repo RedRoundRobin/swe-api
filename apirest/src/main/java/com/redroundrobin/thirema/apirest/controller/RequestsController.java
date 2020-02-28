@@ -30,7 +30,7 @@ public class RequestsController {
     //Richiesta lista dispositivi
     //Le info richieste sono un array con gli ID del dispositivi
     @RequestMapping(value = {"/devices"})
-    public Devices devices() {
+    public Devices devices() throws InterruptedException {
         DataFetch dataFetch = new DataFetch();
         return dataFetch.getDevices();
     }
@@ -38,7 +38,7 @@ public class RequestsController {
     //Richiesta lista sensori ed info di un device sapendo l'id del device
     //Le informazioni richieste sono ID del dispositivo, timestamp del dispositivo ed array con (ID sensore, timestamp e dato)
     @RequestMapping(value = {"/device/{deviceid:.+}"})
-    public Device device(@PathVariable("deviceid") int ID) {
+    public Device device(@PathVariable("deviceid") int ID) throws InterruptedException {
         DataFetch dataFetch = new DataFetch();
         return dataFetch.getDevice(ID);
     }

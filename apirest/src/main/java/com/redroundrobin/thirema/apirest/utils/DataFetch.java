@@ -16,17 +16,18 @@ import java.util.stream.Collectors;
 
 public class DataFetch {
 
-    final String[] topics = new String[] {"US-GATEWAY-1", "SG-GATEWAY-2", "DE-GATEWAY-3"};
+    // final String[] topics = new String[] {"US-GATEWAY-1", "SG-GATEWAY-2", "DE-GATEWAY-3"};
+    final String[] topics = new String[] {"US-GATEWAY-1"};
 
     public List<JsonObject> getForTopics(String [] topics) throws InterruptedException {
-        Consumatore cons = new Consumatore(topics, "localhost:29092");
+        Consumatore cons = new Consumatore(topics, "host.redroundrobin.site:29092");
         List<JsonObject> mex = cons.fetchMessage();
         cons.chiudi();
         return mex;
     }
 
-    public Devices getDevices(){
-        List<JsonObject> all = testMessage();
+    public Devices getDevices() throws InterruptedException {
+        List<JsonObject> all = getForTopics(this.topics);
         List<Device> devices = new ArrayList<Device>();
 
         for(JsonObject jo : all)
@@ -36,8 +37,8 @@ public class DataFetch {
         return new Devices(devices);
     }
 
-    public Device getDevice(int deviceId){
-        List<JsonObject> mex = testMessage();
+    public Device getDevice(int deviceId) throws InterruptedException {
+        List<JsonObject> mex = getForTopics(this.topics);
         Optional<JsonObject> deviceObj;
         deviceObj = mex.stream().filter(jo -> jo.get("deviceId").getAsInt() == deviceId).findFirst();
 
@@ -47,7 +48,7 @@ public class DataFetch {
     }
 
     public Sensor getSensor(int deviceId, int sensorId) throws InterruptedException {
-        List<JsonObject> all = testMessage(); //getForTopics(this.topics);
+        List<JsonObject> all = getForTopics(this.topics);
 
         Optional<JsonObject> device = all.stream()
                 .filter(jsonObject -> jsonObject.get("deviceId").getAsInt() == deviceId)
@@ -90,7 +91,7 @@ public class DataFetch {
     }
 
 
-    public static List<JsonObject> testMessage() {
+    protected static List<JsonObject> testMessage() {
         // TEST STRING GENERATOR
         // ============================
         String mytest = "[{\"deviceId\":1,\"timestamp\":1582818576871,\"sensors\":[{\"sensorId\":1,\"timestamp\":1582818576620,\"data\":5},{\"sensorId\":2,\"timestamp\":1582818576871,\"data\":5}]}, {\"deviceId\":2,\"timestamp\":1582818577121,\"sensors\":[{\"sensorId\":1,\"timestamp\":1582818577121,\"data\":9}]}]";
