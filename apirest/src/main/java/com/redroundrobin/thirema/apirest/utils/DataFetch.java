@@ -35,7 +35,7 @@ public class DataFetch {
         return new Devices(devices);
     }
 
-    public Device getDevice(String deviceId){
+    public Device getDevice(int deviceId){
         List<JsonObject> mex = testMessage();
         Optional<JsonObject> deviceObj;
         deviceObj = mex.stream().filter(jo -> jo.get("deviceId").getAsString().equals(deviceId)).findFirst();
@@ -43,7 +43,7 @@ public class DataFetch {
         return createDeviceFromJsonObject(deviceObj.get());
     }
 
-    public Sensor getSensor(String deviceId, String sensorId) throws InterruptedException {
+    public Sensor getSensor(int deviceId, int sensorId) throws InterruptedException {
         List<JsonObject> all = getForTopics(this.topics);
 
         List<JsonObject> sensorList = all.stream()
