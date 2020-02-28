@@ -1,5 +1,6 @@
 package com.redroundrobin.thirema.apirest.controller;
 
+import com.google.gson.JsonObject;
 import com.redroundrobin.thirema.apirest.utils.*;
 import com.redroundrobin.thirema.apirest.models.Topic;
 import com.redroundrobin.thirema.apirest.models.*;
@@ -24,33 +25,27 @@ public class RequestsController {
         t.setMessage(DataFetch.getForTopics(new String[] {ID}));
         return t;
     }
-    /*
+
     //Richiesta lista dispositivi
     //Le info richieste sono un array con gli ID del dispositivi
     @RequestMapping(value = {"/devices"})
     public Devices devices() {
-        Devices devs = new Devices();
-        devs.setMessage(DataFetch.getDevices());
-        return devs;
+        return DataFetch.getDevices();
     }
 
     //Richiesta lista sensori ed info di un device sapendo l'id del device
     //Le informazioni richieste sono ID del dispositivo, timestamp del dispositivo ed array con (ID sensore, timestamp e dato)
     @RequestMapping(value = {"/device/{deviceid:.+}"})
     public Device device(@PathVariable("deviceid") String ID) {
-        Device dev = new Device(ID);
-        dev.setMessage(DataFetch.getDevice(ID));
-        return dev;
+        return DataFetch.getDevice(ID);
     }
 
     //Richiesta informazioni sensore sapendo id del device ed id del sensore
     //Le informazioni richieste sono: ID del sensore, timestamp ed il dato
     @RequestMapping(value = {"/sensor/{deviceid:.+}/{sensorid:.+}"})
     public Sensor sensor(@PathVariable("deviceid") String IDDevice, @PathVariable("sensorid") String IDSensor) {
-        Sensor s = new Sensor(IDDevice, IDSensor);
-        s.setMessage(DataFetch.getSensor(IDDevice, IDSensor));
-        return s;
+        return DataFetch.getSensor(IDDevice, IDSensor);
     }
 
-     */
+
 }
