@@ -1,8 +1,7 @@
 package com.redroundrobin.thirema.apirest.models;
 
 /*
-   Questa classe va usata solamente per Debugging
-   e Prima implementazione
+   Questa classe va usata solamente per fare debugging e come prima implementazione
  */
 
 import com.google.gson.JsonObject;
@@ -10,14 +9,23 @@ import com.google.gson.JsonObject;
 import java.util.List;
 
 public class Topic {
-    public final String id;
-    public String message;
+    private String id;
+    private String message;
 
     public Topic(String id) {
         this.id = id;
+        this.message = "";
     }
+
     public String getId() {
         return id;
     }
-    public void setMessage(List<JsonObject> s) { message = s.toString(); }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(List<JsonObject> s) {
+        message = s.toString();
+    }
 }

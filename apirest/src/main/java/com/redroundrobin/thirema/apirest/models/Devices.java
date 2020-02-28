@@ -1,13 +1,15 @@
 package com.redroundrobin.thirema.apirest.models;
 
-import com.google.gson.JsonObject;
-
 import java.util.List;
 
 public class Devices {
-    public List<Device> devicesList;
+    private List<Device> devices;
 
-    public Devices(List<Device> devicesList) {
-        this.devicesList = devicesList;
+    public Devices(List<Device> devices) {
+        this.devices = devices;
+    }
+
+    public List<Device> getDevices() {
+        return devices;
     }
 }
