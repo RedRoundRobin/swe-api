@@ -5,11 +5,11 @@ import com.google.gson.JsonObject;
 import java.util.List;
 
 public class Device {
-    public final String ID;
+    public final String deviceId;
     public String message;
 
-    public Device(String ID) { this.ID = ID;}
+    public Device(String deviceId) { this.deviceId = deviceId;}
 
-    public String getID() { return ID; }
-    public String setMessage(JsonObject device) { message = device.toString(); return message; }
+    public String getDeviceId() { return deviceId; }
+    public String setMessage(List<JsonObject> device) { message = device.toString(); return message; }
 }

@@ -2,14 +2,16 @@ package com.redroundrobin.thirema.apirest.models;
 
 import com.google.gson.JsonObject;
 
+import java.util.List;
+
 public class Sensor {
-    public final String deviceID;
-    public final String sensorID;
+    public final String deviceId;
+    public final String sensorId;
     public String message;
 
-    public Sensor(String deviceID, String sensorID) { this.deviceID = deviceID; this.sensorID = sensorID; }
+    public Sensor(String deviceId, String sensorId) { this.deviceId = deviceId; this.sensorId = sensorId; }
 
-    public String getDeviceID() { return deviceID; }
-    public String getSensorID() { return sensorID; }
-    public String setMessage(JsonObject sensor) { message = sensor.toString(); return message; }
+    public String getDeviceId() { return deviceId; }
+    public String getSensorId() { return sensorId; }
+    public String setMessage(List<JsonObject> sensor) { message = sensor.toString(); return message; }
 }

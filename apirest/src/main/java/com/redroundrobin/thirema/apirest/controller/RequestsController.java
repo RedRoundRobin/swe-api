@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.*;
 public class RequestsController {
 
 
-
     @RequestMapping(value = {"/topic/{topicid:.+}"})
     public Topic topic(@PathVariable("topicid") String ID) throws InterruptedException {
         Topic t = new Topic(ID);
@@ -54,6 +53,4 @@ public class RequestsController {
         s.setMessage(DataFetch.getSensor(IDDevice, IDSensor));
         return s;
     }
-
-
 }
