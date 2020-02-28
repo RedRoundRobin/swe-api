@@ -1,10 +1,8 @@
 package com.redroundrobin.thirema.apirest.controller;
 
-import com.redroundrobin.thirema.apirest.utils.DataFetch;
+import com.redroundrobin.thirema.apirest.utils.*;
 import com.redroundrobin.thirema.apirest.models.Topic;
-import com.redroundrobin.thirema.apirest.models.Device;
-import com.redroundrobin.thirema.apirest.models.Devices;
-import com.redroundrobin.thirema.apirest.models.Sensor;
+import com.redroundrobin.thirema.apirest.models.*;
 import org.springframework.web.bind.annotation.*;
 
 
