@@ -4,7 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.redroundrobin.thirema.apirest.models.Device;
+import com.redroundrobin.thirema.apirest.models.*;
 
 
 import java.util.ArrayList;
@@ -15,7 +15,7 @@ public class DataFetch {
 
     final String[] topics = new String[] {"US-GATEWAY-1", "SG-GATEWAY-2", "DE-GATEWAY-3"};
 
-    public static List<JsonObject> getForTopics(String [] topics) throws InterruptedException {
+    public List<JsonObject> getForTopics(String [] topics) throws InterruptedException {
         Consumatore cons = new Consumatore(topics, "localhost:29092");
         List<JsonObject> mex = cons.fetchMessage();
         cons.chiudi();
@@ -23,12 +23,13 @@ public class DataFetch {
     }
 
     public static List<JsonObject> getDevices(){
-        List<JsonObject> test = testMessage();
+        List<JsonObject> all = testMessage();
         List<JsonObject> devices = new ArrayList<JsonObject>();
         devices = test.stream()
                 .filter(jsonObject -> jsonObject.get("deviceId").getAsString() != "").collect(Collectors.toList());
         return devices;
     }
+
     public static Device getDevice(String deviceId){
         List<JsonObject> mex = testMessage();
         List<JsonObject> deviceFilter = new ArrayList<JsonObject>();
@@ -39,19 +40,21 @@ public class DataFetch {
 
         return new Device(deviceFilter.get(0).get("deviceId").getAsInt());
     }
-    public static List<JsonObject> getSensor(String deviceId, String sensorId){
-        List<JsonObject> test = testMessage();
-        List<JsonObject> sensor = new ArrayList<JsonObject>();
 
-        sensor = test.stream()
-                .filter(jsonObject -> jsonObject.get("deviceId").getAsString().equals(deviceId) ).collect(Collectors.toList());
+    public Sensor getSensor(String deviceId, String sensorId) throws InterruptedException {
+        List<JsonObject> all = getForTopics(this.topics);
 
-        sensor = sensor.get("sensors").getAsJsonArray();
-
-        sensor = sensor.stream() .filter(jsonObject -> {
-            jsonObject.get("sensorId").getAsString().equals(sensorId)})
+        List<JsonObject> sensorList = all.stream()
+                .filter(jsonObject -> jsonObject.get("deviceId").getAsString().equals(deviceId))
+                .filter(jsonObject -> jsonObject.get("sensorId").getAsString().equals(sensorId))
                 .collect(Collectors.toList());
-        return sensor;
+
+        JsonObject sensor = sensorList.get(0);
+        int senId = sensor.get("sensorId").getAsInt();
+        long timestamp = sensor.get("timestamp").getAsLong();
+        int value = sensor.get("data").getAsInt();
+
+        return new Sensor(senId, timestamp, value);
     }
 
     public static List<JsonObject> testMessage() {
