@@ -5,13 +5,13 @@ import com.google.gson.JsonObject;
 import java.util.List;
 
 public class Sensor {
-    public final String deviceId;
-    public final String sensorId;
-    public String message;
+    public String sensorId;
+    public long timestamp;
+    public int value;
 
-    public Sensor(String deviceId, String sensorId) { this.deviceId = deviceId; this.sensorId = sensorId; }
-
-    public String getDeviceId() { return deviceId; }
-    public String getSensorId() { return sensorId; }
-    public String setMessage(List<JsonObject> sensor) { message = sensor.toString(); return message; }
+    public Sensor(String sensorId, long timestamp, int value) {
+        this.sensorId = sensorId;
+        this.timestamp = timestamp;
+        this.value = value;
+    }
 }

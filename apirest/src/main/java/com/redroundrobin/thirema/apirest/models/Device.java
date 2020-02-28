@@ -4,12 +4,22 @@ import com.google.gson.JsonObject;
 
 import java.util.List;
 
+
 public class Device {
-    public final String deviceId;
-    public String message;
+    public String deviceId;
+    public long timestamp;
+    public List<Sensor> sensorsList;
+    public int sensorsNumber;
 
-    public Device(String deviceId) { this.deviceId = deviceId;}
+    public Device(String deviceId, long timestamp, List<Sensor> sensorsList) {
+        this.deviceId = deviceId;
+        this.timestamp = timestamp;
+        this.sensorsList = sensorsList;
+        this.sensorsNumber = sensorsList.size();
+    }
 
-    public String getDeviceId() { return deviceId; }
-    public String setMessage(List<JsonObject> device) { message = device.toString(); return message; }
+    public String getDeviceId() {
+        return deviceId;
+    }
+
 }
