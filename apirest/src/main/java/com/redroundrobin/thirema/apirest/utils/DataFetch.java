@@ -37,7 +37,7 @@ public class DataFetch {
         // ============================
     }
 
-
+/*
     public static List<JsonObject> getDevices(){
         List<JsonObject> test = testMessage();
         List<JsonObject> devices = new ArrayList<JsonObject>();
@@ -66,4 +66,6 @@ public class DataFetch {
                 .collect(Collectors.toList());
         return sensor;
     }
+
+ */
 }

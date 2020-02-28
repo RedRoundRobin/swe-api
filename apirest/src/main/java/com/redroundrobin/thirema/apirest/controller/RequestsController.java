@@ -26,7 +26,7 @@ public class RequestsController {
         t.setMessage(DataFetch.getForTopics(new String[] {ID}));
         return t;
     }
-
+    /*
     //Richiesta lista dispositivi
     //Le info richieste sono un array con gli ID del dispositivi
     @RequestMapping(value = {"/devices"})
@@ -53,4 +53,6 @@ public class RequestsController {
         s.setMessage(DataFetch.getSensor(IDDevice, IDSensor));
         return s;
     }
+
+     */
 }
