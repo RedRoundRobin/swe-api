@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 public class DataFetch {
@@ -26,7 +27,7 @@ public class DataFetch {
 
     public Devices getDevices(){
         List<JsonObject> all = testMessage();
-        List<Device> devices = null;
+        List<Device> devices = new ArrayList<Device>();
 
         for(JsonObject jo : all)
         {
@@ -38,30 +39,45 @@ public class DataFetch {
     public Device getDevice(int deviceId){
         List<JsonObject> mex = testMessage();
         Optional<JsonObject> deviceObj;
-        deviceObj = mex.stream().filter(jo -> jo.get("deviceId").getAsString().equals(deviceId)).findFirst();
+        deviceObj = mex.stream().filter(jo -> jo.get("deviceId").getAsInt() == deviceId).findFirst();
+
+        // Aggiungere isPresent() exception
 
         return createDeviceFromJsonObject(deviceObj.get());
     }
 
     public Sensor getSensor(int deviceId, int sensorId) throws InterruptedException {
-        List<JsonObject> all = getForTopics(this.topics);
+        List<JsonObject> all = testMessage(); //getForTopics(this.topics);
 
-        List<JsonObject> sensorList = all.stream()
-                .filter(jsonObject -> jsonObject.get("deviceId").getAsString().equals(deviceId))
-                .filter(jsonObject -> jsonObject.get("sensorId").getAsString().equals(sensorId))
-                .collect(Collectors.toList());
+        Optional<JsonObject> device = all.stream()
+                .filter(jsonObject -> jsonObject.get("deviceId").getAsInt() == deviceId)
+                .findFirst();
 
-        JsonObject sensor = sensorList.get(0);
-        int senId = sensor.get("sensorId").getAsInt();
-        long timestamp = sensor.get("timestamp").getAsLong();
-        int value = sensor.get("data").getAsInt();
+        // Aggiungere isPresent() exception
+
+        JsonArray sensors = device.get().getAsJsonArray("sensors");
+        JsonObject sensorObj = null;
+        for(JsonElement jo : sensors)
+        {
+            if(jo.getAsJsonObject().get("sensorId").getAsInt() == sensorId)
+            {
+                sensorObj = jo.getAsJsonObject();
+                break;
+            }
+        }
+
+        // Aggiungere null exception
+
+        int senId = sensorObj.get("sensorId").getAsInt();
+        long timestamp = sensorObj.get("timestamp").getAsLong();
+        int value = sensorObj.get("data").getAsInt();
 
         return new Sensor(senId, timestamp, value);
     }
 
     protected Device createDeviceFromJsonObject(JsonObject jo)
     {
-        List<Sensor> sensors = null;
+        List<Sensor> sensors = new ArrayList<Sensor>();
         JsonArray sensorsArray = jo.get("sensors").getAsJsonArray();
 
         for(JsonElement je : sensorsArray)

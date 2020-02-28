@@ -6,8 +6,6 @@ import com.redroundrobin.thirema.apirest.models.Topic;
 import com.redroundrobin.thirema.apirest.models.*;
 import org.springframework.web.bind.annotation.*;
 
-import javax.xml.crypto.Data;
-
 
 /*
     Il RequestsController possiamo provare a tenerlo unico, ma se serve
@@ -48,7 +46,7 @@ public class RequestsController {
     //Richiesta informazioni sensore sapendo id del device ed id del sensore
     //Le informazioni richieste sono: ID del sensore, timestamp ed il dato
     @RequestMapping(value = {"/sensor/{deviceid:.+}/{sensorid:.+}"})
-    public Sensor sensor(@PathVariable("deviceid") int IDDevice, @PathVariable("sensorid") int IDSensor) {
+    public Sensor sensor(@PathVariable("deviceid") int IDDevice, @PathVariable("sensorid") int IDSensor) throws InterruptedException {
         DataFetch dataFetch = new DataFetch();
         return dataFetch.getSensor(IDDevice, IDSensor);
     }
