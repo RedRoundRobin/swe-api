@@ -3,28 +3,28 @@ package com.redroundrobin.thirema.apirest.models;
 import java.util.List;
 
 public class Device {
-    private int id;
+    private int deviceId;
     private long timestamp;
-    private List<Sensor> sensors;
+    private List<Sensor> sensorsList;
     private int sensorsNumber;
 
-    public Device(int id, long timestamp, List<Sensor> sensors) {
-        this.id = id;
+    public Device(int deviceId, long timestamp, List<Sensor> sensorsList) {
+        this.deviceId = deviceId;
         this.timestamp = timestamp;
-        this.sensors = sensors;
-        this.sensorsNumber = sensors.size();
+        this.sensorsList = sensorsList;
+        this.sensorsNumber = sensorsList.size();
     }
 
-    public int getId() {
-        return id;
+    public int getDeviceId() {
+        return deviceId;
     }
 
     public long getTimestamp() {
         return timestamp;
     }
 
-    public List<Sensor> getSensors() {
-        return sensors;
+    public List<Sensor> getSensorsList() {
+        return sensorsList;
     }
 
     public int getSensorsNumber() {

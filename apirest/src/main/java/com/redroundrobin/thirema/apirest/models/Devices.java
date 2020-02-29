@@ -3,13 +3,13 @@ package com.redroundrobin.thirema.apirest.models;
 import java.util.List;
 
 public class Devices {
-    private List<Device> devices;
+    private List<Device> devicesList;
 
-    public Devices(List<Device> devices) {
-        this.devices = devices;
+    public Devices(List<Device> devicesList) {
+        this.devicesList = devicesList;
     }
 
-    public List<Device> getDevices() {
-        return devices;
+    public List<Device> getDevicesList() {
+        return devicesList;
     }
 }

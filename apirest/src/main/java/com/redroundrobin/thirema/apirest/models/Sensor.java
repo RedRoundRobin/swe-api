@@ -1,18 +1,18 @@
 package com.redroundrobin.thirema.apirest.models;
 
 public class Sensor {
-    private int id;
+    private int sensorId;
     private long timestamp;
     private int value;
 
-    public Sensor(int id, long timestamp, int value) {
-        this.id = id;
+    public Sensor(int sensorId, long timestamp, int value) {
+        this.sensorId = sensorId;
         this.timestamp = timestamp;
         this.value = value;
     }
 
-    public int getId() {
-        return id;
+    public int getSensorId() {
+        return sensorId;
     }
 
     public long getTimestamp() {
