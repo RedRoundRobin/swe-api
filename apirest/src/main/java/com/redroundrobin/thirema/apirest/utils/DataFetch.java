@@ -15,7 +15,7 @@ public class DataFetch {
     private final String[] topics;
 
     public DataFetch() {
-        topics = new String[] {"US-GATEWAY-1"};
+        topics = new String[] {"US-GATEWAY-1", "SG-GATEWAY-2", "DE-GATEWAY-3"};
     }
 
     public List<JsonObject> getForTopics(String [] topics) {
