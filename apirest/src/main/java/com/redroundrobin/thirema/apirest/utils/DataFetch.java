@@ -17,7 +17,11 @@ import java.util.stream.Collectors;
 public class DataFetch {
 
     // final String[] topics = new String[] {"US-GATEWAY-1", "SG-GATEWAY-2", "DE-GATEWAY-3"};
-    final String[] topics = new String[] {"US-GATEWAY-1"};
+    private final String[] topics;
+
+    public DataFetch() {
+        topics = new String[] {"US-GATEWAY-1", "SG-GATEWAY-2", "DE-GATEWAY-3"};
+    }
 
     public List<JsonObject> getForTopics(String [] topics) throws InterruptedException {
         Consumatore cons = new Consumatore(topics, "host.redroundrobin.site:29092");
