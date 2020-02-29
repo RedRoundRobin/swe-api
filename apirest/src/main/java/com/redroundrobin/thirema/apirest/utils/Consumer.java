@@ -24,7 +24,7 @@ public class Consumer {
 
         final Properties properties = new Properties();
         properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, boostrapServers);
-        properties.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 1000);
+        properties.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 2000);
         properties.put(ConsumerConfig.GROUP_ID_CONFIG, CLIENT_ID.toString());
         properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class.getName());
         properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
@@ -44,7 +44,7 @@ public class Consumer {
 
         List<JsonObject> devicesData = new ArrayList<>();
 
-        final ConsumerRecords<Long, String> consumerRecords = consumer.poll(Duration.ofSeconds(3));
+        final ConsumerRecords<Long, String> consumerRecords = consumer.poll(Duration.ofSeconds(4));
 
         if (consumerRecords.count() == 0) {
             System.out.println("[Consumer] Zero messages found");
@@ -57,7 +57,7 @@ public class Consumer {
         }
 
         for (ConsumerRecord<Long, String> record : consumerRecords) {
-            if (System.currentTimeMillis() - record.key() <= 5000 && !checkTopic.get(record.topic())) {
+            if (System.currentTimeMillis() - record.key() <= 7500 && !checkTopic.get(record.topic())) {
                 for (JsonElement data : JsonParser.parseString(record.value()).getAsJsonArray()) {
                     JsonObject deviceData = data.getAsJsonObject();
                     devicesData.add(deviceData);
