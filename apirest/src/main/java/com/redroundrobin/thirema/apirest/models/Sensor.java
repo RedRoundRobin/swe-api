@@ -1,25 +1,17 @@
 package com.redroundrobin.thirema.apirest.models;
 
-public class Sensor {
-    private int id;
-    private long timestamp;
-    private int value;
+import com.google.gson.JsonObject;
 
-    public Sensor(int id, long timestamp, int value) {
-        this.id = id;
+import java.util.List;
+
+public class Sensor {
+    public int sensorId;
+    public long timestamp;
+    public int value;
+
+    public Sensor(int sensorId, long timestamp, int value) {
+        this.sensorId = sensorId;
         this.timestamp = timestamp;
         this.value = value;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public long getTimestamp() {
-        return timestamp;
-    }
-
-    public int getValue() {
-        return value;
     }
 }

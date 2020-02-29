@@ -1,93 +1,109 @@
 package com.redroundrobin.thirema.apirest.utils;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.redroundrobin.thirema.apirest.models.*;
 
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 public class DataFetch {
 
     // final String[] topics = new String[] {"US-GATEWAY-1", "SG-GATEWAY-2", "DE-GATEWAY-3"};
-    private final String[] topics;
+    final String[] topics = new String[] {"US-GATEWAY-1"};
 
-    public DataFetch() {
-        topics = new String[] {"US-GATEWAY-1"};
+    public List<JsonObject> getForTopics(String [] topics) throws InterruptedException {
+        Consumatore cons = new Consumatore(topics, "host.redroundrobin.site:29092");
+        List<JsonObject> mex = cons.fetchMessage();
+        cons.chiudi();
+        return mex;
     }
 
-    public List<JsonObject> getForTopics(String [] topics) {
-        Consumer consumer = new Consumer(topics, "host.redroundrobin.site:29092");
-        List<JsonObject> message = consumer.fetchMessage();
-        consumer.close();
-        return message;
-    }
+    public Devices getDevices() throws InterruptedException {
+        List<JsonObject> all = getForTopics(this.topics);
+        List<Device> devices = new ArrayList<Device>();
 
-    public Devices getDevices() {
-        List<Device> devices = new ArrayList<>();
-
-        for (JsonObject jsonDevice : getForTopics(this.topics)) {
-            devices.add(createDeviceFromJsonObject(jsonDevice));
+        for(JsonObject jo : all)
+        {
+            devices.add(createDeviceFromJsonObject(jo));
         }
-
         return new Devices(devices);
     }
 
-    public Device getDevice(int deviceId) throws DeviceNotFoundException {
-        Optional<JsonObject> optionalJsonDevice = getForTopics(this.topics).stream().filter(jsonDevice -> jsonDevice.get("deviceId").getAsInt() == deviceId).findFirst();
+    public Device getDevice(int deviceId) throws InterruptedException {
+        List<JsonObject> mex = getForTopics(this.topics);
+        Optional<JsonObject> deviceObj;
+        deviceObj = mex.stream().filter(jo -> jo.get("deviceId").getAsInt() == deviceId).findFirst();
 
-        if (optionalJsonDevice.isEmpty()) {
-            throw new DeviceNotFoundException("Device " + deviceId + " not found!");
-        }
+        // Aggiungere isPresent() exception
 
-        return createDeviceFromJsonObject(optionalJsonDevice.get());
+        return createDeviceFromJsonObject(deviceObj.get());
     }
 
-    public Sensor getSensor(int deviceId, int sensorId) throws DeviceNotFoundException, SensorNotFoundException {
-        Optional<JsonObject> optionalJsonDevice = getForTopics(this.topics).stream().filter(jsonDevice -> jsonDevice.get("deviceId").getAsInt() == deviceId).findFirst();
+    public Sensor getSensor(int deviceId, int sensorId) throws InterruptedException {
+        List<JsonObject> all = getForTopics(this.topics);
 
-        if (optionalJsonDevice.isEmpty()) {
-            throw new DeviceNotFoundException("Device " + deviceId + " not found!");
-        }
+        Optional<JsonObject> device = all.stream()
+                .filter(jsonObject -> jsonObject.get("deviceId").getAsInt() == deviceId)
+                .findFirst();
 
-        JsonObject sensor = null;
-        for (JsonElement jsonSensor : optionalJsonDevice.get().getAsJsonArray("sensors")) {
-            if (jsonSensor.getAsJsonObject().get("sensorId").getAsInt() == sensorId) {
-                sensor = jsonSensor.getAsJsonObject();
+        // Aggiungere isPresent() exception
+
+        JsonArray sensors = device.get().getAsJsonArray("sensors");
+        JsonObject sensorObj = null;
+        for(JsonElement jo : sensors)
+        {
+            if(jo.getAsJsonObject().get("sensorId").getAsInt() == sensorId)
+            {
+                sensorObj = jo.getAsJsonObject();
                 break;
             }
         }
 
-        if (sensor == null) {
-            throw new SensorNotFoundException("Device " + deviceId + ": sensor " + sensorId + " not found!");
-        }
+        // Aggiungere null exception
 
-        return new Sensor(sensor.get("sensorId").getAsInt(), sensor.get("timestamp").getAsLong(), sensor.get("data").getAsInt());
+        int senId = sensorObj.get("sensorId").getAsInt();
+        long timestamp = sensorObj.get("timestamp").getAsLong();
+        int value = sensorObj.get("data").getAsInt();
+
+        return new Sensor(senId, timestamp, value);
     }
 
-    private Device createDeviceFromJsonObject(JsonObject jsonDevice) {
-        List<Sensor> sensors = new ArrayList<>();
+    protected Device createDeviceFromJsonObject(JsonObject jo)
+    {
+        List<Sensor> sensors = new ArrayList<Sensor>();
+        JsonArray sensorsArray = jo.get("sensors").getAsJsonArray();
 
-        for(JsonElement jsonSensor : jsonDevice.get("sensors").getAsJsonArray()) {
-            JsonObject sensor = jsonSensor.getAsJsonObject();
-            sensors.add(new Sensor(sensor.get("sensorId").getAsInt(), sensor.get("timestamp").getAsLong(), sensor.get("data").getAsInt()));
+        for(JsonElement je : sensorsArray)
+        {
+            JsonObject joo = je.getAsJsonObject();
+            sensors.add(new Sensor(joo.get("sensorId").getAsInt(), joo.get("timestamp").getAsLong(), joo.get("data").getAsInt()));
         }
 
-        return new Device(jsonDevice.get("deviceId").getAsInt(), jsonDevice.get("timestamp").getAsLong(), sensors);
+        return new Device(jo.get("deviceId").getAsInt(), jo.get("timestamp").getAsLong(), sensors);
     }
 
-    private static List<JsonObject> testMessage() {
+
+    protected static List<JsonObject> testMessage() {
         // TEST STRING GENERATOR
-        String test = "[{\"deviceId\":1,\"timestamp\":1582818576871,\"sensors\":[{\"sensorId\":1,\"timestamp\":1582818576620,\"data\":5},{\"sensorId\":2,\"timestamp\":1582818576871,\"data\":5}]}, {\"deviceId\":2,\"timestamp\":1582818577121,\"sensors\":[{\"sensorId\":1,\"timestamp\":1582818577121,\"data\":9}]}]";
-        List<JsonObject> message = new ArrayList<>();
-
-        for (JsonElement jsonDevice : JsonParser.parseString(test).getAsJsonArray()) {
-            JsonObject device = jsonDevice.getAsJsonObject();
-            message.add(device);
+        // ============================
+        String mytest = "[{\"deviceId\":1,\"timestamp\":1582818576871,\"sensors\":[{\"sensorId\":1,\"timestamp\":1582818576620,\"data\":5},{\"sensorId\":2,\"timestamp\":1582818576871,\"data\":5}]}, {\"deviceId\":2,\"timestamp\":1582818577121,\"sensors\":[{\"sensorId\":1,\"timestamp\":1582818577121,\"data\":9}]}]";
+        ;
+        List<JsonObject> mex = new ArrayList<JsonObject>();
+        JsonArray dati = new JsonParser().parseString(mytest).getAsJsonArray();
+        for (JsonElement elemento : dati) {
+            JsonObject datiDispositivo = elemento.getAsJsonObject();
+            mex.add(datiDispositivo);
         }
-
-        return message; // Usare "message" come List<JsonObject> di output da un possibile consumatore.
+        return mex;
+        // Usare "mex" come List<JsonObject> di output da un possibile consumatore.
+        // ============================
     }
 }

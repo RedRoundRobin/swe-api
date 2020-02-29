@@ -1,33 +1,25 @@
 package com.redroundrobin.thirema.apirest.models;
 
+import com.google.gson.JsonObject;
+
 import java.util.List;
 
+
 public class Device {
-    private int id;
-    private long timestamp;
-    private List<Sensor> sensors;
-    private int sensorsNumber;
+    public int deviceId;
+    public long timestamp;
+    public List<Sensor> sensorsList;
+    public int sensorsNumber;
 
-    public Device(int id, long timestamp, List<Sensor> sensors) {
-        this.id = id;
+    public Device(int deviceId, long timestamp, List<Sensor> sensorsList) {
+        this.deviceId = deviceId;
         this.timestamp = timestamp;
-        this.sensors = sensors;
-        this.sensorsNumber = sensors.size();
+        this.sensorsList = sensorsList;
+        this.sensorsNumber = sensorsList.size();
     }
 
-    public int getId() {
-        return id;
+    public int getDeviceId() {
+        return deviceId;
     }
 
-    public long getTimestamp() {
-        return timestamp;
-    }
-
-    public List<Sensor> getSensors() {
-        return sensors;
-    }
-
-    public int getSensorsNumber() {
-        return sensorsNumber;
-    }
 }
