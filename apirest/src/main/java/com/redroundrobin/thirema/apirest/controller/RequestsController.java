@@ -1,10 +1,20 @@
 package com.redroundrobin.thirema.apirest.controller;
 
 import com.redroundrobin.thirema.apirest.models.*;
+import com.redroundrobin.thirema.apirest.models.postgres.Account;
+import com.redroundrobin.thirema.apirest.repository.postgres.AccountRepository;
 import com.redroundrobin.thirema.apirest.utils.DataFetch;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+import java.util.Optional;
 
 /*
     Il RequestsController per ora si tiene unico, ma se serve si può suddividerlo in più controller indipendenti.
@@ -47,5 +57,4 @@ public class RequestsController {
         DataFetch dataFetch = new DataFetch();
         return dataFetch.getSensor(idDevice, idSensor);
     }
-
 }

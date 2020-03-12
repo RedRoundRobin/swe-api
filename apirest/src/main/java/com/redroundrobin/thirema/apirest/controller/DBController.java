@@ -1,7 +1,10 @@
 package com.redroundrobin.thirema.apirest.controller;
 
-import com.redroundrobin.thirema.apirest.models.City;
-import com.redroundrobin.thirema.apirest.service.CityService;
+import com.redroundrobin.thirema.apirest.models.postgres.Account;
+import com.redroundrobin.thirema.apirest.models.timescale.Conditions;
+import com.redroundrobin.thirema.apirest.models.timescale.Conditions1;
+import com.redroundrobin.thirema.apirest.repository.postgres.AccountRepository;
+import com.redroundrobin.thirema.apirest.repository.timescale.ConditionsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,13 +16,23 @@ import java.util.List;
 public class DBController {
 
     @Autowired
-    private CityService cityService;
+    private AccountRepository accountRepo;
 
-    @RequestMapping(value = {"/showCities"})
-    public List<City> findCities(Model model) {
+    @Autowired
+    private ConditionsRepository conditionsRepo;
 
-        var cities = (List<City>) cityService.findAll();
+    @RequestMapping(value = {"/showUsers"})
+    public List<Account> findAccount() {
 
-        return cities;
+        var users = (List<Account>) accountRepo.findAll();
+
+        return users;
+    }
+
+    @RequestMapping(value = {"/showConditions"})
+    public List<Conditions> findConditions() {
+        Conditions1 c = new Conditions1();
+
+        return c.prova();
     }
 }
