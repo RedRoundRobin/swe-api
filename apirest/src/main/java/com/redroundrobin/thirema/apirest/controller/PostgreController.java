@@ -1,0 +1,121 @@
+package com.redroundrobin.thirema.apirest.controller;
+
+import com.redroundrobin.thirema.apirest.models.Device;
+import com.redroundrobin.thirema.apirest.models.Gateway;
+import com.redroundrobin.thirema.apirest.models.Sensor;
+import com.redroundrobin.thirema.apirest.service.SensorService;
+import com.redroundrobin.thirema.apirest.service.DeviceService;
+import com.redroundrobin.thirema.apirest.service.GatewayService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@RestController
+public class PostgreController {
+
+    @Autowired
+    private DeviceService deviceService;
+    @Autowired
+    private SensorService sensorService;
+    @Autowired
+    private GatewayService gatewayService;
+
+    //tutti i gateway
+    @GetMapping(value = {"/gateways"})
+    public List<Gateway> gateways() {
+        return gatewayService.findAll();
+    }
+
+    //un determinato gateway
+    @GetMapping(value = {"/gateway/{gatewayid:.+}"})
+    public Gateway gateway(@PathVariable("gatewayid") int gatewayId){
+        return gatewayService.find(gatewayId);
+    }
+
+    //tutti i dispositivi
+    @GetMapping(value = {"/devices"})
+    public List<Device> devices() {
+        return  deviceService.findAll();
+    }
+
+    //un determinato dispositivo
+    @GetMapping(value = {"/device/{deviceid:.+}"})
+    public Device device(@PathVariable("deviceid") int deviceId){
+        return deviceService.find(deviceId);
+    }
+
+    //tutti i sensori di un dispositivo
+    @GetMapping(value = {"/device/{deviceid:.+}/sensors"})
+    public List<Sensor> deviceSensors(@PathVariable("deviceid") int deviceId){
+        return deviceService.find(deviceId).getSensors();
+    }
+
+    //un sensore di un dispositivo
+    @GetMapping(value = {"/device/{deviceid:.+}/sensor/{sensorid:.+}"})
+    public Sensor sensor(@PathVariable("deviceid") int deviceId, @PathVariable("sensorid") int sensorId){
+        return deviceService.find(deviceId).getSensors().stream().filter(
+                sensor -> sensor.getDevice_sensor_id()==sensorId
+        ).collect(Collectors.toList()).get(0);
+    }
+
+    // TODO: 13/03/20 il resto delle api per quanto riguarda, guardare jwt per auth
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////DEBUG///////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    //tutti i dispositivi del gateway
+    @GetMapping(value = {"/gateway/{gatewayid:.+}/devices"})
+    public List<Device> gatewayDevices(@PathVariable("gatewayid") int gatewayid) {
+        return gatewayService.find(gatewayid).getDevices();
+    }
+
+    //il dispositivo del gateway
+    @GetMapping(value = {"/gateway/{gatewayid:.+}/device/{deviceid:.+}"})
+    public Device gatewayDevice(@PathVariable("gatewayid") int gatewayid, @PathVariable("deviceid") int deviceId) {
+        return gatewayService.find(gatewayid).getDevices().stream().filter(
+                device -> device.getDeviceId()==deviceId
+        ).collect(Collectors.toList()).get(0);
+    }
+
+    //tutti il sensori che appartengono al dispositivo del gateway
+    @GetMapping(value = {"/gateway/{gatewayid:.+}/device/{deviceid:.+}/sensors"})
+    public List<Sensor> gatewayDeviceSensors(@PathVariable("gatewayid") int gatewayid, @PathVariable("deviceid") int deviceId) {
+        return gatewayService.find(gatewayid).getDevices().stream().filter(
+                device -> device.getDeviceId()==deviceId
+        ).collect(Collectors.toList()).get(0).getSensors();
+    }
+
+    //il sensori che appartiene al dispositivo del gateway
+    @GetMapping(value = {"/gateway/{gatewayid:.+}/device/{deviceid:.+}/sensor/{sensorid:.+}"})
+    public Sensor gatewayDeviceSensor(@PathVariable("gatewayid") int gatewayid, @PathVariable("deviceid") int deviceId, @PathVariable("sensorid") int sensorId) {
+        return gatewayService.find(gatewayid).getDevices().stream().filter(
+                device -> device.getDeviceId()==deviceId
+        ).collect(Collectors.toList()).get(0).getSensors().stream().filter(
+                sensor -> sensor.getDevice_sensor_id()==sensorId
+        ).collect(Collectors.toList()).get(0);
+    }
+
+    //tutti i sensori
+    @GetMapping(value = {"/sensors"})
+    public List<Sensor> sensors() {
+        return sensorService.findAll();
+    }
+
+    //funzione di test
+    @GetMapping(value = {"/test"})
+    public void deviceSensors(@RequestBody Map<String, Object> payload){
+        System.out.println(payload);
+    }
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+}
+
+/*
+* le risorse sono identificabili tramite url
+* le operazioni devono essere implementati tramite metodi appropiati
+* la rappresentazione delle risorse devono essere tramite un formato standard, specificato nel body
+*/

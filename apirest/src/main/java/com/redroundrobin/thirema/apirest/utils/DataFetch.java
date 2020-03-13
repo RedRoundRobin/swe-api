@@ -24,7 +24,7 @@ public class DataFetch {
         consumer.close();
         return message;
     }
-
+/*
     public Devices getDevices() {
         List<Device> devices = new ArrayList<>();
 
@@ -34,7 +34,7 @@ public class DataFetch {
 
         return new Devices(devices);
     }
-
+*/
     public Device getDevice(int deviceId) throws DeviceNotFoundException {
         Optional<JsonObject> optionalJsonDevice = getForTopics(this.topics).stream().filter(jsonDevice -> jsonDevice.get("deviceId").getAsInt() == deviceId).findFirst();
 
@@ -64,7 +64,7 @@ public class DataFetch {
             throw new SensorNotFoundException("Device " + deviceId + ": sensor " + sensorId + " not found!");
         }
 
-        return new Sensor(sensor.get("sensorId").getAsInt(), sensor.get("timestamp").getAsLong(), sensor.get("data").getAsInt());
+        return new Sensor();//sensor.get("sensorId").getAsInt(), sensor.get("timestamp").getAsLong(), sensor.get("data").getAsInt());
     }
 
     private Device createDeviceFromJsonObject(JsonObject jsonDevice) {
@@ -72,10 +72,10 @@ public class DataFetch {
 
         for(JsonElement jsonSensor : jsonDevice.get("sensors").getAsJsonArray()) {
             JsonObject sensor = jsonSensor.getAsJsonObject();
-            sensors.add(new Sensor(sensor.get("sensorId").getAsInt(), sensor.get("timestamp").getAsLong(), sensor.get("data").getAsInt()));
+            sensors.add(new Sensor());//sensor.get("sensorId").getAsInt(), sensor.get("timestamp").getAsLong(), sensor.get("data").getAsInt()));
         }
 
-        return new Device(jsonDevice.get("deviceId").getAsInt(), jsonDevice.get("timestamp").getAsLong(), sensors);
+        return new Device();//jsonDevice.get("deviceId").getAsInt(), jsonDevice.get("timestamp").getAsLong(), sensors);
     }
 
     private static List<JsonObject> testMessage() {
