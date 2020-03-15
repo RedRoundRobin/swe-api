@@ -1,10 +1,9 @@
 package com.redroundrobin.thirema.apirest.controller;
 
-import com.redroundrobin.thirema.apirest.models.postgres.Account;
-import com.redroundrobin.thirema.apirest.models.timescale.Conditions;
-import com.redroundrobin.thirema.apirest.models.timescale.Conditions1;
-import com.redroundrobin.thirema.apirest.repository.postgres.AccountRepository;
-import com.redroundrobin.thirema.apirest.repository.timescale.ConditionsRepository;
+import com.redroundrobin.thirema.apirest.models.postgres.Users;
+import com.redroundrobin.thirema.apirest.repository.postgres.UsersRepository;
+import com.redroundrobin.thirema.apirest.models.timescale.Sensors;
+import com.redroundrobin.thirema.apirest.repository.timescale.SensorsTRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,23 +15,23 @@ import java.util.List;
 public class DBController {
 
     @Autowired
-    private AccountRepository accountRepo;
+    private UsersRepository usersRepo;
 
     @Autowired
-    private ConditionsRepository conditionsRepo;
+    private SensorsTRepository sensorsRepo;
 
     @RequestMapping(value = {"/showUsers"})
-    public List<Account> findAccount() {
+    public List<Users> findAccount() {
 
-        var users = (List<Account>) accountRepo.findAll();
+        var users = (List<Users>) usersRepo.findAll();
 
         return users;
     }
 
-    @RequestMapping(value = {"/showConditions"})
-    public List<Conditions> findConditions() {
-        Conditions1 c = new Conditions1();
+    @RequestMapping(value = {"/a"})
+    public List<Sensors> findConditions() {
+        var sensors = (List<Sensors>) sensorsRepo.findAll();
 
-        return c.prova();
+        return sensors;
     }
 }

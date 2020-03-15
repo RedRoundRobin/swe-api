@@ -1,8 +1,7 @@
 package com.redroundrobin.thirema.apirest;
 
-import com.redroundrobin.thirema.apirest.models.postgres.Account;
-import com.redroundrobin.thirema.apirest.repository.postgres.AccountRepository;
-import com.redroundrobin.thirema.apirest.repository.timescale.ConditionsRepository;
+import com.redroundrobin.thirema.apirest.models.postgres.Users;
+import com.redroundrobin.thirema.apirest.repository.postgres.UsersRepository;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,24 +18,24 @@ import static org.junit.Assert.assertTrue;
 public class JPAMultipleDBTest {
 
     @Autowired
-    private AccountRepository accountRepository;
+    private UsersRepository usersRepository;
 
-    @Autowired
-    private ConditionsRepository conditionsRepository;
+    //@Autowired
+    //private SensorsRepository sensorsRepository;
 
     // tests
 
     @Test
     @Transactional("postgresTransactionManager")
     public void whenCreatingUser_thenCreated() {
-        Account user = new Account();
-        //user.setUser_id((long) 1);
-        user.setUsername("user1");
+        Users user = new Users();
+        user.setUser_id(1);
+        user.setName("user1");
         user.setPassword("pass");
         user.setEmail("user1@test.com");
-        user = accountRepository.save(user);
+        user = usersRepository.save(user);
 
-        assertTrue(accountRepository.findById(user.getUser_id()).isPresent());
+        assertTrue(usersRepository.findById(user.getUser_id()).isPresent());
     }
 /*
     @Test

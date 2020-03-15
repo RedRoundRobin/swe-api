@@ -1,8 +1,6 @@
 package com.redroundrobin.thirema.apirest.controller;
 
 import com.redroundrobin.thirema.apirest.models.*;
-import com.redroundrobin.thirema.apirest.models.postgres.Account;
-import com.redroundrobin.thirema.apirest.repository.postgres.AccountRepository;
 import com.redroundrobin.thirema.apirest.utils.DataFetch;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
