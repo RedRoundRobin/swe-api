@@ -12,7 +12,7 @@ public class Sensor {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private int SensorId;
+    private int sensor_id;
     private String type;
     private int device_sensor_id;
 
@@ -29,17 +29,17 @@ public class Sensor {
     public Sensor(){}
 
     public Sensor(int SensorId, String type, int device_sensor_id, int device_id) {
-        this.SensorId = SensorId;
+        this.sensor_id = SensorId;
         this.type = type;
         this.device_sensor_id = device_sensor_id;
     }
 
     public int getSensorId() {
-        return SensorId;
+        return sensor_id;
     }
 
     public void setSensorId(int sensorId) {
-        this.SensorId = sensorId;
+        this.sensor_id = sensorId;
     }
 
     public String getType() {
@@ -77,7 +77,7 @@ public class Sensor {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 79 * hash + this.SensorId;
+        hash = 79 * hash + this.sensor_id;
         hash = 79 * hash + Objects.hashCode(this.type);
         hash = 79 * hash + this.device_sensor_id;
         return hash;
@@ -95,7 +95,7 @@ public class Sensor {
             return false;
         }
         final Sensor other = (Sensor) obj;
-        if (this.SensorId != other.SensorId) {
+        if (this.sensor_id != other.sensor_id) {
             return false;
         }
         if (!Objects.equals(this.type, other.type)) {
@@ -110,7 +110,7 @@ public class Sensor {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("Device{");
-        sb.append("id=").append(SensorId);
+        sb.append("id=").append(sensor_id);
         sb.append(", type='").append(type).append("'");
         sb.append(", device_sensor_id=").append(device_sensor_id);
         sb.append('}');

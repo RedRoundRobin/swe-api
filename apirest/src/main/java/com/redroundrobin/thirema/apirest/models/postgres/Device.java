@@ -13,7 +13,7 @@ public class Device {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private int deviceId;
+    private int device_id;
 
     private String name;
     private int frequency;
@@ -30,17 +30,17 @@ public class Device {
     public Device(){}
 
     public Device(int deviceId, String name, int frequency, int gatewayId) {
-        this.deviceId = deviceId;
+        this.device_id = deviceId;
         this.name = name;
         this.frequency = frequency;
     }
 
     public int getDeviceId() {
-        return deviceId;
+        return device_id;
     }
 
     public void setDeviceId(int deviceId){
-        this.deviceId = deviceId;
+        this.device_id = deviceId;
     }
 
     public String getName(){
@@ -78,7 +78,7 @@ public class Device {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 79 * hash + this.deviceId;
+        hash = 79 * hash + this.device_id;
         hash = 79 * hash + Objects.hashCode(this.name);
         hash = 79 * hash + this.frequency;
         return hash;
@@ -96,7 +96,7 @@ public class Device {
             return false;
         }
         final Device other = (Device) obj;
-        if (this.deviceId != other.deviceId) {
+        if (this.device_id != other.device_id) {
             return false;
         }
         if (!Objects.equals(this.name, other.name)) {
@@ -111,7 +111,7 @@ public class Device {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("Device{");
-        sb.append("id=").append(deviceId);
+        sb.append("id=").append(device_id);
         sb.append(", name='").append(name).append("'");
         sb.append(", frequency=").append(frequency);
         sb.append(", sensors=").append(sensors);
