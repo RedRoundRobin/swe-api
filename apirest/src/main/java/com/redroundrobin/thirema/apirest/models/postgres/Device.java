@@ -17,6 +17,7 @@ public class Device {
 
     private String name;
     private int frequency;
+    private int real_device_id;
 
     @JsonManagedReference
     @OneToMany(mappedBy = "device", cascade = CascadeType.ALL)
@@ -29,10 +30,11 @@ public class Device {
 
     public Device(){}
 
-    public Device(int deviceId, String name, int frequency, int gatewayId) {
+    public Device(int deviceId, String name, int frequency, int gatewayId, int real_device_id) {
         this.device_id = deviceId;
         this.name = name;
         this.frequency = frequency;
+        this.real_device_id = real_device_id;
     }
 
     public int getDeviceId() {
@@ -59,6 +61,14 @@ public class Device {
         this.frequency = frequency;
     }
 
+    public int getReal_device_id() {
+        return real_device_id;
+    }
+
+    public void setReal_device_id(int real_device_id) {
+        this.real_device_id = real_device_id;
+    }
+
     public Gateway getGateway() {
         return gateway;
     }
@@ -76,36 +86,24 @@ public class Device {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Device device = (Device) o;
+        return device_id == device.device_id &&
+                frequency == device.frequency &&
+                real_device_id == device.real_device_id &&
+                Objects.equals(name, device.name);
+    }
+
+    @Override
     public int hashCode() {
         int hash = 7;
         hash = 79 * hash + this.device_id;
         hash = 79 * hash + Objects.hashCode(this.name);
         hash = 79 * hash + this.frequency;
+        hash = 79 * hash + this.real_device_id;
         return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final Device other = (Device) obj;
-        if (this.device_id != other.device_id) {
-            return false;
-        }
-        if (!Objects.equals(this.name, other.name)) {
-            return false;
-        }
-        if (this.frequency != other.frequency) {
-            return false;
-        }
-        return true;
     }
 
     @Override
@@ -115,6 +113,7 @@ public class Device {
         sb.append(", name='").append(name).append("'");
         sb.append(", frequency=").append(frequency);
         sb.append(", sensors=").append(sensors);
+        sb.append(", real_id=").append(real_device_id);
         sb.append('}');
         return sb.toString();
     }

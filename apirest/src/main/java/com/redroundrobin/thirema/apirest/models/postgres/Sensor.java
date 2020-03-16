@@ -14,7 +14,7 @@ public class Sensor {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int sensor_id;
     private String type;
-    private int device_sensor_id;
+    private int real_sensor_id;
 
     @JsonBackReference
     @ManyToOne
@@ -28,10 +28,10 @@ public class Sensor {
 
     public Sensor(){}
 
-    public Sensor(int SensorId, String type, int device_sensor_id, int device_id) {
+    public Sensor(int SensorId, String type, int real_sensor_id, int device_id) {
         this.sensor_id = SensorId;
         this.type = type;
-        this.device_sensor_id = device_sensor_id;
+        this.real_sensor_id = real_sensor_id;
     }
 
     public int getSensorId() {
@@ -50,12 +50,12 @@ public class Sensor {
         this.type = type;
     }
 
-    public int getDevice_sensor_id() {
-        return device_sensor_id;
+    public int getReal_sensor_id() {
+        return real_sensor_id;
     }
 
-    public void setDevice_sensor_id(int device_sensor_id) {
-        this.device_sensor_id = device_sensor_id;
+    public void setReal_sensor_id(int real_sensor_id) {
+        this.real_sensor_id = real_sensor_id;
     }
 
     public Device getDevice() {
@@ -79,7 +79,7 @@ public class Sensor {
         int hash = 7;
         hash = 79 * hash + this.sensor_id;
         hash = 79 * hash + Objects.hashCode(this.type);
-        hash = 79 * hash + this.device_sensor_id;
+        hash = 79 * hash + this.real_sensor_id;
         return hash;
     }
 
@@ -101,7 +101,7 @@ public class Sensor {
         if (!Objects.equals(this.type, other.type)) {
             return false;
         }
-        if (this.device_sensor_id != other.device_sensor_id) {
+        if (this.real_sensor_id != other.real_sensor_id) {
             return false;
         }
         return true;
@@ -112,7 +112,7 @@ public class Sensor {
         final StringBuilder sb = new StringBuilder("Device{");
         sb.append("id=").append(sensor_id);
         sb.append(", type='").append(type).append("'");
-        sb.append(", device_sensor_id=").append(device_sensor_id);
+        sb.append(", real_sensor_id=").append(real_sensor_id);
         sb.append('}');
         return sb.toString();
     }

@@ -61,7 +61,7 @@ public class PostgreController {
     @GetMapping(value = {"/device/{deviceid:.+}/sensor/{sensorid:.+}"})
     public Sensor sensor(@PathVariable("deviceid") int deviceId, @PathVariable("sensorid") int sensorId){
         return deviceService.find(deviceId).getSensors().stream().filter(
-                sensor -> sensor.getDevice_sensor_id()==sensorId
+                sensor -> sensor.getReal_sensor_id()==sensorId
         ).collect(Collectors.toList()).get(0);
     }
 
@@ -112,7 +112,7 @@ public class PostgreController {
         return gatewayService.find(gatewayid).getDevices().stream().filter(
                 device -> device.getDeviceId()==deviceId
         ).collect(Collectors.toList()).get(0).getSensors().stream().filter(
-                sensor -> sensor.getDevice_sensor_id()==sensorId
+                sensor -> sensor.getReal_sensor_id()==sensorId
         ).collect(Collectors.toList()).get(0);
     }
 
