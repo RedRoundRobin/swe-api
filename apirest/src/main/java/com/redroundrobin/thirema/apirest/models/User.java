@@ -22,7 +22,7 @@ public class User {
     private boolean deleted;
 
     @JsonBackReference
-    @OneToOne(mappedBy = "user")
+    @ManyToOne
     @JoinColumn(name = "entity_id")
     private Entity entity;
 

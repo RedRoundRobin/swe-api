@@ -13,7 +13,7 @@ public class View {
     private String name;
 
     @JsonManagedReference
-    @OneToOne(mappedBy = "view")
+    @OneToMany(mappedBy = "view")
     @JoinColumn(name = "view_id")
     private ViewGraph viewGraph;
 

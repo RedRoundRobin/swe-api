@@ -3,9 +3,11 @@ package com.redroundrobin.thirema.apirest.controller;
 import com.redroundrobin.thirema.apirest.models.Device;
 import com.redroundrobin.thirema.apirest.models.Gateway;
 import com.redroundrobin.thirema.apirest.models.Sensor;
+import com.redroundrobin.thirema.apirest.models.User;
 import com.redroundrobin.thirema.apirest.service.SensorService;
 import com.redroundrobin.thirema.apirest.service.DeviceService;
 import com.redroundrobin.thirema.apirest.service.GatewayService;
+import com.redroundrobin.thirema.apirest.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,6 +24,8 @@ public class PostgreController {
     private SensorService sensorService;
     @Autowired
     private GatewayService gatewayService;
+    @Autowired
+    private UserService userService;
 
     //tutti i gateway
     @GetMapping(value = {"/gateways"})
@@ -59,6 +63,18 @@ public class PostgreController {
         return deviceService.find(deviceId).getSensors().stream().filter(
                 sensor -> sensor.getDevice_sensor_id()==sensorId
         ).collect(Collectors.toList()).get(0);
+    }
+
+    //tutti gli user
+    @GetMapping(value = {"/users"})
+    public List<User> users(){
+        return userService.findAll();
+    }
+
+    //un determinato user
+    @GetMapping(value = {"/user/{userid:.+}"})
+    public User user(@PathVariable("userid") int userId){
+        return userService.find(userId);
     }
 
     // TODO: 13/03/20 il resto delle api per quanto riguarda, guardare jwt per auth

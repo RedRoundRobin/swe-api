@@ -1,5 +1,8 @@
 package com.redroundrobin.thirema.apirest.models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import javax.persistence.*;
 
 @javax.persistence.Entity
@@ -11,6 +14,17 @@ public class Alert {
     private double threshold;
     private int type;
     private boolean deleted;
+
+    @JsonBackReference
+    @ManyToOne
+    @JoinColumn(name = "entity_id")
+    private Entity entity;
+
+    @JsonManagedReference
+    @ManyToOne
+    @JoinColumn(name = "sensor_id")
+    private Sensor sensor;
+
 
 
     public void setAlertId(int alertId) {
@@ -44,7 +58,7 @@ public class Alert {
     public boolean getDeleted() {
         return this.deleted;
     }
-/*
+
     public void setSensor(Sensor sensor) {
         this.sensor = sensor;
     }
@@ -59,5 +73,5 @@ public class Alert {
 
     public Entity getEntity() {
         return entity;
-    }*/
+    }
 }

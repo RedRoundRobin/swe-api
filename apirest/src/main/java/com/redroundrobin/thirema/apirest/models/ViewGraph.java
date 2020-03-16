@@ -13,7 +13,7 @@ public class ViewGraph {
     private int correlation;
 
     @JsonBackReference
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "view_id")
     private View view;
 

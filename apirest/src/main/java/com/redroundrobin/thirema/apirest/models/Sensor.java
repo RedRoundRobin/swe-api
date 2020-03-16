@@ -3,6 +3,7 @@ package com.redroundrobin.thirema.apirest.models;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import javax.persistence.*;
+import java.util.List;
 import java.util.Objects;
 
 @javax.persistence.Entity
@@ -19,6 +20,12 @@ public class Sensor {
     @ManyToOne
     @JoinColumn(name = "device_id")
     private Device device;
+
+    @JsonBackReference
+    @OneToMany(mappedBy = "sensor")
+    @JoinColumn(name = "SensorId")
+    private List<Alert> alerts;
+
 
     public Sensor(){}
 
@@ -58,6 +65,14 @@ public class Sensor {
 
     public void setDevice(Device device) {
         this.device = device;
+    }
+
+    public List<Alert> getAlerts() {
+        return alerts;
+    }
+
+    public void setAlerts(List<Alert> alerts) {
+        this.alerts = alerts;
     }
 
     @Override

@@ -3,6 +3,7 @@ package com.redroundrobin.thirema.apirest.models;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import javax.persistence.*;
+import java.util.List;
 
 @javax.persistence.Entity
 @Table(name = "entities")
@@ -15,9 +16,14 @@ public class Entity {
     private boolean deleted;
 
     @JsonManagedReference
-    @OneToOne
+    @OneToMany(mappedBy = "entity")
     @JoinColumn(name = "entityId")
-    User user;
+    private List<User> users;
+
+    @JsonManagedReference
+    @OneToMany(mappedBy = "entity")
+    @JoinColumn(name = "entityId")
+    private List<Alert> alerts;
 
     public Entity() {}
 
@@ -45,12 +51,20 @@ public class Entity {
         this.location = location;
     }
 
-    public User getUser() {
-        return user;
+    public List<User> getUsers() {
+        return users;
     }
 
-    public void setUser(User user) {
-        this.user = user;
+    public void setUsers(List<User> users) {
+        this.users = users;
+    }
+
+    public List<Alert> getAlerts() {
+        return alerts;
+    }
+
+    public void setAlerts(List<Alert> alerts) {
+        this.alerts = alerts;
     }
 
     public boolean getDeleted() {
