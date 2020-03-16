@@ -1,8 +1,8 @@
-INSERT INTO cities(name, population) VALUES('Bratislava', 432000);
-INSERT INTO cities(name, population) VALUES('Budapest', 1759000);
-INSERT INTO cities(name, population) VALUES('Prague', 1280000);
-INSERT INTO cities(name, population) VALUES('Warsaw', 1748000);
-INSERT INTO cities(name, population) VALUES('Los Angeles', 3971000);
-INSERT INTO cities(name, population) VALUES('New York', 8550000);
-INSERT INTO cities(name, population) VALUES('Edinburgh', 464000);
-INSERT INTO cities(name, population) VALUES('Berlin', 3671000);
+INSERT INTO gateways(gateway_id, name) VALUES(1, 'Gateway US');
+INSERT INTO gateways(gateway_id, name) VALUES(2, 'Gateway SG');
+INSERT INTO devices(device_id, name, frequency, gateway_id) VALUES(1, 'Device n1', 1, 1);
+INSERT INTO devices(device_id, name, frequency, gateway_id) VALUES(2, 'Device n2', 2, 1);
+INSERT INTO devices(device_id, name, frequency, gateway_id) VALUES(3, 'Device n1', 1, 2);
+INSERT INTO sensors(sensor_id, type, device_sensor_id, device_id) VALUES(1, 'Sensor n1', 1, 1);
+INSERT INTO sensors(sensor_id, type, device_sensor_id, device_id) VALUES(2, 'Sensor n2', 2, 1);
+INSERT INTO sensors(sensor_id, type, device_sensor_id, device_id) VALUES(3, 'Sensor n1', 1, 2);
