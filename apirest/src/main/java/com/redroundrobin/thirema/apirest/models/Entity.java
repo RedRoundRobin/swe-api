@@ -17,12 +17,10 @@ public class Entity {
 
     @JsonManagedReference
     @OneToMany(mappedBy = "entity")
-    @JoinColumn(name = "entityId")
     private List<User> users;
 
     @JsonManagedReference
     @OneToMany(mappedBy = "entity")
-    @JoinColumn(name = "entityId")
     private List<Alert> alerts;
 
     public Entity() {}

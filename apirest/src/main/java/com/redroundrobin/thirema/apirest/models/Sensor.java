@@ -23,7 +23,6 @@ public class Sensor {
 
     @JsonBackReference
     @OneToMany(mappedBy = "sensor")
-    @JoinColumn(name = "SensorId")
     private List<Alert> alerts;
 
 
