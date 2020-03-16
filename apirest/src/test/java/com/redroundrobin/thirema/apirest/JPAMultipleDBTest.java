@@ -1,7 +1,7 @@
 package com.redroundrobin.thirema.apirest;
-
-import com.redroundrobin.thirema.apirest.models.postgres.Users;
-import com.redroundrobin.thirema.apirest.repository.postgres.UsersRepository;
+/*
+import com.redroundrobin.thirema.apirest.models.postgres.User;
+import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,17 +18,17 @@ import static org.junit.Assert.assertTrue;
 public class JPAMultipleDBTest {
 
     @Autowired
-    private UsersRepository usersRepository;
+    private UserRepository usersRepository;
 
     //@Autowired
-    //private SensorsRepository sensorsRepository;
+    //private SensorRepository sensorsRepository;
 
     // tests
 
     @Test
     @Transactional("postgresTransactionManager")
     public void whenCreatingUser_thenCreated() {
-        Users user = new Users();
+        User user = new User();
         user.setUser_id(1);
         user.setName("user1");
         user.setPassword("pass");
@@ -74,5 +74,5 @@ public class JPAMultipleDBTest {
 
         assertTrue(productRepository.findById(product.getId()).isPresent());
     }
-*/
 }
+*/

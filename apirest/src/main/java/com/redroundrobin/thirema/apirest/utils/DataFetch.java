@@ -3,7 +3,10 @@ package com.redroundrobin.thirema.apirest.utils;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.redroundrobin.thirema.apirest.models.*;
+import com.redroundrobin.thirema.apirest.models.postgres.Device;
+import com.redroundrobin.thirema.apirest.models.postgres.DeviceNotFoundException;
+import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
+import com.redroundrobin.thirema.apirest.models.postgres.SensorNotFoundException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,17 +27,7 @@ public class DataFetch {
         consumer.close();
         return message;
     }
-/*
-    public Devices getDevices() {
-        List<Device> devices = new ArrayList<>();
 
-        for (JsonObject jsonDevice : getForTopics(this.topics)) {
-            devices.add(createDeviceFromJsonObject(jsonDevice));
-        }
-
-        return new Devices(devices);
-    }
-*/
     public Device getDevice(int deviceId) throws DeviceNotFoundException {
         Optional<JsonObject> optionalJsonDevice = getForTopics(this.topics).stream().filter(jsonDevice -> jsonDevice.get("deviceId").getAsInt() == deviceId).findFirst();
 

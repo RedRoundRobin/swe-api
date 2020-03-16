@@ -1,6 +1,6 @@
-package com.redroundrobin.thirema.apirest.repository;
+package com.redroundrobin.thirema.apirest.repository.postgres;
 
-import com.redroundrobin.thirema.apirest.models.Sensor;
+import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 

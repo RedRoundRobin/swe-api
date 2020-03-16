@@ -2,8 +2,8 @@ package com.redroundrobin.thirema.apirest.service;
 
 import java.util.List;
 
-import com.redroundrobin.thirema.apirest.models.Device;
-import com.redroundrobin.thirema.apirest.repository.DeviceRepository;
+import com.redroundrobin.thirema.apirest.models.postgres.Device;
+import com.redroundrobin.thirema.apirest.repository.postgres.DeviceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
