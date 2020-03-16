@@ -2,8 +2,8 @@ package com.redroundrobin.thirema.apirest.service;
 
 import java.util.List;
 
-import com.redroundrobin.thirema.apirest.models.Gateway;
-import com.redroundrobin.thirema.apirest.repository.GatewayRepository;
+import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
+import com.redroundrobin.thirema.apirest.repository.postgres.GatewayRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

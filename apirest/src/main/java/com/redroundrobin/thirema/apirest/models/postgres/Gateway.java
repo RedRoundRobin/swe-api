@@ -1,4 +1,4 @@
-package com.redroundrobin.thirema.apirest.models;
+package com.redroundrobin.thirema.apirest.models.postgres;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
@@ -11,7 +11,7 @@ import java.util.Objects;
 public class Gateway {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private int gatewayId;
+    private int gateway_id;
     private String name;
 
     @JsonManagedReference
@@ -21,16 +21,16 @@ public class Gateway {
     public Gateway(){}
 
     public Gateway(int gatewayId, String name) {
-        this.gatewayId = gatewayId;
+        this.gateway_id = gatewayId;
         this.name = name;
     }
 
     public int getId() {
-        return gatewayId;
+        return gateway_id;
     }
 
     public void setId(int gatewayId) {
-        this.gatewayId = gatewayId;
+        this.gateway_id = gatewayId;
     }
 
     public String getName() {
@@ -52,7 +52,7 @@ public class Gateway {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 79 * hash + this.gatewayId;
+        hash = 79 * hash + this.gateway_id;
         hash = 79 * hash + Objects.hashCode(this.name);
         return hash;
     }
@@ -69,7 +69,7 @@ public class Gateway {
             return false;
         }
         final Gateway other = (Gateway) obj;
-        if (this.gatewayId != other.gatewayId) {
+        if (this.gateway_id != other.gateway_id) {
             return false;
         }
         if (!Objects.equals(this.name, other.name)) {
@@ -81,7 +81,7 @@ public class Gateway {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("Device{");
-        sb.append("id=").append(gatewayId);
+        sb.append("id=").append(gateway_id);
         sb.append(", name='").append(name).append("'");
         sb.append(", devices=").append(devices);
         sb.append('}');

@@ -1,4 +1,4 @@
-package com.redroundrobin.thirema.apirest.models;
+package com.redroundrobin.thirema.apirest.models.postgres;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 

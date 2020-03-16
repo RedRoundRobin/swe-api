@@ -1,9 +1,9 @@
 package com.redroundrobin.thirema.apirest.controller;
 
-import com.redroundrobin.thirema.apirest.models.Device;
-import com.redroundrobin.thirema.apirest.models.Gateway;
-import com.redroundrobin.thirema.apirest.models.Sensor;
-import com.redroundrobin.thirema.apirest.models.User;
+import com.redroundrobin.thirema.apirest.models.postgres.Device;
+import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
+import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
+import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.SensorService;
 import com.redroundrobin.thirema.apirest.service.DeviceService;
 import com.redroundrobin.thirema.apirest.service.GatewayService;
