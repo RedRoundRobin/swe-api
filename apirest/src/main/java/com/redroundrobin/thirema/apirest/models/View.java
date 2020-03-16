@@ -3,6 +3,7 @@ package com.redroundrobin.thirema.apirest.models;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import javax.persistence.*;
+import java.util.List;
 
 @javax.persistence.Entity
 @Table(name = "views")
@@ -14,8 +15,7 @@ public class View {
 
     @JsonManagedReference
     @OneToMany(mappedBy = "view")
-    @JoinColumn(name = "view_id")
-    private ViewGraph viewGraph;
+    private List<ViewGraph> viewGraphs;
 
     //setter and getter
 }
