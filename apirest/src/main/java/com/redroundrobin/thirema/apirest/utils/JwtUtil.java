@@ -3,6 +3,7 @@ package com.redroundrobin.thirema.apirest.utils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -13,7 +14,15 @@ import java.util.function.Function;
 
 @Service
 public class JwtUtil {
-    private String SECRET_KEY = "secret";
+
+    @Value("${security.signing-key}")
+    private String signingKey;
+
+    @Value("${security.encoding-strength}")
+    private String encoding_strength;
+
+    @Value("${security.token-expiration}")
+    private int token_expiration;
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -29,7 +38,7 @@ public class JwtUtil {
     }
 
     private Claims extractAllClaims(String token) {
-        return Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token).getBody();
+        return Jwts.parser().setSigningKey(signingKey).parseClaimsJws(token).getBody();
     }
 
     private Boolean isTokenExpired(String token) {
@@ -46,8 +55,8 @@ public class JwtUtil {
                 .setClaims(claims)
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
-                .signWith(SignatureAlgorithm.HS512, SECRET_KEY).compact();
+                .setExpiration(new Date(System.currentTimeMillis() + token_expiration))
+                .signWith(SignatureAlgorithm.forName("HS"+encoding_strength), signingKey).compact();
     }
 
     public Boolean validateToken(String token, UserDetails userDetails) {
