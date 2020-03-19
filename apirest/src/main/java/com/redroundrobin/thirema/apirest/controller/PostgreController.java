@@ -138,6 +138,15 @@ public class PostgreController {
     public void deviceSensors(@RequestBody Map<String, Object> payload){
         System.out.println(payload);
     }
+
+    //funzione di test per ottenere l'username dal token
+    @GetMapping(value = "/credentials")
+    public String getCredentials(@RequestHeader("Authorization") String authorization) {
+        String token = authorization.substring(7);
+
+        return jwtTokenUtil.extractUsername(token);
+    }
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     @Autowired
