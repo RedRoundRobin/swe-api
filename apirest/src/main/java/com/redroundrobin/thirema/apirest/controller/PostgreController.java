@@ -28,10 +28,13 @@ public class PostgreController {
 
     @Autowired
     private DeviceService deviceService;
+
     @Autowired
     private SensorService sensorService;
+
     @Autowired
     private GatewayService gatewayService;
+
     @Autowired
     private UserService userService;
 
@@ -106,7 +109,7 @@ public class PostgreController {
         ).collect(Collectors.toList()).get(0);
     }
 
-    //tutti il sensori che appartengono al dispositivo del gateway
+    //tutti i sensori che appartengono al dispositivo del gateway
     @GetMapping(value = {"/gateway/{gatewayid:.+}/device/{deviceid:.+}/sensors"})
     public List<Sensor> gatewayDeviceSensors(@PathVariable("gatewayid") int gatewayid, @PathVariable("deviceid") int deviceId) {
         return gatewayService.find(gatewayid).getDevices().stream().filter(
@@ -114,7 +117,7 @@ public class PostgreController {
         ).collect(Collectors.toList()).get(0).getSensors();
     }
 
-    //il sensori che appartiene al dispositivo del gateway
+    //il sensore che appartiene al dispositivo del gateway
     @GetMapping(value = {"/gateway/{gatewayid:.+}/device/{deviceid:.+}/sensor/{sensorid:.+}"})
     public Sensor gatewayDeviceSensor(@PathVariable("gatewayid") int gatewayid, @PathVariable("deviceid") int deviceId, @PathVariable("sensorid") int sensorId) {
         return gatewayService.find(gatewayid).getDevices().stream().filter(
@@ -159,6 +162,13 @@ public class PostgreController {
         final String jwt = jwtTokenUtil.generateToken(userDetails);
 
         return ResponseEntity.ok(new AuthenticationResponse(jwt));
+    }
+
+    //funzione di controllo username Telegram e salvataggio chatID
+    @GetMapping(value = {"/login/{username:.+}/{chatId:.+}}"})
+    public String checkUser(@PathVariable("username") String username, @PathVariable("chatId") String chatId){
+
+        return "";
     }
 }
 
