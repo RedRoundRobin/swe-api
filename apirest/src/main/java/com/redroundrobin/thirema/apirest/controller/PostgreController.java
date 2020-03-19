@@ -1,11 +1,11 @@
 package com.redroundrobin.thirema.apirest.controller;
 
-import com.redroundrobin.thirema.apirest.models.AuthenticationRequest;
-import com.redroundrobin.thirema.apirest.models.AuthenticationResponse;
+import com.redroundrobin.thirema.apirest.models.*;
 import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
+import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
 import com.redroundrobin.thirema.apirest.service.postgres.DeviceService;
 import com.redroundrobin.thirema.apirest.service.postgres.GatewayService;
@@ -155,7 +155,9 @@ public class PostgreController {
   @Autowired
   private JwtUtil jwtTokenUtil;
 
-  @RequestMapping(value = "/authenticate", method = RequestMethod.POST)
+  @Autowired
+  private UserRepository userRepository;
+
   @PostMapping(value = "/authenticate")
   public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthenticationRequest authenticationRequest) throws Exception {
     String email = authenticationRequest.getUsername();
@@ -179,13 +181,32 @@ public class PostgreController {
   }
 
   //funzione di controllo username Telegram e salvataggio chatID
-  @GetMapping(value = {"/login/{username:.+}/{chatId:.+}"})
-  public int checkUser(@PathVariable("username") String username, @PathVariable("chatId") String chatId) {
-    if (userService.findByTelegramName(username) == null)
-      return 0;
-    if (userService.findByTelegramNameAndTelegramChat(username, chatId) == null)
-      return 1;
-    return 2;
+  @GetMapping(value = {"/auth/telegram"})
+  public ResponseEntity<?> checkUser(@RequestBody AuthenticationRequestTelegram authenticationRequest) {
+    String telegramName = authenticationRequest.getTelegramName();
+    String chatId = authenticationRequest.getTelegramChat();
+
+    int code = 2;
+    String token = "";
+
+    if (userService.findByTelegramName(telegramName) == null)
+      code = 0;
+    if (userService.findByTelegramNameAndTelegramChat(telegramName, chatId) == null) {
+      code = 1;
+
+      User user = userService.findByTelegramName(telegramName);
+      user.setTelegramChat(chatId);
+      user = userRepository.save(user);
+    }
+
+    if (code != 0) {
+      final UserDetails userDetails = userService
+          .loadUserByTelegramName(telegramName);
+
+      token = jwtTokenUtil.generateToken("telegram", userDetails);
+    }
+
+    return ResponseEntity.ok(new BaseResponse(new AuthenticationResponseTelegram(code, token)));
   }
 }
 

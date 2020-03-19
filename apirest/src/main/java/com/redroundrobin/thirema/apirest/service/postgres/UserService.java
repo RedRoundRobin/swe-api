@@ -45,4 +45,12 @@ public class UserService implements UserDetailsService {
     }
     return new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(), new ArrayList<>());
   }
+
+  public UserDetails loadUserByTelegramName(String s) throws UsernameNotFoundException {
+    User user = this.repository.findByTelegramName(s);
+    if (user == null) {
+      throw new UsernameNotFoundException("");
+    }
+    return new org.springframework.security.core.userdetails.User(user.getTelegramName(), user.getTelegramChat(), new ArrayList<>());
+  }
 }

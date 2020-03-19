@@ -40,6 +40,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
       username = jwtUtil.extractUsername(jwt);
     }
 
+    System.out.println(type);
 
     if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
@@ -48,6 +49,9 @@ public class JwtRequestFilter extends OncePerRequestFilter {
       switch(type) {
         case "webapp":
           userDetails = this.userService.loadUserByUsername(username);
+          break;
+        case "telegram":
+          userDetails = this.userService.loadUserByTelegramName(username);
           break;
         default:
           userDetails = null;
