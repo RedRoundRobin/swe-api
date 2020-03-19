@@ -28,6 +28,10 @@ public class JwtUtil {
     return extractClaim(token, Claims::getSubject);
   }
 
+  public String extractType(String token) {
+    return extractAllClaims(token).get("type", java.lang.String.class);
+  }
+
   public Date extractExpiration(String token) {
     return extractClaim(token, Claims::getExpiration);
   }
@@ -45,8 +49,9 @@ public class JwtUtil {
     return extractExpiration(token).before(new Date());
   }
 
-  public String generateToken(UserDetails userDetails) {
+  public String generateToken(String type, UserDetails userDetails) {
     Map<String, Object> claims = new HashMap<>();
+    claims.put("type", type);
     return createToken(claims, userDetails.getUsername());
   }
 

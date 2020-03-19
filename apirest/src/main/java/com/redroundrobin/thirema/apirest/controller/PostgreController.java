@@ -156,6 +156,7 @@ public class PostgreController {
   private JwtUtil jwtTokenUtil;
 
   @RequestMapping(value = "/authenticate", method = RequestMethod.POST)
+  @PostMapping(value = "/authenticate")
   public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthenticationRequest authenticationRequest) throws Exception {
     String email = authenticationRequest.getUsername();
     String password = authenticationRequest.getPassword();
@@ -169,9 +170,9 @@ public class PostgreController {
     }
 
     final UserDetails userDetails = userService
-        .loadUserByUsername(authenticationRequest.getUsername());
+        .loadUserByUsername(email);
 
-    final String jwt = jwtTokenUtil.generateToken(userDetails);
+    final String jwt = jwtTokenUtil.generateToken("webapp", userDetails);
     final User user = userService.findByEmail(email);
 
     return ResponseEntity.ok(new AuthenticationResponse(jwt, user));
