@@ -10,14 +10,20 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private int userId;
+    private int user_id;
     private String name;
     private String surname;
     private String email;
     private String password;
     private int type;
+
+    @Column(name="telegram_name")
     private String telegramName;
+
+    @Column(name="telegram_chat")
     private String telegramChat;
+
+    @Column(name="two_factor_authentication")
     private boolean TFA;
     private boolean deleted;
 
@@ -27,11 +33,11 @@ public class User {
     private Entity entity;
 
     public void setUserId(int userId) {
-        this.userId = userId;
+        this.user_id = userId;
     }
 
     public int getUserId() {
-        return userId;
+        return user_id;
     }
 
     public void setName(String name) {

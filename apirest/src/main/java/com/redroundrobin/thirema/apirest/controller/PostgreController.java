@@ -1,14 +1,22 @@
 package com.redroundrobin.thirema.apirest.controller;
 
+import com.redroundrobin.thirema.apirest.models.AuthenticationRequest;
+import com.redroundrobin.thirema.apirest.models.AuthenticationResponse;
 import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
-import com.redroundrobin.thirema.apirest.service.SensorService;
-import com.redroundrobin.thirema.apirest.service.DeviceService;
-import com.redroundrobin.thirema.apirest.service.GatewayService;
-import com.redroundrobin.thirema.apirest.service.UserService;
+import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
+import com.redroundrobin.thirema.apirest.service.postgres.DeviceService;
+import com.redroundrobin.thirema.apirest.service.postgres.GatewayService;
+import com.redroundrobin.thirema.apirest.service.postgres.UserService;
+import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,10 +28,13 @@ public class PostgreController {
 
     @Autowired
     private DeviceService deviceService;
+
     @Autowired
     private SensorService sensorService;
+
     @Autowired
     private GatewayService gatewayService;
+
     @Autowired
     private UserService userService;
 
@@ -98,7 +109,7 @@ public class PostgreController {
         ).collect(Collectors.toList()).get(0);
     }
 
-    //tutti il sensori che appartengono al dispositivo del gateway
+    //tutti i sensori che appartengono al dispositivo del gateway
     @GetMapping(value = {"/gateway/{gatewayid:.+}/device/{deviceid:.+}/sensors"})
     public List<Sensor> gatewayDeviceSensors(@PathVariable("gatewayid") int gatewayid, @PathVariable("deviceid") int deviceId) {
         return gatewayService.find(gatewayid).getDevices().stream().filter(
@@ -106,7 +117,7 @@ public class PostgreController {
         ).collect(Collectors.toList()).get(0).getSensors();
     }
 
-    //il sensori che appartiene al dispositivo del gateway
+    //il sensore che appartiene al dispositivo del gateway
     @GetMapping(value = {"/gateway/{gatewayid:.+}/device/{deviceid:.+}/sensor/{sensorid:.+}"})
     public Sensor gatewayDeviceSensor(@PathVariable("gatewayid") int gatewayid, @PathVariable("deviceid") int deviceId, @PathVariable("sensorid") int sensorId) {
         return gatewayService.find(gatewayid).getDevices().stream().filter(
@@ -128,6 +139,37 @@ public class PostgreController {
         System.out.println(payload);
     }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private JwtUtil jwtTokenUtil;
+
+    @RequestMapping(value = "/authenticate", method = RequestMethod.POST)
+    public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthenticationRequest authenticationRequest) throws Exception {
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(authenticationRequest.getUsername(), authenticationRequest.getPassword())
+            );
+        } catch(BadCredentialsException e) {
+            throw new Exception("Incorrect username or password", e);
+        }
+
+        final UserDetails userDetails = userService
+                .loadUserByUsername(authenticationRequest.getUsername());
+
+        final String jwt = jwtTokenUtil.generateToken(userDetails);
+
+        return ResponseEntity.ok(new AuthenticationResponse(jwt));
+    }
+
+    //funzione di controllo username Telegram e salvataggio chatID
+    @GetMapping(value = {"/login/{username:.+}/{chatId:.+}}"})
+    public String checkUser(@PathVariable("username") String username, @PathVariable("chatId") String chatId){
+
+        return "";
+    }
 }
 
 /*

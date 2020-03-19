@@ -1,4 +1,4 @@
-package com.redroundrobin.thirema.apirest.service;
+package com.redroundrobin.thirema.apirest.service.postgres;
 
 import java.util.List;
 
