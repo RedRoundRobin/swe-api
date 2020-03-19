@@ -18,6 +18,9 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
+import java.util.HashMap;
+import org.springframework.http.HttpEntity;
 
 import java.util.List;
 import java.util.Map;
@@ -168,11 +171,24 @@ public class PostgreController {
       throw new Exception("Incorrect username or password", e);
     }
 
+    final User user = userService.findByEmail(email);
+
+    if(user.getTFA()){
+      RestTemplate restTemplate = new RestTemplate();
+      String url= "http://localhost.com/post";
+      Map<String, Object> map = new HashMap<>();
+      Random rnd = new Random();
+      int sixDigitsCode = 100000 + rnd.nextInt(900000);
+      map.put("code", sixDigitsCode); //codice fittizio
+      HttpEntity<Map<String, Object>> entity = new HttpEntity<>(map);
+      ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
+      return ResponseEntity.ok(sixDigitsCode);
+    }
+
     final UserDetails userDetails = userService
         .loadUserByUsername(authenticationRequest.getUsername());
 
     final String jwt = jwtTokenUtil.generateToken(userDetails);
-    final User user = userService.findByEmail(email);
 
     return ResponseEntity.ok(new AuthenticationResponse(jwt, user));
   }
