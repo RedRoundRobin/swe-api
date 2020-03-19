@@ -12,6 +12,7 @@ import com.redroundrobin.thirema.apirest.service.postgres.GatewayService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -24,6 +25,7 @@ import org.springframework.http.HttpEntity;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 @RestController
@@ -158,6 +160,9 @@ public class PostgreController {
   @Autowired
   private JwtUtil jwtTokenUtil;
 
+  @Value("${telegram.url}")
+  private String telegramUrl;
+
   @RequestMapping(value = "/authenticate", method = RequestMethod.POST)
   public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthenticationRequest authenticationRequest) throws Exception {
     String email = authenticationRequest.getUsername();
@@ -175,13 +180,12 @@ public class PostgreController {
 
     if(user.getTFA()){
       RestTemplate restTemplate = new RestTemplate();
-      String url= "http://localhost.com/post";
       Map<String, Object> map = new HashMap<>();
       Random rnd = new Random();
       int sixDigitsCode = 100000 + rnd.nextInt(900000);
       map.put("code", sixDigitsCode); //codice fittizio
       HttpEntity<Map<String, Object>> entity = new HttpEntity<>(map);
-      ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
+      ResponseEntity<String> response = restTemplate.postForEntity(telegramUrl, entity, String.class);
       return ResponseEntity.ok(sixDigitsCode);
     }
 
