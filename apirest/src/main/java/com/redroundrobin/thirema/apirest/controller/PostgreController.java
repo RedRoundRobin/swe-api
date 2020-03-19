@@ -157,9 +157,12 @@ public class PostgreController {
 
     @RequestMapping(value = "/authenticate", method = RequestMethod.POST)
     public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthenticationRequest authenticationRequest) throws Exception {
+        String email = authenticationRequest.getUsername();
+        String password = authenticationRequest.getPassword();
+
         try {
             authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(authenticationRequest.getUsername(), authenticationRequest.getPassword())
+                    new UsernamePasswordAuthenticationToken(email, password)
             );
         } catch(BadCredentialsException e) {
             throw new Exception("Incorrect username or password", e);
@@ -169,8 +172,9 @@ public class PostgreController {
                 .loadUserByUsername(authenticationRequest.getUsername());
 
         final String jwt = jwtTokenUtil.generateToken(userDetails);
+        final User user = userService.findByEmail(email);
 
-        return ResponseEntity.ok(new AuthenticationResponse(jwt));
+        return ResponseEntity.ok(new AuthenticationResponse(jwt, user));
     }
 
     //funzione di controllo username Telegram e salvataggio chatID
