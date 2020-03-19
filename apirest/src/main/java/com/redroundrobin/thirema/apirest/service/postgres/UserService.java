@@ -23,7 +23,12 @@ public class UserService implements UserDetailsService {
     public User find(int id){
         return repository.findById(id).get();
     }
-
+    List<User> findByTelegramName(String telegramName){
+        return repository.findByTelegramName(String telegramName);
+    }
+    List<User> findByTelegramChat(String telegramChat){
+        return repository.findByTelegramChat(String telegramChat);
+    }
     @Override
     public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
         User user = this.repository.findByEmail(s);
