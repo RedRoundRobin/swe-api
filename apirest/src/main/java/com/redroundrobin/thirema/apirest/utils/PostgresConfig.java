@@ -17,61 +17,61 @@ import javax.sql.DataSource;
 import java.util.HashMap;
 
 @Configuration
-@PropertySource({ "classpath:application.properties" })
+@PropertySource({"classpath:application.properties"})
 @EnableJpaRepositories(
-        basePackages = "com.redroundrobin.thirema.apirest.repository.postgres",
-        entityManagerFactoryRef = "postgresEntityManager",
-        transactionManagerRef = "postgresTransactionManager"
+    basePackages = "com.redroundrobin.thirema.apirest.repository.postgres",
+    entityManagerFactoryRef = "postgresEntityManager",
+    transactionManagerRef = "postgresTransactionManager"
 )
 public class PostgresConfig {
-    @Autowired
-    private Environment env;
+  @Autowired
+  private Environment env;
 
-    @Bean
-    @Primary
-    public LocalContainerEntityManagerFactoryBean postgresEntityManager() {
-        LocalContainerEntityManagerFactoryBean em
-                = new LocalContainerEntityManagerFactoryBean();
-        em.setDataSource(postgresDataSource());
-        em.setPackagesToScan(
-                new String[] { "com.redroundrobin.thirema.apirest.models.postgres" });
+  @Bean
+  @Primary
+  public LocalContainerEntityManagerFactoryBean postgresEntityManager() {
+    LocalContainerEntityManagerFactoryBean em
+        = new LocalContainerEntityManagerFactoryBean();
+    em.setDataSource(postgresDataSource());
+    em.setPackagesToScan(
+        new String[]{"com.redroundrobin.thirema.apirest.models.postgres"});
 
-        HibernateJpaVendorAdapter vendorAdapter
-                = new HibernateJpaVendorAdapter();
-        em.setJpaVendorAdapter(vendorAdapter);
-        HashMap<String, Object> properties = new HashMap<>();
-        properties.put("hibernate.hbm2ddl.auto",
-                env.getProperty("hibernate.hbm2ddl.auto"));
-        properties.put("hibernate.dialect",
-                env.getProperty("hibernate.dialect"));
-        em.setJpaPropertyMap(properties);
+    HibernateJpaVendorAdapter vendorAdapter
+        = new HibernateJpaVendorAdapter();
+    em.setJpaVendorAdapter(vendorAdapter);
+    HashMap<String, Object> properties = new HashMap<>();
+    properties.put("hibernate.hbm2ddl.auto",
+        env.getProperty("hibernate.hbm2ddl.auto"));
+    properties.put("hibernate.dialect",
+        env.getProperty("hibernate.dialect"));
+    em.setJpaPropertyMap(properties);
 
-        return em;
-    }
+    return em;
+  }
 
-    @Primary
-    @Bean
-    public DataSource postgresDataSource() {
+  @Primary
+  @Bean
+  public DataSource postgresDataSource() {
 
-        DriverManagerDataSource dataSource
-                = new DriverManagerDataSource();
-        dataSource.setDriverClassName(
-                env.getProperty("spring.postgres.driverClassName"));
-        dataSource.setUrl(env.getProperty("spring.postgres.url"));
-        dataSource.setUsername(env.getProperty("spring.postgres.username"));
-        dataSource.setPassword(env.getProperty("spring.postgres.password"));
+    DriverManagerDataSource dataSource
+        = new DriverManagerDataSource();
+    dataSource.setDriverClassName(
+        env.getProperty("spring.postgres.driverClassName"));
+    dataSource.setUrl(env.getProperty("spring.postgres.url"));
+    dataSource.setUsername(env.getProperty("spring.postgres.username"));
+    dataSource.setPassword(env.getProperty("spring.postgres.password"));
 
-        return dataSource;
-    }
+    return dataSource;
+  }
 
-    @Primary
-    @Bean
-    public PlatformTransactionManager postgresTransactionManager() {
+  @Primary
+  @Bean
+  public PlatformTransactionManager postgresTransactionManager() {
 
-        JpaTransactionManager transactionManager
-                = new JpaTransactionManager();
-        transactionManager.setEntityManagerFactory(
-                postgresEntityManager().getObject());
-        return transactionManager;
-    }
+    JpaTransactionManager transactionManager
+        = new JpaTransactionManager();
+    transactionManager.setEntityManagerFactory(
+        postgresEntityManager().getObject());
+    return transactionManager;
+  }
 }

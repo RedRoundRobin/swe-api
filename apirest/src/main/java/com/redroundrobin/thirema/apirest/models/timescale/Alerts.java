@@ -7,33 +7,33 @@ import java.sql.Timestamp;
 @Table(name = "alerts")
 public class Alerts {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Timestamp time;
+  @Id
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  private Timestamp time;
 
-    @Column(nullable = false)
-    private int sensor_id;
+  @Column(nullable = false)
+  private int sensor_id;
 
-    @Column(nullable = false)
-    private int device_id;
+  @Column(nullable = false)
+  private int device_id;
 
-    private double value;
+  private double value;
 
 
-    public Timestamp getTime() {
-        return time;
-    }
+  public Timestamp getTime() {
+    return time;
+  }
 
-    public int getSensor_id() {
-        return sensor_id;
-    }
+  public int getSensor_id() {
+    return sensor_id;
+  }
 
-    public int getDevice_id() {
-        return device_id;
-    }
+  public int getDevice_id() {
+    return device_id;
+  }
 
-    public double getValue() {
-        return value;
-    }
+  public double getValue() {
+    return value;
+  }
 
 }

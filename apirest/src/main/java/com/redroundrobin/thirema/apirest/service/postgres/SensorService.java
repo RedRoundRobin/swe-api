@@ -10,13 +10,14 @@ import org.springframework.stereotype.Service;
 @Service
 public class SensorService {
 
-    @Autowired
-    private SensorRepository repository;
+  @Autowired
+  private SensorRepository repository;
 
-    public List<Sensor> findAll() {
-        return (List<Sensor>) repository.findAll();
-    }
-    public Sensor find(int sensorId){
-        return repository.findById(sensorId).get();
-    }
+  public List<Sensor> findAll() {
+    return (List<Sensor>) repository.findAll();
+  }
+
+  public Sensor find(int sensorId) {
+    return repository.findById(sensorId).get();
+  }
 }

@@ -7,14 +7,14 @@ import javax.persistence.*;
 @javax.persistence.Entity
 @Table(name = "views_graphs")
 public class ViewGraph {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private int graphId;
-    private int correlation;
+  @Id
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  private int graphId;
+  private int correlation;
 
-    @JsonBackReference
-    @ManyToOne
-    @JoinColumn(name = "view_id")
-    private View view;
+  @JsonBackReference
+  @ManyToOne
+  @JoinColumn(name = "view_id")
+  private View view;
 
 }

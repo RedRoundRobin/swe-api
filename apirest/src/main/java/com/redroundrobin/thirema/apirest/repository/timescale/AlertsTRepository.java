@@ -5,4 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.sql.Timestamp;
 
-public interface AlertsTRepository extends JpaRepository<Alerts, Timestamp> { }
+public interface AlertsTRepository extends JpaRepository<Alerts, Timestamp> {
+}

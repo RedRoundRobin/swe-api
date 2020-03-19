@@ -8,69 +8,70 @@ import java.util.List;
 @javax.persistence.Entity
 @Table(name = "entities")
 public class Entity {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "entity_id")
-    private int entityId;
-    private String name;
-    private String location;
-    private boolean deleted;
+  @Id
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  @Column(name = "entity_id")
+  private int entityId;
+  private String name;
+  private String location;
+  private boolean deleted;
 
-    @JsonManagedReference
-    @OneToMany(mappedBy = "entity")
-    private List<User> users;
+  @JsonManagedReference
+  @OneToMany(mappedBy = "entity")
+  private List<User> users;
 
-    @JsonManagedReference
-    @OneToMany(mappedBy = "entity")
-    private List<Alert> alerts;
+  @JsonManagedReference
+  @OneToMany(mappedBy = "entity")
+  private List<Alert> alerts;
 
-    public Entity() {}
+  public Entity() {
+  }
 
-    public int getEntityId() {
-        return entityId;
-    }
+  public int getEntityId() {
+    return entityId;
+  }
 
-    public void setEntityId(int entityId) {
-        this.entityId = entityId;
-    }
+  public void setEntityId(int entityId) {
+    this.entityId = entityId;
+  }
 
-    public String getName() {
-        return name;
-    }
+  public String getName() {
+    return name;
+  }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+  public void setName(String name) {
+    this.name = name;
+  }
 
-    public String getLocation() {
-        return location;
-    }
+  public String getLocation() {
+    return location;
+  }
 
-    public void setLocation(String location) {
-        this.location = location;
-    }
+  public void setLocation(String location) {
+    this.location = location;
+  }
 
-    public List<User> getUsers() {
-        return users;
-    }
+  public List<User> getUsers() {
+    return users;
+  }
 
-    public void setUsers(List<User> users) {
-        this.users = users;
-    }
+  public void setUsers(List<User> users) {
+    this.users = users;
+  }
 
-    public List<Alert> getAlerts() {
-        return alerts;
-    }
+  public List<Alert> getAlerts() {
+    return alerts;
+  }
 
-    public void setAlerts(List<Alert> alerts) {
-        this.alerts = alerts;
-    }
+  public void setAlerts(List<Alert> alerts) {
+    this.alerts = alerts;
+  }
 
-    public boolean getDeleted() {
-        return this.deleted;
-    }
+  public boolean getDeleted() {
+    return this.deleted;
+  }
 
-    public void setDeleted(boolean deleted) {
-        this.deleted = deleted;
-    }
+  public void setDeleted(boolean deleted) {
+    this.deleted = deleted;
+  }
 }

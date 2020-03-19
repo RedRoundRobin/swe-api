@@ -10,13 +10,14 @@ import org.springframework.stereotype.Service;
 @Service
 public class EntityService {
 
-    @Autowired
-    private EntityRepository repository;
+  @Autowired
+  private EntityRepository repository;
 
-    public List<Entity> findAll() {
-        return (List<Entity>) repository.findAll();
-    }
-    public Entity find(int id){
-        return repository.findById(id).get();
-    }
+  public List<Entity> findAll() {
+    return (List<Entity>) repository.findAll();
+  }
+
+  public Entity find(int id) {
+    return repository.findById(id).get();
+  }
 }

@@ -7,19 +7,19 @@ import java.sql.Timestamp;
 @Table(name = "logs")
 public class Logs {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Timestamp time;
+  @Id
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  private Timestamp time;
 
-    @Column(nullable = false)
-    private int log_id;
+  @Column(nullable = false)
+  private int log_id;
 
 
-    public Timestamp getTime() {
-        return time;
-    }
+  public Timestamp getTime() {
+    return time;
+  }
 
-    public int getLog_id() {
-        return log_id;
-    }
+  public int getLog_id() {
+    return log_id;
+  }
 }

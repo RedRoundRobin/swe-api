@@ -7,9 +7,9 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface UserRepository extends CrudRepository<User, Integer> {
-    User findByEmail(String email);
+  User findByEmail(String email);
 
-    User findByTelegramName(String telegramName);
+  User findByTelegramName(String telegramName);
 
-    User findByTelegramNameAndTelegramChat(String telegramName, String telegramChat);
+  User findByTelegramNameAndTelegramChat(String telegramName, String telegramChat);
 }

@@ -14,35 +14,35 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserService implements UserDetailsService {
 
-    @Autowired
-    private UserRepository repository;
+  @Autowired
+  private UserRepository repository;
 
-    public List<User> findAll() {
-        return (List<User>) repository.findAll();
-    }
+  public List<User> findAll() {
+    return (List<User>) repository.findAll();
+  }
 
-    public User find(int id){
-        return repository.findById(id).get();
-    }
+  public User find(int id) {
+    return repository.findById(id).get();
+  }
 
-    public User findByTelegramName(String telegramName){
-        return repository.findByTelegramName(telegramName);
-    }
+  public User findByTelegramName(String telegramName) {
+    return repository.findByTelegramName(telegramName);
+  }
 
-    public User findByTelegramNameAndTelegramChat(String telegramName, String telegramChat){
-        return repository.findByTelegramNameAndTelegramChat(telegramName, telegramChat);
-    }
+  public User findByTelegramNameAndTelegramChat(String telegramName, String telegramChat) {
+    return repository.findByTelegramNameAndTelegramChat(telegramName, telegramChat);
+  }
 
-    public User findByEmail(String email) {
-        return repository.findByEmail(email);
-    }
+  public User findByEmail(String email) {
+    return repository.findByEmail(email);
+  }
 
-    @Override
-    public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
-        User user = this.repository.findByEmail(s);
-        if( user == null ) {
-            throw new UsernameNotFoundException("");
-        }
-        return new org.springframework.security.core.userdetails.User(user.getEmail(),user.getPassword(), new ArrayList<>());
+  @Override
+  public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
+    User user = this.repository.findByEmail(s);
+    if (user == null) {
+      throw new UsernameNotFoundException("");
     }
+    return new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(), new ArrayList<>());
+  }
 }

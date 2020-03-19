@@ -16,58 +16,58 @@ import javax.sql.DataSource;
 import java.util.HashMap;
 
 @Configuration
-@PropertySource({ "classpath:application.properties" })
+@PropertySource({"classpath:application.properties"})
 @EnableJpaRepositories(
-        basePackages = "com.redroundrobin.thirema.apirest.repository.timescale",
-        entityManagerFactoryRef = "timescaleEntityManager",
-        transactionManagerRef = "timescaleTransactionManager"
+    basePackages = "com.redroundrobin.thirema.apirest.repository.timescale",
+    entityManagerFactoryRef = "timescaleEntityManager",
+    transactionManagerRef = "timescaleTransactionManager"
 )
 public class TimescaleConfig {
-    @Autowired
-    private Environment env;
+  @Autowired
+  private Environment env;
 
-    @Bean
-    public LocalContainerEntityManagerFactoryBean timescaleEntityManager() {
-        LocalContainerEntityManagerFactoryBean em
-                = new LocalContainerEntityManagerFactoryBean();
-        em.setDataSource(timescaleDataSource());
-        em.setPackagesToScan(
-                new String[] { "com.redroundrobin.thirema.apirest.models.timescale" });
+  @Bean
+  public LocalContainerEntityManagerFactoryBean timescaleEntityManager() {
+    LocalContainerEntityManagerFactoryBean em
+        = new LocalContainerEntityManagerFactoryBean();
+    em.setDataSource(timescaleDataSource());
+    em.setPackagesToScan(
+        new String[]{"com.redroundrobin.thirema.apirest.models.timescale"});
 
-        HibernateJpaVendorAdapter vendorAdapter
-                = new HibernateJpaVendorAdapter();
-        em.setJpaVendorAdapter(vendorAdapter);
-        HashMap<String, Object> properties = new HashMap<>();
-        properties.put("hibernate.hbm2ddl.auto",
-                env.getProperty("hibernate.hbm2ddl.auto"));
-        properties.put("hibernate.dialect",
-                env.getProperty("hibernate.dialect"));
-        em.setJpaPropertyMap(properties);
+    HibernateJpaVendorAdapter vendorAdapter
+        = new HibernateJpaVendorAdapter();
+    em.setJpaVendorAdapter(vendorAdapter);
+    HashMap<String, Object> properties = new HashMap<>();
+    properties.put("hibernate.hbm2ddl.auto",
+        env.getProperty("hibernate.hbm2ddl.auto"));
+    properties.put("hibernate.dialect",
+        env.getProperty("hibernate.dialect"));
+    em.setJpaPropertyMap(properties);
 
-        return em;
-    }
+    return em;
+  }
 
-    @Bean
-    public DataSource timescaleDataSource() {
+  @Bean
+  public DataSource timescaleDataSource() {
 
-        DriverManagerDataSource dataSource
-                = new DriverManagerDataSource();
-        dataSource.setDriverClassName(
-                env.getProperty("spring.timescale.driverClassName"));
-        dataSource.setUrl(env.getProperty("spring.timescale.url"));
-        dataSource.setUsername(env.getProperty("spring.timescale.username"));
-        dataSource.setPassword(env.getProperty("spring.timescale.password"));
+    DriverManagerDataSource dataSource
+        = new DriverManagerDataSource();
+    dataSource.setDriverClassName(
+        env.getProperty("spring.timescale.driverClassName"));
+    dataSource.setUrl(env.getProperty("spring.timescale.url"));
+    dataSource.setUsername(env.getProperty("spring.timescale.username"));
+    dataSource.setPassword(env.getProperty("spring.timescale.password"));
 
-        return dataSource;
-    }
+    return dataSource;
+  }
 
-    @Bean
-    public PlatformTransactionManager timescaleTransactionManager() {
+  @Bean
+  public PlatformTransactionManager timescaleTransactionManager() {
 
-        JpaTransactionManager transactionManager
-                = new JpaTransactionManager();
-        transactionManager.setEntityManagerFactory(
-                timescaleEntityManager().getObject());
-        return transactionManager;
-    }
+    JpaTransactionManager transactionManager
+        = new JpaTransactionManager();
+    transactionManager.setEntityManagerFactory(
+        timescaleEntityManager().getObject());
+    return transactionManager;
+  }
 }
