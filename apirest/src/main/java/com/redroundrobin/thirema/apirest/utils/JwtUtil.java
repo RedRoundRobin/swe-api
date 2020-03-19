@@ -55,7 +55,7 @@ public class JwtUtil {
                 .setClaims(claims)
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + token_expiration))
+                .setExpiration(new Date(System.currentTimeMillis() + (token_expiration*1000)))
                 .signWith(SignatureAlgorithm.forName("HS"+encoding_strength), signingKey).compact();
     }
 
