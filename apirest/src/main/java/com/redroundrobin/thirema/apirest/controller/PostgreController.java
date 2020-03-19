@@ -174,11 +174,11 @@ public class PostgreController {
     }
 
     //funzione di controllo username Telegram e salvataggio chatID
-    @GetMapping(value = {"/login/{username:.+}/{chatId:.+}}"})
+    @GetMapping(value = {"/login/{username:.+}/{chatId:.+}"})
     public int checkUser(@PathVariable("username") String username, @PathVariable("chatId") String chatId){
         if(userService.findByTelegramName(username) == null)
             return 0;
-        if(userService.findByTelegramChat(chatId) == null)
+        if(userService.findByTelegramNameAndTelegramChat(username, chatId) == null)
             return 1;
         return 2;
     }

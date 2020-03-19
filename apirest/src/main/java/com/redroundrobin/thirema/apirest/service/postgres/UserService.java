@@ -20,15 +20,19 @@ public class UserService implements UserDetailsService {
     public List<User> findAll() {
         return (List<User>) repository.findAll();
     }
+
     public User find(int id){
         return repository.findById(id).get();
     }
-    List<User> findByTelegramName(String telegramName){
-        return repository.findByTelegramName(String telegramName);
+
+    public User findByTelegramName(String telegramName){
+        return repository.findByTelegramName(telegramName);
     }
-    List<User> findByTelegramChat(String telegramChat){
-        return repository.findByTelegramChat(String telegramChat);
+
+    public User findByTelegramNameAndTelegramChat(String telegramName, String telegramChat){
+        return repository.findByTelegramNameAndTelegramChat(telegramName, telegramChat);
     }
+
     @Override
     public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
         User user = this.repository.findByEmail(s);
