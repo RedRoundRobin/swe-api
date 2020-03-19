@@ -10,6 +10,7 @@ import java.util.List;
 public class Entity {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "entity_id")
     private int entityId;
     private String name;
     private String location;
