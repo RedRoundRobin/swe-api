@@ -206,7 +206,7 @@ public class PostgreController {
       token = jwtTokenUtil.generateToken("telegram", userDetails);
     }
 
-    return ResponseEntity.ok(new BaseResponse(new AuthenticationResponseTelegram(code, token)));
+    return ResponseEntity.ok(new AuthenticationResponseTelegram(code, token));
   }
 }
 
