@@ -181,9 +181,13 @@ public class PostgreController {
     if(user.getTFA()){
       RestTemplate restTemplate = new RestTemplate();
       Map<String, Object> map = new HashMap<>();
+
+      map.put("chat_id", user.getTelegramChat());
       Random rnd = new Random();
       int sixDigitsCode = 100000 + rnd.nextInt(900000);
-      map.put("code", sixDigitsCode); //codice fittizio
+      map.put("auth_code", sixDigitsCode); //codice fittizio
+
+
       HttpEntity<Map<String, Object>> entity = new HttpEntity<>(map);
       ResponseEntity<String> response = restTemplate.postForEntity(telegramUrl, entity, String.class);
       return ResponseEntity.ok(sixDigitsCode);
