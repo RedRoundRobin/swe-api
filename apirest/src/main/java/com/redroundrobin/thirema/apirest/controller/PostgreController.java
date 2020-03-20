@@ -18,6 +18,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
 
 import java.util.List;
 import java.util.Map;
@@ -189,14 +190,15 @@ public class PostgreController {
 
   //funzione richiesta da Beppe
   @GetMapping(value = {"/users/{userid:.+}/devices"})
-  public List<Device> getUserDevices (@RequestHeader("Authorization") String authorization,
-                                      @PathVariable("userid") int requiredUser) throws Exception{
+  public ResponseEntity<?> getUserDevices (@RequestHeader("Authorization") String authorization,
+                                      @PathVariable("userid") int requiredUser) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
     if(user.getType() == 2 || (user.getType() == 1 &&
-         user.getEntity() == userService.findByUser_Id(requiredUser).getEntity()))
-      return userService.userDevices(requiredUser);
-    else throw new Exception("User not authorized to see devices");
+         user.getEntity() == userService.findByUser_Id(requiredUser).getEntity())
+                          ||user.getType() == 0 && user.getUserId() == requiredUser)
+      return ResponseEntity.ok(userService.userDevices(requiredUser));
+    else return new ResponseEntity(HttpStatus.FORBIDDEN);
   }
 }
 
