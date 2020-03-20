@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -168,12 +169,18 @@ public class PostgreController {
     String email = authenticationRequest.getUsername();
     String password = authenticationRequest.getPassword();
 
+    if( email == null || password == null ) {
+      return ResponseEntity.status(400).build();  // Bad Request
+    }
+
     try {
       authenticationManager.authenticate(
           new UsernamePasswordAuthenticationToken(email, password)
       );
-    } catch (BadCredentialsException e) {
-      throw new Exception("Incorrect username or password", e);
+    } catch (BadCredentialsException bce) {
+      return ResponseEntity.status(401).build();  // Unauthenticated
+    } catch (DisabledException de) {
+      return ResponseEntity.status(403).build();  // Unauthorized
     }
 
     final User user = userService.findByEmail(email);

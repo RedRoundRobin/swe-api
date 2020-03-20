@@ -17,6 +17,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
+  private CustomAuthenticationManager authenticationManager = new CustomAuthenticationManager();
+
   @Autowired
   private UserService userService;
 
@@ -33,7 +35,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
   @Override
   @Bean
   public AuthenticationManager authenticationManagerBean() throws Exception {
-    return super.authenticationManagerBean();
+    return authenticationManager;
   }
 
   @Autowired
