@@ -1,5 +1,7 @@
 package com.redroundrobin.thirema.apirest.controller;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.redroundrobin.thirema.apirest.models.AuthenticationRequest;
 import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
@@ -200,12 +202,14 @@ public class PostgreController {
   }
 
   @PostMapping(value = "/auth/tfa")
-  public ResponseEntity<?> checkTFA(@RequestBody HashMap<String, String> data, @RequestHeader("Authorization") String authorization) {
-    if( !data.containsKey("auth_code") || data.get("auth_code") != "" ) {
+  public ResponseEntity<?> checkTFA(@RequestBody String rawData, @RequestHeader("Authorization") String authorization) {
+    JsonObject data = JsonParser.parseString(rawData).getAsJsonObject();
+
+    if( !data.has("auth_code") || data.get("auth_code").getAsString().equals("") ) {
       return ResponseEntity.status(400).build();
     }
 
-    String authCode = data.get("auth_code");
+    String authCode = data.get("auth_code").getAsString();
     String token = authorization.substring(7);
     User user = userService.findByEmail( jwtTokenUtil.extractUsername(token) );
 
