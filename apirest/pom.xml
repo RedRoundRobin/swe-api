@@ -94,7 +94,8 @@
             <scope>test</scope>
         </dependency>
 
-        <dependency> /*aggiunta il 19-03-2020 per mandare richieste http da partee delle api*/
+        <!-- aggiunta il 19-03-2020 per mandare richieste http da partee delle api -->
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
