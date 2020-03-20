@@ -13,6 +13,7 @@ import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -164,7 +165,7 @@ public class PostgreController {
   @Value("${telegram.url}")
   private String telegramUrl;
 
-  @RequestMapping(value = "/authenticate", method = RequestMethod.POST)
+  @RequestMapping(value = "/auth", method = RequestMethod.POST)
   public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthenticationRequest authenticationRequest) throws Exception {
     String email = authenticationRequest.getUsername();
     String password = authenticationRequest.getPassword();
@@ -183,29 +184,46 @@ public class PostgreController {
       return ResponseEntity.status(403).build();  // Unauthorized
     }
 
+    HashMap<String,Object> response = new HashMap<>();
     final User user = userService.findByEmail(email);
 
     if(user.getTFA()){
-      RestTemplate restTemplate = new RestTemplate();
-      Map<String, Object> map = new HashMap<>();
-
-      map.put("chat_id", user.getTelegramChat());
-      Random rnd = new Random();
-      int sixDigitsCode = 100000 + rnd.nextInt(900000);
-      map.put("auth_code", sixDigitsCode); //codice fittizio
-
-
-      HttpEntity<Map<String, Object>> entity = new HttpEntity<>(map);
-      ResponseEntity<String> response = restTemplate.postForEntity(telegramUrl, entity, String.class);
-      return ResponseEntity.ok(sixDigitsCode);
+      response.put("tfa", true);
+    } else {
+      response.put("user", user);
     }
 
     final UserDetails userDetails = userService
         .loadUserByUsername(authenticationRequest.getUsername());
+    final String token = jwtTokenUtil.generateToken(userDetails);
 
-    final String jwt = jwtTokenUtil.generateToken(userDetails);
+    response.put("token", token);
 
-    return ResponseEntity.ok(new AuthenticationResponse(jwt, user));
+    return ResponseEntity.ok(response);
+  }
+
+  @PostMapping(value = "/auth/tfa")
+  public ResponseEntity<?> checkTFA(@RequestBody HashMap<String, String> data, @RequestHeader("Authorization") String authorization) {
+    if( !data.containsKey("auth_code") || data.get("auth_code") != "" ) {
+      return ResponseEntity.status(400).build();
+    }
+
+    String authCode = data.get("auth_code");
+    String token = authorization.substring(7);
+    User user = userService.findByEmail( jwtTokenUtil.extractUsername(token) );
+
+    Map<String, Object> map = new HashMap<>();
+    map.put("chat_id", user.getTelegramChat());
+    map.put("auth_code", authCode);
+
+    HttpEntity<Map<String, Object>> entity = new HttpEntity<>(map);
+    ResponseEntity<String> response = new RestTemplate().postForEntity(telegramUrl, entity, String.class);
+
+    if( response.getStatusCode().value() == 200 ) {
+      return ResponseEntity.ok().build();
+    } else {
+      return response;
+    }
   }
 
   //funzione di controllo username Telegram e salvataggio chatID
