@@ -18,9 +18,9 @@ public interface UserRepository extends CrudRepository<User, Integer> {
 
   User findByuserId(int user_id);
 
-  @Query("SELECT device_id " +
+  @Query("SELECT u.device_id " +
       "FROM users u, entities e, sensors s, devices d, alerts a" +
       "WHERE u.user_id IN : userId and u.entity_id = e.entity_id and e.entity_id = a.entity_id" +
-      "and a.sensor_id = s.sensor_id and s.device_id = d.devide_id")
+      "and a.sensor_id = s.sensor_id and s.device_id = d.device_id")
   List<Device> userDevices(@Param("userId") int userId);
 }
