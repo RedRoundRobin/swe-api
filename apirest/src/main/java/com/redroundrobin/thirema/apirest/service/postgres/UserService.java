@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.redroundrobin.thirema.apirest.models.postgres.User;
+import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -33,9 +34,13 @@ public class UserService implements UserDetailsService {
     return repository.findByTelegramNameAndTelegramChat(telegramName, telegramChat);
   }
 
+  public User findByUser_Id(int user_id){ return repository.findByuserId(user_id);}
+
   public User findByEmail(String email) {
     return repository.findByEmail(email);
   }
+
+  public List<Device> userDevices(int user_id){ return repository.userDevices(user_id);}
 
   @Override
   public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {

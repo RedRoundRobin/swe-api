@@ -186,6 +186,18 @@ public class PostgreController {
       return 1;
     return 2;
   }
+
+  //funzione richiesta da Beppe
+  @GetMapping(value = {"/users/{userid:.+}/devices"})
+  public List<Device> getUserDevices (@RequestHeader("Authorization") String authorization,
+                                      @PathVariable("userid") int requiredUser) throws Exception{
+    String token = authorization.substring(7);
+    User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
+    if(user.getType() == 2 || (user.getType() == 1 &&
+        user.getEntity() == userService.findByUser_Id(requiredUser).getEntity()))
+      return userService.userDevices(requiredUser);
+    else throw new Exception("User not authorized to see devices");
+  }
 }
 
 /*
