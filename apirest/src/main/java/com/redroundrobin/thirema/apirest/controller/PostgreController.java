@@ -181,7 +181,7 @@ public class PostgreController {
   }
 
   //funzione di controllo username Telegram e salvataggio chatID
-  @GetMapping(value = {"/auth/telegram"})
+  @PostMapping(value = {"/auth/telegram"})
   public ResponseEntity<?> checkUser(@RequestBody AuthenticationRequestTelegram authenticationRequest) {
     String telegramName = authenticationRequest.getTelegramName();
     String chatId = authenticationRequest.getTelegramChat();
