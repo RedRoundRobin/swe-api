@@ -1,7 +1,6 @@
 package com.redroundrobin.thirema.apirest.controller;
 
 import com.redroundrobin.thirema.apirest.models.AuthenticationRequest;
-import com.redroundrobin.thirema.apirest.models.AuthenticationResponse;
 import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
@@ -13,7 +12,6 @@ import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -27,7 +25,6 @@ import org.springframework.http.HttpEntity;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 @RestController
