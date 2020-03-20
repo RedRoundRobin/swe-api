@@ -189,9 +189,9 @@ public class PostgreController {
     int code = 2;
     String token = "";
 
-    if (userService.findByTelegramName(telegramName) == null)
+    if (userService.findByTelegramName(telegramName) == null) {
       code = 0;
-    if (userService.findByTelegramNameAndTelegramChat(telegramName, chatId) == null) {
+    } else if (userService.findByTelegramNameAndTelegramChat(telegramName, chatId) == null) {
       code = 1;
 
       User user = userService.findByTelegramName(telegramName);
