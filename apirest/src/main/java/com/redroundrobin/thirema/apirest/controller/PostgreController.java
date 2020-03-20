@@ -194,7 +194,7 @@ public class PostgreController {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
     if(user.getType() == 2 || (user.getType() == 1 &&
-        user.getEntity() == userService.findByUser_Id(requiredUser).getEntity()))
+         user.getEntity() == userService.findByUser_Id(requiredUser).getEntity()))
       return userService.userDevices(requiredUser);
     else throw new Exception("User not authorized to see devices");
   }

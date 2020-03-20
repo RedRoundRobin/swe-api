@@ -34,7 +34,7 @@ public class UserService implements UserDetailsService {
     return repository.findByTelegramNameAndTelegramChat(telegramName, telegramChat);
   }
 
-  public User findByUser_Id(int user_id){ return repository.findByuserId(user_id);}
+  public User findByUser_Id(int user_id){ return find(user_id);}
 
   public User findByEmail(String email) {
     return repository.findByEmail(email);

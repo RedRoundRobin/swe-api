@@ -16,11 +16,9 @@ public interface UserRepository extends CrudRepository<User, Integer> {
 
   User findByTelegramNameAndTelegramChat(String telegramName, String telegramChat);
 
-  User findByuserId(int user_id);
-
-  @Query("SELECT u.device_id " +
-      "FROM users u, entities e, sensors s, devices d, alerts a" +
-      "WHERE u.user_id IN : userId and u.entity_id = e.entity_id and e.entity_id = a.entity_id" +
-      "and a.sensor_id = s.sensor_id and s.device_id = d.device_id")
+  @Query("SELECT d.device_id " +
+      "FROM User u,  Entity e, Sensor s,  Device d, Alert a " +
+      "WHERE u.user_id IN : userId and u.entity = e.entityId and e.entityId = a.entity " +
+      "and a.sensor = s.sensor_id and s.device = d.device_id")
   List<Device> userDevices(@Param("userId") int userId);
 }
