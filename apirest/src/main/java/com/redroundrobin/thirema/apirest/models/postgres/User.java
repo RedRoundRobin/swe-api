@@ -1,6 +1,7 @@
 package com.redroundrobin.thirema.apirest.models.postgres;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import javax.persistence.*;
 
@@ -14,6 +15,8 @@ public class User {
   private String name;
   private String surname;
   private String email;
+
+  @JsonIgnore
   private String password;
   private int type;
 
