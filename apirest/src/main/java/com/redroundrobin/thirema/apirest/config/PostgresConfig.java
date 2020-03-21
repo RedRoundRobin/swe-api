@@ -1,4 +1,4 @@
-package com.redroundrobin.thirema.apirest.utils;
+package com.redroundrobin.thirema.apirest.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -11,12 +11,14 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
+import org.springframework.retry.annotation.EnableRetry;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
 import java.util.HashMap;
 
 @Configuration
+@EnableRetry
 @PropertySource({"classpath:application.properties"})
 @EnableJpaRepositories(
     basePackages = "com.redroundrobin.thirema.apirest.repository.postgres",
