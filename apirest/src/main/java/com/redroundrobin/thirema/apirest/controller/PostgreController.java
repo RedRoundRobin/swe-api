@@ -1,7 +1,5 @@
 package com.redroundrobin.thirema.apirest.controller;
 
-import com.redroundrobin.thirema.apirest.models.AuthenticationRequest;
-import com.redroundrobin.thirema.apirest.models.AuthenticationResponse;
 import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
@@ -10,19 +8,13 @@ import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
 import com.redroundrobin.thirema.apirest.service.postgres.DeviceService;
 import com.redroundrobin.thirema.apirest.service.postgres.GatewayService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
-import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
 import java.util.stream.Collectors;
 
 @RestController
@@ -150,48 +142,7 @@ public class PostgreController {
     System.out.println(payload);
   }
 
-  //funzione di test per ottenere l'username dal token
-  @GetMapping(value = "/credentials")
-  public String getCredentials(@RequestHeader("Authorization") String authorization) {
-    String token = authorization.substring(7);
-
-    return jwtTokenUtil.extractUsername(token);
-  }
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-  @RequestMapping(value = "/authenticate", method = RequestMethod.POST)
-  public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthenticationRequest authenticationRequest) throws Exception {
-    String email = authenticationRequest.getUsername();
-    String password = authenticationRequest.getPassword();
-
-    try {
-      authenticationManager.authenticate(
-          new UsernamePasswordAuthenticationToken(email, password)
-      );
-    } catch (BadCredentialsException e) {
-      throw new Exception("Incorrect username or password", e);
-    }
-
-    final UserDetails userDetails = userService
-        .loadUserByUsername(authenticationRequest.getUsername());
-
-    final String jwt = jwtTokenUtil.generateToken(userDetails);
-    final User user = userService.findByEmail(email);
-
-    return ResponseEntity.ok(new AuthenticationResponse(jwt, user));
-  }
-
-  //funzione di controllo username Telegram e salvataggio chatID
-  @GetMapping(value = {"/login/{username:.+}/{chatId:.+}"})
-  public int checkUser(@PathVariable("username") String username, @PathVariable("chatId") String chatId) {
-    if (userService.findByTelegramName(username) == null)
-      return 0;
-    if (userService.findByTelegramNameAndTelegramChat(username, chatId) == null)
-      return 1;
-    return 2;
-  }
-
   //richiesta fatta da un utente autenticato per vedere i device visibili a un altro utente
   @GetMapping(value = {"/users/{userid:.+}/devices"})
   public ResponseEntity<?> getUserDevices (@RequestHeader("Authorization") String authorization,

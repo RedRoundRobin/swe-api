@@ -1,6 +1,7 @@
 package com.redroundrobin.thirema.apirest.models.postgres;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import javax.persistence.*;
 
@@ -9,11 +10,13 @@ import javax.persistence.*;
 public class User {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private int user_id;
   private String name;
   private String surname;
   private String email;
+
+  @JsonIgnore
   private String password;
   private int type;
 
@@ -108,7 +111,7 @@ public class User {
     this.deleted = deleted;
   }
 
-  public boolean getDeleted() {
+  public boolean isDeleted() {
     return this.deleted;
   }
 
