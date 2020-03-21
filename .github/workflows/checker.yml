@@ -19,7 +19,7 @@ jobs:
     - name: Checkout repo content
       uses: actions/checkout@v2
     - name: Git fetch unshallow
-      uses: git fetch --unshallow
+      run: git fetch --unshallow
     - name: Setup JDK 11
       uses: actions/setup-java@v1
       with:
