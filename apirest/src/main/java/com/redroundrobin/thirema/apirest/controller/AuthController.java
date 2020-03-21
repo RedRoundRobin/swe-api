@@ -103,6 +103,11 @@ public class AuthController {
 
     int authCode = data.get("auth_code").getAsInt();
     String tfaToken = authorization.substring(7);
+
+    if( !jwtTokenUtil.isTfa(tfaToken) ) {
+      return ResponseEntity.status(400).build();
+    }
+
     int tokenAuthCode = jwtTokenUtil.extractAuthCode(tfaToken);
 
     if( authCode == tokenAuthCode ) {

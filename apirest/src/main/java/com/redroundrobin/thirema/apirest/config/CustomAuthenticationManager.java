@@ -1,7 +1,7 @@
 package com.redroundrobin.thirema.apirest.config;
 
 import com.redroundrobin.thirema.apirest.models.postgres.User;
-import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
+import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -13,14 +13,15 @@ import org.springframework.security.core.AuthenticationException;
 public class CustomAuthenticationManager implements AuthenticationManager {
 
   @Autowired
-  UserRepository userRepo;
+  UserService userService;
 
   @Override
   public Authentication authenticate(Authentication authentication) throws AuthenticationException {
     String username = authentication.getPrincipal() + "";
     String password = authentication.getCredentials() + "";
 
-    User user = userRepo.findByEmail(username);
+    User user = userService.findByEmail(username);
+
     if (user == null || !password.equals(user.getPassword())) {
       throw new BadCredentialsException("401");
     } else if (user.isDeleted() || (user.getType() != 2 && (user.getEntity() == null || user.getEntity().isDeleted()))) {
