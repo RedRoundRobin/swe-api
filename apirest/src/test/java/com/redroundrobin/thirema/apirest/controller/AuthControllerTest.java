@@ -82,4 +82,81 @@ public class AuthControllerTest {
     assertNotEquals(response.get("token").getAsString(),"");
     assertNotNull(response.get("user"));
   }
+
+  @Test
+  public void addUserToDB_error401() throws Exception {
+
+    User user = this.defaultUser();
+
+    String uri = "/auth";
+    AuthenticationRequest authenticationRequest = new AuthenticationRequest(user.getEmail(),user.getPassword()+"1");
+
+    Gson gson = new Gson();
+    String inputJson = gson.toJson(authenticationRequest);
+
+    MvcResult mvcResult = mockMvc.perform(
+        MockMvcRequestBuilders.post(uri)
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .content(inputJson))
+        .andReturn();
+
+    int status = mvcResult.getResponse().getStatus();
+    assertEquals(401, status);
+  }
+
+  @Test
+  public void addUserToDB_error403() throws Exception {
+
+    User user = this.defaultUser();
+    user.setDeleted(true);
+
+    String uri = "/auth";
+    AuthenticationRequest authenticationRequest = new AuthenticationRequest(user.getEmail(),user.getPassword());
+
+    Gson gson = new Gson();
+    String inputJson = gson.toJson(authenticationRequest);
+
+    MvcResult mvcResult = mockMvc.perform(
+        MockMvcRequestBuilders.post(uri)
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .content(inputJson))
+        .andReturn();
+
+    int status = mvcResult.getResponse().getStatus();
+    assertEquals(403, status);
+  }
+
+  @Test
+  public void addUserToDB_receive2FA() throws Exception {
+
+    User user = this.defaultUser();
+    user.setTFA(true);
+    user.setTelegramName("prova");
+
+    // Creating request to api
+    String uri = "/auth";
+    AuthenticationRequest authenticationRequest = new AuthenticationRequest(user.getEmail(),user.getPassword());
+
+    Gson gson = new Gson();
+    String inputJson = gson.toJson(authenticationRequest);
+
+    MvcResult mvcResult = mockMvc.perform(
+        MockMvcRequestBuilders.post(uri)
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .content(inputJson))
+        .andReturn();
+
+
+    // Check status and if are present tfa and token
+    int status = mvcResult.getResponse().getStatus();
+    assertEquals(200, status);
+
+    JsonObject response = gson.fromJson(
+        mvcResult.getResponse().getContentAsString(), JsonObject.class);
+
+    assertTrue(response.has("tfa"));
+    assertTrue(response.has("token"));
+
+    String token = response.get("token").getAsString();
+  }
 }
