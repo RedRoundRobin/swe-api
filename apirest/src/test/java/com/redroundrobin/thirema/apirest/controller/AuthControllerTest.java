@@ -126,7 +126,8 @@ public class AuthControllerTest {
     assertEquals(403, status);
   }
 
-  @Test
+  // Test that work only with telegram
+  /*@Test
   public void addUserToDB_receive2FA() throws Exception {
 
     User user = this.defaultUser();
@@ -158,5 +159,5 @@ public class AuthControllerTest {
     assertTrue(response.has("token"));
 
     String token = response.get("token").getAsString();
-  }
+  }*/
 }
