@@ -45,10 +45,6 @@ public class UserService implements UserDetailsService {
 
   public List<Device> userDevices(int user_id){ return repository.userDevices(user_id);}
 
-  public User save (User user) {
-    return repository.save(user);
-  }
-
   @Override
   public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
     User user = this.repository.findByEmail(s);

@@ -4,12 +4,10 @@ import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
-import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
-import com.redroundrobin.thirema.apirest.service.postgres.DeviceService;
-import com.redroundrobin.thirema.apirest.service.postgres.GatewayService;
-import com.redroundrobin.thirema.apirest.service.postgres.UserService;
+import com.redroundrobin.thirema.apirest.service.postgres.*;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 
@@ -34,9 +32,6 @@ public class PostgreController {
 
   @Autowired
   private EntityService entityService;
-
-  @Autowired
-  private AuthenticationManager authenticationManager;
 
   @Autowired
   private JwtUtil jwtTokenUtil;
@@ -146,7 +141,7 @@ public class PostgreController {
   //richiesta fatta da un utente autenticato per vedere i device visibili a un altro utente
   @GetMapping(value = {"/users/{userid:.+}/devices"})
   public ResponseEntity<?> getUserDevices (@RequestHeader("Authorization") String authorization,
-                                      @PathVariable("userid") int requiredUser) {
+                                           @PathVariable("userid") int requiredUser) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
     if( user.getUserId() == requiredUser || user.getType() == 2 ||
@@ -182,11 +177,11 @@ public class PostgreController {
   }
 
   @PutMapping(value ={"/users/edit"})
-  public ResponseEntity<?> createUser(@RequestHeader("Authorization") String authorization,
+  public ResponseEntity<?> editUser(@RequestHeader("Authorization") String authorization,
                                       @RequestBody User editUser) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
-    if(userService.find(editUser.getUserId()) && user.getType() == 2 || user.getType() == 1 && user.getEntity().getEntityId() == editUser.getEntity().getEntityId()) {
+    if(userService.find(editUser.getUserId()) != null && user.getType() == 2 || user.getType() == 1 && user.getEntity().getEntityId() == editUser.getEntity().getEntityId()) {
       return ResponseEntity.ok(userService.save(editUser));
     }
     return  new ResponseEntity(HttpStatus.FORBIDDEN);
