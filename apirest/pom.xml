@@ -93,12 +93,6 @@
             <version>4.12</version>
             <scope>test</scope>
         </dependency>
-
-        <!-- aggiunta il 19-03-2020 per mandare richieste http da partee delle api -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
     </dependencies>
 
     <build>
