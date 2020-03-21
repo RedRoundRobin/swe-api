@@ -2,7 +2,7 @@
 name: Nuova richiesta API
 about: Richiesta di realizzazione di una nuova API
 title: "[NEW_API] ruote/to/api"
-labels: enhancement
+labels: enhancement, richiesta api
 assignees: FouadM96, nfrison
 
 ---
