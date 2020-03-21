@@ -13,13 +13,11 @@ on:
       - feature/**
 
 jobs:
-
   ci_check:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repo content
       uses: actions/checkout@v2
-  # CAMBIARE IL PATH CON LA ROOT DI PROGETTO JAVA
     - name: Setup JDK 11
       uses: actions/setup-java@v1
       with:
@@ -30,7 +28,7 @@ jobs:
       run: mvn clean compile --file apirest/pom.xml
     - name: Run project tests
       run: mvn clean test --file apirest/pom.xml
-    - name: Run SonarCloud
+    - name: Run project SonarCloud
       run: mvn clean verify -Dsonar.login=${{ secrets.SONARCLOUD_LOGIN_KEY }} --file apirest/pom.xml -e
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
