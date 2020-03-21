@@ -12,6 +12,7 @@ import com.redroundrobin.thirema.apirest.service.postgres.DeviceService;
 import com.redroundrobin.thirema.apirest.service.postgres.GatewayService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
+import io.jsonwebtoken.ExpiredJwtException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -22,12 +23,11 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
-import java.util.HashMap;
+
+import java.util.*;
+
 import org.springframework.http.HttpEntity;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 @RestController
@@ -245,6 +245,29 @@ public class PostgreController {
       return ResponseEntity.ok(response);
     } else {
       return ResponseEntity.status(401).build();
+    }
+  }
+
+  @PostMapping(value = "/check")
+  public ResponseEntity<?> checkToken(@RequestHeader("Authorization") String authorization) {
+    if( authorization != null ) {
+      String token = authorization.substring(7);
+      HashMap<String, Object> response = new HashMap<>();
+
+      try {
+        Date expirationTime = jwtTokenUtil.extractExpiration(token);
+
+        if (expirationTime.after(new Date())) {
+          response.put("valid", true);
+        } else {
+          response.put("valid", false);
+        }
+      } catch (ExpiredJwtException eje) {
+        response.put("valid", false);
+      }
+      return ResponseEntity.ok(response);
+    } else {
+      return ResponseEntity.status(400).build();
     }
   }
 

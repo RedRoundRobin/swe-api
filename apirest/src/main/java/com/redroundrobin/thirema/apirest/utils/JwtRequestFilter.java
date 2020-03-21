@@ -35,7 +35,11 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
     if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
       jwt = authorizationHeader.substring(7);
-      username = jwtUtil.extractUsername(jwt);
+
+      // Any jwtUtil method call catch ExpiredJwtException that not permit to reach "/check" that is allowed to anyone
+      if( !request.getRequestURI().equals("/check") ) {
+        username = jwtUtil.extractUsername(jwt);
+      }
     }
 
     // check if request with normal token or request to "/auth/tfa" with tfa token
