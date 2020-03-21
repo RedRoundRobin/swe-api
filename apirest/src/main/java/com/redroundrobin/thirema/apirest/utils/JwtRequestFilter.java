@@ -38,8 +38,10 @@ public class JwtRequestFilter extends OncePerRequestFilter {
       username = jwtUtil.extractUsername(jwt);
     }
 
-
-    if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+    // check if request with normal token or request to "/auth/tfa" with tfa token
+    // block all calls to api if no token provided and permit only "/auth/tfa" with tfa token
+    if (username != null && SecurityContextHolder.getContext().getAuthentication() == null &&
+        (!jwtUtil.isTfa(jwt) || request.getRequestURI().equals("/auth/tfa"))) {
 
       UserDetails userDetails = this.userService.loadUserByUsername(username);
 

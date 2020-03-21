@@ -27,6 +27,7 @@ import org.springframework.http.HttpEntity;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 @RestController
@@ -186,15 +187,32 @@ public class PostgreController {
     HashMap<String,Object> response = new HashMap<>();
     final User user = userService.findByEmail(email);
 
-    if(user.getTFA()){
-      response.put("tfa", true);
-    } else {
-      response.put("user", user);
-    }
 
     final UserDetails userDetails = userService
         .loadUserByUsername(authenticationRequest.getUsername());
-    final String token = jwtTokenUtil.generateToken(userDetails);
+    String token;
+
+    if(user.getTFA()){
+
+      Random rnd = new Random();
+      int sixDigitsCode = 100000 + rnd.nextInt(900000);
+
+      Map<String, Object> map = new HashMap<>();
+      map.put("auth_code", sixDigitsCode); //codice fittizio
+      map.put("chat_id", user.getTelegramChat());
+      HttpEntity<Map<String, Object>> entity = new HttpEntity<>(map);
+
+      RestTemplate restTemplate = new RestTemplate();
+      ResponseEntity<String> telegramResponse = restTemplate.postForEntity(telegramUrl, entity, String.class);
+
+      response.put("tfa", true);
+
+      token = jwtTokenUtil.generateTfaToken(userDetails, sixDigitsCode);
+    } else {
+      response.put("user", user);
+
+      token = jwtTokenUtil.generateToken(userDetails);
+    }
 
     response.put("token", token);
 
@@ -209,21 +227,24 @@ public class PostgreController {
       return ResponseEntity.status(400).build();
     }
 
-    String authCode = data.get("auth_code").getAsString();
-    String token = authorization.substring(7);
-    User user = userService.findByEmail( jwtTokenUtil.extractUsername(token) );
+    int authCode = data.get("auth_code").getAsInt();
+    String tfaToken = authorization.substring(7);
+    int tokenAuthCode = jwtTokenUtil.extractAuthCode(tfaToken);
 
-    Map<String, Object> map = new HashMap<>();
-    map.put("chat_id", user.getTelegramChat());
-    map.put("auth_code", authCode);
+    if( authCode == tokenAuthCode ) {
+      User user = userService.findByEmail(jwtTokenUtil.extractUsername(tfaToken));
 
-    HttpEntity<Map<String, Object>> entity = new HttpEntity<>(map);
-    ResponseEntity<String> response = new RestTemplate().postForEntity(telegramUrl, entity, String.class);
+      final UserDetails userDetails = userService
+          .loadUserByUsername(user.getEmail());
+      final String token = jwtTokenUtil.generateToken(userDetails);
 
-    if( response.getStatusCode().value() == 200 ) {
-      return ResponseEntity.ok().build();
+      HashMap<String, Object> response = new HashMap<>();
+      response.put("token", token);
+      response.put("user", user);
+
+      return ResponseEntity.ok(response);
     } else {
-      return response;
+      return ResponseEntity.status(401).build();
     }
   }
 

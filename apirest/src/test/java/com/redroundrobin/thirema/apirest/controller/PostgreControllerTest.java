@@ -183,19 +183,5 @@ public class PostgreControllerTest {
     assertTrue(response.has("token"));
 
     String token = response.get("token").getAsString();
-
-
-    // Request to send token to telegram from api
-    uri = "/auth/tfa";
-
-    JsonObject request = new JsonObject();
-    request.add("auth_code", JsonParser.parseString("156842"));
-
-    mvcResult = mvc.perform(
-        MockMvcRequestBuilders.post(uri)
-            .header("Authorization", "Bearer "+token)
-            .contentType(MediaType.APPLICATION_JSON_VALUE)
-            .content(request.toString()))
-        .andReturn();
   }
 }
