@@ -1,8 +1,9 @@
-package com.redroundrobin.thirema.apirest.utils;
+package com.redroundrobin.thirema.apirest.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
@@ -18,21 +19,22 @@ import java.util.HashMap;
 @Configuration
 @PropertySource({"classpath:application.properties"})
 @EnableJpaRepositories(
-    basePackages = "com.redroundrobin.thirema.apirest.repository.timescale",
-    entityManagerFactoryRef = "timescaleEntityManager",
-    transactionManagerRef = "timescaleTransactionManager"
+    basePackages = "com.redroundrobin.thirema.apirest.repository.postgres",
+    entityManagerFactoryRef = "postgresEntityManager",
+    transactionManagerRef = "postgresTransactionManager"
 )
-public class TimescaleConfig {
+public class PostgresConfig {
   @Autowired
   private Environment env;
 
   @Bean
-  public LocalContainerEntityManagerFactoryBean timescaleEntityManager() {
+  @Primary
+  public LocalContainerEntityManagerFactoryBean postgresEntityManager() {
     LocalContainerEntityManagerFactoryBean em
         = new LocalContainerEntityManagerFactoryBean();
-    em.setDataSource(timescaleDataSource());
+    em.setDataSource(postgresDataSource());
     em.setPackagesToScan(
-        new String[]{"com.redroundrobin.thirema.apirest.models.timescale"});
+        new String[]{"com.redroundrobin.thirema.apirest.models.postgres"});
 
     HibernateJpaVendorAdapter vendorAdapter
         = new HibernateJpaVendorAdapter();
@@ -47,27 +49,29 @@ public class TimescaleConfig {
     return em;
   }
 
+  @Primary
   @Bean
-  public DataSource timescaleDataSource() {
+  public DataSource postgresDataSource() {
 
     DriverManagerDataSource dataSource
         = new DriverManagerDataSource();
     dataSource.setDriverClassName(
-        env.getProperty("spring.timescale.driverClassName"));
-    dataSource.setUrl(env.getProperty("spring.timescale.url"));
-    dataSource.setUsername(env.getProperty("spring.timescale.username"));
-    dataSource.setPassword(env.getProperty("spring.timescale.password"));
+        env.getProperty("spring.postgres.driverClassName"));
+    dataSource.setUrl(env.getProperty("spring.postgres.url"));
+    dataSource.setUsername(env.getProperty("spring.postgres.username"));
+    dataSource.setPassword(env.getProperty("spring.postgres.password"));
 
     return dataSource;
   }
 
+  @Primary
   @Bean
-  public PlatformTransactionManager timescaleTransactionManager() {
+  public PlatformTransactionManager postgresTransactionManager() {
 
     JpaTransactionManager transactionManager
         = new JpaTransactionManager();
     transactionManager.setEntityManagerFactory(
-        timescaleEntityManager().getObject());
+        postgresEntityManager().getObject());
     return transactionManager;
   }
 }

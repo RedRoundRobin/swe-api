@@ -67,7 +67,7 @@ public class Entity {
     this.alerts = alerts;
   }
 
-  public boolean getDeleted() {
+  public boolean isDeleted() {
     return this.deleted;
   }
 
