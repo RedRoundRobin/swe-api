@@ -40,7 +40,7 @@ public class AuthController {
   private String telegramUrl;
 
   @RequestMapping(value = "/auth", method = RequestMethod.POST)
-  public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthenticationRequest authenticationRequest) throws Exception {
+  public ResponseEntity<?> authenticate(@RequestBody AuthenticationRequest authenticationRequest) throws Exception {
     String email = authenticationRequest.getUsername();
     String password = authenticationRequest.getPassword();
 
@@ -94,7 +94,7 @@ public class AuthController {
   }
 
   @PostMapping(value = "/auth/tfa")
-  public ResponseEntity<?> checkTFA(@RequestBody String rawData, @RequestHeader("Authorization") String authorization) {
+  public ResponseEntity<?> tfaAuthenticate(@RequestBody String rawData, @RequestHeader("Authorization") String authorization) {
     JsonObject data = JsonParser.parseString(rawData).getAsJsonObject();
 
     if( !data.has("auth_code") || data.get("auth_code").getAsString().equals("") ) {
@@ -128,7 +128,7 @@ public class AuthController {
   }
 
   @PostMapping(value = "/check")
-  public ResponseEntity<?> checkToken(@RequestHeader("Authorization") String authorization) {
+  public ResponseEntity<?> tokenValidity(@RequestHeader("Authorization") String authorization) {
     if( authorization != null ) {
       String token = authorization.substring(7);
       HashMap<String, Object> response = new HashMap<>();
