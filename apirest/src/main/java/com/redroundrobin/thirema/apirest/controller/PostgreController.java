@@ -4,12 +4,12 @@ import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
-import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
-import com.redroundrobin.thirema.apirest.service.postgres.DeviceService;
-import com.redroundrobin.thirema.apirest.service.postgres.GatewayService;
-import com.redroundrobin.thirema.apirest.service.postgres.UserService;
+import com.redroundrobin.thirema.apirest.service.postgres.*;
+import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
 
 import java.util.*;
 
@@ -29,6 +29,12 @@ public class PostgreController {
 
   @Autowired
   private UserService userService;
+
+  @Autowired
+  private EntityService entityService;
+
+  @Autowired
+  private JwtUtil jwtTokenUtil;
 
   //tutti i gateway
   @GetMapping(value = {"/gateways"})
@@ -132,6 +138,56 @@ public class PostgreController {
   }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  //richiesta fatta da un utente autenticato per vedere i device visibili a un altro utente
+  @GetMapping(value = {"/users/{userid:.+}/devices"})
+  public ResponseEntity<?> getUserDevices (@RequestHeader("Authorization") String authorization,
+                                           @PathVariable("userid") int requiredUser) {
+    String token = authorization.substring(7);
+    User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
+    if( user.getUserId() == requiredUser || user.getType() == 2 ||
+        user.getType() == 1 && user.getEntity().getEntityId() ==
+            userService.find(requiredUser).getEntity().getEntityId())
+      return ResponseEntity.ok(userService.userDevices(requiredUser));
+    else return new ResponseEntity(HttpStatus.FORBIDDEN);
+  }
+
+
+  //dato un token valid restituisce l'ente di appertenenza o tutti gli enti
+  //se il token è di un amministratore
+  @GetMapping(value = {"/entities"})
+  public ResponseEntity<?> getUserEntity(@RequestHeader("Authorization") String authorization) {
+    String token = authorization.substring(7);
+    User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
+    if(user.getType() == 2)
+      return  ResponseEntity.ok(entityService.findAll());
+    //utente moderatore || utente membro
+    return ResponseEntity.ok(user.getEntity());
+  }
+
+
+  //creazione di un nuovo utente
+  @PostMapping(value = {"/users/create"})
+  public ResponseEntity<?> createUser(@RequestHeader("Authorization") String authorization, @RequestBody User newUser) {
+    String token = authorization.substring(7);
+    User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
+    if(user.getType() == 2 || user.getType() == 1 && user.getEntity().getEntityId() == newUser.getEntity().getEntityId()) {
+      return ResponseEntity.ok(userService.save(newUser));
+    }
+    return  new ResponseEntity(HttpStatus.FORBIDDEN);
+  }
+
+  @PutMapping(value ={"/users/edit"})
+  public ResponseEntity<?> editUser(@RequestHeader("Authorization") String authorization,
+                                      @RequestBody User editUser) {
+    String token = authorization.substring(7);
+    User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
+    if(userService.find(editUser.getUserId()) != null && user.getType() == 2 || user.getType() == 1 && user.getEntity().getEntityId() == editUser.getEntity().getEntityId()) {
+      return ResponseEntity.ok(userService.save(editUser));
+    }
+    return  new ResponseEntity(HttpStatus.FORBIDDEN);
+  }
+
+
 }
 
 /*
