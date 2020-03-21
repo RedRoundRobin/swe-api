@@ -1,10 +1,12 @@
 package com.redroundrobin.thirema.apirest.utils;
 
+import com.redroundrobin.thirema.apirest.models.UserDisabledException;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -31,10 +33,12 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     final String authorizationHeader = request.getHeader("Authorization");
 
     String username = null;
+    String type = null;
     String jwt = null;
 
     if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
       jwt = authorizationHeader.substring(7);
+      type = jwtUtil.extractType(jwt);
 
       // Any jwtUtil method call catch ExpiredJwtException that not permit to reach "/check" that is allowed to anyone
       if( !request.getRequestURI().equals("/check") ) {
@@ -47,9 +51,25 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     if (username != null && SecurityContextHolder.getContext().getAuthentication() == null &&
         (!jwtUtil.isTfa(jwt) || request.getRequestURI().equals("/auth/tfa"))) {
 
-      UserDetails userDetails = this.userService.loadUserByUsername(username);
+      UserDetails userDetails;
 
-      if (jwtUtil.validateToken(jwt, userDetails)) {
+      try {
+        switch (type) {
+          case "webapp":
+          case "tfa":
+            userDetails = this.userService.loadUserByEmail(username);
+            break;
+          case "telegram":
+            userDetails = this.userService.loadUserByTelegramName(username);
+            break;
+          default:
+            userDetails = null;
+        }
+      } catch(UsernameNotFoundException | UserDisabledException ue) {
+        userDetails = null;
+      }
+
+      if (userDetails != null && jwtUtil.validateToken(jwt, userDetails)) {
 
         UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
             userDetails, null, userDetails.getAuthorities());

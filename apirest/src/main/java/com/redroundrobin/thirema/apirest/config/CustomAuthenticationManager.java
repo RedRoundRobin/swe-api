@@ -17,10 +17,10 @@ public class CustomAuthenticationManager implements AuthenticationManager {
 
   @Override
   public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-    String username = authentication.getPrincipal() + "";
+    String email = authentication.getPrincipal() + "";
     String password = authentication.getCredentials() + "";
 
-    User user = userService.findByEmail(username);
+    User user = userService.findByEmail(email);
 
     if (user == null || !password.equals(user.getPassword())) {
       throw new BadCredentialsException("401");
@@ -28,6 +28,6 @@ public class CustomAuthenticationManager implements AuthenticationManager {
       throw new DisabledException("403");
     }
 
-    return new UsernamePasswordAuthenticationToken(username, password);
+    return new UsernamePasswordAuthenticationToken(email, password);
   }
 }

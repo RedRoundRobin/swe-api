@@ -1,9 +1,11 @@
 package com.redroundrobin.thirema.apirest.controller;
 
+import com.redroundrobin.thirema.apirest.models.*;
 import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
+import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
 import com.redroundrobin.thirema.apirest.service.postgres.DeviceService;
 import com.redroundrobin.thirema.apirest.service.postgres.GatewayService;
@@ -132,7 +134,6 @@ public class PostgreController {
   }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 }
 
 /*

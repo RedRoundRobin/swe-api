@@ -4,6 +4,9 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.redroundrobin.thirema.apirest.config.CustomAuthenticationManager;
 import com.redroundrobin.thirema.apirest.models.AuthenticationRequest;
+import com.redroundrobin.thirema.apirest.models.AuthenticationRequestTelegram;
+import com.redroundrobin.thirema.apirest.models.AuthenticationResponseTelegram;
+import com.redroundrobin.thirema.apirest.models.UserDisabledException;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
@@ -16,6 +19,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
@@ -61,9 +65,17 @@ public class AuthController {
     HashMap<String,Object> response = new HashMap<>();
     final User user = userService.findByEmail(email);
 
+    final UserDetails userDetails;
 
-    final UserDetails userDetails = userService
-        .loadUserByUsername(authenticationRequest.getUsername());
+    try {
+      userDetails = userService
+          .loadUserByEmail(authenticationRequest.getUsername());
+    } catch(UsernameNotFoundException unfe) {
+      return ResponseEntity.status(401).build();
+    } catch(UserDisabledException ude) {
+      return ResponseEntity.status(403).build();
+    }
+
     String token;
 
     if(user.getTFA()){
@@ -81,11 +93,11 @@ public class AuthController {
 
       response.put("tfa", true);
 
-      token = jwtTokenUtil.generateTfaToken(userDetails, sixDigitsCode);
+      token = jwtTokenUtil.generateTfaToken("tfa", sixDigitsCode, userDetails);
     } else {
       response.put("user", user);
 
-      token = jwtTokenUtil.generateToken(userDetails);
+      token = jwtTokenUtil.generateToken("webapp", userDetails);
     }
 
     response.put("token", token);
@@ -113,9 +125,18 @@ public class AuthController {
     if( authCode == tokenAuthCode ) {
       User user = userService.findByEmail(jwtTokenUtil.extractUsername(tfaToken));
 
-      final UserDetails userDetails = userService
-          .loadUserByUsername(user.getEmail());
-      final String token = jwtTokenUtil.generateToken(userDetails);
+      final UserDetails userDetails;
+
+      try {
+        userDetails = userService
+            .loadUserByEmail(user.getEmail());
+      } catch(UsernameNotFoundException unfe) {
+        return ResponseEntity.status(401).build();
+      } catch (UserDisabledException ude) {
+        return ResponseEntity.status(403).build();
+      }
+
+      final String token = jwtTokenUtil.generateToken("webapp", userDetails);
 
       HashMap<String, Object> response = new HashMap<>();
       response.put("token", token);
@@ -148,5 +169,38 @@ public class AuthController {
     } else {
       return ResponseEntity.status(400).build();
     }
+  }
+
+  //funzione di controllo username Telegram e salvataggio chatID
+  @PostMapping(value = {"/auth/telegram"})
+  public ResponseEntity<?> checkUser(@RequestBody AuthenticationRequestTelegram authenticationRequest) {
+    String telegramName = authenticationRequest.getTelegramName();
+    String chatId = authenticationRequest.getTelegramChat();
+
+    int code = 2;
+    String token = "";
+
+    if (userService.findByTelegramName(telegramName) == null) {
+      code = 0;
+    } else if (userService.findByTelegramNameAndTelegramChat(telegramName, chatId) == null) {
+      code = 1;
+
+      User user = userService.findByTelegramName(telegramName);
+      user.setTelegramChat(chatId);
+      userService.save(user);
+    }
+
+    try {
+      if (code != 0) {
+          final UserDetails userDetails = userService
+              .loadUserByTelegramName(telegramName);
+
+        token = jwtTokenUtil.generateToken("telegram", userDetails);
+      }
+    } catch( UsernameNotFoundException | UserDisabledException ue ) {
+      code = 0;
+    }
+
+    return ResponseEntity.ok(new AuthenticationResponseTelegram(code, token));
   }
 }

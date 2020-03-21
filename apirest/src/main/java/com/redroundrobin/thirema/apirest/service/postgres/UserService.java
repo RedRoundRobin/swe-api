@@ -3,6 +3,7 @@ package com.redroundrobin.thirema.apirest.service.postgres;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.redroundrobin.thirema.apirest.models.UserDisabledException;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,12 +38,35 @@ public class UserService implements UserDetailsService {
     return repository.findByEmail(email);
   }
 
-  @Override
+  public User save(User user) {
+    return repository.save(user);
+  }
+
   public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
     User user = this.repository.findByEmail(s);
-    if (user == null) {
+    if (user == null || (user.isDeleted() || (user.getType() != 2 && (user.getEntity() == null || user.getEntity().isDeleted())))) {
       throw new UsernameNotFoundException("");
     }
     return new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(), new ArrayList<>());
+  }
+
+  public UserDetails loadUserByEmail(String s) throws UsernameNotFoundException, UserDisabledException {
+    User user = this.repository.findByEmail(s);
+    if (user == null) {
+      throw new UsernameNotFoundException("");
+    } else if(user.isDeleted() || (user.getType() != 2 && (user.getEntity() == null || user.getEntity().isDeleted()))) {
+      throw new UserDisabledException();
+    }
+    return new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(), new ArrayList<>());
+  }
+
+  public UserDetails loadUserByTelegramName(String s) throws UsernameNotFoundException, UserDisabledException {
+    User user = this.repository.findByTelegramName(s);
+    if (user == null) {
+      throw new UsernameNotFoundException("");
+    } else if(user.isDeleted() || (user.getType() != 2 && (user.getEntity() == null || user.getEntity().isDeleted()))) {
+      throw new UserDisabledException();
+    }
+    return new org.springframework.security.core.userdetails.User(user.getTelegramName(), user.getTelegramChat(), new ArrayList<>());
   }
 }

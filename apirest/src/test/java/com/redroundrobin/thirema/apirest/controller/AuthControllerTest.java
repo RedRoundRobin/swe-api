@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.redroundrobin.thirema.apirest.models.AuthenticationRequest;
+import com.redroundrobin.thirema.apirest.models.UserDisabledException;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
@@ -15,6 +16,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -43,7 +45,7 @@ public class AuthControllerTest {
     }
   }
 
-  private User defaultUser() {
+  private User defaultUser() throws UsernameNotFoundException, UserDisabledException {
     User user = new User();
     user.setName("user");
     user.setSurname("user");
@@ -54,7 +56,8 @@ public class AuthControllerTest {
     when(userService.findByEmail(user.getEmail())).thenReturn(user);
 
     org.springframework.security.core.userdetails.User userD = new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(), new ArrayList<>());
-    when(userService.loadUserByUsername(user.getEmail())).thenReturn(userD);
+
+    when(userService.loadUserByEmail(user.getEmail())).thenReturn(userD);
 
     return user;
   }
