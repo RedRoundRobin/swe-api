@@ -34,13 +34,15 @@ public class UserService implements UserDetailsService {
     return repository.findByTelegramNameAndTelegramChat(telegramName, telegramChat);
   }
 
-  public User findByUser_Id(int user_id){ return find(user_id);}
-
   public User findByEmail(String email) {
     return repository.findByEmail(email);
   }
 
   public List<Device> userDevices(int user_id){ return repository.userDevices(user_id);}
+
+  public User save (User user) {
+    return repository.save(user);
+  }
 
   @Override
   public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
