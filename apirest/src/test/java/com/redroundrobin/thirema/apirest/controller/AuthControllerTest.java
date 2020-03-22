@@ -8,6 +8,7 @@ import com.redroundrobin.thirema.apirest.models.UserDisabledException;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
+import org.json.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,10 +38,13 @@ public class AuthControllerTest {
   @MockBean
   UserService userService;
 
+  @Autowired
+  JwtUtil jwtTokenUtil;
+
   @TestConfiguration
   static class AdditionalConfig {
     @Bean
-    public JwtUtil getSomeBean() {
+    public JwtUtil getJwtTokenUtilBean() {
       return new JwtUtil();
     }
   }
@@ -63,19 +67,19 @@ public class AuthControllerTest {
   }
 
   @Test
-  public void normalAuth() throws Exception {
+  public void authenticateSuccessfull() throws Exception {
     User user = defaultUser();
 
-    AuthenticationRequest authenticationRequest = new AuthenticationRequest(user.getEmail(),user.getPassword());
-
-    Gson gson = new Gson();
-    String inputJson = gson.toJson(authenticationRequest);
+    JSONObject json = new JSONObject();
+    json.put("username",user.getEmail());
+    json.put("password",user.getPassword());
+    System.out.println(json.toString());
 
     MvcResult mvcResult = mockMvc.perform(
       MockMvcRequestBuilders
           .post("/auth")
           .contentType(MediaType.APPLICATION_JSON_VALUE)
-          .content(inputJson))
+          .content(json.toString()))
         .andReturn();
 
     int status = mvcResult.getResponse().getStatus();
@@ -87,7 +91,25 @@ public class AuthControllerTest {
   }
 
   @Test
-  public void addUserToDB_error401() throws Exception {
+  public void authenticateError400() throws Exception {
+
+    this.defaultUser();
+
+    String uri = "/auth";
+    JsonObject request = new JsonObject();
+
+    MvcResult mvcResult = mockMvc.perform(
+        MockMvcRequestBuilders.post(uri)
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .content(request.toString()))
+        .andReturn();
+
+    int status = mvcResult.getResponse().getStatus();
+    assertEquals(400, status);
+  }
+
+  @Test
+  public void authenticateError401() throws Exception {
 
     User user = this.defaultUser();
 
@@ -108,7 +130,7 @@ public class AuthControllerTest {
   }
 
   @Test
-  public void addUserToDB_error403() throws Exception {
+  public void authenticateError403() throws Exception {
 
     User user = this.defaultUser();
     user.setDeleted(true);
@@ -130,12 +152,13 @@ public class AuthControllerTest {
   }
 
   // Test that work only with telegram
-  /*@Test
-  public void addUserToDB_receive2FA() throws Exception {
+  @Test
+  public void authenticateReceiveTfaToken() throws Exception {
 
     User user = this.defaultUser();
-    user.setTFA(true);
+    user.setTfa(true);
     user.setTelegramName("prova");
+    user.setTelegramChat("4365587567");
 
     // Creating request to api
     String uri = "/auth";
@@ -150,7 +173,6 @@ public class AuthControllerTest {
             .content(inputJson))
         .andReturn();
 
-
     // Check status and if are present tfa and token
     int status = mvcResult.getResponse().getStatus();
     assertEquals(200, status);
@@ -162,5 +184,5 @@ public class AuthControllerTest {
     assertTrue(response.has("token"));
 
     String token = response.get("token").getAsString();
-  }*/
+  }
 }
