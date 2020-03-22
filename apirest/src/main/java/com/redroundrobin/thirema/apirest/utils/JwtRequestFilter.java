@@ -2,6 +2,7 @@ package com.redroundrobin.thirema.apirest.utils;
 
 import com.redroundrobin.thirema.apirest.models.UserDisabledException;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
+import io.jsonwebtoken.ExpiredJwtException;
 import java.io.IOException;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -37,13 +38,14 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     String jwt = null;
 
     if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-      jwt = authorizationHeader.substring(7);
-      type = jwtUtil.extractType(jwt);
-
-      // Any jwtUtil method call catch ExpiredJwtException that not permit
-      // to reach "/check" that is allowed to anyone
-      if (!request.getRequestURI().equals("/check")) {
+      try {
+        jwt = authorizationHeader.substring(7);
+        type = jwtUtil.extractType(jwt);
         username = jwtUtil.extractUsername(jwt);
+
+      } catch (ExpiredJwtException eje) {
+        response.setStatus(419);
+        return;
       }
     }
 

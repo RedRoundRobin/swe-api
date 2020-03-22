@@ -9,8 +9,6 @@ import com.redroundrobin.thirema.apirest.models.UserDisabledException;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
-import io.jsonwebtoken.ExpiredJwtException;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -151,29 +149,6 @@ public class AuthController {
       return ResponseEntity.ok(response);
     } else {
       return ResponseEntity.status(401).build();
-    }
-  }
-
-  @PostMapping(value = "/check")
-  public ResponseEntity<?> tokenValidity(@RequestHeader("Authorization") String authorization) {
-    if (authorization != null) {
-      String token = authorization.substring(7);
-      HashMap<String, Object> response = new HashMap<>();
-
-      try {
-        Date expirationTime = jwtTokenUtil.extractExpiration(token);
-
-        if (expirationTime.after(new Date())) {
-          response.put("valid", true);
-        } else {
-          response.put("valid", false);
-        }
-      } catch (ExpiredJwtException eje) {
-        response.put("valid", false);
-      }
-      return ResponseEntity.ok(response);
-    } else {
-      return ResponseEntity.status(400).build();
     }
   }
 
