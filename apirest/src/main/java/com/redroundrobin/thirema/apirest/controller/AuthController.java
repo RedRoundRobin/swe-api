@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 @RestController
@@ -90,9 +91,17 @@ public class AuthController {
       map.put("chat_id", user.getTelegramChat());
       HttpEntity<Map<String, Object>> entity = new HttpEntity<>(map);
 
-      RestTemplate restTemplate = new RestTemplate();
-      ResponseEntity<String> telegramResponse =
-          restTemplate.postForEntity(telegramUrl, entity, String.class);
+      try {
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<String> telegramResponse =
+            restTemplate.postForEntity(telegramUrl, entity, String.class);
+
+        if (telegramResponse.getStatusCode().value() != 200) {
+          throw new ResourceAccessException("");
+        }
+      } catch (ResourceAccessException rae) {
+        return ResponseEntity.status(500).build();
+      }
 
       response.put("tfa", true);
 
