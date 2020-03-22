@@ -38,6 +38,13 @@ public class Sensor {
   public Sensor() {
   }
 
+  /**
+   * Create the Sensor with the @sensorId, the @type and the @realSensorId.
+   *
+   * @param sensorId Database sensor id
+   * @param type Type of sensor
+   * @param realSensorId Sensor Id for the device
+   */
   public Sensor(int sensorId, String type, int realSensorId) {
     this.sensorId = sensorId;
     this.type = type;
