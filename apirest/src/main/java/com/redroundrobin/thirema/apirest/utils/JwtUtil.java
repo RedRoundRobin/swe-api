@@ -42,6 +42,13 @@ public class JwtUtil {
     return extractAllClaims(token).containsKey("tfa");
   }
 
+  /**
+   * Method that return the authCode decoded from token if found, else it throw
+   * IllegalArgumentException.
+   *
+   * @param token of type "tfa" that would contain the auth code encoded
+   * @return the auth code decoded from the token
+   */
   public int extractAuthCode(String token) {
     if (extractAllClaims(token).containsKey("auth_code")) {
       return extractAllClaims(token).get("auth_code", Integer.class);
@@ -63,17 +70,33 @@ public class JwtUtil {
     return extractExpiration(token).before(new Date());
   }
 
+  /**
+   * Method that return a jwt token generated with the @type and the @userDetails.
+   *
+   * @param type type of the token to be generated ("webapp" | "tfa" | "telegram" supported)
+   * @param userDetails userDetails class that contain username and password to be encoded in token
+   * @return jwt token that will be generated
+   */
   public String generateToken(String type, UserDetails userDetails) {
     Map<String, Object> claims = new HashMap<>();
     claims.put("type", type);
     return createToken(claims, userDetails.getUsername());
   }
 
-  public String generateTfaToken(String type, int sixDigitsCode, UserDetails userDetails) {
+  /**
+   * Method that return a jwt token generated with the @type, the @authCode and @userDetails.
+   *
+   * @param type type of the token to be generated, usually "tfa" for this method
+   *             ("webapp" | "tfa" | "telegram" supported)
+   * @param authCode two factor authentication code that will be encoded in token
+   * @param userDetails userDetails class that contain username and password to be encoded in token
+   * @return jwt token that will be generated
+   */
+  public String generateTfaToken(String type, int authCode, UserDetails userDetails) {
     Map<String, Object> claims = new HashMap<>();
     claims.put("type", type);
     claims.put("tfa", true);
-    claims.put("auth_code", sixDigitsCode);
+    claims.put("auth_code", authCode);
     return createToken(claims, userDetails.getUsername());
   }
 

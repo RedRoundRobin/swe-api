@@ -41,7 +41,15 @@ public class Device {
   public Device() {
   }
 
-  public Device(int deviceId, String name, int frequency, int gatewayId, int realDeviceId) {
+  /**
+   * Create the device with the @deviceId, @name, @frequency and @realDeviceId.
+   *
+   * @param deviceId Database device id
+   * @param name Name of the device
+   * @param frequency Data request frequency
+   * @param realDeviceId Device id for the gateway
+   */
+  public Device(int deviceId, String name, int frequency, int realDeviceId) {
     this.deviceId = deviceId;
     this.name = name;
     this.frequency = frequency;

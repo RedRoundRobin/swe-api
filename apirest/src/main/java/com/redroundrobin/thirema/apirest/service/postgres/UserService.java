@@ -57,6 +57,16 @@ public class UserService implements UserDetailsService {
         user.getEmail(), user.getPassword(), new ArrayList<>());
   }
 
+  /**
+   * Method that return the UserDetails created with the email furnished as @s and the
+   * password taken from the database.
+   *
+   * @param s the email to create the UserDetails
+   * @return the UserDetails generated from the email and the password.
+   * @throws UsernameNotFoundException thrown if no user with furnished email found.
+   * @throws UserDisabledException thrown if user with furnished email found but the user is
+  disabled.
+   */
   public UserDetails loadUserByEmail(String s)
       throws UsernameNotFoundException, UserDisabledException {
     User user = this.repository.findByEmail(s);
@@ -70,6 +80,15 @@ public class UserService implements UserDetailsService {
         user.getEmail(), user.getPassword(), new ArrayList<>());
   }
 
+  /**
+   * Method that return the UserDetails created with the telegram name furnished as @s and the
+   * chat id taken from the database.
+   *
+   * @param s the telegram name to create the UserDetails
+   * @return the UserDetails generated from the telegram name and the chat id.
+   * @throws UsernameNotFoundException thrown if no telegram name found.
+   * @throws UserDisabledException thrown if telegram name found but the user is disabled.
+   */
   public UserDetails loadUserByTelegramName(String s)
       throws UsernameNotFoundException, UserDisabledException {
     User user = this.repository.findByTelegramName(s);
