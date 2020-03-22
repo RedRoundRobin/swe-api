@@ -9,8 +9,6 @@ import com.redroundrobin.thirema.apirest.models.UserDisabledException;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
-import io.jsonwebtoken.ExpiredJwtException;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -29,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 @RestController
@@ -92,9 +91,17 @@ public class AuthController {
       map.put("chat_id", user.getTelegramChat());
       HttpEntity<Map<String, Object>> entity = new HttpEntity<>(map);
 
-      RestTemplate restTemplate = new RestTemplate();
-      ResponseEntity<String> telegramResponse =
-          restTemplate.postForEntity(telegramUrl, entity, String.class);
+      try {
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<String> telegramResponse =
+            restTemplate.postForEntity(telegramUrl, entity, String.class);
+
+        if (telegramResponse.getStatusCode().value() != 200) {
+          throw new ResourceAccessException("");
+        }
+      } catch (ResourceAccessException rae) {
+        return ResponseEntity.status(500).build();
+      }
 
       response.put("tfa", true);
 
@@ -151,29 +158,6 @@ public class AuthController {
       return ResponseEntity.ok(response);
     } else {
       return ResponseEntity.status(401).build();
-    }
-  }
-
-  @PostMapping(value = "/check")
-  public ResponseEntity<?> tokenValidity(@RequestHeader("Authorization") String authorization) {
-    if (authorization != null) {
-      String token = authorization.substring(7);
-      HashMap<String, Object> response = new HashMap<>();
-
-      try {
-        Date expirationTime = jwtTokenUtil.extractExpiration(token);
-
-        if (expirationTime.after(new Date())) {
-          response.put("valid", true);
-        } else {
-          response.put("valid", false);
-        }
-      } catch (ExpiredJwtException eje) {
-        response.put("valid", false);
-      }
-      return ResponseEntity.ok(response);
-    } else {
-      return ResponseEntity.status(400).build();
     }
   }
 
