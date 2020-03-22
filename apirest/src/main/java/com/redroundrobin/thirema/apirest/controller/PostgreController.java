@@ -1,5 +1,7 @@
 package com.redroundrobin.thirema.apirest.controller;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
@@ -96,9 +98,6 @@ public class PostgreController {
     return userService.find(userId);
   }
 
-  // TODO: 13/03/20 il resto delle api per quanto riguarda, guardare jwt per auth
-
-
   //////////////////////////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////DEBUG///////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -149,7 +148,7 @@ public class PostgreController {
 
   //richiesta fatta da un utente autenticato per vedere i device visibili a un altro utente
   @GetMapping(value = {"/users/{userid:.+}/devices"})
-  public ResponseEntity<?> getUserDevices(@RequestHeader("Authorization") String authorization,
+  public ResponseEntity<Object> getUserDevices(@RequestHeader("Authorization") String authorization,
                                            @PathVariable("userid") int requiredUser) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
@@ -166,7 +165,8 @@ public class PostgreController {
   //dato un token valid restituisce l'ente di appertenenza o tutti gli enti
   //se il token è di un amministratore
   @GetMapping(value = {"/entities"})
-  public ResponseEntity<?> getUserEntity(@RequestHeader("Authorization") String authorization) {
+  public ResponseEntity<Object> getUserEntity(
+      @RequestHeader("Authorization") String authorization) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
     if (user.getType() == 2) {
@@ -180,8 +180,11 @@ public class PostgreController {
 
   //creazione di un nuovo utente
   @PostMapping(value = {"/users/create"})
-  public ResponseEntity<?> createUser(@RequestHeader("Authorization") String authorization,
-                                      @RequestBody User newUser) {
+  public ResponseEntity<Object> createUser(@RequestHeader("Authorization") String authorization,
+                                      @RequestBody JsonObject request) {
+    Gson g = new Gson();
+    User newUser = g.fromJson(request,User.class);
+
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
     if (user.getType() == 2 || user.getType() == 1
@@ -193,8 +196,10 @@ public class PostgreController {
   }
 
   @PutMapping(value = {"/users/edit"})
-  public ResponseEntity<?> editUser(@RequestHeader("Authorization") String authorization,
-                                      @RequestBody User editUser) {
+  public ResponseEntity<Object> editUser(@RequestHeader("Authorization") String authorization,
+                                      @RequestBody JsonObject request) {
+    Gson g = new Gson();
+    User editUser = g.fromJson(request,User.class);
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
     if (userService.find(editUser.getUserId()) != null && user.getType() == 2 || user.getType() == 1
