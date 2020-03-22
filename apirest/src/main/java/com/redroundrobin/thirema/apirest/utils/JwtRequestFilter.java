@@ -37,7 +37,9 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     String type = null;
     String jwt = null;
 
-    if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+    if (!request.getRequestURI().equals("/auth")
+        && !request.getRequestURI().equals("/auth/telegram")
+        && authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
       try {
         jwt = authorizationHeader.substring(7);
         type = jwtUtil.extractType(jwt);
