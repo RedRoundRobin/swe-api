@@ -1,17 +1,23 @@
 package com.redroundrobin.thirema.apirest.models.postgres;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-
-import javax.persistence.*;
 import java.util.List;
 import java.util.Objects;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
 
 @javax.persistence.Entity
 @Table(name = "gateways")
 public class Gateway {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
-  private int gateway_id;
+  @Column(name = "gateway_id")
+  private int gatewayId;
   private String name;
 
   @JsonManagedReference
@@ -22,16 +28,16 @@ public class Gateway {
   }
 
   public Gateway(int gatewayId, String name) {
-    this.gateway_id = gatewayId;
+    this.gatewayId = gatewayId;
     this.name = name;
   }
 
   public int getId() {
-    return gateway_id;
+    return gatewayId;
   }
 
   public void setId(int gatewayId) {
-    this.gateway_id = gatewayId;
+    this.gatewayId = gatewayId;
   }
 
   public String getName() {
@@ -53,7 +59,7 @@ public class Gateway {
   @Override
   public int hashCode() {
     int hash = 7;
-    hash = 79 * hash + this.gateway_id;
+    hash = 79 * hash + this.gatewayId;
     hash = 79 * hash + Objects.hashCode(this.name);
     return hash;
   }
@@ -70,7 +76,7 @@ public class Gateway {
       return false;
     }
     final Gateway other = (Gateway) obj;
-    if (this.gateway_id != other.gateway_id) {
+    if (this.gatewayId != other.gatewayId) {
       return false;
     }
     if (!Objects.equals(this.name, other.name)) {
@@ -82,7 +88,7 @@ public class Gateway {
   @Override
   public String toString() {
     final StringBuilder sb = new StringBuilder("Device{");
-    sb.append("id=").append(gateway_id);
+    sb.append("id=").append(gatewayId);
     sb.append(", name='").append(name).append("'");
     sb.append(", devices=").append(devices);
     sb.append('}');

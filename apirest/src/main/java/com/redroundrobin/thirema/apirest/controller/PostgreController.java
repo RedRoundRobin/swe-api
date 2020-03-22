@@ -4,16 +4,24 @@ import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
-import com.redroundrobin.thirema.apirest.service.postgres.*;
+import com.redroundrobin.thirema.apirest.service.postgres.DeviceService;
+import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
+import com.redroundrobin.thirema.apirest.service.postgres.GatewayService;
+import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
+import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.http.HttpStatus;
-
-import java.util.*;
-
+import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class PostgreController {
@@ -68,10 +76,12 @@ public class PostgreController {
 
   //un sensore di un dispositivo
   @GetMapping(value = {"/device/{deviceid:.+}/sensor/{sensorid:.+}"})
-  public Sensor sensor(@PathVariable("deviceid") int deviceId, @PathVariable("sensorid") int sensorId) {
-    return deviceService.find(deviceId).getSensors().stream().filter(
-        sensor -> sensor.getReal_sensor_id() == sensorId
-    ).collect(Collectors.toList()).get(0);
+  public Sensor sensor(@PathVariable("deviceid") int deviceId,
+                       @PathVariable("sensorid") int sensorId) {
+    return deviceService.find(deviceId).getSensors().stream()
+        .filter(sensor -> sensor.getRealSensorId() == sensorId)
+        .collect(Collectors.toList())
+        .get(0);
   }
 
   //tutti gli user
@@ -89,9 +99,9 @@ public class PostgreController {
   // TODO: 13/03/20 il resto delle api per quanto riguarda, guardare jwt per auth
 
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////DEBUG///////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////DEBUG///////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////////////////////////
 
   //tutti i dispositivi del gateway
   @GetMapping(value = {"/gateway/{gatewayid:.+}/devices"})
@@ -101,7 +111,8 @@ public class PostgreController {
 
   //il dispositivo del gateway
   @GetMapping(value = {"/gateway/{gatewayid:.+}/device/{deviceid:.+}"})
-  public Device gatewayDevice(@PathVariable("gatewayid") int gatewayid, @PathVariable("deviceid") int deviceId) {
+  public Device gatewayDevice(@PathVariable("gatewayid") int gatewayid,
+                              @PathVariable("deviceid") int deviceId) {
     return gatewayService.find(gatewayid).getDevices().stream().filter(
         device -> device.getDeviceId() == deviceId
     ).collect(Collectors.toList()).get(0);
@@ -109,7 +120,8 @@ public class PostgreController {
 
   //tutti i sensori che appartengono al dispositivo del gateway
   @GetMapping(value = {"/gateway/{gatewayid:.+}/device/{deviceid:.+}/sensors"})
-  public List<Sensor> gatewayDeviceSensors(@PathVariable("gatewayid") int gatewayid, @PathVariable("deviceid") int deviceId) {
+  public List<Sensor> gatewayDeviceSensors(@PathVariable("gatewayid") int gatewayid,
+                                           @PathVariable("deviceid") int deviceId) {
     return gatewayService.find(gatewayid).getDevices().stream().filter(
         device -> device.getDeviceId() == deviceId
     ).collect(Collectors.toList()).get(0).getSensors();
@@ -117,11 +129,13 @@ public class PostgreController {
 
   //il sensore che appartiene al dispositivo del gateway
   @GetMapping(value = {"/gateway/{gatewayid:.+}/device/{deviceid:.+}/sensor/{sensorid:.+}"})
-  public Sensor gatewayDeviceSensor(@PathVariable("gatewayid") int gatewayid, @PathVariable("deviceid") int deviceId, @PathVariable("sensorid") int sensorId) {
+  public Sensor gatewayDeviceSensor(@PathVariable("gatewayid") int gatewayid,
+                                    @PathVariable("deviceid") int deviceId,
+                                    @PathVariable("sensorid") int sensorId) {
     return gatewayService.find(gatewayid).getDevices().stream().filter(
         device -> device.getDeviceId() == deviceId
     ).collect(Collectors.toList()).get(0).getSensors().stream().filter(
-        sensor -> sensor.getReal_sensor_id() == sensorId
+        sensor -> sensor.getRealSensorId() == sensorId
     ).collect(Collectors.toList()).get(0);
   }
 
@@ -131,24 +145,21 @@ public class PostgreController {
     return sensorService.findAll();
   }
 
-  //funzione di test
-  @GetMapping(value = {"/test"})
-  public void deviceSensors(@RequestBody Map<String, Object> payload) {
-    System.out.println(payload);
-  }
+  //////////////////////////////////////////////////////////////////////////////////////////////////
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //richiesta fatta da un utente autenticato per vedere i device visibili a un altro utente
   @GetMapping(value = {"/users/{userid:.+}/devices"})
-  public ResponseEntity<?> getUserDevices (@RequestHeader("Authorization") String authorization,
+  public ResponseEntity<?> getUserDevices(@RequestHeader("Authorization") String authorization,
                                            @PathVariable("userid") int requiredUser) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
-    if( user.getUserId() == requiredUser || user.getType() == 2 ||
-        user.getType() == 1 && user.getEntity().getEntityId() ==
-            userService.find(requiredUser).getEntity().getEntityId())
+    if (user.getUserId() == requiredUser || user.getType() == 2
+        || user.getType() == 1 && user.getEntity().getEntityId()
+        == userService.find(requiredUser).getEntity().getEntityId()) {
       return ResponseEntity.ok(userService.userDevices(requiredUser));
-    else return new ResponseEntity(HttpStatus.FORBIDDEN);
+    } else {
+      return new ResponseEntity(HttpStatus.FORBIDDEN);
+    }
   }
 
 
@@ -158,36 +169,40 @@ public class PostgreController {
   public ResponseEntity<?> getUserEntity(@RequestHeader("Authorization") String authorization) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
-    if(user.getType() == 2)
-      return  ResponseEntity.ok(entityService.findAll());
-    //utente moderatore || utente membro
-    return ResponseEntity.ok(user.getEntity());
+    if (user.getType() == 2) {
+      return ResponseEntity.ok(entityService.findAll());
+    } else {
+      //utente moderatore || utente membro
+      return ResponseEntity.ok(user.getEntity());
+    }
   }
 
 
   //creazione di un nuovo utente
   @PostMapping(value = {"/users/create"})
-  public ResponseEntity<?> createUser(@RequestHeader("Authorization") String authorization, @RequestBody User newUser) {
+  public ResponseEntity<?> createUser(@RequestHeader("Authorization") String authorization,
+                                      @RequestBody User newUser) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
-    if(user.getType() == 2 || user.getType() == 1 && user.getEntity().getEntityId() == newUser.getEntity().getEntityId()) {
+    if (user.getType() == 2 || user.getType() == 1
+        && user.getEntity().getEntityId() == newUser.getEntity().getEntityId()) {
       return ResponseEntity.ok(userService.save(newUser));
+    } else {
+      return new ResponseEntity(HttpStatus.FORBIDDEN);
     }
-    return  new ResponseEntity(HttpStatus.FORBIDDEN);
   }
 
-  @PutMapping(value ={"/users/edit"})
+  @PutMapping(value = {"/users/edit"})
   public ResponseEntity<?> editUser(@RequestHeader("Authorization") String authorization,
                                       @RequestBody User editUser) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
-    if(userService.find(editUser.getUserId()) != null && user.getType() == 2 || user.getType() == 1 && user.getEntity().getEntityId() == editUser.getEntity().getEntityId()) {
+    if (userService.find(editUser.getUserId()) != null && user.getType() == 2 || user.getType() == 1
+        && user.getEntity().getEntityId() == editUser.getEntity().getEntityId()) {
       return ResponseEntity.ok(userService.save(editUser));
     }
     return  new ResponseEntity(HttpStatus.FORBIDDEN);
   }
-
-
 }
 
 /*

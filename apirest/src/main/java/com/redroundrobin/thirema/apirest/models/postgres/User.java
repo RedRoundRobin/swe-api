@@ -2,8 +2,13 @@ package com.redroundrobin.thirema.apirest.models.postgres;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 
 @javax.persistence.Entity
 @Table(name = "users")
@@ -11,7 +16,8 @@ public class User {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private int user_id;
+  @Column(name = "user_id")
+  private int userId;
   private String name;
   private String surname;
   private String email;
@@ -27,7 +33,7 @@ public class User {
   private String telegramChat;
 
   @Column(name = "two_factor_authentication")
-  private boolean TFA;
+  private boolean tfa;
   private boolean deleted;
 
   @JsonBackReference
@@ -36,11 +42,11 @@ public class User {
   private Entity entity;
 
   public void setUserId(int userId) {
-    this.user_id = userId;
+    this.userId = userId;
   }
 
   public int getUserId() {
-    return user_id;
+    return userId;
   }
 
   public void setName(String name) {
@@ -99,12 +105,12 @@ public class User {
     return telegramChat;
   }
 
-  public void setTFA(boolean TFA) {
-    this.TFA = TFA;
+  public void setTfa(boolean tfa) {
+    this.tfa = tfa;
   }
 
-  public boolean getTFA() {
-    return this.TFA;
+  public boolean getTfa() {
+    return this.tfa;
   }
 
   public void setDeleted(boolean deleted) {

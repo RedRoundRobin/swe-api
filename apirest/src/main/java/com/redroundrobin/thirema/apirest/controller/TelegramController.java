@@ -5,7 +5,9 @@ import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class TelegramController {
@@ -21,11 +23,11 @@ public class TelegramController {
   public ResponseEntity<?> checkStatus(@RequestHeader("Authorization") String authorization) {
     String token = authorization.substring(7);
 
-    User user = userService.findByTelegramName( jwtTokenUtil.extractUsername(token) );
+    User user = userService.findByTelegramName(jwtTokenUtil.extractUsername(token));
     user.setTelegramChat("");
     user.setTelegramName("");
 
-    return ResponseEntity.ok( user );
+    return ResponseEntity.ok(user);
   }
 }
 

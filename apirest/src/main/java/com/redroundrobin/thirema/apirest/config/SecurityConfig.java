@@ -21,9 +21,22 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
   @Autowired
   private UserService userService;
 
+  @Autowired
+  private JwtRequestFilter jwtRequestFilter;
+
   @Override
   protected void configure(AuthenticationManagerBuilder auth) throws Exception {
     auth.userDetailsService(userService);
+  }
+
+  @Override
+  protected void configure(HttpSecurity http) throws Exception {
+    http.csrf().disable()
+        .authorizeRequests().antMatchers("/auth", "/check","/auth/telegram").permitAll()
+        .anyRequest().authenticated()
+        .and().sessionManagement()
+        .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+    http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
   }
 
   @Bean
@@ -35,18 +48,5 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
   @Bean
   public CustomAuthenticationManager authenticationManagerBean() throws Exception {
     return authenticationManager;
-  }
-
-  @Autowired
-  private JwtRequestFilter jwtRequestFilter;
-
-  @Override
-  protected void configure(HttpSecurity http) throws Exception {
-    http.csrf().disable()
-        .authorizeRequests().antMatchers("/auth", "/check","/auth/telegram").permitAll()
-        .anyRequest().authenticated()
-        .and().sessionManagement()
-        .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-    http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
   }
 }

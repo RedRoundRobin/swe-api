@@ -2,10 +2,17 @@ package com.redroundrobin.thirema.apirest.models.postgres;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-
 import java.util.List;
 import java.util.Objects;
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
 
 @javax.persistence.Entity
 @Table(name = "devices")
@@ -13,11 +20,14 @@ public class Device {
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
-  private int device_id;
+  @Column(name = "device_id")
+  private int deviceId;
 
   private String name;
   private int frequency;
-  private int real_device_id;
+
+  @Column(name = "real_device_id")
+  private int realDeviceId;
 
   @JsonManagedReference
   @OneToMany(mappedBy = "device", cascade = CascadeType.ALL)
@@ -31,19 +41,19 @@ public class Device {
   public Device() {
   }
 
-  public Device(int deviceId, String name, int frequency, int gatewayId, int real_device_id) {
-    this.device_id = deviceId;
+  public Device(int deviceId, String name, int frequency, int gatewayId, int realDeviceId) {
+    this.deviceId = deviceId;
     this.name = name;
     this.frequency = frequency;
-    this.real_device_id = real_device_id;
+    this.realDeviceId = realDeviceId;
   }
 
   public int getDeviceId() {
-    return device_id;
+    return deviceId;
   }
 
   public void setDeviceId(int deviceId) {
-    this.device_id = deviceId;
+    this.deviceId = deviceId;
   }
 
   public String getName() {
@@ -62,12 +72,12 @@ public class Device {
     this.frequency = frequency;
   }
 
-  public int getReal_device_id() {
-    return real_device_id;
+  public int getRealDeviceId() {
+    return realDeviceId;
   }
 
-  public void setReal_device_id(int real_device_id) {
-    this.real_device_id = real_device_id;
+  public void setRealDeviceId(int realDeviceId) {
+    this.realDeviceId = realDeviceId;
   }
 
   public Gateway getGateway() {
@@ -88,33 +98,37 @@ public class Device {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
     Device device = (Device) o;
-    return device_id == device.device_id &&
-        frequency == device.frequency &&
-        real_device_id == device.real_device_id &&
-        Objects.equals(name, device.name);
+    return deviceId == device.deviceId
+        && frequency == device.frequency
+        && realDeviceId == device.realDeviceId
+        && Objects.equals(name, device.name);
   }
 
   @Override
   public int hashCode() {
     int hash = 7;
-    hash = 79 * hash + this.device_id;
+    hash = 79 * hash + this.deviceId;
     hash = 79 * hash + Objects.hashCode(this.name);
     hash = 79 * hash + this.frequency;
-    hash = 79 * hash + this.real_device_id;
+    hash = 79 * hash + this.realDeviceId;
     return hash;
   }
 
   @Override
   public String toString() {
     final StringBuilder sb = new StringBuilder("Device{");
-    sb.append("id=").append(device_id);
+    sb.append("id=").append(deviceId);
     sb.append(", name='").append(name).append("'");
     sb.append(", frequency=").append(frequency);
     sb.append(", sensors=").append(sensors);
-    sb.append(", real_id=").append(real_device_id);
+    sb.append(", real_id=").append(realDeviceId);
     sb.append('}');
     return sb.toString();
   }

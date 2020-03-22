@@ -1,9 +1,13 @@
 package com.redroundrobin.thirema.apirest.models.timescale;
 
-import javax.persistence.*;
 import java.sql.Timestamp;
+import javax.persistence.Column;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
-@Entity
+@javax.persistence.Entity
 @Table(name = "logs")
 public class Logs {
 
@@ -11,15 +15,15 @@ public class Logs {
   @GeneratedValue(strategy = GenerationType.AUTO)
   private Timestamp time;
 
-  @Column(nullable = false)
-  private int log_id;
+  @Column(name = "log_id", nullable = false)
+  private int logId;
 
 
   public Timestamp getTime() {
     return time;
   }
 
-  public int getLog_id() {
-    return log_id;
+  public int getLogId() {
+    return logId;
   }
 }
