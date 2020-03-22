@@ -1,9 +1,8 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
-import java.util.List;
-
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

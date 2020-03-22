@@ -1,10 +1,16 @@
 package com.redroundrobin.thirema.apirest.models.postgres;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-
-import javax.persistence.*;
 import java.util.List;
 import java.util.Objects;
+import javax.persistence.Column;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
 
 @javax.persistence.Entity
 @Table(name = "sensors")
@@ -12,9 +18,12 @@ public class Sensor {
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
-  private int sensor_id;
+  @Column(name = "sensor_id")
+  private int sensorId;
   private String type;
-  private int real_sensor_id;
+
+  @Column(name = "real_sensor_id")
+  private int realSensorId;
 
   @JsonBackReference
   @ManyToOne
@@ -29,18 +38,25 @@ public class Sensor {
   public Sensor() {
   }
 
-  public Sensor(int SensorId, String type, int real_sensor_id, int device_id) {
-    this.sensor_id = SensorId;
+  /**
+   * Create the Sensor with the @sensorId, the @type and the @realSensorId.
+   *
+   * @param sensorId Database sensor id
+   * @param type Type of sensor
+   * @param realSensorId Sensor Id for the device
+   */
+  public Sensor(int sensorId, String type, int realSensorId) {
+    this.sensorId = sensorId;
     this.type = type;
-    this.real_sensor_id = real_sensor_id;
+    this.realSensorId = realSensorId;
   }
 
   public int getSensorId() {
-    return sensor_id;
+    return sensorId;
   }
 
   public void setSensorId(int sensorId) {
-    this.sensor_id = sensorId;
+    this.sensorId = sensorId;
   }
 
   public String getType() {
@@ -51,12 +67,12 @@ public class Sensor {
     this.type = type;
   }
 
-  public int getReal_sensor_id() {
-    return real_sensor_id;
+  public int getRealSensorId() {
+    return realSensorId;
   }
 
-  public void setReal_sensor_id(int real_sensor_id) {
-    this.real_sensor_id = real_sensor_id;
+  public void setRealSensorId(int realSensorId) {
+    this.realSensorId = realSensorId;
   }
 
   public Device getDevice() {
@@ -78,9 +94,9 @@ public class Sensor {
   @Override
   public int hashCode() {
     int hash = 7;
-    hash = 79 * hash + this.sensor_id;
+    hash = 79 * hash + this.sensorId;
     hash = 79 * hash + Objects.hashCode(this.type);
-    hash = 79 * hash + this.real_sensor_id;
+    hash = 79 * hash + this.realSensorId;
     return hash;
   }
 
@@ -96,13 +112,13 @@ public class Sensor {
       return false;
     }
     final Sensor other = (Sensor) obj;
-    if (this.sensor_id != other.sensor_id) {
+    if (this.sensorId != other.sensorId) {
       return false;
     }
     if (!Objects.equals(this.type, other.type)) {
       return false;
     }
-    if (this.real_sensor_id != other.real_sensor_id) {
+    if (this.realSensorId != other.realSensorId) {
       return false;
     }
     return true;
@@ -111,9 +127,9 @@ public class Sensor {
   @Override
   public String toString() {
     final StringBuilder sb = new StringBuilder("Device{");
-    sb.append("id=").append(sensor_id);
+    sb.append("id=").append(sensorId);
     sb.append(", type='").append(type).append("'");
-    sb.append(", real_sensor_id=").append(real_sensor_id);
+    sb.append(", real_sensor_id=").append(realSensorId);
     sb.append('}');
     return sb.toString();
   }

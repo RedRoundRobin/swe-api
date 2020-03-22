@@ -3,14 +3,13 @@ package com.redroundrobin.thirema.apirest.utils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Service;
-
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Service;
 
 @Service
 public class JwtUtil {
@@ -19,13 +18,13 @@ public class JwtUtil {
   private String signingKey;
 
   @Value("${security.encoding-strength}")
-  private String encoding_strength;
+  private String encodingStrength;
 
   @Value("${security.token-expiration}")
-  private int token_expiration;
+  private int tokenExpiration;
 
   @Value("${security.tfa-token-expiration}")
-  private int tfa_token_expiration;
+  private int tfaTokenExpiration;
 
   public String extractUsername(String token) {
     return extractClaim(token, Claims::getSubject);
@@ -43,8 +42,15 @@ public class JwtUtil {
     return extractAllClaims(token).containsKey("tfa");
   }
 
+  /**
+   * Method that return the authCode decoded from token if found, else it throw
+   * IllegalArgumentException.
+   *
+   * @param token of type "tfa" that would contain the auth code encoded
+   * @return the auth code decoded from the token
+   */
   public int extractAuthCode(String token) {
-    if( extractAllClaims(token).containsKey("auth_code") ) {
+    if (extractAllClaims(token).containsKey("auth_code")) {
       return extractAllClaims(token).get("auth_code", Integer.class);
     } else {
       throw new IllegalArgumentException();
@@ -64,24 +70,40 @@ public class JwtUtil {
     return extractExpiration(token).before(new Date());
   }
 
+  /**
+   * Method that return a jwt token generated with the @type and the @userDetails.
+   *
+   * @param type type of the token to be generated ("webapp" | "tfa" | "telegram" supported)
+   * @param userDetails userDetails class that contain username and password to be encoded in token
+   * @return jwt token that will be generated
+   */
   public String generateToken(String type, UserDetails userDetails) {
     Map<String, Object> claims = new HashMap<>();
     claims.put("type", type);
     return createToken(claims, userDetails.getUsername());
   }
 
-  public String generateTfaToken(String type, int sixDigitsCode, UserDetails userDetails) {
+  /**
+   * Method that return a jwt token generated with the @type, the @authCode and @userDetails.
+   *
+   * @param type type of the token to be generated, usually "tfa" for this method
+   *             ("webapp" | "tfa" | "telegram" supported)
+   * @param authCode two factor authentication code that will be encoded in token
+   * @param userDetails userDetails class that contain username and password to be encoded in token
+   * @return jwt token that will be generated
+   */
+  public String generateTfaToken(String type, int authCode, UserDetails userDetails) {
     Map<String, Object> claims = new HashMap<>();
     claims.put("type", type);
     claims.put("tfa", true);
-    claims.put("auth_code", sixDigitsCode);
+    claims.put("auth_code", authCode);
     return createToken(claims, userDetails.getUsername());
   }
 
   private String createToken(Map<String, Object> claims, String subject) {
-    int expiration = token_expiration;
-    if( claims.containsKey("tfa") && (boolean)claims.get("tfa") ) {
-      expiration = tfa_token_expiration;
+    int expiration = tokenExpiration;
+    if (claims.containsKey("tfa") && (boolean)claims.get("tfa")) {
+      expiration = tfaTokenExpiration;
     }
 
     return Jwts.builder()
@@ -89,7 +111,7 @@ public class JwtUtil {
         .setSubject(subject)
         .setIssuedAt(new Date(System.currentTimeMillis()))
         .setExpiration(new Date(System.currentTimeMillis() + (expiration * 1000)))
-        .signWith(SignatureAlgorithm.forName("HS" + encoding_strength), signingKey).compact();
+        .signWith(SignatureAlgorithm.forName("HS" + encodingStrength), signingKey).compact();
   }
 
   public Boolean validateToken(String token, UserDetails userDetails) {

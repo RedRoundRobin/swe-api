@@ -1,9 +1,13 @@
 package com.redroundrobin.thirema.apirest.models.timescale;
 
-import javax.persistence.*;
 import java.sql.Timestamp;
+import javax.persistence.Column;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
-@Entity
+@javax.persistence.Entity
 @Table(name = "sensors")
 public class Sensors {
 
@@ -11,11 +15,11 @@ public class Sensors {
   @GeneratedValue(strategy = GenerationType.AUTO)
   private Timestamp time;
 
-  @Column(nullable = false)
-  private int sensor_id;
+  @Column(name = "sensor_id", nullable = false)
+  private int sensorId;
 
-  @Column(nullable = false)
-  private int device_id;
+  @Column(name = "device_id", nullable = false)
+  private int deviceId;
 
   private double value;
 
@@ -24,12 +28,12 @@ public class Sensors {
     return time;
   }
 
-  public int getSensor_id() {
-    return sensor_id;
+  public int getSensorId() {
+    return sensorId;
   }
 
-  public int getDevice_id() {
-    return device_id;
+  public int getDeviceId() {
+    return deviceId;
   }
 
   public double getValue() {

@@ -1,5 +1,7 @@
 package com.redroundrobin.thirema.apirest.config;
 
+import java.util.HashMap;
+import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,9 +14,6 @@ import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import javax.sql.DataSource;
-import java.util.HashMap;
-
 @Configuration
 @PropertySource({"classpath:application.properties"})
 @EnableJpaRepositories(
@@ -26,6 +25,12 @@ public class TimescaleConfig {
   @Autowired
   private Environment env;
 
+  /**
+   * FactoryBean that creates a JPA EntityManagerFactory for the timescale DB defined in application
+   * properties.
+   *
+   * @return the entityManager for the timescale DB
+   */
   @Bean
   public LocalContainerEntityManagerFactoryBean timescaleEntityManager() {
     LocalContainerEntityManagerFactoryBean em
@@ -47,6 +52,12 @@ public class TimescaleConfig {
     return em;
   }
 
+  /**
+   * Return the dataSource that rapresent a standard Connection object for timescale database
+   * defined in application.properties with the prefix "spring.timescale".
+   *
+   * @return the dataSource configuration for timescale database
+   */
   @Bean
   public DataSource timescaleDataSource() {
 
@@ -62,6 +73,11 @@ public class TimescaleConfig {
     return dataSource;
   }
 
+  /**
+   * Return the PlatformTransactionManager for the timescale connection.
+   *
+   * @return the PlatformTransactionManager for the timescale connection
+   */
   @Bean
   public PlatformTransactionManager timescaleTransactionManager() {
 

@@ -1,5 +1,7 @@
 package com.redroundrobin.thirema.apirest.config;
 
+import java.util.HashMap;
+import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,9 +15,6 @@ import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import javax.sql.DataSource;
-import java.util.HashMap;
-
 @Configuration
 @PropertySource({"classpath:application.properties"})
 @EnableJpaRepositories(
@@ -27,6 +26,12 @@ public class PostgresConfig {
   @Autowired
   private Environment env;
 
+  /**
+   * FactoryBean that creates a JPA EntityManagerFactory for the postgres DB defined in application
+   * properties.
+   *
+   * @return the entityManager for the postgres DB
+   */
   @Bean
   @Primary
   public LocalContainerEntityManagerFactoryBean postgresEntityManager() {
@@ -49,6 +54,12 @@ public class PostgresConfig {
     return em;
   }
 
+  /**
+   * Return the dataSource that rapresent a standard Connection object for postgres database
+   * defined in application.properties with the prefix "spring.postgres".
+   *
+   * @return the dataSource configuration for postgres database
+   */
   @Primary
   @Bean
   public DataSource postgresDataSource() {
@@ -64,6 +75,11 @@ public class PostgresConfig {
     return dataSource;
   }
 
+  /**
+   * Return the PlatformTransactionManager for the postgres db connection.
+   *
+   * @return the PlatformTransactionManager for the postgres db connection
+   */
   @Primary
   @Bean
   public PlatformTransactionManager postgresTransactionManager() {
