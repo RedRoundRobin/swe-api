@@ -71,7 +71,7 @@ public class AuthControllerTest {
   }
 
   @Test
-  public void authenticateSuccessfull() throws Exception {
+  public void authenticationSuccessfull() throws Exception {
     User user = defaultUser();
 
     JSONObject json = new JSONObject();
@@ -95,7 +95,7 @@ public class AuthControllerTest {
   }
 
   @Test
-  public void authenticateError400() throws Exception {
+  public void authenticationError400() throws Exception {
 
     this.defaultUser();
 
@@ -113,7 +113,7 @@ public class AuthControllerTest {
   }
 
   @Test
-  public void authenticateError401() throws Exception {
+  public void authenticationError401() throws Exception {
 
     User user = this.defaultUser();
 
@@ -134,7 +134,7 @@ public class AuthControllerTest {
   }
 
   @Test
-  public void authenticateError403() throws Exception {
+  public void authenticationError403() throws Exception {
 
     User user = this.defaultUser();
     user.setDeleted(true);
@@ -155,9 +155,9 @@ public class AuthControllerTest {
     assertEquals(403, status);
   }
 
-  // Test that work only with telegram
+  // Test that work only with maven test
   @Test
-  public void authenticateReceiveTfaToken() throws Exception {
+  public void authenticationTfaSuccessfull() throws Exception {
 
     User user = this.defaultUser();
     user.setTfa(true);
@@ -190,10 +190,37 @@ public class AuthControllerTest {
     String token = response.get("token").getAsString();
   }
 
-  // Test that work only with telegram
+  // Test that work only with maven test
+  @Test
+  public void authenticationTfaError500() throws Exception {
+
+    User user = this.defaultUser();
+    user.setTfa(true);
+    user.setTelegramName("prova");
+
+    // Creating request to api
+    String uri = "/auth";
+    AuthenticationRequest authenticationRequest = new AuthenticationRequest(user.getEmail(),user.getPassword());
+
+    Gson gson = new Gson();
+    String inputJson = gson.toJson(authenticationRequest);
+
+    MvcResult mvcResult = mockMvc.perform(
+        MockMvcRequestBuilders.post(uri)
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .content(inputJson))
+        .andReturn();
+
+    // Check status and if are present tfa and token
+    int status = mvcResult.getResponse().getStatus();
+    assertEquals(500, status);
+  }
+
+
+
   @WithMockUser
   @Test
-  public void authenticateTfa() throws Exception {
+  public void tfaAuthenticationSuccessfull() throws Exception {
 
     User user = this.defaultUser();
 
@@ -226,8 +253,105 @@ public class AuthControllerTest {
     assertNotNull(response.get("user"));
   }
 
+  @WithMockUser
   @Test
-  public void authenticateTelegramSuccessfull() throws Exception {
+  public void tfaAuthenticationError400NoContent() throws Exception {
+    User user = this.defaultUser();
+
+    String authCode = "456436";
+
+    UserDetails userDetails = userService.loadUserByEmail(user.getEmail());
+
+    String tfaToken = jwtTokenUtil.generateTfaToken("webapp", authCode, userDetails);
+
+    // Creating request to api
+    String uri = "/auth/tfa";
+
+    JSONObject request = new JSONObject();
+    request.put("auth_code", "");
+
+    // check first 400
+    MvcResult mvcResult = mockMvc.perform(
+        MockMvcRequestBuilders
+            .post(uri)
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .header("Authorization","Bearer "+tfaToken)
+            .content(request.toString()))
+        .andReturn();
+
+    // Check status and if are present tfa and token
+    int status = mvcResult.getResponse().getStatus();
+    assertEquals(400, status);
+  }
+
+  @WithMockUser
+  @Test
+  public void tfaAuthenticationError400NoTfaTypeToken() throws Exception {
+    User user = this.defaultUser();
+
+    String authCode = "456436";
+
+    UserDetails userDetails = userService.loadUserByEmail(user.getEmail());
+
+    String tfaToken = jwtTokenUtil.generateToken("webapp", userDetails);
+
+    // Creating request to api
+    String uri = "/auth/tfa";
+
+    JSONObject request = new JSONObject();
+    request.put("auth_code", authCode);
+
+    // check first 400
+
+    MvcResult mvcResult = mockMvc.perform(
+        MockMvcRequestBuilders
+            .post(uri)
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .header("Authorization","Bearer "+tfaToken)
+            .content(request.toString()))
+        .andReturn();
+
+    // Check status and if are present tfa and token
+    int status = mvcResult.getResponse().getStatus();
+    assertEquals(400, status);
+  }
+
+  @WithMockUser
+  @Test
+  public void tfaAuthenticationError401DifferentAuthCode() throws Exception {
+    User user = this.defaultUser();
+
+    String authCode = "456436";
+
+    UserDetails userDetails = userService.loadUserByEmail(user.getEmail());
+
+    String tfaToken = jwtTokenUtil.generateTfaToken("tfa", authCode, userDetails);
+
+    // Creating request to api
+    String uri = "/auth/tfa";
+
+    JSONObject request = new JSONObject();
+    request.put("auth_code", "465757");
+
+    // check first 400
+
+    MvcResult mvcResult = mockMvc.perform(
+        MockMvcRequestBuilders
+            .post(uri)
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .header("Authorization","Bearer "+tfaToken)
+            .content(request.toString()))
+        .andReturn();
+
+    // Check status and if are present tfa and token
+    int status = mvcResult.getResponse().getStatus();
+    assertEquals(401, status);
+  }
+
+
+
+  @Test
+  public void telegramAuthenticationSuccessfull() throws Exception {
 
     User user = this.defaultUser();
     user.setTelegramName("name");
@@ -263,7 +387,7 @@ public class AuthControllerTest {
   }
 
   @Test
-  public void authenticateTelegramCode1() throws Exception {
+  public void telegramAuthenticationCode1() throws Exception {
 
     User user = this.defaultUser();
     user.setTelegramName("name");
@@ -305,7 +429,7 @@ public class AuthControllerTest {
   }
 
   @Test
-  public void authenticateTelegramCode0() throws Exception {
+  public void telegramAuthenticationCode0() throws Exception {
 
     User user = this.defaultUser();
     user.setTelegramName("name");
@@ -340,7 +464,7 @@ public class AuthControllerTest {
   }
 
   @Test
-  public void authenticateTelegramCode0UserDisabled() throws Exception {
+  public void telegramAuthenticationCode0UserDisabled() throws Exception {
 
     User user = this.defaultUser();
     user.setTelegramName("name");
