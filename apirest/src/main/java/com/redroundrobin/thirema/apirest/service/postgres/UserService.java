@@ -106,7 +106,7 @@ public class UserService implements UserDetailsService {
     return new org.springframework.security.core.userdetails.User(
         user.getTelegramName(), user.getTelegramChat(), new ArrayList<>());
   }
-
+/*
   public User editUser(User userToEdit) {
     User oldUser = find(userToEdit.getUserId());
     if((JsonObject)userToEdit.has("name"))
@@ -131,5 +131,5 @@ public class UserService implements UserDetailsService {
       oldUser.setEntity(entityService.find(userToEdit.get("entity_id").getAsInt()));
     return oldUser;
 
-  }
+  }*/
 }

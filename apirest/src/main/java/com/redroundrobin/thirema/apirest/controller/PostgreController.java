@@ -198,7 +198,7 @@ public class PostgreController {
     return new ResponseEntity(HttpStatus.FORBIDDEN);
   }
 
-  @PutMapping(value = {"/users/edit"})
+ /* @PutMapping(value = {"/users/edit"})
   public ResponseEntity<Object> editUser(@RequestHeader("Authorization") String authorization,
                                       @RequestBody JsonObject request) {
     String token = authorization.substring(7);
@@ -209,7 +209,7 @@ public class PostgreController {
       return ResponseEntity.ok(userService.save(editUser));
     }
     return  new ResponseEntity(HttpStatus.FORBIDDEN);
-  }
+  }*/
 }
 
 /*
