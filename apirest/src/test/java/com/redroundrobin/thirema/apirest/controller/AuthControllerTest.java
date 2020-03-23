@@ -8,6 +8,7 @@ import com.redroundrobin.thirema.apirest.models.UserDisabledException;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
+import java.util.ArrayList;
 import org.json.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -17,15 +18,18 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import java.util.ArrayList;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
@@ -57,10 +61,9 @@ public class AuthControllerTest {
     user.setPassword("password");
     user.setType(2);
 
-    when(userService.findByEmail(user.getEmail())).thenReturn(user);
-
     org.springframework.security.core.userdetails.User userD = new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(), new ArrayList<>());
 
+    when(userService.findByEmail(user.getEmail())).thenReturn(user);
     when(userService.loadUserByEmail(user.getEmail())).thenReturn(userD);
 
     return user;
@@ -184,5 +187,40 @@ public class AuthControllerTest {
     assertTrue(response.has("token"));
 
     String token = response.get("token").getAsString();
+  }
+
+  // Test that work only with telegram
+  @WithMockUser
+  @Test
+  public void authenticateTfa() throws Exception {
+
+    User user = this.defaultUser();
+
+    String authCode = "456436";
+
+    UserDetails userDetails = userService.loadUserByEmail(user.getEmail());
+
+    String tfaToken = jwtTokenUtil.generateTfaToken("tfa", authCode, userDetails);
+
+    // Creating request to api
+    String uri = "/auth/tfa";
+
+    JSONObject request = new JSONObject();
+    request.put("auth_code", authCode);
+
+    MvcResult mvcResult = mockMvc.perform(
+        MockMvcRequestBuilders
+            .post(uri)
+            .header("Authorization","Bearer "+tfaToken)
+            .content(request.toString()))
+        .andReturn();
+
+    // Check status and if are present tfa and token
+    int status = mvcResult.getResponse().getStatus();
+    assertEquals(200, status);
+
+    JsonObject response = JsonParser.parseString( mvcResult.getResponse().getContentAsString() ).getAsJsonObject();
+    assertNotEquals(response.get("token").getAsString(),"");
+    assertNotNull(response.get("user"));
   }
 }
