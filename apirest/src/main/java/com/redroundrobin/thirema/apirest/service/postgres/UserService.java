@@ -48,7 +48,7 @@ public class UserService implements UserDetailsService {
 
   @Override
   public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
-    User user = this.repository.findByEmail(s);
+    User user = this.findByEmail(s);
     if (user == null || (user.isDeleted() || (user.getType() != 2
         && (user.getEntity() == null || user.getEntity().isDeleted())))) {
       throw new UsernameNotFoundException("");
@@ -69,7 +69,7 @@ public class UserService implements UserDetailsService {
    */
   public UserDetails loadUserByEmail(String s)
       throws UsernameNotFoundException, UserDisabledException {
-    User user = this.repository.findByEmail(s);
+    User user = this.findByEmail(s);
     if (user == null) {
       throw new UsernameNotFoundException("");
     } else if (user.isDeleted() || (user.getType() != 2
@@ -91,7 +91,7 @@ public class UserService implements UserDetailsService {
    */
   public UserDetails loadUserByTelegramName(String s)
       throws UsernameNotFoundException, UserDisabledException {
-    User user = this.repository.findByTelegramName(s);
+    User user = this.findByTelegramName(s);
     if (user == null) {
       throw new UsernameNotFoundException("");
     } else if (user.isDeleted() || (user.getType() != 2

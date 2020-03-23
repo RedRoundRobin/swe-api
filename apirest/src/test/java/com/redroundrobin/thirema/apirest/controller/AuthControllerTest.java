@@ -8,6 +8,8 @@ import com.redroundrobin.thirema.apirest.models.UserDisabledException;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
+import java.util.ArrayList;
+import org.json.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,15 +18,19 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import java.util.ArrayList;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
@@ -37,10 +43,13 @@ public class AuthControllerTest {
   @MockBean
   UserService userService;
 
+  @Autowired
+  JwtUtil jwtTokenUtil;
+
   @TestConfiguration
   static class AdditionalConfig {
     @Bean
-    public JwtUtil getSomeBean() {
+    public JwtUtil getJwtTokenUtilBean() {
       return new JwtUtil();
     }
   }
@@ -53,29 +62,28 @@ public class AuthControllerTest {
     user.setPassword("password");
     user.setType(2);
 
-    when(userService.findByEmail(user.getEmail())).thenReturn(user);
-
     org.springframework.security.core.userdetails.User userD = new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(), new ArrayList<>());
 
+    when(userService.findByEmail(user.getEmail())).thenReturn(user);
     when(userService.loadUserByEmail(user.getEmail())).thenReturn(userD);
 
     return user;
   }
 
   @Test
-  public void normalAuth() throws Exception {
+  public void authenticationSuccessfull() throws Exception {
     User user = defaultUser();
 
-    AuthenticationRequest authenticationRequest = new AuthenticationRequest(user.getEmail(),user.getPassword());
-
-    Gson gson = new Gson();
-    String inputJson = gson.toJson(authenticationRequest);
+    JSONObject json = new JSONObject();
+    json.put("username",user.getEmail());
+    json.put("password",user.getPassword());
+    System.out.println(json.toString());
 
     MvcResult mvcResult = mockMvc.perform(
       MockMvcRequestBuilders
           .post("/auth")
           .contentType(MediaType.APPLICATION_JSON_VALUE)
-          .content(inputJson))
+          .content(json.toString()))
         .andReturn();
 
     int status = mvcResult.getResponse().getStatus();
@@ -87,7 +95,25 @@ public class AuthControllerTest {
   }
 
   @Test
-  public void addUserToDB_error401() throws Exception {
+  public void authenticationError400() throws Exception {
+
+    this.defaultUser();
+
+    String uri = "/auth";
+    JsonObject request = new JsonObject();
+
+    MvcResult mvcResult = mockMvc.perform(
+        MockMvcRequestBuilders.post(uri)
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .content(request.toString()))
+        .andReturn();
+
+    int status = mvcResult.getResponse().getStatus();
+    assertEquals(400, status);
+  }
+
+  @Test
+  public void authenticationError401() throws Exception {
 
     User user = this.defaultUser();
 
@@ -108,7 +134,7 @@ public class AuthControllerTest {
   }
 
   @Test
-  public void addUserToDB_error403() throws Exception {
+  public void authenticationError403() throws Exception {
 
     User user = this.defaultUser();
     user.setDeleted(true);
@@ -129,12 +155,47 @@ public class AuthControllerTest {
     assertEquals(403, status);
   }
 
-  // Test that work only with telegram
-  /*@Test
-  public void addUserToDB_receive2FA() throws Exception {
+  // Test that work only with maven test
+  @Test
+  public void authenticationTfaSuccessfull() throws Exception {
 
     User user = this.defaultUser();
-    user.setTFA(true);
+    user.setTfa(true);
+    user.setTelegramName("prova");
+    user.setTelegramChat("4365587567");
+
+    // Creating request to api
+    String uri = "/auth";
+    AuthenticationRequest authenticationRequest = new AuthenticationRequest(user.getEmail(),user.getPassword());
+
+    Gson gson = new Gson();
+    String inputJson = gson.toJson(authenticationRequest);
+
+    MvcResult mvcResult = mockMvc.perform(
+        MockMvcRequestBuilders.post(uri)
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .content(inputJson))
+        .andReturn();
+
+    // Check status and if are present tfa and token
+    int status = mvcResult.getResponse().getStatus();
+    assertEquals(200, status);
+
+    JsonObject response = gson.fromJson(
+        mvcResult.getResponse().getContentAsString(), JsonObject.class);
+
+    assertTrue(response.has("tfa"));
+    assertTrue(response.has("token"));
+
+    String token = response.get("token").getAsString();
+  }
+
+  // Test that work only with maven test
+  @Test
+  public void authenticationTfaError500() throws Exception {
+
+    User user = this.defaultUser();
+    user.setTfa(true);
     user.setTelegramName("prova");
 
     // Creating request to api
@@ -150,17 +211,292 @@ public class AuthControllerTest {
             .content(inputJson))
         .andReturn();
 
+    // Check status and if are present tfa and token
+    int status = mvcResult.getResponse().getStatus();
+    assertEquals(500, status);
+  }
+
+
+
+  @WithMockUser
+  @Test
+  public void tfaAuthenticationSuccessfull() throws Exception {
+
+    User user = this.defaultUser();
+
+    String authCode = "456436";
+
+    UserDetails userDetails = userService.loadUserByEmail(user.getEmail());
+
+    String tfaToken = jwtTokenUtil.generateTfaToken("tfa", authCode, userDetails);
+
+    // Creating request to api
+    String uri = "/auth/tfa";
+
+    JSONObject request = new JSONObject();
+    request.put("auth_code", authCode);
+
+    MvcResult mvcResult = mockMvc.perform(
+        MockMvcRequestBuilders
+            .post(uri)
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .header("Authorization","Bearer "+tfaToken)
+            .content(request.toString()))
+        .andReturn();
 
     // Check status and if are present tfa and token
     int status = mvcResult.getResponse().getStatus();
     assertEquals(200, status);
 
-    JsonObject response = gson.fromJson(
-        mvcResult.getResponse().getContentAsString(), JsonObject.class);
+    JsonObject response = JsonParser.parseString( mvcResult.getResponse().getContentAsString() ).getAsJsonObject();
+    assertNotEquals(response.get("token").getAsString(),"");
+    assertNotNull(response.get("user"));
+  }
 
-    assertTrue(response.has("tfa"));
-    assertTrue(response.has("token"));
+  @WithMockUser
+  @Test
+  public void tfaAuthenticationError400NoContent() throws Exception {
+    User user = this.defaultUser();
 
-    String token = response.get("token").getAsString();
-  }*/
+    String authCode = "456436";
+
+    UserDetails userDetails = userService.loadUserByEmail(user.getEmail());
+
+    String tfaToken = jwtTokenUtil.generateTfaToken("webapp", authCode, userDetails);
+
+    // Creating request to api
+    String uri = "/auth/tfa";
+
+    JSONObject request = new JSONObject();
+    request.put("auth_code", "");
+
+    // check first 400
+    MvcResult mvcResult = mockMvc.perform(
+        MockMvcRequestBuilders
+            .post(uri)
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .header("Authorization","Bearer "+tfaToken)
+            .content(request.toString()))
+        .andReturn();
+
+    // Check status and if are present tfa and token
+    int status = mvcResult.getResponse().getStatus();
+    assertEquals(400, status);
+  }
+
+  @WithMockUser
+  @Test
+  public void tfaAuthenticationError400NoTfaTypeToken() throws Exception {
+    User user = this.defaultUser();
+
+    String authCode = "456436";
+
+    UserDetails userDetails = userService.loadUserByEmail(user.getEmail());
+
+    String tfaToken = jwtTokenUtil.generateToken("webapp", userDetails);
+
+    // Creating request to api
+    String uri = "/auth/tfa";
+
+    JSONObject request = new JSONObject();
+    request.put("auth_code", authCode);
+
+    // check first 400
+
+    MvcResult mvcResult = mockMvc.perform(
+        MockMvcRequestBuilders
+            .post(uri)
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .header("Authorization","Bearer "+tfaToken)
+            .content(request.toString()))
+        .andReturn();
+
+    // Check status and if are present tfa and token
+    int status = mvcResult.getResponse().getStatus();
+    assertEquals(400, status);
+  }
+
+  @WithMockUser
+  @Test
+  public void tfaAuthenticationError401DifferentAuthCode() throws Exception {
+    User user = this.defaultUser();
+
+    String authCode = "456436";
+
+    UserDetails userDetails = userService.loadUserByEmail(user.getEmail());
+
+    String tfaToken = jwtTokenUtil.generateTfaToken("tfa", authCode, userDetails);
+
+    // Creating request to api
+    String uri = "/auth/tfa";
+
+    JSONObject request = new JSONObject();
+    request.put("auth_code", "465757");
+
+    // check first 400
+
+    MvcResult mvcResult = mockMvc.perform(
+        MockMvcRequestBuilders
+            .post(uri)
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .header("Authorization","Bearer "+tfaToken)
+            .content(request.toString()))
+        .andReturn();
+
+    // Check status and if are present tfa and token
+    int status = mvcResult.getResponse().getStatus();
+    assertEquals(401, status);
+  }
+
+
+
+  @Test
+  public void telegramAuthenticationSuccessfull() throws Exception {
+
+    User user = this.defaultUser();
+    user.setTelegramName("name");
+    user.setTelegramChat("chat");
+
+    UserDetails userDetails = userService.loadUserByEmail(user.getEmail());
+
+    when(userService.loadUserByTelegramName(user.getTelegramName())).thenReturn(userDetails);
+    when(userService.findByTelegramName(user.getTelegramName())).thenReturn(user);
+    when(userService.findByTelegramNameAndTelegramChat(user.getTelegramName(),user.getTelegramChat())).thenReturn(user);
+
+    // Creating request to api
+    String uri = "/auth/telegram";
+
+    JSONObject request = new JSONObject();
+    request.put("telegramName", user.getTelegramName());
+    request.put("telegramChat", user.getTelegramChat());
+
+    MvcResult mvcResult = mockMvc.perform(
+        MockMvcRequestBuilders
+            .post(uri)
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .content(request.toString()))
+        .andReturn();
+
+    // Check status and if are present tfa and token
+    int status = mvcResult.getResponse().getStatus();
+    assertEquals(200, status);
+
+    JsonObject response = JsonParser.parseString( mvcResult.getResponse().getContentAsString() ).getAsJsonObject();
+    assertNotEquals(response.get("token").getAsString(),"");
+    assertEquals(response.get("code").getAsInt(),2);
+  }
+
+  @Test
+  public void telegramAuthenticationCode1() throws Exception {
+
+    User user = this.defaultUser();
+    user.setTelegramName("name");
+
+    String telegramChat = "asdsgfdhf";
+
+    User userExpected = user;
+    userExpected.setTelegramChat(telegramChat);
+    when(userService.save(user)).thenReturn(userExpected);
+
+    UserDetails userDetails = userService.loadUserByEmail(user.getEmail());
+
+    when(userService.loadUserByTelegramName(user.getTelegramName())).thenReturn(userDetails);
+    when(userService.findByTelegramName(user.getTelegramName())).thenReturn(user);
+    when(userService.findByTelegramNameAndTelegramChat(user.getTelegramName(),telegramChat)).thenReturn(null);
+
+    // Creating request to api
+    String uri = "/auth/telegram";
+
+    JSONObject request = new JSONObject();
+    request.put("telegramName", user.getTelegramName());
+    request.put("telegramChat", telegramChat);
+
+    MvcResult mvcResult = mockMvc.perform(
+        MockMvcRequestBuilders
+            .post(uri)
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .content(request.toString()))
+        .andReturn();
+
+    // Check status and if are present tfa and token
+    int status = mvcResult.getResponse().getStatus();
+    assertEquals(200, status);
+
+    JsonObject response = JsonParser.parseString( mvcResult.getResponse().getContentAsString() ).getAsJsonObject();
+    assertNotEquals(response.get("token").getAsString(),"");
+    assertEquals(response.get("code").getAsInt(),1);
+    assertEquals(userExpected.getTelegramChat(),telegramChat);
+  }
+
+  @Test
+  public void telegramAuthenticationCode0() throws Exception {
+
+    User user = this.defaultUser();
+    user.setTelegramName("name");
+    user.setTelegramChat("chat");
+
+    UserDetails userDetails = userService.loadUserByEmail(user.getEmail());
+
+    when(userService.loadUserByTelegramName(user.getTelegramName())).thenReturn(userDetails);
+    when(userService.findByTelegramName(user.getTelegramName())).thenReturn(null);
+
+    // Creating request to api
+    String uri = "/auth/telegram";
+
+    JSONObject request = new JSONObject();
+    request.put("telegramName", user.getTelegramName());
+    request.put("telegramChat", user.getTelegramChat());
+
+    MvcResult mvcResult = mockMvc.perform(
+        MockMvcRequestBuilders
+            .post(uri)
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .content(request.toString()))
+        .andReturn();
+
+    // Check status and if are present tfa and token
+    int status = mvcResult.getResponse().getStatus();
+    assertEquals(200, status);
+
+    JsonObject response = JsonParser.parseString( mvcResult.getResponse().getContentAsString() ).getAsJsonObject();
+    assertTrue(!response.has("token") || response.get("token").getAsString().isEmpty());
+    assertEquals(response.get("code").getAsInt(),0);
+  }
+
+  @Test
+  public void telegramAuthenticationCode0UserDisabled() throws Exception {
+
+    User user = this.defaultUser();
+    user.setTelegramName("name");
+    user.setTelegramChat("chat");
+    user.setDeleted(true);
+
+    UserDetails userDetails = userService.loadUserByEmail(user.getEmail());
+
+    when(userService.loadUserByTelegramName(user.getTelegramName())).thenThrow(new UserDisabledException());
+    when(userService.findByTelegramName(user.getTelegramName())).thenReturn(user);
+    when(userService.findByTelegramNameAndTelegramChat(user.getTelegramName(),user.getTelegramChat())).thenReturn(user);
+
+    // Creating request to api
+    String uri = "/auth/telegram";
+
+    JSONObject request = new JSONObject();
+    request.put("telegramName", user.getTelegramName());
+    request.put("telegramChat", user.getTelegramChat());
+
+    MvcResult mvcResult = mockMvc.perform(
+        MockMvcRequestBuilders
+            .post(uri)
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .content(request.toString()))
+        .andReturn();
+
+    // Check status and if are present tfa and token
+    int status = mvcResult.getResponse().getStatus();
+    assertEquals(200, status);
+
+    JsonObject response = JsonParser.parseString( mvcResult.getResponse().getContentAsString() ).getAsJsonObject();
+    assertTrue(!response.has("token") || response.get("token").getAsString().isEmpty());
+    assertEquals(response.get("code").getAsInt(),0);
+  }
 }
