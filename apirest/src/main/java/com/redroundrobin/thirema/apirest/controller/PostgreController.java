@@ -198,18 +198,22 @@ public class PostgreController {
     return new ResponseEntity(HttpStatus.FORBIDDEN);
   }
 
- /* @PutMapping(value = {"/users/edit"})
+
+ /*In input prende JsonObject coi field da modificare dello userId*/
+  @PutMapping(value = {"/users/{userid:.+}/edit"})
   public ResponseEntity<Object> editUser(@RequestHeader("Authorization") String authorization,
-                                      @RequestBody JsonObject request) {
+                                      @RequestBody String rawFieldsToEdit, @PathVariable("userid") int userId) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
-    User editUser = serializeNewUser.serializeUser(jsonUser);
-    if (userService.find(editUser.getUserId()) != null && user.getType() == 2 || user.getType() == 1
-        && user.getEntity().getEntityId() == editUser.getEntity().getEntityId()) {
-      return ResponseEntity.ok(userService.save(editUser));
+    JsonObject fieldsToEdit = JsonParser.parseString(rawFieldsToEdit).getAsJsonObject();
+    if (userService.find(userId) != null && user.getType() == 2 || user.getType() == 1
+        && user.getEntity().getEntityId() == userService.find(userId).getEntity().getEntityId()) {
+      User editedUser = userService.editUser(userId, fieldsToEdit);
+      userService.save(editedUser);
+      return ResponseEntity.ok(userService.find(userId));
     }
     return  new ResponseEntity(HttpStatus.FORBIDDEN);
-  }*/
+  }
 }
 
 /*

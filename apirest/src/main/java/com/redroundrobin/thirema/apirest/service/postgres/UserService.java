@@ -106,30 +106,29 @@ public class UserService implements UserDetailsService {
     return new org.springframework.security.core.userdetails.User(
         user.getTelegramName(), user.getTelegramChat(), new ArrayList<>());
   }
-/*
-  public User editUser(User userToEdit) {
-    User oldUser = find(userToEdit.getUserId());
-    if((JsonObject)userToEdit.has("name"))
-      oldUser.setName(userToEdit.getName());
-    if(userToEdit.has("surname"))
-      oldUser.setName(userToEdit.getSurname());
-    if(userToEdit.has("email"))
-      oldUser.setEmail(userToEdit.getEmail());
-    if(userToEdit.has("password"))
-      oldUser.setName(userToEdit.getPassword());
-    if(userToEdit.has("type"))
-      oldUser.setName(userToEdit.getType());
-    if(userToEdit.has("telegram_name"))
-      oldUser.setName(userToEdit.getTelegramName());
-    if(userToEdit.has("telegram_chat"))
-      oldUser.setName(userToEdit.getTelegramChat());
-    if(userToEdit.has("two_factor_authentication"))
-      oldUser.setName(userToEdit.getTfa());
-    if(userToEdit.has("deleted"))
-      oldUser.setName(userToEdit.isDeleted());
-    if(userToEdit.has("entity_id"))
-      oldUser.setEntity(entityService.find(userToEdit.get("entity_id").getAsInt()));
-    return oldUser;
 
-  }*/
+  public User editUser(int userId, JsonObject fieldsToEdit) {
+    User oldUser = find(userId);
+    if(fieldsToEdit.has("name"))
+      oldUser.setName(fieldsToEdit.get("name").getAsString());
+    if(fieldsToEdit.has("surname"))
+      oldUser.setSurname(fieldsToEdit.get("surname").getAsString());
+    if(fieldsToEdit.has("email"))
+      oldUser.setEmail(fieldsToEdit.get("email").getAsString());
+    if(fieldsToEdit.has("password"))
+      oldUser.setPassword(fieldsToEdit.get("password").getAsString());
+    if(fieldsToEdit.has("type"))
+      oldUser.setType(fieldsToEdit.get("type").getAsInt());
+    if(fieldsToEdit.has("telegram_name"))
+      oldUser.setTelegramName(fieldsToEdit.get("telegram_name").getAsString());
+    if(fieldsToEdit.has("telegram_chat"))
+      oldUser.setTelegramChat(fieldsToEdit.get("telegram_chat").getAsString());
+    if(fieldsToEdit.has("two_factor_authentication"))
+      oldUser.setTfa(fieldsToEdit.get("two_factor_authentication").getAsBoolean());
+    if(fieldsToEdit.has("deleted"))
+      oldUser.setDeleted(fieldsToEdit.get("deleted").getAsBoolean());
+    if(fieldsToEdit.has("entity_id"))
+      oldUser.setEntity(entityService.find(fieldsToEdit.get("entity_id").getAsInt()));
+    return oldUser;
+  }
 }
