@@ -338,4 +338,41 @@ public class AuthControllerTest {
     assertTrue(!response.has("token") || response.get("token").getAsString().isEmpty());
     assertEquals(response.get("code").getAsInt(),0);
   }
+
+  @Test
+  public void authenticateTelegramCode0UserDisabled() throws Exception {
+
+    User user = this.defaultUser();
+    user.setTelegramName("name");
+    user.setTelegramChat("chat");
+    user.setDeleted(true);
+
+    UserDetails userDetails = userService.loadUserByEmail(user.getEmail());
+
+    when(userService.loadUserByTelegramName(user.getTelegramName())).thenThrow(new UserDisabledException());
+    when(userService.findByTelegramName(user.getTelegramName())).thenReturn(user);
+    when(userService.findByTelegramNameAndTelegramChat(user.getTelegramName(),user.getTelegramChat())).thenReturn(user);
+
+    // Creating request to api
+    String uri = "/auth/telegram";
+
+    JSONObject request = new JSONObject();
+    request.put("telegramName", user.getTelegramName());
+    request.put("telegramChat", user.getTelegramChat());
+
+    MvcResult mvcResult = mockMvc.perform(
+        MockMvcRequestBuilders
+            .post(uri)
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .content(request.toString()))
+        .andReturn();
+
+    // Check status and if are present tfa and token
+    int status = mvcResult.getResponse().getStatus();
+    assertEquals(200, status);
+
+    JsonObject response = JsonParser.parseString( mvcResult.getResponse().getContentAsString() ).getAsJsonObject();
+    assertTrue(!response.has("token") || response.get("token").getAsString().isEmpty());
+    assertEquals(response.get("code").getAsInt(),0);
+  }
 }
