@@ -7,11 +7,12 @@ import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
 import com.google.gson.JsonObject;
 
 @Service
@@ -58,8 +59,12 @@ public class UserService implements UserDetailsService {
         && (user.getEntity() == null || user.getEntity().isDeleted())))) {
       throw new UsernameNotFoundException("");
     }
+
+    List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
+    grantedAuthorities.add(new SimpleGrantedAuthority(String.valueOf(user.getType())));
+
     return new org.springframework.security.core.userdetails.User(
-        user.getEmail(), user.getPassword(), new ArrayList<>());
+        user.getEmail(), user.getPassword(), grantedAuthorities);
   }
 
   /**
@@ -81,8 +86,12 @@ public class UserService implements UserDetailsService {
         && (user.getEntity() == null || user.getEntity().isDeleted()))) {
       throw new UserDisabledException();
     }
+
+    List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
+    grantedAuthorities.add(new SimpleGrantedAuthority(String.valueOf(user.getType())));
+
     return new org.springframework.security.core.userdetails.User(
-        user.getEmail(), user.getPassword(), new ArrayList<>());
+        user.getEmail(), user.getPassword(), grantedAuthorities);
   }
 
   /**
@@ -103,8 +112,12 @@ public class UserService implements UserDetailsService {
         && (user.getEntity() == null || user.getEntity().isDeleted()))) {
       throw new UserDisabledException();
     }
+
+    List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
+    grantedAuthorities.add(new SimpleGrantedAuthority(String.valueOf(user.getType())));
+
     return new org.springframework.security.core.userdetails.User(
-        user.getTelegramName(), user.getTelegramChat(), new ArrayList<>());
+        user.getTelegramName(), user.getTelegramChat(), grantedAuthorities);
   }
 
   public User editUser(int userId, JsonObject fieldsToEdit) {

@@ -14,6 +14,10 @@ import javax.persistence.Table;
 @Table(name = "users")
 public class User {
 
+  public enum role {
+    USER, MOD, ADMIN;
+  }
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "user_id")
