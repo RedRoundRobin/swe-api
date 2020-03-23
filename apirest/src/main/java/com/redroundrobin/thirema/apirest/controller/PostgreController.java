@@ -2,6 +2,7 @@ package com.redroundrobin.thirema.apirest.controller;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
@@ -25,6 +26,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.redroundrobin.thirema.apirest.utils.SerializeUser;
+
 @RestController
 public class PostgreController {
 
@@ -45,6 +48,9 @@ public class PostgreController {
 
   @Autowired
   private JwtUtil jwtTokenUtil;
+
+  @Autowired
+  private SerializeUser serializeNewUser;
 
   //tutti i gateway
   @GetMapping(value = {"/gateways"})
@@ -148,17 +154,16 @@ public class PostgreController {
 
   //richiesta fatta da un utente autenticato per vedere i device visibili a un altro utente
   @GetMapping(value = {"/users/{userid:.+}/devices"})
-  public ResponseEntity<Object> getUserDevices(@RequestHeader("Authorization") String authorization,
-                                           @PathVariable("userid") int requiredUser) {
+  public ResponseEntity<?> getUserDevices (@RequestHeader("Authorization") String authorization,
+                                           @PathVariable("userid") int requiredUserId) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
-    if (user.getUserId() == requiredUser || user.getType() == 2
-        || user.getType() == 1 && user.getEntity().getEntityId()
-        == userService.find(requiredUser).getEntity().getEntityId()) {
-      return ResponseEntity.ok(userService.userDevices(requiredUser));
-    } else {
-      return new ResponseEntity(HttpStatus.FORBIDDEN);
-    }
+    User requiredUser = userService.find(requiredUserId);
+    if( requiredUser != null && (user.getUserId() == requiredUserId || user.getType() == 2 ||
+        user.getType() == 1 && requiredUser.getType() != 2
+            && user.getEntity().getEntityId() == requiredUser.getEntity().getEntityId()))
+      return ResponseEntity.ok(userService.userDevices(requiredUserId));
+    else return new ResponseEntity(HttpStatus.FORBIDDEN);
   }
 
 
@@ -181,27 +186,24 @@ public class PostgreController {
   //creazione di un nuovo utente
   @PostMapping(value = {"/users/create"})
   public ResponseEntity<Object> createUser(@RequestHeader("Authorization") String authorization,
-                                      @RequestBody JsonObject request) {
-    Gson g = new Gson();
-    User newUser = g.fromJson(request,User.class);
-
+                                      @RequestBody String jsonStringUser) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
+    JsonObject jsonUser = JsonParser.parseString(jsonStringUser).getAsJsonObject();
+    User newUser = serializeNewUser.serializeUser(jsonUser);
     if (user.getType() == 2 || user.getType() == 1
         && user.getEntity().getEntityId() == newUser.getEntity().getEntityId()) {
       return ResponseEntity.ok(userService.save(newUser));
-    } else {
-      return new ResponseEntity(HttpStatus.FORBIDDEN);
     }
+    return new ResponseEntity(HttpStatus.FORBIDDEN);
   }
 
   @PutMapping(value = {"/users/edit"})
   public ResponseEntity<Object> editUser(@RequestHeader("Authorization") String authorization,
                                       @RequestBody JsonObject request) {
-    Gson g = new Gson();
-    User editUser = g.fromJson(request,User.class);
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
+    User editUser = serializeNewUser.serializeUser(jsonUser);
     if (userService.find(editUser.getUserId()) != null && user.getType() == 2 || user.getType() == 1
         && user.getEntity().getEntityId() == editUser.getEntity().getEntityId()) {
       return ResponseEntity.ok(userService.save(editUser));
