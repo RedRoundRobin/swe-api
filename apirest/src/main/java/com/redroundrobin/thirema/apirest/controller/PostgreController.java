@@ -25,7 +25,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.redroundrobin.thirema.apirest.utils.SerializeUser;
 
 @RestController
@@ -41,16 +40,7 @@ public class PostgreController {
   private GatewayService gatewayService;
 
   @Autowired
-  private UserService userService;
-
-  @Autowired
-  private EntityService entityService;
-
-  @Autowired
   private JwtUtil jwtTokenUtil;
-
-  @Autowired
-  private SerializeUser serializeNewUser;
 
   //tutti i gateway
   @GetMapping(value = {"/gateways"})
@@ -92,17 +82,6 @@ public class PostgreController {
         .get(0);
   }
 
-  //tutti gli user
-  @GetMapping(value = {"/users"})
-  public List<User> users() {
-    return userService.findAll();
-  }
-
-  //un determinato user
-  @GetMapping(value = {"/user/{userid:.+}"})
-  public User user(@PathVariable("userid") int userId) {
-    return userService.find(userId);
-  }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////DEBUG///////////////////////////////////////////////
@@ -148,71 +127,6 @@ public class PostgreController {
   @GetMapping(value = {"/sensors"})
   public List<Sensor> sensors() {
     return sensorService.findAll();
-  }
-
-  //////////////////////////////////////////////////////////////////////////////////////////////////
-
-  //richiesta fatta da un utente autenticato per vedere i device visibili a un altro utente
-  @GetMapping(value = {"/users/{userid:.+}/devices"})
-  public ResponseEntity<?> getUserDevices (@RequestHeader("Authorization") String authorization,
-                                           @PathVariable("userid") int requiredUserId) {
-    String token = authorization.substring(7);
-    User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
-    User requiredUser = userService.find(requiredUserId);
-    if( requiredUser != null && (user.getUserId() == requiredUserId || user.getType() == 2 ||
-        user.getType() == 1 && requiredUser.getType() != 2
-            && user.getEntity().getEntityId() == requiredUser.getEntity().getEntityId()))
-      return ResponseEntity.ok(userService.userDevices(requiredUserId));
-    else return new ResponseEntity(HttpStatus.FORBIDDEN);
-  }
-
-
-  //dato un token valid restituisce l'ente di appertenenza o tutti gli enti
-  //se il token è di un amministratore
-  @GetMapping(value = {"/entities"})
-  public ResponseEntity<Object> getUserEntity(
-      @RequestHeader("Authorization") String authorization) {
-    String token = authorization.substring(7);
-    User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
-    if (user.getType() == 2) {
-      return ResponseEntity.ok(entityService.findAll());
-    } else {
-      //utente moderatore || utente membro
-      return ResponseEntity.ok(user.getEntity());
-    }
-  }
-
-
-  //creazione di un nuovo utente
-  @PostMapping(value = {"/users/create"})
-  public ResponseEntity<Object> createUser(@RequestHeader("Authorization") String authorization,
-                                      @RequestBody String jsonStringUser) {
-    String token = authorization.substring(7);
-    User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
-    JsonObject jsonUser = JsonParser.parseString(jsonStringUser).getAsJsonObject();
-    User newUser = serializeNewUser.serializeUser(jsonUser);
-    if (user.getType() == 2 || user.getType() == 1
-        && user.getEntity().getEntityId() == newUser.getEntity().getEntityId()) {
-      return ResponseEntity.ok(userService.save(newUser));
-    }
-    return new ResponseEntity(HttpStatus.FORBIDDEN);
-  }
-
-
- /*In input prende JsonObject coi field da modificare dello userId*/
-  @PutMapping(value = {"/users/{userid:.+}/edit"})
-  public ResponseEntity<Object> editUser(@RequestHeader("Authorization") String authorization,
-                                      @RequestBody String rawFieldsToEdit, @PathVariable("userid") int userId) {
-    String token = authorization.substring(7);
-    User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
-    JsonObject fieldsToEdit = JsonParser.parseString(rawFieldsToEdit).getAsJsonObject();
-    if (userService.find(userId) != null && user.getType() == 2 || user.getType() == 1
-        && user.getEntity().getEntityId() == userService.find(userId).getEntity().getEntityId()) {
-      User editedUser = userService.editUser(userId, fieldsToEdit);
-      userService.save(editedUser);
-      return ResponseEntity.ok(userService.find(userId));
-    }
-    return  new ResponseEntity(HttpStatus.FORBIDDEN);
   }
 }
 
