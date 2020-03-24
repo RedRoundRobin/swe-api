@@ -1,11 +1,16 @@
 package com.redroundrobin.thirema.apirest.models.postgres;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.jsonwebtoken.Claims;
-
-import javax.persistence.*;
-import java.util.function.Function;
+import com.fasterxml.jackson.annotation.JsonValue;
+import javax.persistence.Column;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 
 @javax.persistence.Entity
 @Table(name = "users")
@@ -13,6 +18,11 @@ public class User {
 
   public enum Role {
     USER, MOD, ADMIN;
+
+    @JsonValue
+    public int toValue() {
+      return ordinal();
+    }
   }
 
   @Id
