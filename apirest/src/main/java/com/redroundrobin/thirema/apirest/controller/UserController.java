@@ -63,27 +63,47 @@ public class UserController {
   public ResponseEntity<Object> editUser(@RequestHeader("Authorization") String authorization,
                                          @RequestBody String rawFieldsToEdit, @PathVariable("userid") int userId) {
     String token = authorization.substring(7);
-    User editingUser = userService.findByEmail(jwtTokenUtil.extractUsername(token));
+    String editingUserEmail = jwtTokenUtil.extractUsername(token);
+    User editingUser = userService.findByEmail(editingUserEmail);
     JsonObject fieldsToEdit = JsonParser.parseString(rawFieldsToEdit).getAsJsonObject();
     User userToEdit = userService.find(userId);
 
     if(userToEdit != null) {
+      HashMap<String, Object> response = new HashMap<>();
+
       User user;
       try {
         if (editingUser.getType() == User.Role.ADMIN) {
           user = userService.editByAdministrator(userToEdit, fieldsToEdit);
+          response.put("user", user);
         } else if (editingUser.getUserId() == userToEdit.getUserId()) {
+          Date previousExpiration = jwtTokenUtil.extractExpiration(token);
+
           user = userService.editItself(userToEdit, fieldsToEdit);
+          response.put("user", user);
+
+          if( !user.getEmail().equals(editingUserEmail) ) {
+            try {
+              UserDetails userDetails = userService.loadUserByEmail(user.getEmail());
+              String newToken = jwtTokenUtil.generateTokenWithExpiration("webapp", previousExpiration,userDetails);
+              response.put("token", jwtTokenUtil.generateToken("webapp", userDetails));
+            } catch ( UsernameNotFoundException unfe ) {
+              return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            } catch ( UserDisabledException ude ) {
+              return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+          }
         } else if (editingUser.getType() == User.Role.MOD
             && editingUser.getEntity().equals(userToEdit.getEntity())) {
           user = userService.editByModerator(userToEdit, fieldsToEdit);
+          response.put("user", user);
         } else {
           return new ResponseEntity(HttpStatus.FORBIDDEN);
         }
       } catch (NotAllowedToEditFields natef) {
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
       }
-      return ResponseEntity.ok(user);
+      return ResponseEntity.ok(response);
     } else {
       return new ResponseEntity(HttpStatus.BAD_REQUEST);
     }

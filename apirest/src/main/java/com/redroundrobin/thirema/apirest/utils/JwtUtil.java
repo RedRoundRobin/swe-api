@@ -93,6 +93,21 @@ public class JwtUtil {
   }
 
   /**
+   * Method that return a jwt token generated with the @type, the @expiration and the @userDetails.
+   *
+   * @param type type of the token to be generated ("webapp" | "tfa" | "telegram" supported)
+   * @param expiration time set for the expiration
+   * @param userDetails userDetails class that contain username and password to be encoded in token
+   * @return jwt token that will be generated
+   */
+  public String generateTokenWithExpiration(String type, Date expiration,UserDetails userDetails) {
+    Map<String, Object> claims = new HashMap<>();
+    claims.put("type", type);
+    claims.put("role", String.valueOf( userDetails.getAuthorities().stream().findFirst().toString()));
+    return createTokenWithExpiration(claims, expiration, userDetails.getUsername());
+  }
+
+  /**
    * Method that return a jwt token generated with the @type, the @authCode and @userDetails.
    *
    * @param type type of the token to be generated, usually "tfa" for this method
@@ -120,6 +135,16 @@ public class JwtUtil {
         .setSubject(subject)
         .setIssuedAt(new Date(System.currentTimeMillis()))
         .setExpiration(new Date(System.currentTimeMillis() + (expiration * 1000)))
+        .signWith(SignatureAlgorithm.forName("HS" + encodingStrength), signingKey).compact();
+  }
+
+  private String createTokenWithExpiration(Map<String, Object> claims, Date expiration, String subject) {
+
+    return Jwts.builder()
+        .setClaims(claims)
+        .setSubject(subject)
+        .setIssuedAt(new Date(System.currentTimeMillis()))
+        .setExpiration(expiration)
         .signWith(SignatureAlgorithm.forName("HS" + encodingStrength), signingKey).compact();
   }
 
