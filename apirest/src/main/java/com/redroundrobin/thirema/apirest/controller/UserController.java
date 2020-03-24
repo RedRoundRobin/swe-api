@@ -65,7 +65,7 @@ public class UserController {
     String token = authorization.substring(7);
     User editingUser = userService.findByEmail(jwtTokenUtil.extractUsername(token));
     JsonObject fieldsToEdit = JsonParser.parseString(rawFieldsToEdit).getAsJsonObject();
-    User userToEdit = null;
+    User userToEdit = userService.find(userId);
 
     User user;
     try {
@@ -74,7 +74,7 @@ public class UserController {
       } else if ( editingUser.getUserId() == userToEdit.getUserId() ) {
         user = userService.editItself(userToEdit, fieldsToEdit);
       } else if( editingUser.getType() == User.Role.MOD
-          && editingUser.getEntity().equals(userToEdit.getEntity()) ) {
+          && editingUser.getEntity().getEntityId() == userToEdit.getEntity().getEntityId() ) {
         user = userService.editByModerator(userToEdit, fieldsToEdit);
       } else {
         return new ResponseEntity(HttpStatus.FORBIDDEN);
