@@ -24,7 +24,7 @@ public class CustomAuthenticationManager implements AuthenticationManager {
 
     if (user == null || !password.equals(user.getPassword())) {
       throw new BadCredentialsException("401");
-    } else if (user.isDeleted() || (user.getType() != 2
+    } else if (user.isDeleted() || (user.getType() != User.Role.ADMIN
         && (user.getEntity() == null || user.getEntity().isDeleted()))) {
       throw new DisabledException("403");
     }

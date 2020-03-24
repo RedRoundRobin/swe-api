@@ -36,8 +36,8 @@ public class UserController {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
     User requiredUser = userService.find(requiredUserId);
-    if (requiredUser != null && (user.getUserId() == requiredUserId || user.getType() == 2 ||
-        user.getType() == 1 && requiredUser.getType() != 2
+    if (requiredUser != null && (user.getUserId() == requiredUserId || user.getType() == User.Role.ADMIN ||
+        user.getType() == User.Role.MOD && requiredUser.getType() != User.Role.ADMIN
             && user.getEntity().getEntityId() == requiredUser.getEntity().getEntityId()))
       return ResponseEntity.ok(userService.userDevices(requiredUserId));
     else return new ResponseEntity(HttpStatus.FORBIDDEN);
@@ -51,7 +51,7 @@ public class UserController {
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
     JsonObject jsonUser = JsonParser.parseString(jsonStringUser).getAsJsonObject();
     User newUser = userService.serializeUser(jsonUser, user.getType());
-    if (user.getType() == 2 || user.getType() == 1
+    if (user.getType() == User.Role.ADMIN || user.getType() == User.Role.ADMIN
         && user.getEntity().getEntityId() == newUser.getEntity().getEntityId()) {
       return ResponseEntity.ok(userService.save(newUser));
     }
@@ -66,14 +66,23 @@ public class UserController {
     User editingUser = userService.findByEmail(jwtTokenUtil.extractUsername(token));
     JsonObject fieldsToEdit = JsonParser.parseString(rawFieldsToEdit).getAsJsonObject();
     User userToEdit = null;
-    if (editingUser.getUserId() == userId || ((editingUser.getType() == 2 || editingUser.getType() == 1
-        && editingUser.getEntity().getEntityId() == userService.find(userId).getEntity().getEntityId())
-            && (userToEdit = userService.find(userId)) != null)) {
-      try {userService.editUser(editingUser.getType(), userToEdit, fieldsToEdit);}
-      catch(NotAllowedToEditFields e){return new ResponseEntity(HttpStatus.FORBIDDEN);}
-      return ResponseEntity.ok(userService.save(userToEdit));
+
+    User user;
+    try {
+      if( editingUser.getType() == User.Role.ADMIN ) {
+        user = userService.editByAdministrator(userToEdit, fieldsToEdit);
+      } else if ( editingUser.getUserId() == userToEdit.getUserId() ) {
+        user = userService.editItself(userToEdit, fieldsToEdit);
+      } else if( editingUser.getType() == User.Role.MOD
+          && editingUser.getEntity().equals(userToEdit.getEntity()) ) {
+        user = userService.editByModerator(userToEdit, fieldsToEdit);
+      } else {
+        return new ResponseEntity(HttpStatus.FORBIDDEN);
+      }
+    } catch( NotAllowedToEditFields natef ) {
+      return new ResponseEntity(HttpStatus.BAD_REQUEST);
     }
-    return new ResponseEntity(HttpStatus.FORBIDDEN);
+    return ResponseEntity.ok(user);
   }
 
   //dato un token valido restituisce l'ente di appertenenza o tutti gli enti
@@ -83,7 +92,7 @@ public class UserController {
       @RequestHeader("Authorization") String authorization) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
-    if (user.getType() == 2) {
+    if (user.getType() == User.Role.ADMIN) {
       return ResponseEntity.ok(entityService.findAll());
     } else {
       //utente moderatore || utente membro

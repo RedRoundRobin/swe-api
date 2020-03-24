@@ -1,11 +1,14 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
+import com.google.gson.JsonElement;
 import com.redroundrobin.thirema.apirest.models.UserDisabledException;
 import com.redroundrobin.thirema.apirest.models.postgres.Device;
+import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
-import java.util.ArrayList;
-import java.util.List;
+
+import java.util.*;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -29,79 +32,51 @@ public class UserService implements UserDetailsService {
   @Autowired
   private SerializeUser serializeUser;
 
-  private void editItself(User userToEdit, JsonObject fieldsToEdit)
-      throws NotAllowedToEditFields{
-    if(fieldsToEdit.has("name") || fieldsToEdit.has("surname")
-        || fieldsToEdit.has("user_id") || fieldsToEdit.has("entity_id")
-          || fieldsToEdit.has("type") ||   fieldsToEdit.has("telegram_chat")
-              || fieldsToEdit.has("deleted"))
-      throw new NotAllowedToEditFields("You are not allowed to edit some of the specified fields");
+  private User editAndSave(User userToEdit, JsonObject fieldsToEdit) {
+    Boolean enableableTfa = !fieldsToEdit.has("telegram_name");
 
-    if(fieldsToEdit.has("email"))
-      userToEdit.setEmail(fieldsToEdit.get("email").getAsString());
-    if(fieldsToEdit.has("password"))
-      userToEdit.setPassword(fieldsToEdit.get("password").getAsString());
-    if(fieldsToEdit.has("telegram_name")) {
-      userToEdit.setTelegramName(fieldsToEdit.get("telegram_name").getAsString());
-      /*Fatto perchè lo dice Mariano in #gen_software*/
-      userToEdit.setTfa(false);
-      userToEdit.setTelegramChat(null);
+    for( Map.Entry<String, JsonElement> entry : fieldsToEdit.entrySet() ) {
+      switch (entry.getKey()) {
+        case "name":
+          userToEdit.setName(entry.getValue().getAsString());
+          break;
+        case "surname":
+          userToEdit.setSurname(entry.getValue().getAsString());
+          break;
+        case "email":
+          userToEdit.setEmail(entry.getValue().getAsString());
+          break;
+        case "password":
+          userToEdit.setPassword(entry.getValue().getAsString());
+          break;
+        case "type":
+          try {
+            userToEdit.setType(User.Role.valueOf(entry.getValue().getAsString()));
+          } catch ( IllegalArgumentException iae ) {
+            // il ruole / tipo è diverso da 0, 1, 2
+          }
+          break;
+        case "telegram_name":
+          userToEdit.setTelegramName(entry.getValue().getAsString());
+          userToEdit.setTfa(false);
+          userToEdit.setTelegramChat(null);
+          break;
+        case "two_factor_authentication":
+          if( enableableTfa ) {
+            userToEdit.setTfa(entry.getValue().getAsBoolean());
+          }
+          break;
+        case "deleted":
+          userToEdit.setDeleted(true);
+          break;
+        case "entity_id":
+          Entity entity = entityService.find(entry.getValue().getAsInt());
+          break;
+        default:
+      }
     }
-    if(fieldsToEdit.has("two_factor_authentication"))
-      userToEdit.setTfa(fieldsToEdit.get("two_factor_authentication").getAsBoolean());
-  }
 
-  private void editByModerator(User userToEdit, JsonObject fieldsToEdit)
-      throws NotAllowedToEditFields{
-    if(fieldsToEdit.has("name") || fieldsToEdit.has("password")
-        || fieldsToEdit.has("user_id") || fieldsToEdit.has("telegram_name")
-    || fieldsToEdit.has("type") || fieldsToEdit.has("telegram_chat")
-        || fieldsToEdit.has("two_factor_authentication") || fieldsToEdit.has("entity_id"))
-      throw new NotAllowedToEditFields("You are not allowed to edit some of the specified fields");
-
-    if(fieldsToEdit.has("email"))
-      userToEdit.setEmail(fieldsToEdit.get("email").getAsString());
-    if(fieldsToEdit.has("nome"))
-    userToEdit.setPassword(fieldsToEdit.get("nome").getAsString());
-    if(fieldsToEdit.has("cognome")) {
-      userToEdit.setTelegramName(fieldsToEdit.get("cognome").getAsString());
-    }
-    /*Domanda: si puo riabilitare utente disabilitato? In adr non mi pare ci sia use case al riguardo..!*/
-    if(fieldsToEdit.has("deleted") == true) {
-      userToEdit.setDeleted(true);
-      userToEdit.setEntity(null);
-    }
-  }
-
-  private void editByAdministrator(User userToEdit, JsonObject fieldsToEdit)
-      throws NotAllowedToEditFields{
-    if(fieldsToEdit.has("user_id"))
-      throw new NotAllowedToEditFields("You are not allowed to edit some of the specified fields");
-    if(fieldsToEdit.has("name"))
-      userToEdit.setName(fieldsToEdit.get("name").getAsString());
-    if(fieldsToEdit.has("surname"))
-      userToEdit.setSurname(fieldsToEdit.get("surname").getAsString());
-    if(fieldsToEdit.has("email"))
-      userToEdit.setEmail(fieldsToEdit.get("email").getAsString());
-    if(fieldsToEdit.has("password")) //Reset password? Cosa significa?
-      userToEdit.setPassword(fieldsToEdit.get("password").getAsString());
-    if(fieldsToEdit.has("type"))
-      userToEdit.setType(fieldsToEdit.get("type").getAsInt());
-    if(fieldsToEdit.has("telegram_name")) {
-      userToEdit.setTelegramName(fieldsToEdit.get("telegram_name").getAsString());
-      userToEdit.setTfa(false);
-      userToEdit.setTelegramChat(null);
-    }
-    if(fieldsToEdit.has("telegram_chat"))
-      userToEdit.setTelegramChat(fieldsToEdit.get("telegram_chat").getAsString());
-    if(fieldsToEdit.has("two_factor_authentication"))
-      userToEdit.setTfa(fieldsToEdit.get("two_factor_authentication").getAsBoolean());
-    if(fieldsToEdit.has("deleted") == true) {
-      userToEdit.setDeleted(true);
-      userToEdit.setEntity(null);
-    }
-    if(fieldsToEdit.has("entity_id"))
-      userToEdit.setEntity(entityService.find(fieldsToEdit.get("entity_id").getAsInt()));
+    return save(userToEdit);
   }
 
   public List<User> findAll() {
@@ -135,7 +110,7 @@ public class UserService implements UserDetailsService {
   @Override
   public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
     User user = this.repository.findByEmail(s);
-    if (user == null || (user.isDeleted() || (user.getType() != 2
+    if (user == null || (user.isDeleted() || (user.getType() != User.Role.ADMIN
         && (user.getEntity() == null || user.getEntity().isDeleted())))) {
       throw new UsernameNotFoundException("");
     }
@@ -162,7 +137,7 @@ public class UserService implements UserDetailsService {
     User user = this.repository.findByEmail(s);
     if (user == null) {
       throw new UsernameNotFoundException("");
-    } else if (user.isDeleted() || (user.getType() != 2
+    } else if (user.isDeleted() || (user.getType() != User.Role.ADMIN
         && (user.getEntity() == null || user.getEntity().isDeleted()))) {
       throw new UserDisabledException();
     }
@@ -188,7 +163,7 @@ public class UserService implements UserDetailsService {
     User user = this.repository.findByTelegramName(s);
     if (user == null) {
       throw new UsernameNotFoundException("");
-    } else if (user.isDeleted() || (user.getType() != 2
+    } else if (user.isDeleted() || (user.getType() != User.Role.ADMIN
         && (user.getEntity() == null || user.getEntity().isDeleted()))) {
       throw new UserDisabledException();
     }
@@ -200,16 +175,69 @@ public class UserService implements UserDetailsService {
         user.getTelegramName(), user.getTelegramChat(), grantedAuthorities);
   }
 
-  public void editUser(int editingUserType, User userToEdit, JsonObject fieldsToEdit)
-      throws NotAllowedToEditFields{
-    switch(editingUserType)  {
-      case 0 : editItself(userToEdit, fieldsToEdit);
-      case 1 : editByModerator(userToEdit, fieldsToEdit);
-      case 2 : editByAdministrator(userToEdit, fieldsToEdit);
+  public User serializeUser(JsonObject rawUser, User.Role type) {
+    return serializeUser.serializeUser(rawUser, type);
+  }
+
+  public User editItself(User userToEdit, JsonObject fieldsToEdit)
+      throws NotAllowedToEditFields {
+    Set<String> allowed = new HashSet<>();
+    allowed.add("email");
+    allowed.add("password");
+    allowed.add("telegram_name");
+    allowed.add("two_factor_authentication");
+
+    boolean onlyEditableKeys = fieldsToEdit.keySet().stream()
+        .filter(key -> !allowed.contains(key))
+        .count() == 0;
+
+    if(!onlyEditableKeys) {
+      throw new NotAllowedToEditFields("You are not allowed to edit some of the specified fields");
+    } else {
+      return this.editAndSave(userToEdit, fieldsToEdit);
     }
   }
 
-  public User serializeUser(JsonObject rawUser, int type) {
-    return serializeUser.serializeUser(rawUser, type);
+  public User editByModerator(User userToEdit, JsonObject fieldsToEdit)
+      throws NotAllowedToEditFields{
+    Set<String> allowed = new HashSet<>();
+    allowed.add("email");
+    allowed.add("name");
+    allowed.add("surname");
+    allowed.add("deleted");
+
+    boolean onlyEditableKeys = fieldsToEdit.keySet().stream()
+        .filter(key -> !allowed.contains(key))
+        .count() == 0;
+
+    if(!onlyEditableKeys) {
+      throw new NotAllowedToEditFields("You are not allowed to edit some of the specified fields");
+    } else {
+      return this.editAndSave(userToEdit, fieldsToEdit);
+    }
   }
+
+  public User editByAdministrator(User userToEdit, JsonObject fieldsToEdit)
+      throws NotAllowedToEditFields{
+    Set<String> allowed = new HashSet<>();
+    allowed.add("name");
+    allowed.add("surname");
+    allowed.add("email");
+    allowed.add("type");
+    allowed.add("telegram_name");
+    allowed.add("two_factor_authentication");
+    allowed.add("deleted");
+    allowed.add("entity_id");
+
+    boolean onlyEditableKeys = fieldsToEdit.keySet().stream()
+        .filter(key -> !allowed.contains(key))
+        .count() == 0;
+
+    if(!onlyEditableKeys) {
+      throw new NotAllowedToEditFields("You are not allowed to edit some of the specified fields");
+    } else {
+      return this.editAndSave(userToEdit, fieldsToEdit);
+    }
+  }
+
 }

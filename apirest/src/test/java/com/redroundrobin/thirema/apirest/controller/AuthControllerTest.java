@@ -51,7 +51,7 @@ public class AuthControllerTest {
     user.setSurname("user");
     user.setEmail("email@test.it");
     user.setPassword("password");
-    user.setType(2);
+    user.setType(User.Role.ADMIN);
 
     when(userService.findByEmail(user.getEmail())).thenReturn(user);
 

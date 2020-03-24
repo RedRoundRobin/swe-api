@@ -18,13 +18,13 @@ public class SerializeUser {
   private EntityService entityService;
 
 
-  public User serializeUser(JsonObject rawUser, int type) {
+  public User serializeUser(JsonObject rawUser, User.Role type) {
     User newUser= new User();
     newUser.setName(rawUser.get("name").getAsString());
     newUser.setSurname(rawUser.get("surname").getAsString());
     newUser.setEmail(rawUser.get("email").getAsString());
-    if(type == 2) {
-      newUser.setType(rawUser.get("type").getAsInt());
+    if(type == User.Role.ADMIN) {
+      newUser.setType(User.Role.valueOf(rawUser.get("type").getAsString()));
       newUser.setEntity( entityService.find(rawUser.get("entity_id").getAsInt()));
     }
     /*manca distinzione sui campi che potrebbero essere null! Se no eccezione*/
