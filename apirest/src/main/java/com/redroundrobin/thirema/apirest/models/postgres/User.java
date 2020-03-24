@@ -2,6 +2,7 @@ package com.redroundrobin.thirema.apirest.models.postgres;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonValue;
 import io.jsonwebtoken.Claims;
 
 import javax.persistence.*;
@@ -13,6 +14,11 @@ public class User {
 
   public enum Role {
     USER, MOD, ADMIN;
+
+    @JsonValue
+    public int toValue() {
+      return ordinal();
+    }
   }
 
   @Id
