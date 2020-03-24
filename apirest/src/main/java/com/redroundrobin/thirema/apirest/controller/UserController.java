@@ -65,24 +65,28 @@ public class UserController {
     String token = authorization.substring(7);
     User editingUser = userService.findByEmail(jwtTokenUtil.extractUsername(token));
     JsonObject fieldsToEdit = JsonParser.parseString(rawFieldsToEdit).getAsJsonObject();
-    User userToEdit = null;
+    User userToEdit = userService.find(userId);
 
-    User user;
-    try {
-      if( editingUser.getType() == User.Role.ADMIN ) {
-        user = userService.editByAdministrator(userToEdit, fieldsToEdit);
-      } else if ( editingUser.getUserId() == userToEdit.getUserId() ) {
-        user = userService.editItself(userToEdit, fieldsToEdit);
-      } else if( editingUser.getType() == User.Role.MOD
-          && editingUser.getEntity().equals(userToEdit.getEntity()) ) {
-        user = userService.editByModerator(userToEdit, fieldsToEdit);
-      } else {
-        return new ResponseEntity(HttpStatus.FORBIDDEN);
+    if(userToEdit != null) {
+      User user;
+      try {
+        if (editingUser.getType() == User.Role.ADMIN) {
+          user = userService.editByAdministrator(userToEdit, fieldsToEdit);
+        } else if (editingUser.getUserId() == userToEdit.getUserId()) {
+          user = userService.editItself(userToEdit, fieldsToEdit);
+        } else if (editingUser.getType() == User.Role.MOD
+            && editingUser.getEntity().equals(userToEdit.getEntity())) {
+          user = userService.editByModerator(userToEdit, fieldsToEdit);
+        } else {
+          return new ResponseEntity(HttpStatus.FORBIDDEN);
+        }
+      } catch (NotAllowedToEditFields natef) {
+        return new ResponseEntity(HttpStatus.BAD_REQUEST);
       }
-    } catch( NotAllowedToEditFields natef ) {
+      return ResponseEntity.ok(user);
+    } else {
       return new ResponseEntity(HttpStatus.BAD_REQUEST);
     }
-    return ResponseEntity.ok(user);
   }
 
   //dato un token valido restituisce l'ente di appertenenza o tutti gli enti
