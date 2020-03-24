@@ -108,7 +108,7 @@ public class UserController {
       @RequestHeader("Authorization") String authorization, @PathVariable("userId") int userId )  {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
-    if (user.getType() == 2) {
+    if (user.getType() == User.Role.ADMIN) {
       return ResponseEntity.ok(entityService.findAll());
     }
     else{
