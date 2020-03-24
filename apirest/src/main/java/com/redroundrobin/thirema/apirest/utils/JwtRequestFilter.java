@@ -39,6 +39,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
     if (!request.getRequestURI().equals("/auth")
         && !request.getRequestURI().equals("/auth/telegram")
+        && !request.getRequestURI().equals("/test")
         && authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
       try {
         jwt = authorizationHeader.substring(7);

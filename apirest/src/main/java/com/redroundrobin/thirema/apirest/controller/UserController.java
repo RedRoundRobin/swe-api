@@ -155,4 +155,10 @@ public class UserController {
   public User user(@PathVariable("userid") int userId) {
     return userService.find(userId);
   }
+
+  //un determinato user
+  @GetMapping(value = {"/test"})
+  public ResponseEntity<String> user() {
+    return ResponseEntity.status(409).body("Errore");
+  }
 }
