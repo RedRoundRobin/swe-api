@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
+import com.redroundrobin.thirema.apirest.utils.SerializeUser;
 
 @RestController
 public class PostgreController {
@@ -27,9 +28,6 @@ public class PostgreController {
 
   @Autowired
   private GatewayService gatewayService;
-
-  @Autowired
-  private UserService userService;
 
   @Autowired
   private JwtUtil jwtTokenUtil;
@@ -74,17 +72,6 @@ public class PostgreController {
         .get(0);
   }
 
-  //tutti gli user
-  @GetMapping(value = {"/users"})
-  public List<User> users() {
-    return userService.findAll();
-  }
-
-  //un determinato user
-  @GetMapping(value = {"/user/{userid:.+}"})
-  public User user(@PathVariable("userid") int userId) {
-    return userService.find(userId);
-  }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////DEBUG///////////////////////////////////////////////

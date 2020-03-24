@@ -6,6 +6,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.Column;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
@@ -14,6 +15,7 @@ import javax.persistence.Table;
 public class Alert {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
+  @Column(name = "alert_id")
   private int alertId;
   private double threshold;
   private int type;
