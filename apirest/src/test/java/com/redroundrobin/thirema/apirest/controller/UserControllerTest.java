@@ -302,4 +302,33 @@ public class UserControllerTest {
     int status = mvcResult.getResponse().getStatus();
     assertEquals(403, status);
   }
+
+  @WithMockUser
+  @Test
+  public void editUserNotFoundError400() throws Exception {
+
+    User user = this.modUser();
+
+    UserDetails userDetails = userService.loadUserByEmail(user.getEmail());
+
+    String tfaToken = jwtTokenUtil.generateToken("webapp", userDetails);
+
+    // Creating request to api
+    String uri = "/users/3/edit";
+
+    JsonObject request = new JsonObject();
+    request.add("telegram_name", new JsonPrimitive("ciao"));
+
+    MvcResult mvcResult = mockMvc.perform(
+        MockMvcRequestBuilders
+            .put(uri)
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .header("Authorization","Bearer "+tfaToken)
+            .content(request.toString()))
+        .andReturn();
+
+    // Check status and if are present tfa and token
+    int status = mvcResult.getResponse().getStatus();
+    assertEquals(400, status);
+  }
 }
