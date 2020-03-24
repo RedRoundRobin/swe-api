@@ -1,6 +1,5 @@
 package com.redroundrobin.thirema.apirest.controller;
 
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
@@ -10,7 +9,7 @@ import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
-import com.redroundrobin.thirema.apirest.utils.NotAllowedToEditFields;
+import com.redroundrobin.thirema.apirest.utils.exception.*;
 import org.json.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -19,7 +18,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.EnableLoadTimeWeaving;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -32,6 +31,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -63,7 +63,9 @@ public class UserControllerTest {
     }
   }
 
-  private User adminUser() throws UsernameNotFoundException, UserDisabledException, NotAllowedToEditFields {
+  private User adminUser() throws UsernameNotFoundException, UserDisabledException,
+      NotAllowedToEditException, KeysNotFoundException, EntityNotFoundException,
+      TfaNotPermittedException, UserRoleNotFoundException {
     User editingUser = new User();
     editingUser.setName("user");
     editingUser.setSurname("user");
@@ -87,7 +89,8 @@ public class UserControllerTest {
     return editingUser;
   }
 
-  private User modUser() throws UsernameNotFoundException, UserDisabledException, NotAllowedToEditFields {
+  private User modUser() throws UsernameNotFoundException, UserDisabledException,
+      NotAllowedToEditException, KeysNotFoundException {
     Entity entity = new Entity();
     entity.setEntityId(1);
 
@@ -144,7 +147,7 @@ public class UserControllerTest {
     assertEquals(200, status);
 
     JsonObject response = JsonParser.parseString( mvcResult.getResponse().getContentAsString() ).getAsJsonObject();
-    assertNotNull(response.get("userId"));
+    assertNotNull(response.get("user"));
   }
 
   @WithMockUser
@@ -165,7 +168,7 @@ public class UserControllerTest {
 
     JsonObject json = new JsonObject();
     json.add("user_id", new JsonPrimitive(1));
-    when(userService.editByAdministrator(user, json)).thenThrow(new NotAllowedToEditFields(""));
+    when(userService.editByAdministrator(user, json)).thenThrow(new NotAllowedToEditException(""));
 
     MvcResult mvcResult = mockMvc.perform(
         MockMvcRequestBuilders
@@ -177,7 +180,7 @@ public class UserControllerTest {
 
     // Check status and if are present tfa and token
     int status = mvcResult.getResponse().getStatus();
-    assertEquals(400, status);
+    assertEquals(403, status);
   }
 
   @WithMockUser
@@ -186,8 +189,18 @@ public class UserControllerTest {
 
     User user = this.modUser();
 
+    User editedUser = this.modUser();
+    editedUser.setEmail("ciao");
+
     when(userService.find(1)).thenReturn(user);
-    when(userService.editItself(eq(user), any(JsonObject.class))).thenReturn(user);
+    when(userService.editItself(eq(user), any(JsonObject.class))).thenReturn(editedUser);
+
+    List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
+    grantedAuthorities.add(new SimpleGrantedAuthority(String.valueOf(user.getType())));
+
+    when(userService.loadUserByEmail(editedUser.getEmail())).thenReturn(
+        new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(),
+            grantedAuthorities));
 
     UserDetails userDetails = userService.loadUserByEmail(user.getEmail());
 
@@ -197,7 +210,7 @@ public class UserControllerTest {
     String uri = "/users/1/edit";
 
     JsonObject request = new JsonObject();
-    request.add("telegram_name", new JsonPrimitive("ciao"));
+    request.add("email", new JsonPrimitive("ciao"));
 
     MvcResult mvcResult = mockMvc.perform(
         MockMvcRequestBuilders
@@ -212,7 +225,7 @@ public class UserControllerTest {
     assertEquals(200, status);
 
     JsonObject response = JsonParser.parseString( mvcResult.getResponse().getContentAsString() ).getAsJsonObject();
-    assertNotNull(response.get("userId"));
+    assertNotNull(response.get("user"));
   }
 
   @WithMockUser
@@ -256,51 +269,7 @@ public class UserControllerTest {
     assertEquals(200, status);
 
     JsonObject response = JsonParser.parseString( mvcResult.getResponse().getContentAsString() ).getAsJsonObject();
-    assertNotNull(response.get("userId"));
-  }
-
-  @WithMockUser
-  @Test
-  public void editUserByModError403() throws Exception {
-
-    User user = this.modUser();
-
-    Entity entity1 = new Entity();
-    entity1.setEntityId(2);
-
-    User user2 = new User();
-    user2.setUserId(3);
-    user2.setName("user");
-    user2.setSurname("user");
-    user2.setEmail("email2@test.it");
-    user2.setPassword("password");
-    user2.setType(User.Role.USER);
-    user2.setEntity(entity1);
-
-    when(userService.find(3)).thenReturn(user2);
-    when(userService.editByModerator(eq(user2), any(JsonObject.class))).thenThrow(new NotAllowedToEditFields(""));
-
-    UserDetails userDetails = userService.loadUserByEmail(user.getEmail());
-
-    String tfaToken = jwtTokenUtil.generateToken("webapp", userDetails);
-
-    // Creating request to api
-    String uri = "/users/3/edit";
-
-    JsonObject request = new JsonObject();
-    request.add("telegram_name", new JsonPrimitive("ciao"));
-
-    MvcResult mvcResult = mockMvc.perform(
-        MockMvcRequestBuilders
-            .put(uri)
-            .contentType(MediaType.APPLICATION_JSON_VALUE)
-            .header("Authorization","Bearer "+tfaToken)
-            .content(request.toString()))
-        .andReturn();
-
-    // Check status and if are present tfa and token
-    int status = mvcResult.getResponse().getStatus();
-    assertEquals(403, status);
+    assertNotNull(response.get("user"));
   }
 
   @WithMockUser
@@ -330,5 +299,203 @@ public class UserControllerTest {
     // Check status and if are present tfa and token
     int status = mvcResult.getResponse().getStatus();
     assertEquals(400, status);
+  }
+
+  @WithMockUser
+  @Test
+  public void editModItselfTooLongValueError400() throws Exception {
+
+    User user = this.modUser();
+
+    User editedUser = this.modUser();
+    editedUser.setTelegramName("ciao");
+
+    when(userService.find(1)).thenReturn(user);
+    when(userService.editItself(eq(user), any(JsonObject.class))).thenThrow(
+        new DataIntegrityViolationException("ERROR: value too long for type character varying(32)"));
+
+    UserDetails userDetails = userService.loadUserByEmail(user.getEmail());
+
+    String tfaToken = jwtTokenUtil.generateToken("webapp", userDetails);
+
+    // Creating request to api
+    String uri = "/users/1/edit";
+
+    JsonObject request = new JsonObject();
+    request.add("telegram_name", new JsonPrimitive("ciao"));
+
+    MvcResult mvcResult = mockMvc.perform(
+        MockMvcRequestBuilders
+            .put(uri)
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .header("Authorization","Bearer "+tfaToken)
+            .content(request.toString()))
+        .andReturn();
+
+    // Check status and if are present tfa and token
+    int status = mvcResult.getResponse().getStatus();
+    assertEquals(400, status);
+  }
+
+  @WithMockUser
+  @Test
+  public void editModItselfEntityNotFoundError400() throws Exception {
+
+    User user = this.modUser();
+
+    User editedUser = this.modUser();
+    editedUser.setTelegramName("ciao");
+
+    when(userService.find(1)).thenReturn(user);
+    when(userService.editItself(eq(user), any(JsonObject.class))).thenThrow(
+        new EntityNotFoundException(""));
+
+    UserDetails userDetails = userService.loadUserByEmail(user.getEmail());
+
+    String tfaToken = jwtTokenUtil.generateToken("webapp", userDetails);
+
+    // Creating request to api
+    String uri = "/users/1/edit";
+
+    JsonObject request = new JsonObject();
+    request.add("telegram_name", new JsonPrimitive("ciao"));
+
+    MvcResult mvcResult = mockMvc.perform(
+        MockMvcRequestBuilders
+            .put(uri)
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .header("Authorization","Bearer "+tfaToken)
+            .content(request.toString()))
+        .andReturn();
+
+    // Check status and if are present tfa and token
+    int status = mvcResult.getResponse().getStatus();
+    assertEquals(400, status);
+  }
+
+  @WithMockUser
+  @Test
+  public void editUserByModNotAllowedError403() throws Exception {
+
+    User user = this.modUser();
+
+    Entity entity1 = new Entity();
+    entity1.setEntityId(2);
+
+    User user2 = new User();
+    user2.setUserId(3);
+    user2.setName("user");
+    user2.setSurname("user");
+    user2.setEmail("email2@test.it");
+    user2.setPassword("password");
+    user2.setType(User.Role.USER);
+    user2.setEntity(entity1);
+
+    when(userService.find(3)).thenReturn(user2);
+    when(userService.editByModerator(eq(user2), any(JsonObject.class))).thenThrow(new NotAllowedToEditException(""));
+
+    UserDetails userDetails = userService.loadUserByEmail(user.getEmail());
+
+    String tfaToken = jwtTokenUtil.generateToken("webapp", userDetails);
+
+    // Creating request to api
+    String uri = "/users/3/edit";
+
+    JsonObject request = new JsonObject();
+    request.add("telegram_name", new JsonPrimitive("ciao"));
+
+    MvcResult mvcResult = mockMvc.perform(
+        MockMvcRequestBuilders
+            .put(uri)
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .header("Authorization","Bearer "+tfaToken)
+            .content(request.toString()))
+        .andReturn();
+
+    // Check status and if are present tfa and token
+    int status = mvcResult.getResponse().getStatus();
+    assertEquals(403, status);
+  }
+
+  @WithMockUser
+  @Test
+  public void editModItselfDuplicateTelegramNameError409() throws Exception {
+
+    User user = this.modUser();
+
+    User editedUser = this.modUser();
+    editedUser.setTelegramName("ciao");
+
+    when(userService.find(1)).thenReturn(user);
+    when(userService.editItself(eq(user), any(JsonObject.class))).thenThrow(
+        new DataIntegrityViolationException("ERROR: "
+        + "duplicate key value violates unique constraint \"unique_telegram_name\"\n"
+        + "  Dettaglio: Key (telegram_name)=(Fritz20) already exists."));
+
+    UserDetails userDetails = userService.loadUserByEmail(user.getEmail());
+
+    String tfaToken = jwtTokenUtil.generateToken("webapp", userDetails);
+
+    // Creating request to api
+    String uri = "/users/1/edit";
+
+    JsonObject request = new JsonObject();
+    request.add("telegram_name", new JsonPrimitive("ciao"));
+
+    MvcResult mvcResult = mockMvc.perform(
+        MockMvcRequestBuilders
+            .put(uri)
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .header("Authorization","Bearer "+tfaToken)
+            .content(request.toString()))
+        .andReturn();
+
+    // Check status and if are present tfa and token
+    int status = mvcResult.getResponse().getStatus();
+    assertEquals(409, status);
+
+    String response = mvcResult.getResponse().getContentAsString();
+    assertEquals("The value of telegram_name already exists", response);
+  }
+
+  @WithMockUser
+  @Test
+  public void editModItselfTfaNotPermittedError409() throws Exception {
+
+    User user = this.modUser();
+
+    User editedUser = this.modUser();
+    editedUser.setTelegramName("ciao");
+
+    when(userService.find(1)).thenReturn(user);
+    when(userService.editItself(eq(user), any(JsonObject.class))).thenThrow(
+        new TfaNotPermittedException("TFA can't be edited because either telegram_name is "
+            + "in the request or telegram chat not present"));
+
+    UserDetails userDetails = userService.loadUserByEmail(user.getEmail());
+
+    String tfaToken = jwtTokenUtil.generateToken("webapp", userDetails);
+
+    // Creating request to api
+    String uri = "/users/1/edit";
+
+    JsonObject request = new JsonObject();
+    request.add("telegram_name", new JsonPrimitive("ciao"));
+
+    MvcResult mvcResult = mockMvc.perform(
+        MockMvcRequestBuilders
+            .put(uri)
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .header("Authorization","Bearer "+tfaToken)
+            .content(request.toString()))
+        .andReturn();
+
+    // Check status and if are present tfa and token
+    int status = mvcResult.getResponse().getStatus();
+    assertEquals(409, status);
+
+    String response = mvcResult.getResponse().getContentAsString();
+    assertEquals("TFA can't be edited because either telegram_name is "
+        + "in the request or telegram chat not present", response);
   }
 }

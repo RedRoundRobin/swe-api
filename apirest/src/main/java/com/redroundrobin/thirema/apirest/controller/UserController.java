@@ -6,12 +6,12 @@ import com.redroundrobin.thirema.apirest.models.UserDisabledException;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
-import com.redroundrobin.thirema.apirest.utils.EntityNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.EntityNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
-import com.redroundrobin.thirema.apirest.utils.KeysNotFoundException;
-import com.redroundrobin.thirema.apirest.utils.NotAllowedToEditFields;
-import com.redroundrobin.thirema.apirest.utils.TfaNotPermittedException;
-import com.redroundrobin.thirema.apirest.utils.UserRoleNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.NotAllowedToEditException;
+import com.redroundrobin.thirema.apirest.utils.exception.TfaNotPermittedException;
+import com.redroundrobin.thirema.apirest.utils.exception.UserRoleNotFoundException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -105,11 +105,9 @@ public class UserController {
               UserDetails userDetails = userService.loadUserByEmail(user.getEmail());
               String newToken = jwtTokenUtil.generateTokenWithExpiration("webapp",
                   previousExpiration,userDetails);
-              response.put("token", jwtTokenUtil.generateToken("webapp", userDetails));
+              response.put("token", newToken);
             } catch (UsernameNotFoundException unfe) {
               return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            } catch (UserDisabledException ude) {
-              return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
           }
         } else if (editingUser.getType() == User.Role.MOD
@@ -119,7 +117,7 @@ public class UserController {
         } else {
           return new ResponseEntity(HttpStatus.FORBIDDEN);
         }
-      } catch (NotAllowedToEditFields natef) {
+      } catch (NotAllowedToEditException | UserDisabledException natef) {
         return new ResponseEntity(HttpStatus.FORBIDDEN);
       } catch (DataIntegrityViolationException dive) {
         if (dive.getMostSpecificCause().getMessage()

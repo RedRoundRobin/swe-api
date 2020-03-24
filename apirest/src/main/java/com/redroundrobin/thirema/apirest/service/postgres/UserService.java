@@ -6,12 +6,12 @@ import com.redroundrobin.thirema.apirest.models.UserDisabledException;
 import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
-import com.redroundrobin.thirema.apirest.utils.EntityNotFoundException;
-import com.redroundrobin.thirema.apirest.utils.KeysNotFoundException;
-import com.redroundrobin.thirema.apirest.utils.NotAllowedToEditFields;
+import com.redroundrobin.thirema.apirest.utils.exception.EntityNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.NotAllowedToEditException;
 import com.redroundrobin.thirema.apirest.utils.SerializeUser;
-import com.redroundrobin.thirema.apirest.utils.TfaNotPermittedException;
-import com.redroundrobin.thirema.apirest.utils.UserRoleNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.TfaNotPermittedException;
+import com.redroundrobin.thirema.apirest.utils.exception.UserRoleNotFoundException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -245,33 +245,33 @@ public class UserService implements UserDetailsService {
   }
 
   public User editItself(User userToEdit, JsonObject fieldsToEdit)
-      throws NotAllowedToEditFields, KeysNotFoundException, EntityNotFoundException,
+      throws NotAllowedToEditException, KeysNotFoundException, EntityNotFoundException,
       TfaNotPermittedException, UserRoleNotFoundException {
 
     if (!checkFieldsEditable(User.Role.USER, fieldsToEdit.keySet())) {
-      throw new NotAllowedToEditFields("You are not allowed to edit some of the specified fields");
+      throw new NotAllowedToEditException("You are not allowed to edit some of the specified fields");
     } else {
       return this.editAndSave(userToEdit, fieldsToEdit);
     }
   }
 
   public User editByModerator(User userToEdit, JsonObject fieldsToEdit)
-      throws NotAllowedToEditFields, KeysNotFoundException, EntityNotFoundException,
+      throws NotAllowedToEditException, KeysNotFoundException, EntityNotFoundException,
       TfaNotPermittedException, UserRoleNotFoundException {
 
     if (!checkFieldsEditable(User.Role.MOD, fieldsToEdit.keySet())) {
-      throw new NotAllowedToEditFields("You are not allowed to edit some of the specified fields");
+      throw new NotAllowedToEditException("You are not allowed to edit some of the specified fields");
     } else {
       return this.editAndSave(userToEdit, fieldsToEdit);
     }
   }
 
   public User editByAdministrator(User userToEdit, JsonObject fieldsToEdit)
-      throws NotAllowedToEditFields, KeysNotFoundException, EntityNotFoundException,
+      throws NotAllowedToEditException, KeysNotFoundException, EntityNotFoundException,
       TfaNotPermittedException, UserRoleNotFoundException {
 
     if (!checkFieldsEditable(User.Role.ADMIN, fieldsToEdit.keySet())) {
-      throw new NotAllowedToEditFields("You are not allowed to edit some of the specified fields");
+      throw new NotAllowedToEditException("You are not allowed to edit some of the specified fields");
     } else {
       return this.editAndSave(userToEdit, fieldsToEdit);
     }
