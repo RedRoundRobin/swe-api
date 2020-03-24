@@ -57,9 +57,9 @@ public class JwtUtil {
    * @param token of type "tfa" that would contain the auth code encoded
    * @return the auth code decoded from the token
    */
-  public int extractAuthCode(String token) {
+  public String extractAuthCode(String token) {
     if (extractAllClaims(token).containsKey("auth_code")) {
-      return extractAllClaims(token).get("auth_code", Integer.class);
+      return extractAllClaims(token).get("auth_code", String.class);
     } else {
       throw new IllegalArgumentException();
     }
@@ -101,7 +101,7 @@ public class JwtUtil {
    * @param userDetails userDetails class that contain username and password to be encoded in token
    * @return jwt token that will be generated
    */
-  public String generateTfaToken(String type, int authCode, UserDetails userDetails) {
+  public String generateTfaToken(String type, String authCode, UserDetails userDetails) {
     Map<String, Object> claims = new HashMap<>();
     claims.put("type", type);
     claims.put("tfa", true);

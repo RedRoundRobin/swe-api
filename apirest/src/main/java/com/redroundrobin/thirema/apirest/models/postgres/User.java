@@ -22,8 +22,6 @@ public class User {
   private String name;
   private String surname;
   private String email;
-
-  @JsonIgnore
   private String password;
 
   @Enumerated(EnumType.ORDINAL)
