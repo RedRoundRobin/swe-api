@@ -78,16 +78,36 @@ public class UserController {
 
   //dato un token valido restituisce l'ente di appertenenza o tutti gli enti
   //se il token è di un amministratore
-  @GetMapping(value = {"users/{userId:.+}/entities"})
-  public ResponseEntity<Object> getUserEntity(
+  @GetMapping(value = {"users/entities"})
+  public ResponseEntity<Object> getAnotherUserEntity(
       @RequestHeader("Authorization") String authorization) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
     if (user.getType() == 2) {
       return ResponseEntity.ok(entityService.findAll());
-    } else {
+    }
+    else {
       //utente moderatore || utente membro
       return ResponseEntity.ok(user.getEntity());
+    }
+  }
+
+  //dato un token valido restituisce l'ente di appertenenza o tutti gli enti
+  //se il token è di un amministratore
+  @GetMapping(value = {"users/{userId:.+}/entities"})
+  public ResponseEntity<Object> getUserEntity(
+      @RequestHeader("Authorization") String authorization, @PathVariable("userId") int userId )  {
+    String token = authorization.substring(7);
+    User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
+    if (user.getType() == 2) {
+      return ResponseEntity.ok(entityService.findAll());
+    }
+    else{
+      User userToRetrieve = userService.find(userId);
+      if(userToRetrieve != null &&
+                userToRetrieve.getEntity().getEntityId() == user.getEntity().getEntityId())
+        return ResponseEntity.ok(user.getEntity());
+      return new ResponseEntity(HttpStatus.FORBIDDEN);
     }
   }
 
