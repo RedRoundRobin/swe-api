@@ -88,7 +88,8 @@ public class JwtUtil {
   public String generateToken(String type, UserDetails userDetails) {
     Map<String, Object> claims = new HashMap<>();
     claims.put("type", type);
-    claims.put("role", String.valueOf( userDetails.getAuthorities().stream().findFirst().toString()));
+    claims.put("role",
+        String.valueOf(userDetails.getAuthorities().stream().findFirst().toString()));
     return createToken(claims, userDetails.getUsername());
   }
 
@@ -103,7 +104,8 @@ public class JwtUtil {
   public String generateTokenWithExpiration(String type, Date expiration,UserDetails userDetails) {
     Map<String, Object> claims = new HashMap<>();
     claims.put("type", type);
-    claims.put("role", String.valueOf( userDetails.getAuthorities().stream().findFirst().toString()));
+    claims.put("role",
+        String.valueOf(userDetails.getAuthorities().stream().findFirst().toString()));
     return createTokenWithExpiration(claims, expiration, userDetails.getUsername());
   }
 
@@ -138,7 +140,8 @@ public class JwtUtil {
         .signWith(SignatureAlgorithm.forName("HS" + encodingStrength), signingKey).compact();
   }
 
-  private String createTokenWithExpiration(Map<String, Object> claims, Date expiration, String subject) {
+  private String createTokenWithExpiration(Map<String, Object> claims, Date expiration,
+                                           String subject) {
 
     return Jwts.builder()
         .setClaims(claims)
