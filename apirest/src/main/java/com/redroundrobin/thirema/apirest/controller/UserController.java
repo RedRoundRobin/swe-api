@@ -34,14 +34,18 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class UserController {
 
-  @Autowired
   private JwtUtil jwtTokenUtil;
 
-  @Autowired
   private UserService userService;
 
-  @Autowired
   private EntityService entityService;
+
+  @Autowired
+  public UserController(JwtUtil jwtTokenUtil, UserService userService, EntityService entityService) {
+    this.jwtTokenUtil = jwtTokenUtil;
+    this.userService = userService;
+    this.entityService = entityService;
+  }
 
   //richiesta fatta da un utente autenticato per vedere i device visibili a un altro utente
   @GetMapping(value = {"/users/{userid:.+}/devices"})
@@ -91,37 +95,31 @@ public class UserController {
 
       User user;
       try {
-        if (editingUser.getType() == User.Role.ADMIN) {
+        if (editingUser.getType() == User.Role.ADMIN && editingUser.getUserId() != userToEdit.getUserId()) {
           user = userService.editByAdministrator(userToEdit, fieldsToEdit);
-          response.put("user", user);
         } else if (editingUser.getUserId() == userToEdit.getUserId()) {
           Date previousExpiration = jwtTokenUtil.extractExpiration(token);
 
           user = userService.editItself(userToEdit, fieldsToEdit);
-          response.put("user", user);
 
           if (!user.getEmail().equals(editingUserEmail)) {
-            try {
-              UserDetails userDetails = userService.loadUserByEmail(user.getEmail());
-              String newToken = jwtTokenUtil.generateTokenWithExpiration("webapp",
-                  previousExpiration,userDetails);
-              response.put("token", newToken);
-            } catch (UsernameNotFoundException unfe) {
-              return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
+            String newToken = jwtTokenUtil.generateTokenWithExpiration("webapp",
+                previousExpiration, userService.loadUserByEmail(user.getEmail()));
+            response.put("token", newToken);
           }
         } else if (editingUser.getType() == User.Role.MOD
             && editingUser.getEntity().equals(userToEdit.getEntity())) {
           user = userService.editByModerator(userToEdit, fieldsToEdit);
-          response.put("user", user);
         } else {
           return new ResponseEntity(HttpStatus.FORBIDDEN);
         }
+      } catch (UsernameNotFoundException unfe) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
       } catch (NotAllowedToEditException | UserDisabledException natef) {
         return new ResponseEntity(HttpStatus.FORBIDDEN);
       } catch (DataIntegrityViolationException dive) {
         if (dive.getMostSpecificCause().getMessage()
-            .contains("duplicate key value violates unique constraint")) {
+            .startsWith("ERROR: duplicate key value violates unique constraint")) {
 
           Pattern pattern = Pattern.compile("Key \\((.+)\\)=\\((.+)\\) already exists");
           Matcher matcher = pattern.matcher(dive.getMostSpecificCause().getMessage());
@@ -139,6 +137,7 @@ public class UserController {
       } catch (TfaNotPermittedException tnpe) {
         return new ResponseEntity(tnpe.getMessage(),HttpStatus.CONFLICT);
       }
+      response.put("user",user);
       return ResponseEntity.ok(response);
     } else {
       return new ResponseEntity(HttpStatus.BAD_REQUEST);
