@@ -37,7 +37,7 @@ public class UserService implements UserDetailsService {
   @Autowired
   private SerializeUser serializeUser;
 
-  private boolean checkFieldsEditable(User.Role role, Set<String> keys)
+  private boolean checkFieldsEditable(User.Role role, boolean itself, Set<String> keys)
       throws KeysNotFoundException {
     Set<String> editable = new HashSet<>();
     editable.add("name");
@@ -59,14 +59,22 @@ public class UserService implements UserDetailsService {
     } else {
       switch (role) {
         case ADMIN:
-          editable.remove("password");
+          if (itself) {
+            editable.remove("type");
+            editable.remove("deleted");
+            editable.remove("entity_id");
+          }
 
           break;
         case MOD:
-          editable.remove("password");
+          if (itself) {
+            editable.remove("deleted");
+          } else {
+            editable.remove("password");
+            editable.remove("telegram_name");
+            editable.remove("two_factor_authentication");
+          }
           editable.remove("type");
-          editable.remove("telegram_name");
-          editable.remove("two_factor_authentication");
           editable.remove("entity_id");
 
           break;
@@ -76,6 +84,7 @@ public class UserService implements UserDetailsService {
           editable.remove("type");
           editable.remove("deleted");
           editable.remove("entity_id");
+
           break;
         default:
           editable.clear();
@@ -120,7 +129,7 @@ public class UserService implements UserDetailsService {
           try {
             userToEdit.setType(User.Role.valueOf(entry.getValue().getAsString()));
           } catch (IllegalArgumentException iae) {
-            throw new UserRoleNotFoundException("The inserted role doesn't exist");
+            throw new UserRoleNotFoundException("The inserted role is not found");
           }
           break;
         case "telegram_name":
@@ -244,11 +253,11 @@ public class UserService implements UserDetailsService {
     return serializeUser.serializeUser(rawUser, type);
   }
 
-  public User editItself(User userToEdit, JsonObject fieldsToEdit)
+  public User editByUser(User userToEdit, JsonObject fieldsToEdit)
       throws NotAllowedToEditException, KeysNotFoundException, EntityNotFoundException,
       TfaNotPermittedException, UserRoleNotFoundException {
 
-    if (!checkFieldsEditable(User.Role.USER, fieldsToEdit.keySet())) {
+    if (!checkFieldsEditable(User.Role.USER, true, fieldsToEdit.keySet())) {
       throw new NotAllowedToEditException(
           "You are not allowed to edit some of the specified fields");
     } else {
@@ -256,11 +265,11 @@ public class UserService implements UserDetailsService {
     }
   }
 
-  public User editByModerator(User userToEdit, JsonObject fieldsToEdit)
+  public User editByModerator(User userToEdit, boolean itself, JsonObject fieldsToEdit)
       throws NotAllowedToEditException, KeysNotFoundException, EntityNotFoundException,
       TfaNotPermittedException, UserRoleNotFoundException {
 
-    if (!checkFieldsEditable(User.Role.MOD, fieldsToEdit.keySet())) {
+    if (!checkFieldsEditable(User.Role.MOD, itself, fieldsToEdit.keySet())) {
       throw new NotAllowedToEditException(
           "You are not allowed to edit some of the specified fields");
     } else {
@@ -268,11 +277,11 @@ public class UserService implements UserDetailsService {
     }
   }
 
-  public User editByAdministrator(User userToEdit, JsonObject fieldsToEdit)
+  public User editByAdministrator(User userToEdit, boolean itself, JsonObject fieldsToEdit)
       throws NotAllowedToEditException, KeysNotFoundException, EntityNotFoundException,
       TfaNotPermittedException, UserRoleNotFoundException {
 
-    if (!checkFieldsEditable(User.Role.ADMIN, fieldsToEdit.keySet())) {
+    if (!checkFieldsEditable(User.Role.ADMIN, itself, fieldsToEdit.keySet())) {
       throw new NotAllowedToEditException(
           "You are not allowed to edit some of the specified fields");
     } else {

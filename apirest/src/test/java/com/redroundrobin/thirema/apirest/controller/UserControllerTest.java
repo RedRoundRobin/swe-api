@@ -62,13 +62,17 @@ public class UserControllerTest {
 
   private UserController userController;
 
-  private String adminToken = "adminToken";
+  private String admin1Token = "admin1Token";
+  private String admin2Token = "admin2Token";
   private String mod1Token = "mod1Token";
+  private String mod11Token = "mod11Token";
   private String user1Token = "user1Token";
   private String user2Token = "user2Token";
 
-  private User admin;
+  private User admin1;
+  private User admin2;
   private User mod1;
+  private User mod11;
   private User user1;
   private User user2;
 
@@ -76,19 +80,27 @@ public class UserControllerTest {
   public void setUp() {
     userController = new UserController(jwtTokenUtil, userService, entityService);
 
-    admin = new User();
-    admin.setUserId(1);
-    admin.setName("admin");
-    admin.setSurname("admin");
-    admin.setEmail("admin");
-    admin.setPassword("password");
-    admin.setType(User.Role.ADMIN);
+    admin1 = new User();
+    admin1.setUserId(1);
+    admin1.setName("admin1");
+    admin1.setSurname("admin1");
+    admin1.setEmail("admin1");
+    admin1.setPassword("password");
+    admin1.setType(User.Role.ADMIN);
+
+    admin2 = new User();
+    admin2.setUserId(2);
+    admin2.setName("admin2");
+    admin2.setSurname("admin2");
+    admin2.setEmail("admin2");
+    admin2.setPassword("password");
+    admin2.setType(User.Role.ADMIN);
 
     Entity entity1 = new Entity();
     entity1.setEntityId(1);
 
     mod1 = new User();
-    mod1.setUserId(2);
+    mod1.setUserId(3);
     mod1.setName("mod1");
     mod1.setSurname("mod1");
     mod1.setEmail("mod1");
@@ -96,8 +108,17 @@ public class UserControllerTest {
     mod1.setType(User.Role.MOD);
     mod1.setEntity(entity1);
 
+    mod11 = new User();
+    mod11.setUserId(4);
+    mod11.setName("mod11");
+    mod11.setSurname("mod11");
+    mod11.setEmail("mod11");
+    mod11.setPassword("password");
+    mod11.setType(User.Role.MOD);
+    mod11.setEntity(entity1);
+
     user1 = new User();
-    user1.setUserId(3);
+    user1.setUserId(5);
     user1.setName("user1");
     user1.setSurname("user1");
     user1.setEmail("user1");
@@ -109,7 +130,7 @@ public class UserControllerTest {
     entity2.setEntityId(2);
 
     user2 = new User();
-    user2.setUserId(4);
+    user2.setUserId(6);
     user2.setName("user2");
     user2.setSurname("user2");
     user2.setEmail("user2");
@@ -117,13 +138,21 @@ public class UserControllerTest {
     user2.setType(User.Role.USER);
     user2.setEntity(entity2);
 
-    when(jwtTokenUtil.extractUsername(adminToken)).thenReturn(admin.getEmail());
-    when(userService.findByEmail(admin.getEmail())).thenReturn(admin);
-    when(userService.find(admin.getUserId())).thenReturn(admin);
+    when(jwtTokenUtil.extractUsername(admin1Token)).thenReturn(admin1.getEmail());
+    when(userService.findByEmail(admin1.getEmail())).thenReturn(admin1);
+    when(userService.find(admin1.getUserId())).thenReturn(admin1);
+
+    when(jwtTokenUtil.extractUsername(admin2Token)).thenReturn(admin2.getEmail());
+    when(userService.findByEmail(admin2.getEmail())).thenReturn(admin2);
+    when(userService.find(admin2.getUserId())).thenReturn(admin2);
 
     when(jwtTokenUtil.extractUsername(mod1Token)).thenReturn(mod1.getEmail());
     when(userService.findByEmail(mod1.getEmail())).thenReturn(mod1);
     when(userService.find(mod1.getUserId())).thenReturn(mod1);
+
+    when(jwtTokenUtil.extractUsername(mod11Token)).thenReturn(mod11.getEmail());
+    when(userService.findByEmail(mod11.getEmail())).thenReturn(mod11);
+    when(userService.find(mod11.getUserId())).thenReturn(mod11);
 
     when(jwtTokenUtil.extractUsername(user1Token)).thenReturn(user1.getEmail());
     when(userService.findByEmail(user1.getEmail())).thenReturn(user1);
@@ -152,17 +181,30 @@ public class UserControllerTest {
   }
 
   @Test
-  public void editUser1ByAdminUserNotExistError400() throws Exception {
+  public void editAdmin2ByAdmin1EditNotAllowedError403() throws Exception {
 
-    String token = "token";
+    JSONObject request = new JSONObject();
+    request.put("email", "newemail");
+
+    ResponseEntity response = userController.editUser("Bearer " + admin1Token,
+        request.toString(), admin2.getUserId());
+
+    ResponseEntity expected = new ResponseEntity(HttpStatus.FORBIDDEN);
+
+    // Check status and if are present tfa and token
+    assertEquals(expected, response);
+  }
+
+  @Test
+  public void editUser1ByAdmin1UserNotExistError400() throws Exception {
 
     when(userService.find(5)).thenReturn(null);
 
     JSONObject request = new JSONObject();
     request.put("email", "newemail");
 
-    ResponseEntity response = userController.editUser("Bearer " + token,
-        request.toString(), 5);
+    ResponseEntity response = userController.editUser("Bearer " + admin1Token,
+        request.toString(), 10);
 
     ResponseEntity expected = new ResponseEntity(HttpStatus.BAD_REQUEST);
 
@@ -171,28 +213,26 @@ public class UserControllerTest {
   }
 
   @Test
-  public void editAdminByItSelfUsernameNotFoundError403() throws Exception {
+  public void editUser1ByItSelfUsernameNotFoundError401() throws Exception {
 
     String newPassword = "fghmjyktsyd";
     String newEmail = "fghmjyktsyd";
-    User editedAdmin = cloneUser(admin);
-    editedAdmin.setEmail(newEmail);
-    editedAdmin.setPassword(newPassword);
+    User editedUser1 = cloneUser(user1);
+    editedUser1.setEmail(newEmail);
+    editedUser1.setPassword(newPassword);
 
-    when(jwtTokenUtil.extractExpiration(adminToken)).thenReturn(new Date());
+    when(jwtTokenUtil.extractExpiration(user1Token)).thenReturn(new Date());
 
-    when(userService.editItself(eq(admin), any(JsonObject.class))).thenReturn(editedAdmin);
+    when(userService.editByUser(eq(user1), any(JsonObject.class))).thenReturn(editedUser1);
 
-    when(userService.loadUserByEmail(editedAdmin.getEmail())).thenThrow(new UsernameNotFoundException(""));
+    when(userService.loadUserByEmail(editedUser1.getEmail())).thenThrow(new UsernameNotFoundException(""));
 
     JSONObject request = new JSONObject();
     request.put("password", "newpassword");
 
-    ResponseEntity response = userController.editUser("Bearer " + adminToken,
-        request.toString(), admin.getUserId());
+    ResponseEntity response = userController.editUser("Bearer " + user1Token,
+        request.toString(), user1.getUserId());
 
-    HashMap<String, Object> bodyExpected = new HashMap<>();
-    bodyExpected.put("user", editedAdmin);
     ResponseEntity expected = new ResponseEntity(HttpStatus.UNAUTHORIZED);
 
     // Check status and if are present tfa and token
@@ -200,15 +240,15 @@ public class UserControllerTest {
   }
 
   @Test
-  public void editUser1ByAdminEditNotAllowedError403() throws Exception {
+  public void editUser1ByAdmin1EditNotAllowedError403() throws Exception {
 
-    when(userService.editByAdministrator(eq(user1), any(JsonObject.class))).thenThrow(
+    when(userService.editByAdministrator(eq(user1), eq(false), any(JsonObject.class))).thenThrow(
         new NotAllowedToEditException("fields furnished not allowed"));
 
     JSONObject request = new JSONObject();
     request.put("user_id", user1.getUserId());
 
-    ResponseEntity response = userController.editUser("Bearer " + adminToken,
+    ResponseEntity response = userController.editUser("Bearer " + admin1Token,
         request.toString(), user1.getUserId());
 
     ResponseEntity expected = new ResponseEntity(HttpStatus.FORBIDDEN);
@@ -218,18 +258,18 @@ public class UserControllerTest {
   }
 
   @Test
-  public void editUser1ByAdminSuccessfull() throws Exception {
+  public void editUser1ByAdmin1Successfull() throws Exception {
 
     String newEmail = "newEmail";
     User editedUser1 = cloneUser(user1);
     editedUser1.setEmail(newEmail);
 
-    when(userService.editByAdministrator(eq(user1), any(JsonObject.class))).thenReturn(editedUser1);
+    when(userService.editByAdministrator(eq(user1), eq(false), any(JsonObject.class))).thenReturn(editedUser1);
 
     JSONObject request = new JSONObject();
     request.put("email", newEmail);
 
-    ResponseEntity response = userController.editUser("Bearer " + adminToken,
+    ResponseEntity response = userController.editUser("Bearer " + admin1Token,
         request.toString(), user1.getUserId());
 
     HashMap<String, Object> expectedBody = new HashMap<>();
@@ -249,7 +289,7 @@ public class UserControllerTest {
 
     when(jwtTokenUtil.extractExpiration(user1Token)).thenReturn(new Date());
 
-    when(userService.editItself(eq(user1), any(JsonObject.class))).thenReturn(editedUser1);
+    when(userService.editByUser(eq(user1), any(JsonObject.class))).thenReturn(editedUser1);
 
     String newToken = "newToken";
 
@@ -296,7 +336,7 @@ public class UserControllerTest {
     User editedUser1 = cloneUser(user1);
     editedUser1.setEmail(newEmail);
 
-    when(userService.editByModerator(eq(user1), any(JsonObject.class))).thenReturn(editedUser1);
+    when(userService.editByModerator(eq(user1), eq(false), any(JsonObject.class))).thenReturn(editedUser1);
 
     JSONObject request = new JSONObject();
     request.put("email", newEmail);
@@ -317,7 +357,7 @@ public class UserControllerTest {
 
     String newTelegramName = "newEmail";
 
-    when(userService.editItself(eq(user2), any(JsonObject.class))).thenThrow(
+    when(userService.editByUser(eq(user2), any(JsonObject.class))).thenThrow(
         new DataIntegrityViolationException(
             "ERROR: duplicate key value violates unique constraint \"unique_telegram_name\"\n"
             + "  Dettaglio: Key (telegram_name)=(newEmail) already exists."));
@@ -340,7 +380,7 @@ public class UserControllerTest {
 
     String newTelegramName = "newEmail";
 
-    when(userService.editItself(eq(user2), any(JsonObject.class))).thenThrow(
+    when(userService.editByUser(eq(user2), any(JsonObject.class))).thenThrow(
         new DataIntegrityViolationException(
             "ERROR: duplicate key value violates unique constraint \"unique_telegram_name\"\n"
                 + "  Dettaglio: something"));
@@ -363,7 +403,7 @@ public class UserControllerTest {
 
     String newTelegramName = "newEmail";
 
-    when(userService.editItself(eq(user2), any(JsonObject.class))).thenThrow(
+    when(userService.editByUser(eq(user2), any(JsonObject.class))).thenThrow(
         new DataIntegrityViolationException("ERROR: value too long for type character varying(32)"));
 
     JSONObject request = new JSONObject();
@@ -383,7 +423,7 @@ public class UserControllerTest {
 
     String newTelegramName = "newEmail";
 
-    when(userService.editItself(eq(user2), any(JsonObject.class))).thenThrow(
+    when(userService.editByUser(eq(user2), any(JsonObject.class))).thenThrow(
         new KeysNotFoundException("telegramName doesn't exist"));
 
     JSONObject request = new JSONObject();
@@ -406,7 +446,7 @@ public class UserControllerTest {
 
     String tfaError = "TFA can't be edited because either telegram_name is "
         + "in the request or telegram chat not present";
-    when(userService.editItself(eq(mod1), any(JsonObject.class))).thenThrow(
+    when(userService.editByModerator(eq(mod1), eq(true), any(JsonObject.class))).thenThrow(
         new TfaNotPermittedException(tfaError));
 
     JSONObject request = new JSONObject();
@@ -416,6 +456,26 @@ public class UserControllerTest {
         request.toString(), mod1.getUserId());
 
     ResponseEntity expected = new ResponseEntity(tfaError, HttpStatus.CONFLICT);
+
+    // Check status and if are present tfa and token
+    assertEquals(expected, response);
+  }
+
+  @Test
+  public void editMod11ByMod1() throws Exception {
+
+    String newEmail = "newEmail";
+
+    when(userService.editByModerator(eq(mod11), eq(false), any(JsonObject.class))).thenThrow(
+        new NotAllowedToEditException(""));
+
+    JSONObject request = new JSONObject();
+    request.put("email", newEmail);
+
+    ResponseEntity response = userController.editUser("Bearer " + mod1Token,
+        request.toString(), mod11.getUserId());
+
+    ResponseEntity expected = new ResponseEntity(HttpStatus.FORBIDDEN);
 
     // Check status and if are present tfa and token
     assertEquals(expected, response);

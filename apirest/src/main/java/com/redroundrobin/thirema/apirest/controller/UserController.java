@@ -12,7 +12,7 @@ import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAllowedToEditException;
 import com.redroundrobin.thirema.apirest.utils.exception.TfaNotPermittedException;
 import com.redroundrobin.thirema.apirest.utils.exception.UserRoleNotFoundException;
-import java.util.Date;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -79,6 +79,12 @@ public class UserController {
     return new ResponseEntity(HttpStatus.FORBIDDEN);
   }
 
+  private boolean canEditMod(User editingUser, User userToEdit) {
+    return editingUser.getUserId() == userToEdit.getUserId()
+        || (userToEdit.getType() == User.Role.USER
+        && editingUser.getEntity().equals(userToEdit.getEntity()));
+  }
+
   /*In input prende JsonObject coi field da modificare dello userId*/
   @PutMapping(value = {"/users/{userid:.+}/edit"})
   public ResponseEntity<Object> editUser(@RequestHeader("Authorization") String authorization,
@@ -95,54 +101,60 @@ public class UserController {
 
       User user;
       try {
-        if (editingUser.getType() == User.Role.ADMIN
-            && editingUser.getUserId() != userToEdit.getUserId()) {
-          user = userService.editByAdministrator(userToEdit, fieldsToEdit);
-        } else if (editingUser.getUserId() == userToEdit.getUserId()) {
-          Date previousExpiration = jwtTokenUtil.extractExpiration(token);
+        if (editingUser.getType() == User.Role.ADMIN && userToEdit.getType() != User.Role.ADMIN) {
 
-          user = userService.editItself(userToEdit, fieldsToEdit);
+          user = userService.editByAdministrator(userToEdit,
+              editingUser.getUserId() == userToEdit.getUserId(), fieldsToEdit);
+
+        } else if (editingUser.getType() == User.Role.MOD && canEditMod(editingUser, userToEdit)) {
+
+          user = userService.editByModerator(userToEdit,
+              editingUser.getUserId() == userToEdit.getUserId(), fieldsToEdit);
+
+        } else if (editingUser.getType() == User.Role.USER
+            && editingUser.getUserId() == userToEdit.getUserId()) {
+
+          user = userService.editByUser(userToEdit, fieldsToEdit);
 
           if (!user.getEmail().equals(editingUserEmail)) {
             String newToken = jwtTokenUtil.generateTokenWithExpiration("webapp",
-                previousExpiration, userService.loadUserByEmail(user.getEmail()));
+                jwtTokenUtil.extractExpiration(token),
+                userService.loadUserByEmail(user.getEmail()));
             response.put("token", newToken);
           }
-        } else if (editingUser.getType() == User.Role.MOD
-            && editingUser.getEntity().equals(userToEdit.getEntity())) {
-          user = userService.editByModerator(userToEdit, fieldsToEdit);
         } else {
           return new ResponseEntity(HttpStatus.FORBIDDEN);
         }
+
+        response.put("user",user);
+        return ResponseEntity.ok(response);
+
       } catch (UsernameNotFoundException unfe) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
       } catch (NotAllowedToEditException | UserDisabledException natef) {
         return new ResponseEntity(HttpStatus.FORBIDDEN);
+      } catch (TfaNotPermittedException tnpe) {
+        return new ResponseEntity(tnpe.getMessage(),HttpStatus.CONFLICT);
       } catch (DataIntegrityViolationException dive) {
         if (dive.getMostSpecificCause().getMessage()
             .startsWith("ERROR: duplicate key value violates unique constraint")) {
 
           Pattern pattern = Pattern.compile("Key \\((.+)\\)=\\((.+)\\) already exists");
           Matcher matcher = pattern.matcher(dive.getMostSpecificCause().getMessage());
+
+          String errorMessage = "";
           if (matcher.find()) {
-            return new ResponseEntity("The value of " + matcher.group(1) + " already exists",
-                HttpStatus.CONFLICT);
-          } else {
-            return new ResponseEntity("",HttpStatus.CONFLICT);
+            errorMessage ="The value of " + matcher.group(1) + " already exists";
           }
-        } else {
-          return new ResponseEntity(HttpStatus.BAD_REQUEST);
+
+          return new ResponseEntity(errorMessage,HttpStatus.CONFLICT);
         }
-      } catch (EntityNotFoundException | KeysNotFoundException | UserRoleNotFoundException nf) {
-        return new ResponseEntity(HttpStatus.BAD_REQUEST);
-      } catch (TfaNotPermittedException tnpe) {
-        return new ResponseEntity(tnpe.getMessage(),HttpStatus.CONFLICT);
-      }
-      response.put("user",user);
-      return ResponseEntity.ok(response);
-    } else {
-      return new ResponseEntity(HttpStatus.BAD_REQUEST);
+      } catch (EntityNotFoundException | KeysNotFoundException |
+          UserRoleNotFoundException nf) {}
     }
+    // when db error is not for duplicate unique or when userToEdit with id furnished is not found
+    // or in case of EntityNotFoundException or KeysNotFoundException or UserRoleNotFoundException
+    return new ResponseEntity(HttpStatus.BAD_REQUEST);
   }
 
   //dato un token valido restituisce l'ente di appertenenza o tutti gli enti
