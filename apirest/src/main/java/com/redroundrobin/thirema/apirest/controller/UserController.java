@@ -6,8 +6,8 @@ import com.redroundrobin.thirema.apirest.models.UserDisabledException;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
-import com.redroundrobin.thirema.apirest.utils.exception.EntityNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
+import com.redroundrobin.thirema.apirest.utils.exception.EntityNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAllowedToEditException;
 import com.redroundrobin.thirema.apirest.utils.exception.TfaNotPermittedException;
@@ -21,7 +21,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -41,7 +40,8 @@ public class UserController {
   private EntityService entityService;
 
   @Autowired
-  public UserController(JwtUtil jwtTokenUtil, UserService userService, EntityService entityService) {
+  public UserController(JwtUtil jwtTokenUtil, UserService userService,
+                        EntityService entityService) {
     this.jwtTokenUtil = jwtTokenUtil;
     this.userService = userService;
     this.entityService = entityService;
@@ -95,7 +95,8 @@ public class UserController {
 
       User user;
       try {
-        if (editingUser.getType() == User.Role.ADMIN && editingUser.getUserId() != userToEdit.getUserId()) {
+        if (editingUser.getType() == User.Role.ADMIN
+            && editingUser.getUserId() != userToEdit.getUserId()) {
           user = userService.editByAdministrator(userToEdit, fieldsToEdit);
         } else if (editingUser.getUserId() == userToEdit.getUserId()) {
           Date previousExpiration = jwtTokenUtil.extractExpiration(token);
