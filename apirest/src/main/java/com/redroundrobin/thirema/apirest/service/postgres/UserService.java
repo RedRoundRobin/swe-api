@@ -78,7 +78,7 @@ public class UserService implements UserDetailsService {
           editable.remove("entity_id");
           break;
         default:
-          editable.removeAll(editable);
+          editable.clear();
       }
 
       return keys.stream()

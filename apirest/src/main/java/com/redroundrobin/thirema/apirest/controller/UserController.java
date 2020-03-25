@@ -49,7 +49,7 @@ public class UserController {
 
   //richiesta fatta da un utente autenticato per vedere i device visibili a un altro utente
   @GetMapping(value = {"/users/{userid:.+}/devices"})
-  public ResponseEntity<?> getUserDevices(@RequestHeader("Authorization") String authorization,
+  public ResponseEntity<Object> getUserDevices(@RequestHeader("Authorization") String authorization,
                                           @PathVariable("userid") int requiredUserId) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
