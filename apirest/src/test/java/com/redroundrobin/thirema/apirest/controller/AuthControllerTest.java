@@ -9,6 +9,8 @@ import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import java.util.ArrayList;
+import java.util.List;
+
 import org.json.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -18,6 +20,8 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -61,7 +65,12 @@ public class AuthControllerTest {
     user.setPassword("password");
     user.setType(User.Role.ADMIN);
 
-    org.springframework.security.core.userdetails.User userD = new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(), new ArrayList<>());
+    List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
+    grantedAuthorities.add(new SimpleGrantedAuthority(String.valueOf(user.getType())));
+
+    org.springframework.security.core.userdetails.User userD =
+        new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(),
+            grantedAuthorities);
 
     when(userService.findByEmail(user.getEmail())).thenReturn(user);
     when(userService.loadUserByEmail(user.getEmail())).thenReturn(userD);

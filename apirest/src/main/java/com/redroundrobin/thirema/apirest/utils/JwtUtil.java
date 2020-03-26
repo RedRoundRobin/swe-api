@@ -106,8 +106,8 @@ public class JwtUtil {
   public String generateTokenWithExpiration(String type, Date expiration,UserDetails userDetails) {
     Map<String, Object> claims = new HashMap<>();
     claims.put("type", type);
-    claims.put("role",
-        User.Role.valueOf(userDetails.getAuthorities().stream().findFirst().toString()));
+    claims.put("role", User.Role.valueOf(User.Role.class,
+        userDetails.getAuthorities().stream().findFirst().get().toString()));
     return createTokenWithExpiration(claims, expiration, userDetails.getUsername());
   }
 
@@ -124,8 +124,8 @@ public class JwtUtil {
     Map<String, Object> claims = new HashMap<>();
     claims.put("type", type);
     claims.put("tfa", true);
-    claims.put("role",
-        User.Role.valueOf(userDetails.getAuthorities().stream().findFirst().toString()));
+    claims.put("role", User.Role.valueOf(User.Role.class,
+        userDetails.getAuthorities().stream().findFirst().get().toString()));
     claims.put("auth_code", authCode);
     return createToken(claims, userDetails.getUsername());
   }

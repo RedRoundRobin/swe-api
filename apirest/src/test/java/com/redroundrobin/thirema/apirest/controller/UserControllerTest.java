@@ -547,7 +547,7 @@ public class UserControllerTest {
   }
 
   @Test
-  public void getAllUsersByMod1NoPermissionError403() {
+  public void getAllUsersByMod1Successfull() {
     String authorization = "Bearer "+mod1Token;
 
     ResponseEntity<List<User>> response = userController.getUsers(authorization,null, null, null);
@@ -559,7 +559,7 @@ public class UserControllerTest {
 
     assertTrue(response1.getStatusCode() == HttpStatus.OK);
     assertTrue(!response1.getBody().isEmpty());
-    assertTrue(response.getBody() == response1.getBody());
+    assertTrue(response.getBody().equals(response1.getBody()));
   }
 
   @Test
