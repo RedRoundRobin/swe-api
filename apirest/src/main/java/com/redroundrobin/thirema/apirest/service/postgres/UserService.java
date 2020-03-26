@@ -180,7 +180,6 @@ public class UserService implements UserDetailsService {
   }
 
   public User save(User user) {
-    System.out.println(user);
     return repository.save(user);
   }
 
