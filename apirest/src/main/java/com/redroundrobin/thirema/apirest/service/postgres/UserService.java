@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
@@ -116,8 +118,9 @@ public class UserService implements UserDetailsService {
       throw new EntityNotFoundException("The entity with the entityId furnished doesn't exist");
     }
 
-    for (String key : fieldsToEdit.keySet()) {
-      Object value = fieldsToEdit.get(key);
+    for (Map.Entry<String, Object> entry : fieldsToEdit.entrySet()) {
+      String key = entry.getKey();
+      Object value = entry.getValue();
       switch (key) {
         case "name":
           userToEdit.setName((String) value);
@@ -164,7 +167,8 @@ public class UserService implements UserDetailsService {
   }
 
   public User find(int id) {
-    return repository.findById(id).get();
+    Optional<User> optUser = repository.findById(id);
+    return optUser.orElse(null);
   }
 
   public User findByTelegramName(String telegramName) {

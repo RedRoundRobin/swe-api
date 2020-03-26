@@ -16,6 +16,7 @@ import com.redroundrobin.thirema.apirest.utils.exception.TfaNotPermittedExceptio
 import com.redroundrobin.thirema.apirest.utils.exception.UserRoleNotFoundException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -150,7 +151,7 @@ public class UserController {
           return new ResponseEntity(errorMessage,HttpStatus.CONFLICT);
         }
       } catch (EntityNotFoundException | KeysNotFoundException | UserRoleNotFoundException nf) {
-        System.out.println(nf.getMessage());
+        Logger.getLogger(nf.getMessage());
       }
     }
     // when db error is not for duplicate unique or when userToEdit with id furnished is not found

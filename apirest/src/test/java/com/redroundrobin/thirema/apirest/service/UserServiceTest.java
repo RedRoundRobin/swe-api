@@ -1,6 +1,7 @@
 package com.redroundrobin.thirema.apirest.service;
 
 import com.redroundrobin.thirema.apirest.models.UserDisabledException;
+import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
@@ -17,10 +18,10 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.junit4.SpringRunner;
-
-
+import java.util.ArrayList;
 import java.util.HashMap;
-
+import java.util.List;
+import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
@@ -117,6 +118,34 @@ public class UserServiceTest {
     user2.setType(User.Role.USER);
     user2.setEntity(entity2);
 
+    List<User> allUsers = new ArrayList<>();
+    allUsers.add(admin1);
+    allUsers.add(admin2);
+    allUsers.add(mod1);
+    allUsers.add(mod11);
+    allUsers.add(user1);
+    allUsers.add(user2);
+
+    when(userRepo.findAll()).thenReturn(allUsers);
+    when(userRepo.findById(anyInt())).thenAnswer(i -> {
+      int id = i.getArgument(0);
+      Optional<User> userFound = allUsers.stream()
+          .filter(user -> user.getUserId() == id)
+          .findFirst();
+      return userFound;
+    });
+
+    when(userRepo.findByTelegramNameAndTelegramChat(anyString(), anyString())).thenAnswer(i -> {
+      String tn = i.getArgument(0);
+      String tc = i.getArgument(1);
+      Optional<User> userFound = allUsers.stream()
+          .filter(user -> user.getTelegramName() == tn && user.getTelegramChat() == tc)
+          .findFirst();
+      return userFound.isPresent() ? userFound.get() : null;
+    });
+
+    List<Device> devices = new ArrayList<>();
+    when(userRepo.userDevices(anyInt())).thenReturn(devices);
 
     when(userRepo.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
   }
@@ -138,6 +167,45 @@ public class UserServiceTest {
     return clone;
   }
 
+
+
+  // findAll method tests
+  @Test
+  public void findAllSuccessfull() {
+    List<User> users = userService.findAll();
+    assertTrue(!users.isEmpty());
+  }
+
+
+
+  // findById method tests
+  @Test
+  public void findSuccessfull() {
+    User user = userService.find(6);
+    assertEquals(user2, user);
+  }
+
+
+
+  // findById method tests
+  @Test
+  public void userDevicesEmpty() {
+    List<Device> devices = userService.userDevices(6);
+    assertTrue(devices.isEmpty());
+  }
+
+
+
+  // findByTelegramNameAndTelegramChat method tests
+  @Test
+  public void findByTelegramNameAndTelegramChatNull() {
+    User user = userService.findByTelegramNameAndTelegramChat("name", "chat");
+    assertNull(user);
+  }
+
+
+
+  // loadByUsername method tests
   @Test
   public void loadUser1ByNameSuccessfull() throws Exception {
 
@@ -191,6 +259,7 @@ public class UserServiceTest {
 
 
 
+  // loadByUserEmail method tests
   @Test
   public void loadUser2ByEmailSuccessfull() {
 
@@ -244,6 +313,7 @@ public class UserServiceTest {
 
 
 
+  // loadByTelegramName method tests
   @Test
   public void loadMod1ByTelegramNameSuccessfull() {
 
@@ -318,6 +388,15 @@ public class UserServiceTest {
 
 
 
+  // serializeUser method tests
+  /*@Test
+  public void serializeUserSuccessfull() {
+
+  }*/
+
+
+
+  // editByAdmin method tests
   @Test
   public void editAdminByItselfSuccessfull() {
     // modificare tutto
@@ -436,6 +515,28 @@ public class UserServiceTest {
   }
 
   @Test
+  public void editAdmin2ByAdmin1NotAllowedToEditException() {
+    // modificare name, surname, email, deleted
+
+    HashMap<String, Object> fieldsToEdit = new HashMap<>();
+    fieldsToEdit.put("type",1);
+
+    try {
+      User user = userService.editByAdministrator(admin2, false, fieldsToEdit);
+
+      assertTrue(false);
+    } catch (NotAllowedToEditException e) {
+      assertTrue(true);
+    } catch (Exception e) {
+      System.out.println(e);
+      assertTrue(false);
+    }
+  }
+
+
+
+  // editByModerator method tests
+  @Test
   public void editUser2ByMod1Successfull() {
     // modificare name, surname, email, deleted
 
@@ -500,6 +601,28 @@ public class UserServiceTest {
   }
 
   @Test
+  public void editMod11ByItselfNotAllowedToEditException() {
+    // modificare name, surname, email, deleted
+
+    HashMap<String, Object> fieldsToEdit = new HashMap<>();
+    fieldsToEdit.put("entity_id",2);
+
+    try {
+      User user = userService.editByModerator(mod11, true, fieldsToEdit);
+
+      assertTrue(false);
+    } catch (NotAllowedToEditException e) {
+      assertTrue(true);
+    } catch (Exception e) {
+      System.out.println(e);
+      assertTrue(false);
+    }
+  }
+
+
+
+  // editByUser method tests
+  @Test
   public void editUser1ByItselfKeysNotFoundException() {
     // modificare telegramName
 
@@ -563,41 +686,4 @@ public class UserServiceTest {
     }
   }
 
-  @Test
-  public void editMod11ByItselfNotAllowedToEditException() {
-    // modificare name, surname, email, deleted
-
-    HashMap<String, Object> fieldsToEdit = new HashMap<>();
-    fieldsToEdit.put("entity_id",2);
-
-    try {
-      User user = userService.editByModerator(mod11, true, fieldsToEdit);
-
-      assertTrue(false);
-    } catch (NotAllowedToEditException e) {
-      assertTrue(true);
-    } catch (Exception e) {
-      System.out.println(e);
-      assertTrue(false);
-    }
-  }
-
-  @Test
-  public void editAdmin2ByAdmin1NotAllowedToEditException() {
-    // modificare name, surname, email, deleted
-
-    HashMap<String, Object> fieldsToEdit = new HashMap<>();
-    fieldsToEdit.put("type",1);
-
-    try {
-      User user = userService.editByAdministrator(admin2, false, fieldsToEdit);
-
-      assertTrue(false);
-    } catch (NotAllowedToEditException e) {
-      assertTrue(true);
-    } catch (Exception e) {
-      System.out.println(e);
-      assertTrue(false);
-    }
-  }
 }
