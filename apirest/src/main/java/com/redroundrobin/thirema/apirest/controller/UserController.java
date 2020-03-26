@@ -201,7 +201,7 @@ public class UserController {
           @RequestParam(value = "view", required = false) Integer view) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
-    if (jwtTokenUtil.extractRole(authorization) == User.Role.ADMIN) {
+    if (user.getType() == User.Role.ADMIN) {
       if (entity != null) {
         try {
           return ResponseEntity.ok(userService.findAllByEntityId(entity));
@@ -216,9 +216,17 @@ public class UserController {
         return ResponseEntity.ok(userService.findAll());
       }
       return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-    } else {
-      return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+    } else if (user.getType() == User.Role.MOD) {
+      if ((entity == null && disabledAlert == null && view == null)
+          || (entity != null && user.getEntity().getEntityId() == entity)) {
+        try {
+          return ResponseEntity.ok(userService.findAllByEntityId(user.getEntity().getEntityId()));
+        } catch (EntityNotFoundException enfe) {
+          Logger.getLogger(enfe.getMessage());
+        }
+      }
     }
+    return new ResponseEntity<>(HttpStatus.FORBIDDEN);
   }
 
   //un determinato user

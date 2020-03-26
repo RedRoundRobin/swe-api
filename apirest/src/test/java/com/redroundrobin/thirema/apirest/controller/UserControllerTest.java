@@ -552,6 +552,22 @@ public class UserControllerTest {
 
     ResponseEntity<List<User>> response = userController.getUsers(authorization,null, null, null);
 
+    assertTrue(response.getStatusCode() == HttpStatus.OK);
+    assertTrue(!response.getBody().isEmpty());
+
+    ResponseEntity<List<User>> response1 = userController.getUsers(authorization,1, null, null);
+
+    assertTrue(response1.getStatusCode() == HttpStatus.OK);
+    assertTrue(!response1.getBody().isEmpty());
+    assertTrue(response.getBody() == response1.getBody());
+  }
+
+  @Test
+  public void getAllAlertUsersByMod1NoPermissionError403() {
+    String authorization = "Bearer "+mod1Token;
+
+    ResponseEntity<List<User>> response = userController.getUsers(authorization,null, 1, null);
+
     assertTrue(response.getStatusCode() == HttpStatus.FORBIDDEN);
   }
 
