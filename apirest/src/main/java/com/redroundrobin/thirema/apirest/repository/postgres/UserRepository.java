@@ -1,6 +1,7 @@
 package com.redroundrobin.thirema.apirest.repository.postgres;
 
 import com.redroundrobin.thirema.apirest.models.postgres.Device;
+import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import java.util.List;
 import org.springframework.data.jpa.repository.Query;
@@ -20,4 +21,6 @@ public interface UserRepository extends CrudRepository<User, Integer> {
       + "WHERE u.userId = ?1 and u.entity.entityId = e.entityId and e.entityId = a.entity.entityId "
       + "and a.sensor.sensorId = s.sensorId and s.device.deviceId = d.deviceId")
   List<Device> userDevices(int userId);
+
+  List<User> findAllByEntity(Entity entity);
 }

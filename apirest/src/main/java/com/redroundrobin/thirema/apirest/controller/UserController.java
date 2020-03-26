@@ -1,7 +1,5 @@
 package com.redroundrobin.thirema.apirest.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.redroundrobin.thirema.apirest.models.UserDisabledException;
@@ -30,6 +28,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -196,8 +195,30 @@ public class UserController {
 
   //tutti gli user
   @GetMapping(value = {"/users"})
-  public List<User> users() {
-    return userService.findAll();
+  public ResponseEntity<List<User>> getUsers(@RequestHeader("Authorization") String authorization,
+          @RequestParam(value = "entity", required = false) Integer entity,
+          @RequestParam(value = "disabledAlert", required = false) Integer disabledAlert,
+          @RequestParam(value = "view", required = false) Integer view) {
+    String token = authorization.substring(7);
+    User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
+    if (jwtTokenUtil.extractRole(authorization) == User.Role.ADMIN) {
+      if (entity != null) {
+        try {
+          return ResponseEntity.ok(userService.findAllByEntityId(entity));
+        } catch (EntityNotFoundException enfe) {
+          Logger.getLogger(enfe.getMessage());
+        }
+      } else if (disabledAlert != null) {
+        return new ResponseEntity(HttpStatus.BAD_REQUEST);
+      } else if (view != null) {
+        return new ResponseEntity(HttpStatus.BAD_REQUEST);
+      } else {
+        return ResponseEntity.ok(userService.findAll());
+      }
+      return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    } else {
+      return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+    }
   }
 
   //un determinato user

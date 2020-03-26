@@ -12,7 +12,6 @@ import com.redroundrobin.thirema.apirest.utils.exception.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -22,6 +21,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
@@ -148,6 +149,24 @@ public class UserServiceTest {
     when(userRepo.userDevices(anyInt())).thenReturn(devices);
 
     when(userRepo.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
+
+    when(entityService.find(anyInt())).thenAnswer(i -> {
+      int id = i.getArgument(0);
+      if (id == 1) {
+        return entity1;
+      } else if (id == 2) {
+        return entity2;
+      } else {
+        return null;
+      }
+    });
+
+    when(userRepo.findAllByEntity(any(Entity.class))).thenAnswer(i -> {
+      Entity ent = i.getArgument(0);
+      List<User> users = allUsers.stream()
+          .filter(user -> user.getEntity() == ent).collect(Collectors.toList());
+      return users;
+    });
   }
 
   private User cloneUser(User user) {
@@ -686,4 +705,28 @@ public class UserServiceTest {
     }
   }
 
+
+
+  // findAllByEntityId method test
+  @Test
+  public void findAllByEntityIdSuccessfull() {
+    try {
+      List<User> users = userService.findAllByEntityId(1);
+
+      assertTrue(!users.isEmpty());
+    } catch (EntityNotFoundException enfe) {
+      assertTrue(false);
+    }
+  }
+
+  @Test
+  public void findAllByEntityIdEntityNotFoundException() {
+    try {
+      List<User> users = userService.findAllByEntityId(3);
+
+      assertTrue(false);
+    } catch (EntityNotFoundException enfe) {
+      assertTrue(true);
+    }
+  }
 }
