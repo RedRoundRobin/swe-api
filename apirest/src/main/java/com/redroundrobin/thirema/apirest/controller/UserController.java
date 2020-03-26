@@ -1,5 +1,7 @@
 package com.redroundrobin.thirema.apirest.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.redroundrobin.thirema.apirest.models.UserDisabledException;
@@ -12,7 +14,6 @@ import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAllowedToEditException;
 import com.redroundrobin.thirema.apirest.utils.exception.TfaNotPermittedException;
 import com.redroundrobin.thirema.apirest.utils.exception.UserRoleNotFoundException;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -88,12 +89,11 @@ public class UserController {
   /*In input prende JsonObject coi field da modificare dello userId*/
   @PutMapping(value = {"/users/{userid:.+}/edit"})
   public ResponseEntity<Object> editUser(@RequestHeader("Authorization") String authorization,
-                                         @RequestBody String rawFieldsToEdit,
+                                         @RequestBody HashMap<String, Object> fieldsToEdit,
                                          @PathVariable("userid") int userId) {
     String token = authorization.substring(7);
     String editingUserEmail = jwtTokenUtil.extractUsername(token);
     User editingUser = userService.findByEmail(editingUserEmail);
-    JsonObject fieldsToEdit = JsonParser.parseString(rawFieldsToEdit).getAsJsonObject();
     User userToEdit = userService.find(userId);
 
     if (userToEdit != null) {
@@ -144,13 +144,14 @@ public class UserController {
 
           String errorMessage = "";
           if (matcher.find()) {
-            errorMessage ="The value of " + matcher.group(1) + " already exists";
+            errorMessage = "The value of " + matcher.group(1) + " already exists";
           }
 
           return new ResponseEntity(errorMessage,HttpStatus.CONFLICT);
         }
-      } catch (EntityNotFoundException | KeysNotFoundException |
-          UserRoleNotFoundException nf) {}
+      } catch (EntityNotFoundException | KeysNotFoundException | UserRoleNotFoundException nf) {
+        System.out.println(nf.getMessage());
+      }
     }
     // when db error is not for duplicate unique or when userToEdit with id furnished is not found
     // or in case of EntityNotFoundException or KeysNotFoundException or UserRoleNotFoundException

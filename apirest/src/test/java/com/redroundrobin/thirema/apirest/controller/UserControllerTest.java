@@ -183,11 +183,11 @@ public class UserControllerTest {
   @Test
   public void editAdmin2ByAdmin1EditNotAllowedError403() throws Exception {
 
-    JSONObject request = new JSONObject();
+    HashMap<String, Object> request = new HashMap<>();
     request.put("email", "newemail");
 
     ResponseEntity response = userController.editUser("Bearer " + admin1Token,
-        request.toString(), admin2.getUserId());
+        request, admin2.getUserId());
 
     ResponseEntity expected = new ResponseEntity(HttpStatus.FORBIDDEN);
 
@@ -200,11 +200,11 @@ public class UserControllerTest {
 
     when(userService.find(5)).thenReturn(null);
 
-    JSONObject request = new JSONObject();
+    HashMap<String, Object> request = new HashMap<>();
     request.put("email", "newemail");
 
     ResponseEntity response = userController.editUser("Bearer " + admin1Token,
-        request.toString(), 10);
+        request, 10);
 
     ResponseEntity expected = new ResponseEntity(HttpStatus.BAD_REQUEST);
 
@@ -223,15 +223,15 @@ public class UserControllerTest {
 
     when(jwtTokenUtil.extractExpiration(user1Token)).thenReturn(new Date());
 
-    when(userService.editByUser(eq(user1), any(JsonObject.class))).thenReturn(editedUser1);
+    when(userService.editByUser(eq(user1), any(HashMap.class))).thenReturn(editedUser1);
 
     when(userService.loadUserByEmail(editedUser1.getEmail())).thenThrow(new UsernameNotFoundException(""));
 
-    JSONObject request = new JSONObject();
+    HashMap<String, Object> request = new HashMap<>();
     request.put("password", "newpassword");
 
     ResponseEntity response = userController.editUser("Bearer " + user1Token,
-        request.toString(), user1.getUserId());
+        request, user1.getUserId());
 
     ResponseEntity expected = new ResponseEntity(HttpStatus.UNAUTHORIZED);
 
@@ -242,14 +242,14 @@ public class UserControllerTest {
   @Test
   public void editUser1ByAdmin1EditNotAllowedError403() throws Exception {
 
-    when(userService.editByAdministrator(eq(user1), eq(false), any(JsonObject.class))).thenThrow(
+    when(userService.editByAdministrator(eq(user1), eq(false), any(HashMap.class))).thenThrow(
         new NotAllowedToEditException("fields furnished not allowed"));
 
-    JSONObject request = new JSONObject();
+    HashMap<String, Object> request = new HashMap<>();
     request.put("user_id", user1.getUserId());
 
     ResponseEntity response = userController.editUser("Bearer " + admin1Token,
-        request.toString(), user1.getUserId());
+        request, user1.getUserId());
 
     ResponseEntity expected = new ResponseEntity(HttpStatus.FORBIDDEN);
 
@@ -264,13 +264,13 @@ public class UserControllerTest {
     User editedUser1 = cloneUser(user1);
     editedUser1.setEmail(newEmail);
 
-    when(userService.editByAdministrator(eq(user1), eq(false), any(JsonObject.class))).thenReturn(editedUser1);
+    when(userService.editByAdministrator(eq(user1), eq(false), any(HashMap.class))).thenReturn(editedUser1);
 
-    JSONObject request = new JSONObject();
+    HashMap<String, Object> request = new HashMap<>();
     request.put("email", newEmail);
 
     ResponseEntity response = userController.editUser("Bearer " + admin1Token,
-        request.toString(), user1.getUserId());
+        request, user1.getUserId());
 
     HashMap<String, Object> expectedBody = new HashMap<>();
     expectedBody.put("user", editedUser1);
@@ -289,7 +289,7 @@ public class UserControllerTest {
 
     when(jwtTokenUtil.extractExpiration(user1Token)).thenReturn(new Date());
 
-    when(userService.editByUser(eq(user1), any(JsonObject.class))).thenReturn(editedUser1);
+    when(userService.editByUser(eq(user1), any(HashMap.class))).thenReturn(editedUser1);
 
     String newToken = "newToken";
 
@@ -299,11 +299,11 @@ public class UserControllerTest {
     when(jwtTokenUtil.generateTokenWithExpiration(anyString(), any(Date.class),
         any(org.springframework.security.core.userdetails.User.class))).thenReturn("newToken");
 
-    JSONObject request = new JSONObject();
+    HashMap<String, Object> request = new HashMap<>();
     request.put("email", newEmail);
 
     ResponseEntity response = userController.editUser("Bearer " + user1Token,
-        request.toString(), user1.getUserId());
+        request, user1.getUserId());
 
     HashMap<String, Object> expectedBody = new HashMap<>();
     expectedBody.put("user", editedUser1);
@@ -317,11 +317,11 @@ public class UserControllerTest {
   @Test
   public void editUser2ByUser1NotAllowedError403() throws Exception {
 
-    JSONObject request = new JSONObject();
+    HashMap<String, Object> request = new HashMap<>();
     request.put("email", "newEmail");
 
     ResponseEntity response = userController.editUser("Bearer " + user1Token,
-        request.toString(), user2.getUserId());
+        request, user2.getUserId());
 
     ResponseEntity expected = new ResponseEntity(HttpStatus.FORBIDDEN);
 
@@ -336,13 +336,13 @@ public class UserControllerTest {
     User editedUser1 = cloneUser(user1);
     editedUser1.setEmail(newEmail);
 
-    when(userService.editByModerator(eq(user1), eq(false), any(JsonObject.class))).thenReturn(editedUser1);
+    when(userService.editByModerator(eq(user1), eq(false), any(HashMap.class))).thenReturn(editedUser1);
 
-    JSONObject request = new JSONObject();
+    HashMap<String, Object> request = new HashMap<>();
     request.put("email", newEmail);
 
     ResponseEntity response = userController.editUser("Bearer " + mod1Token,
-        request.toString(), user1.getUserId());
+        request, user1.getUserId());
 
     HashMap<String, Object> expectedBody = new HashMap<>();
     expectedBody.put("user", editedUser1);
@@ -357,16 +357,16 @@ public class UserControllerTest {
 
     String newTelegramName = "newEmail";
 
-    when(userService.editByUser(eq(user2), any(JsonObject.class))).thenThrow(
+    when(userService.editByUser(eq(user2), any(HashMap.class))).thenThrow(
         new DataIntegrityViolationException(
             "ERROR: duplicate key value violates unique constraint \"unique_telegram_name\"\n"
             + "  Dettaglio: Key (telegram_name)=(newEmail) already exists."));
 
-    JSONObject request = new JSONObject();
+    HashMap<String, Object> request = new HashMap<>();
     request.put("telegram_name", newTelegramName);
 
     ResponseEntity response = userController.editUser("Bearer " + user2Token,
-        request.toString(), user2.getUserId());
+        request, user2.getUserId());
 
     String expectedBody = "The value of telegram_name already exists";
     ResponseEntity expected = new ResponseEntity(expectedBody, HttpStatus.CONFLICT);
@@ -380,16 +380,16 @@ public class UserControllerTest {
 
     String newTelegramName = "newEmail";
 
-    when(userService.editByUser(eq(user2), any(JsonObject.class))).thenThrow(
+    when(userService.editByUser(eq(user2), any(HashMap.class))).thenThrow(
         new DataIntegrityViolationException(
             "ERROR: duplicate key value violates unique constraint \"unique_telegram_name\"\n"
                 + "  Dettaglio: something"));
 
-    JSONObject request = new JSONObject();
+    HashMap<String, Object> request = new HashMap<>();
     request.put("telegram_name", newTelegramName);
 
     ResponseEntity response = userController.editUser("Bearer " + user2Token,
-        request.toString(), user2.getUserId());
+        request, user2.getUserId());
 
     String expectedBody = "";
     ResponseEntity expected = new ResponseEntity(expectedBody, HttpStatus.CONFLICT);
@@ -403,14 +403,14 @@ public class UserControllerTest {
 
     String newTelegramName = "newEmail";
 
-    when(userService.editByUser(eq(user2), any(JsonObject.class))).thenThrow(
+    when(userService.editByUser(eq(user2), any(HashMap.class))).thenThrow(
         new DataIntegrityViolationException("ERROR: value too long for type character varying(32)"));
 
-    JSONObject request = new JSONObject();
+    HashMap<String, Object> request = new HashMap<>();
     request.put("telegram_name", newTelegramName);
 
     ResponseEntity response = userController.editUser("Bearer " + user2Token,
-        request.toString(), user2.getUserId());
+        request, user2.getUserId());
 
     ResponseEntity expected = new ResponseEntity(HttpStatus.BAD_REQUEST);
 
@@ -423,14 +423,14 @@ public class UserControllerTest {
 
     String newTelegramName = "newEmail";
 
-    when(userService.editByUser(eq(user2), any(JsonObject.class))).thenThrow(
+    when(userService.editByUser(eq(user2), any(HashMap.class))).thenThrow(
         new KeysNotFoundException("telegramName doesn't exist"));
 
-    JSONObject request = new JSONObject();
+    HashMap<String, Object> request = new HashMap<>();
     request.put("telegramName", newTelegramName);
 
     ResponseEntity response = userController.editUser("Bearer " + user2Token,
-        request.toString(), user2.getUserId());
+        request, user2.getUserId());
 
     ResponseEntity expected = new ResponseEntity(HttpStatus.BAD_REQUEST);
 
@@ -446,14 +446,14 @@ public class UserControllerTest {
 
     String tfaError = "TFA can't be edited because either telegram_name is "
         + "in the request or telegram chat not present";
-    when(userService.editByModerator(eq(mod1), eq(true), any(JsonObject.class))).thenThrow(
+    when(userService.editByModerator(eq(mod1), eq(true), any(HashMap.class))).thenThrow(
         new TfaNotPermittedException(tfaError));
 
-    JSONObject request = new JSONObject();
+    HashMap<String, Object> request = new HashMap<>();
     request.put("telegramName", newTelegramName);
 
     ResponseEntity response = userController.editUser("Bearer " + mod1Token,
-        request.toString(), mod1.getUserId());
+        request, mod1.getUserId());
 
     ResponseEntity expected = new ResponseEntity(tfaError, HttpStatus.CONFLICT);
 
@@ -466,14 +466,14 @@ public class UserControllerTest {
 
     String newEmail = "newEmail";
 
-    when(userService.editByModerator(eq(mod11), eq(false), any(JsonObject.class))).thenThrow(
+    when(userService.editByModerator(eq(mod11), eq(false), any(HashMap.class))).thenThrow(
         new NotAllowedToEditException(""));
 
-    JSONObject request = new JSONObject();
+    HashMap<String, Object> request = new HashMap<>();
     request.put("email", newEmail);
 
     ResponseEntity response = userController.editUser("Bearer " + mod1Token,
-        request.toString(), mod11.getUserId());
+        request, mod11.getUserId());
 
     ResponseEntity expected = new ResponseEntity(HttpStatus.FORBIDDEN);
 
