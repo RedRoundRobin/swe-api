@@ -1,0 +1,38 @@
+name: Repository Checker
+
+on: [push, pull_request]
+
+jobs:
+  repo_checker:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout repository contents
+      uses: actions/checkout@v2
+
+    - name: Checking for .DS_Store files
+      uses: Maxelweb/ds-store-patrol@v1
+
+    - name: Check file existence
+      id: check_files
+      uses: andstor/file-existence-action@v1
+      with:
+        files: LICENSE, README.md, .gitignore"
+
+    - name: File exists
+      if: steps.check_files.outputs.files_exists == 'true'
+      run: echo All files exists! Thanks god. 
+
+    - name: Slack Notification
+      uses: homoluctus/slatify@v2.0.1
+      if: failure()
+      with:
+        type: ${{ job.status }}
+        job_name: 'Repo check'
+        mention: 'here'
+        mention_if: 'failure'
+        channel: '#devops_repositories'
+        username: 'Repo checker'
+        url: ${{ secrets.SLACK_REPO_WEBHOOK }}
+        commit: true
+        token: ${{ secrets.GITHUB_TOKEN }}
