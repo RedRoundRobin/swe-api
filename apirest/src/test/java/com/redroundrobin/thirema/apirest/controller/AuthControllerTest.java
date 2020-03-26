@@ -60,7 +60,7 @@ public class AuthControllerTest {
     user.setSurname("user");
     user.setEmail("email@test.it");
     user.setPassword("password");
-    user.setType(2);
+    user.setType(User.Role.ADMIN);
 
     org.springframework.security.core.userdetails.User userD = new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(), new ArrayList<>());
 

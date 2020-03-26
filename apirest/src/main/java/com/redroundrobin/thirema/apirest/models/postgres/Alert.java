@@ -2,6 +2,7 @@ package com.redroundrobin.thirema.apirest.models.postgres;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -14,6 +15,7 @@ import javax.persistence.Table;
 public class Alert {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
+  @Column(name = "alert_id")
   private int alertId;
   private double threshold;
   private int type;

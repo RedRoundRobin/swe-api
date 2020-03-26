@@ -9,6 +9,7 @@ import com.redroundrobin.thirema.apirest.models.UserDisabledException;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
+import com.redroundrobin.thirema.apirest.utils.exception.TelegramChatNotFoundException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -184,7 +185,7 @@ public class AuthController {
 
         token = jwtTokenUtil.generateToken("telegram", userDetails);
       }
-    } catch (UsernameNotFoundException | UserDisabledException ue) {
+    } catch (UsernameNotFoundException | UserDisabledException | TelegramChatNotFoundException ue) {
       code = 0;
     }
 

@@ -1,8 +1,10 @@
 package com.redroundrobin.thirema.apirest.models.postgres;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonValue;
 import javax.persistence.Column;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -14,6 +16,15 @@ import javax.persistence.Table;
 @Table(name = "users")
 public class User {
 
+  public enum Role {
+    USER, MOD, ADMIN;
+
+    @JsonValue
+    public int toValue() {
+      return ordinal();
+    }
+  }
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "user_id")
@@ -22,7 +33,9 @@ public class User {
   private String surname;
   private String email;
   private String password;
-  private int type;
+
+  @Enumerated(EnumType.ORDINAL)
+  private Role type;
 
   @Column(name = "telegram_name")
   private String telegramName;
@@ -79,11 +92,11 @@ public class User {
     return password;
   }
 
-  public void setType(int type) {
+  public void setType(Role type) {
     this.type = type;
   }
 
-  public int getType() {
+  public Role getType() {
     return type;
   }
 
