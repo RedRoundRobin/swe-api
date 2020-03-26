@@ -1,5 +1,6 @@
 package com.redroundrobin.thirema.apirest.utils;
 
+import com.redroundrobin.thirema.apirest.models.postgres.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -34,9 +35,10 @@ public class JwtUtil {
     return extractAllClaims(token).get("type", java.lang.String.class);
   }
 
-  public int extractRole(String token) {
+  public User.Role extractRole(String bearerToken) {
+    String token = bearerToken.substring(7);
     if (extractAllClaims(token).containsKey("role")) {
-      return extractAllClaims(token).get("role", Integer.class);
+      return User.Role.values()[extractAllClaims(token).get("role", Integer.class)];
     } else {
       throw new IllegalArgumentException();
     }
@@ -88,8 +90,8 @@ public class JwtUtil {
   public String generateToken(String type, UserDetails userDetails) {
     Map<String, Object> claims = new HashMap<>();
     claims.put("type", type);
-    claims.put("role",
-        String.valueOf(userDetails.getAuthorities().stream().findFirst().toString()));
+    claims.put("role", User.Role.valueOf(User.Role.class,
+        userDetails.getAuthorities().stream().findFirst().get().toString()));
     return createToken(claims, userDetails.getUsername());
   }
 
@@ -105,7 +107,7 @@ public class JwtUtil {
     Map<String, Object> claims = new HashMap<>();
     claims.put("type", type);
     claims.put("role",
-        String.valueOf(userDetails.getAuthorities().stream().findFirst().toString()));
+        User.Role.valueOf(userDetails.getAuthorities().stream().findFirst().toString()));
     return createTokenWithExpiration(claims, expiration, userDetails.getUsername());
   }
 
@@ -122,6 +124,8 @@ public class JwtUtil {
     Map<String, Object> claims = new HashMap<>();
     claims.put("type", type);
     claims.put("tfa", true);
+    claims.put("role",
+        User.Role.valueOf(userDetails.getAuthorities().stream().findFirst().toString()));
     claims.put("auth_code", authCode);
     return createToken(claims, userDetails.getUsername());
   }
