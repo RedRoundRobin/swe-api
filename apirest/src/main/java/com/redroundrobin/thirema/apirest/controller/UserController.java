@@ -6,12 +6,9 @@ import com.redroundrobin.thirema.apirest.models.UserDisabledException;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
-import com.redroundrobin.thirema.apirest.utils.EntityNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.*;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
-import com.redroundrobin.thirema.apirest.utils.KeysNotFoundException;
-import com.redroundrobin.thirema.apirest.utils.NotAllowedToEditFields;
-import com.redroundrobin.thirema.apirest.utils.TfaNotPermittedException;
-import com.redroundrobin.thirema.apirest.utils.UserRoleNotFoundException;
+
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -23,6 +20,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.UserRoleNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.MissingFieldsException;
+import com.redroundrobin.thirema.apirest.utils.ValuesNotAllowedException;
+import com.redroundrobin.thirema.apirest.utils.NotAuthorizedToInsertUserException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -67,12 +68,13 @@ public class UserController {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
     JsonObject jsonUser = JsonParser.parseString(jsonStringUser).getAsJsonObject();
-    User newUser = userService.serializeUser(jsonUser, user.getType());
-    if (user.getType() == User.Role.ADMIN || user.getType() == User.Role.ADMIN
-        && user.getEntity().getEntityId() == newUser.getEntity().getEntityId()) {
-      return ResponseEntity.ok(userService.save(newUser));
+    try {
+      return ResponseEntity.ok(userService.serializeUser(jsonUser, user));
     }
-    return new ResponseEntity(HttpStatus.FORBIDDEN);
+    catch(KeysNotFoundException | MissingFieldsException | ValuesNotAllowedException
+        | UserRoleNotFoundException | EntityNotFoundException | NotAuthorizedToInsertUserException e){
+      return new ResponseEntity(e.getMessage() , HttpStatus.BAD_REQUEST);
+    }
   }
 
   /*In input prende JsonObject coi field da modificare dello userId*/
@@ -119,7 +121,7 @@ public class UserController {
         } else {
           return new ResponseEntity(HttpStatus.FORBIDDEN);
         }
-      } catch (NotAllowedToEditFields natef) {
+      } catch (NotAllowedToEditFieldsException natef) {
         return new ResponseEntity(HttpStatus.FORBIDDEN);
       } catch (DataIntegrityViolationException dive) {
         if (dive.getMostSpecificCause().getMessage()

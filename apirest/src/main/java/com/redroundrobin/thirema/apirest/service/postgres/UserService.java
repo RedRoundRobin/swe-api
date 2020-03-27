@@ -5,13 +5,16 @@ import com.google.gson.JsonObject;
 import com.redroundrobin.thirema.apirest.models.UserDisabledException;
 import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
+import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 import com.redroundrobin.thirema.apirest.utils.EntityNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.KeysNotFoundException;
-import com.redroundrobin.thirema.apirest.utils.NotAllowedToEditFields;
-import com.redroundrobin.thirema.apirest.utils.SerializeUser;
+import com.redroundrobin.thirema.apirest.utils.NotAllowedToEditFieldsException;
 import com.redroundrobin.thirema.apirest.utils.TfaNotPermittedException;
 import com.redroundrobin.thirema.apirest.utils.UserRoleNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.MissingFieldsException;
+import com.redroundrobin.thirema.apirest.utils.ValuesNotAllowedException;
+import com.redroundrobin.thirema.apirest.utils.NotAuthorizedToInsertUserException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -34,8 +37,25 @@ public class UserService implements UserDetailsService {
   @Autowired
   private EntityService entityService;
 
-  @Autowired
-  private SerializeUser serializeUser;
+  private boolean checkCreatableFields(Set<String> keys)
+      throws KeysNotFoundException {
+    Set<String> creatable = new HashSet<>();
+    creatable.add("name");
+    creatable.add("surname");
+    creatable.add("email");
+    creatable.add("type");
+    creatable.add("entity_id");
+
+    boolean onlyCreatableKeys = keys.stream()
+        .filter(key -> !creatable.contains(key))
+        .count() == 0;
+
+    if (!onlyCreatableKeys)
+      throw new KeysNotFoundException("There are some keys that either do not exist or you are not" +
+          "allowed to edit them");
+
+    return creatable.size() == keys.size();
+  }
 
   private boolean checkFieldsEditable(User.Role role, Set<String> keys)
       throws KeysNotFoundException {
@@ -55,7 +75,7 @@ public class UserService implements UserDetailsService {
         .count() == 0;
 
     if (!onlyExistingKeys) {
-      throw new KeysNotFoundException("There are some keys that doesn't exist");
+      throw new KeysNotFoundException("There are some keys that don't exist");
     } else {
       switch (role) {
         case ADMIN:
@@ -94,12 +114,12 @@ public class UserService implements UserDetailsService {
         && (fieldsToEdit.has("telegram_name")
         || userToEdit.getTelegramChat().isEmpty())) {
       throw new TfaNotPermittedException("TFA can't be edited because either telegram_name is "
-          + "in the request or telegram chat not present");
+          + "in the request or telegram chat is not present");
     }
 
     if (fieldsToEdit.has("entityId")
         && entityService.find(fieldsToEdit.get("entityId").getAsInt()) == null) {
-      throw new EntityNotFoundException("The entity with the entityId furnished doesn't exist");
+      throw new EntityNotFoundException("The entity with the entityId given doesn't exist");
     }
 
     for (Map.Entry<String, JsonElement> entry : fieldsToEdit.entrySet()) {
@@ -215,7 +235,7 @@ public class UserService implements UserDetailsService {
   }
 
   /**
-   * Method that return the UserDetails created with the telegram name furnished as @s and the
+   * Method that return the UserDetails created with the telegram name given as @s and the
    * chat id taken from the database.
    *
    * @param s the telegram name to create the UserDetails
@@ -240,41 +260,89 @@ public class UserService implements UserDetailsService {
         user.getTelegramName(), user.getTelegramChat(), grantedAuthorities);
   }
 
-  public User serializeUser(JsonObject rawUser, User.Role type) {
-    return serializeUser.serializeUser(rawUser, type);
-  }
-
   public User editItself(User userToEdit, JsonObject fieldsToEdit)
-      throws NotAllowedToEditFields, KeysNotFoundException, EntityNotFoundException,
+      throws NotAllowedToEditFieldsException, KeysNotFoundException, EntityNotFoundException,
       TfaNotPermittedException, UserRoleNotFoundException {
 
     if (!checkFieldsEditable(User.Role.USER, fieldsToEdit.keySet())) {
-      throw new NotAllowedToEditFields("You are not allowed to edit some of the specified fields");
+      throw new NotAllowedToEditFieldsException("You are not allowed to edit some of the specified fields");
     } else {
       return this.editAndSave(userToEdit, fieldsToEdit);
     }
   }
 
   public User editByModerator(User userToEdit, JsonObject fieldsToEdit)
-      throws NotAllowedToEditFields, KeysNotFoundException, EntityNotFoundException,
+      throws NotAllowedToEditFieldsException, KeysNotFoundException, EntityNotFoundException,
       TfaNotPermittedException, UserRoleNotFoundException {
 
     if (!checkFieldsEditable(User.Role.MOD, fieldsToEdit.keySet())) {
-      throw new NotAllowedToEditFields("You are not allowed to edit some of the specified fields");
+      throw new NotAllowedToEditFieldsException("You are not allowed to edit some of the specified fields");
     } else {
       return this.editAndSave(userToEdit, fieldsToEdit);
     }
   }
 
   public User editByAdministrator(User userToEdit, JsonObject fieldsToEdit)
-      throws NotAllowedToEditFields, KeysNotFoundException, EntityNotFoundException,
+      throws NotAllowedToEditFieldsException, KeysNotFoundException, EntityNotFoundException,
       TfaNotPermittedException, UserRoleNotFoundException {
 
     if (!checkFieldsEditable(User.Role.ADMIN, fieldsToEdit.keySet())) {
-      throw new NotAllowedToEditFields("You are not allowed to edit some of the specified fields");
+      throw new NotAllowedToEditFieldsException("You are not allowed to edit some of the specified fields");
     } else {
       return this.editAndSave(userToEdit, fieldsToEdit);
     }
   }
+
+  public User serializeUser(JsonObject rawUserToInsert, User insertingUser)
+      throws KeysNotFoundException, MissingFieldsException, ValuesNotAllowedException,
+      UserRoleNotFoundException, EntityNotFoundException, NotAuthorizedToInsertUserException {
+    if(!checkCreatableFields(rawUserToInsert.keySet())) {
+      throw new MissingFieldsException("Some necessary fields are missing: cannot create user");
+    }
+
+    Entity userToInsertEntity;
+    if ((userToInsertEntity = entityService.find(
+        (rawUserToInsert.get("entity_id")).getAsInt())) == null) {
+      throw new EntityNotFoundException("The entity with the entityId given doesn't exist");
+    }
+
+    User.Role userToInsertType;
+    try {
+        userToInsertType = User.Role.valueOf(rawUserToInsert.get("type").getAsString());
+    }
+    catch (IllegalArgumentException iae) {
+      throw new UserRoleNotFoundException("The given role doesn't exist");
+    }
+    catch (NullPointerException nptr) {
+      throw new UserRoleNotFoundException("The type parameter cannot be null");
+    }
+
+    //qui so che entity_id dato esiste && so il tipo dello user che si vuole inserire
+
+    if(insertingUser.getType() != User.Role.ADMIN &&
+        insertingUser.getType() == User.Role.MOD &&
+            userToInsertEntity.getEntityId() != insertingUser.getEntity().getEntityId())
+      throw new NotAuthorizedToInsertUserException();
+
+      User newUser = new User();
+      newUser.setEntity(userToInsertEntity);
+      newUser.setType(userToInsertType);
+
+      if (rawUserToInsert.get("name").getAsString() != null)
+        newUser.setName(rawUserToInsert.get("name").getAsString());
+      else throw new ValuesNotAllowedException("The name field cannot be null");
+
+      if (rawUserToInsert.get("surname").getAsString() != null)
+        newUser.setSurname(rawUserToInsert.get("name").getAsString());
+      else throw new ValuesNotAllowedException("The surname field cannot be null");
+
+      String email = rawUserToInsert.get("email").getAsString();
+      if (email != null && findByEmail(email) != null)
+        newUser.setEmail(email);
+      else throw new ValuesNotAllowedException("Either the email field you inserted is" +
+          "null or it is already used");
+
+      return save(newUser);
+    }
 
 }

@@ -1,16 +1,11 @@
 package com.redroundrobin.thirema.apirest.models.postgres;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonValue;
-import javax.persistence.Column;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+
+import javax.persistence.*;
+import java.util.List;
 
 @javax.persistence.Entity
 @Table(name = "users")
@@ -51,6 +46,10 @@ public class User {
   @ManyToOne
   @JoinColumn(name = "entity_id")
   private Entity entity;
+
+  @JsonManagedReference //non sicuro ! (Fouad)
+  @OneToMany(mappedBy = "userId")
+  private List<View> views;
 
   public void setUserId(int userId) {
     this.userId = userId;
