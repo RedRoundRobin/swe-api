@@ -3,6 +3,7 @@ package com.redroundrobin.thirema.apirest.service.postgres;
 import com.google.gson.JsonObject;
 import com.redroundrobin.thirema.apirest.models.UserDisabledException;
 import com.redroundrobin.thirema.apirest.models.postgres.Device;
+import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 import com.redroundrobin.thirema.apirest.utils.SerializeUser;
@@ -30,16 +31,16 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserService implements UserDetailsService {
 
-  private UserRepository repository;
+  private UserRepository userRepo;
 
   private EntityService entityService;
 
   private SerializeUser serializeUser;
 
   @Autowired
-  public UserService(UserRepository repository, EntityService entityService,
+  public UserService(UserRepository userRepo, EntityService entityService,
                      SerializeUser serializeUser) {
-    this.repository = repository;
+    this.userRepo = userRepo;
     this.entityService = entityService;
     this.serializeUser = serializeUser;
   }
@@ -163,32 +164,32 @@ public class UserService implements UserDetailsService {
   }
 
   public List<User> findAll() {
-    return (List<User>) repository.findAll();
+    return (List<User>) userRepo.findAll();
   }
 
   public User find(int id) {
-    Optional<User> optUser = repository.findById(id);
+    Optional<User> optUser = userRepo.findById(id);
     return optUser.orElse(null);
   }
 
   public User findByTelegramName(String telegramName) {
-    return repository.findByTelegramName(telegramName);
+    return userRepo.findByTelegramName(telegramName);
   }
 
   public User findByTelegramNameAndTelegramChat(String telegramName, String telegramChat) {
-    return repository.findByTelegramNameAndTelegramChat(telegramName, telegramChat);
+    return userRepo.findByTelegramNameAndTelegramChat(telegramName, telegramChat);
   }
 
   public User findByEmail(String email) {
-    return repository.findByEmail(email);
+    return userRepo.findByEmail(email);
   }
 
   public User save(User user) {
-    return repository.save(user);
+    return userRepo.save(user);
   }
 
   public List<Device> userDevices(int userId) {
-    return repository.userDevices(userId);
+    return userRepo.userDevices(userId);
   }
 
   @Override
@@ -304,4 +305,12 @@ public class UserService implements UserDetailsService {
     }
   }
 
+  public List<User> findAllByEntityId(int id) throws EntityNotFoundException {
+    Entity entity = entityService.find(id);
+    if (entity != null) {
+      return userRepo.findAllByEntity(entity);
+    } else {
+      throw new EntityNotFoundException("Entity with id furnished not found");
+    }
+  }
 }

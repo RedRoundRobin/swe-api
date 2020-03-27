@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import com.redroundrobin.thirema.apirest.models.UserDisabledException;
+import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
@@ -40,8 +41,11 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -77,7 +81,7 @@ public class UserControllerTest {
   private User user2;
 
   @Before
-  public void setUp() {
+  public void setUp() throws Exception {
     userController = new UserController(jwtTokenUtil, userService, entityService);
 
     admin1 = new User();
@@ -138,29 +142,58 @@ public class UserControllerTest {
     user2.setType(User.Role.USER);
     user2.setEntity(entity2);
 
+    when(jwtTokenUtil.extractRole("Bearer "+admin1Token)).thenReturn(admin1.getType());
     when(jwtTokenUtil.extractUsername(admin1Token)).thenReturn(admin1.getEmail());
     when(userService.findByEmail(admin1.getEmail())).thenReturn(admin1);
     when(userService.find(admin1.getUserId())).thenReturn(admin1);
 
+    when(jwtTokenUtil.extractRole("Bearer "+admin2Token)).thenReturn(admin2.getType());
     when(jwtTokenUtil.extractUsername(admin2Token)).thenReturn(admin2.getEmail());
     when(userService.findByEmail(admin2.getEmail())).thenReturn(admin2);
     when(userService.find(admin2.getUserId())).thenReturn(admin2);
 
+    when(jwtTokenUtil.extractRole("Bearer "+mod1Token)).thenReturn(mod1.getType());
     when(jwtTokenUtil.extractUsername(mod1Token)).thenReturn(mod1.getEmail());
     when(userService.findByEmail(mod1.getEmail())).thenReturn(mod1);
     when(userService.find(mod1.getUserId())).thenReturn(mod1);
 
+    when(jwtTokenUtil.extractRole("Bearer "+mod11Token)).thenReturn(mod11.getType());
     when(jwtTokenUtil.extractUsername(mod11Token)).thenReturn(mod11.getEmail());
     when(userService.findByEmail(mod11.getEmail())).thenReturn(mod11);
     when(userService.find(mod11.getUserId())).thenReturn(mod11);
 
+    when(jwtTokenUtil.extractRole("Bearer "+user1Token)).thenReturn(user1.getType());
     when(jwtTokenUtil.extractUsername(user1Token)).thenReturn(user1.getEmail());
     when(userService.findByEmail(user1.getEmail())).thenReturn(user1);
     when(userService.find(user1.getUserId())).thenReturn(user1);
 
+    when(jwtTokenUtil.extractRole("Bearer "+user2Token)).thenReturn(user2.getType());
     when(jwtTokenUtil.extractUsername(user2Token)).thenReturn(user2.getEmail());
     when(userService.findByEmail(user2.getEmail())).thenReturn(user2);
     when(userService.find(user2.getUserId())).thenReturn(user2);
+
+
+    List<User> allUsers = new ArrayList<>();
+    allUsers.add(admin1);
+    allUsers.add(admin2);
+    allUsers.add(mod1);
+    allUsers.add(mod11);
+    allUsers.add(user1);
+    allUsers.add(user2);
+
+    when(userService.findAll()).thenReturn(allUsers);
+
+    when(userService.findAllByEntityId(anyInt())).thenAnswer(i -> {
+      int id = i.getArgument(0);
+      if( id < 3 ) {
+        List<User> users = allUsers.stream()
+            .filter(user -> user.getEntity() != null && user.getEntity().getEntityId() == id)
+            .collect(Collectors.toList());
+        return users;
+      } else {
+        throw new EntityNotFoundException("");
+      }
+    });
   }
 
   private User cloneUser(User user) {
@@ -479,5 +512,80 @@ public class UserControllerTest {
 
     // Check status and if are present tfa and token
     assertEquals(expected, response);
+  }
+
+
+  // getUsers method tests
+  @Test
+  public void getAllUsersByAdmin1Successfull() {
+    String authorization = "Bearer "+admin1Token;
+
+    ResponseEntity<List<User>> response = userController.getUsers(authorization,null, null, null);
+
+    assertTrue(response.getStatusCode() == HttpStatus.OK);
+    assertTrue(!response.getBody().isEmpty());
+  }
+
+  @Test
+  public void getAllEntity1UsersByAdmin2Successfull() {
+    String authorization = "Bearer "+admin2Token;
+
+    ResponseEntity<List<User>> response = userController.getUsers(authorization,1, null, null);
+
+    assertTrue(response.getStatusCode() == HttpStatus.OK);
+    assertTrue(!response.getBody().isEmpty());
+  }
+
+  @Test
+  public void getAllUsersByAdmin1EntityNotFoundError400() {
+    String authorization = "Bearer "+admin1Token;
+
+    ResponseEntity<List<User>> response = userController.getUsers(authorization,3, null, null);
+
+    System.out.println(response.getStatusCode());
+    assertTrue(response.getStatusCode() == HttpStatus.BAD_REQUEST);
+  }
+
+  @Test
+  public void getAllUsersByMod1Successfull() {
+    String authorization = "Bearer "+mod1Token;
+
+    ResponseEntity<List<User>> response = userController.getUsers(authorization,null, null, null);
+
+    assertTrue(response.getStatusCode() == HttpStatus.OK);
+    assertTrue(!response.getBody().isEmpty());
+
+    ResponseEntity<List<User>> response1 = userController.getUsers(authorization,1, null, null);
+
+    assertTrue(response1.getStatusCode() == HttpStatus.OK);
+    assertTrue(!response1.getBody().isEmpty());
+    assertTrue(response.getBody().equals(response1.getBody()));
+  }
+
+  @Test
+  public void getAllAlertUsersByMod1NoPermissionError403() {
+    String authorization = "Bearer "+mod1Token;
+
+    ResponseEntity<List<User>> response = userController.getUsers(authorization,null, 1, null);
+
+    assertTrue(response.getStatusCode() == HttpStatus.FORBIDDEN);
+  }
+
+  @Test
+  public void getAllDisabledAlertUsersByAdmin1Error400() {
+    String authorization = "Bearer "+admin1Token;
+
+    ResponseEntity<List<User>> response = userController.getUsers(authorization,null, 1, null);
+
+    assertTrue(response.getStatusCode() == HttpStatus.BAD_REQUEST);
+  }
+
+  @Test
+  public void getAllViewUsersByAdmin1Error400() {
+    String authorization = "Bearer "+admin1Token;
+
+    ResponseEntity<List<User>> response = userController.getUsers(authorization,null, null, 1);
+
+    assertTrue(response.getStatusCode() == HttpStatus.BAD_REQUEST);
   }
 }
