@@ -1,7 +1,8 @@
 package com.redroundrobin.thirema.apirest.utils;
 
-import com.redroundrobin.thirema.apirest.models.UserDisabledException;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
+import com.redroundrobin.thirema.apirest.utils.exception.TelegramChatNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
 import io.jsonwebtoken.ExpiredJwtException;
 import java.io.IOException;
 import javax.servlet.FilterChain;
@@ -70,7 +71,8 @@ public class JwtRequestFilter extends OncePerRequestFilter {
           default:
             userDetails = null;
         }
-      } catch (UsernameNotFoundException | UserDisabledException ue) {
+      } catch (UsernameNotFoundException | UserDisabledException
+          | TelegramChatNotFoundException ue) {
         userDetails = null;
       }
 

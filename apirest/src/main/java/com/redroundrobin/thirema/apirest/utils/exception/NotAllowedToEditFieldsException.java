@@ -1,4 +1,4 @@
-package com.redroundrobin.thirema.apirest.utils;
+package com.redroundrobin.thirema.apirest.utils.exception;
 
 import java.lang.Exception;
 

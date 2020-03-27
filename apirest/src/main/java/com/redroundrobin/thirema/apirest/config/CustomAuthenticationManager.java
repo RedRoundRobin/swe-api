@@ -23,10 +23,10 @@ public class CustomAuthenticationManager implements AuthenticationManager {
     User user = userService.findByEmail(email);
 
     if (user == null || !password.equals(user.getPassword())) {
-      throw new BadCredentialsException("401");
+      throw new BadCredentialsException("User not found or password not match");
     } else if (user.isDeleted() || (user.getType() != User.Role.ADMIN
         && (user.getEntity() == null || user.getEntity().isDeleted()))) {
-      throw new DisabledException("403");
+      throw new DisabledException("User is deleted or not have an entity");
     }
 
     return new UsernamePasswordAuthenticationToken(email, password);

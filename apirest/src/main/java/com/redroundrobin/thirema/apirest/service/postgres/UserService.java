@@ -1,24 +1,26 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.redroundrobin.thirema.apirest.models.UserDisabledException;
 import com.redroundrobin.thirema.apirest.models.postgres.Device;
-import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
+import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
-import com.redroundrobin.thirema.apirest.utils.EntityNotFoundException;
-import com.redroundrobin.thirema.apirest.utils.KeysNotFoundException;
-import com.redroundrobin.thirema.apirest.utils.NotAllowedToEditFieldsException;
-import com.redroundrobin.thirema.apirest.utils.TfaNotPermittedException;
-import com.redroundrobin.thirema.apirest.utils.UserRoleNotFoundException;
-import com.redroundrobin.thirema.apirest.utils.MissingFieldsException;
-import com.redroundrobin.thirema.apirest.utils.ValuesNotAllowedException;
-import com.redroundrobin.thirema.apirest.utils.NotAuthorizedToInsertUserException;
+import com.redroundrobin.thirema.apirest.utils.exception.EntityNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.TfaNotPermittedException;
+import com.redroundrobin.thirema.apirest.utils.exception.UserRoleNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
+import com.redroundrobin.thirema.apirest.utils.exception.ValuesNotAllowedException;
+import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedToInsertUserException;
+import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
+import com.redroundrobin.thirema.apirest.utils.exception.TelegramChatNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.NotAllowedToEditException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
@@ -31,10 +33,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserService implements UserDetailsService {
 
-  @Autowired
-  private UserRepository repository;
+  private UserRepository userRepo;
 
-  @Autowired
   private EntityService entityService;
 
   private boolean checkCreatableFields(Set<String> keys)
@@ -57,7 +57,13 @@ public class UserService implements UserDetailsService {
     return creatable.size() == keys.size();
   }
 
-  private boolean checkFieldsEditable(User.Role role, Set<String> keys)
+  @Autowired
+  public UserService(UserRepository userRepo, EntityService entityService) {
+    this.userRepo = userRepo;
+    this.entityService = entityService;
+  }
+
+  private boolean checkFieldsEditable(User.Role role, boolean itself, Set<String> keys)
       throws KeysNotFoundException {
     Set<String> editable = new HashSet<>();
     editable.add("name");
@@ -79,14 +85,22 @@ public class UserService implements UserDetailsService {
     } else {
       switch (role) {
         case ADMIN:
-          editable.remove("password");
+          if (itself) {
+            editable.remove("type");
+            editable.remove("deleted");
+            editable.remove("entity_id");
+          }
 
           break;
         case MOD:
-          editable.remove("password");
+          if (itself) {
+            editable.remove("deleted");
+          } else {
+            editable.remove("password");
+            editable.remove("telegram_name");
+            editable.remove("two_factor_authentication");
+          }
           editable.remove("type");
-          editable.remove("telegram_name");
-          editable.remove("two_factor_authentication");
           editable.remove("entity_id");
 
           break;
@@ -96,9 +110,10 @@ public class UserService implements UserDetailsService {
           editable.remove("type");
           editable.remove("deleted");
           editable.remove("entity_id");
+
           break;
         default:
-          editable.removeAll(editable);
+          editable.clear();
       }
 
       return keys.stream()
@@ -107,55 +122,58 @@ public class UserService implements UserDetailsService {
     }
   }
 
-  private User editAndSave(User userToEdit, JsonObject fieldsToEdit) throws EntityNotFoundException,
-      TfaNotPermittedException, UserRoleNotFoundException {
-    if (fieldsToEdit.has("two_factor_authentication")
-        && fieldsToEdit.get("two_factor_authentication").getAsBoolean()
-        && (fieldsToEdit.has("telegram_name")
+  private User editAndSave(User userToEdit, HashMap<String, Object> fieldsToEdit)
+      throws EntityNotFoundException, TfaNotPermittedException, UserRoleNotFoundException {
+    if (fieldsToEdit.containsKey("two_factor_authentication")
+        && (boolean)fieldsToEdit.get("two_factor_authentication")
+        && (fieldsToEdit.containsKey("telegram_name")
         || userToEdit.getTelegramChat().isEmpty())) {
       throw new TfaNotPermittedException("TFA can't be edited because either telegram_name is "
           + "in the request or telegram chat is not present");
     }
 
-    if (fieldsToEdit.has("entityId")
-        && entityService.find(fieldsToEdit.get("entityId").getAsInt()) == null) {
+
+    if (fieldsToEdit.containsKey("entity_id")
+        && entityService.find((int)fieldsToEdit.get("entity_id")) == null) {
       throw new EntityNotFoundException("The entity with the entityId given doesn't exist");
     }
 
-    for (Map.Entry<String, JsonElement> entry : fieldsToEdit.entrySet()) {
-      switch (entry.getKey()) {
+    for (Map.Entry<String, Object> entry : fieldsToEdit.entrySet()) {
+      String key = entry.getKey();
+      Object value = entry.getValue();
+      switch (key) {
         case "name":
-          userToEdit.setName(entry.getValue().getAsString());
+          userToEdit.setName((String) value);
           break;
         case "surname":
-          userToEdit.setSurname(entry.getValue().getAsString());
+          userToEdit.setSurname((String) value);
           break;
         case "email":
-          userToEdit.setEmail(entry.getValue().getAsString());
+          userToEdit.setEmail((String) value);
           break;
         case "password":
-          userToEdit.setPassword(entry.getValue().getAsString());
+          userToEdit.setPassword((String) value);
           break;
         case "type":
           try {
-            userToEdit.setType(User.Role.valueOf(entry.getValue().getAsString()));
-          } catch (IllegalArgumentException iae) {
-            throw new UserRoleNotFoundException("The inserted role doesn't exist");
+            userToEdit.setType(User.Role.values()[(int)value]);
+          } catch (IllegalArgumentException | ArrayIndexOutOfBoundsException iae) {
+            throw new UserRoleNotFoundException("The inserted role is not found");
           }
           break;
         case "telegram_name":
-          userToEdit.setTelegramName(entry.getValue().getAsString());
+          userToEdit.setTelegramName((String) value);
           userToEdit.setTfa(false);
           userToEdit.setTelegramChat(null);
           break;
         case "two_factor_authentication":
-          userToEdit.setTfa(entry.getValue().getAsBoolean());
+          userToEdit.setTfa((boolean) value);
           break;
         case "deleted":
-          userToEdit.setDeleted(true);
+          userToEdit.setDeleted((boolean) value);
           break;
         case "entity_id":
-          userToEdit.setEntity(entityService.find(entry.getValue().getAsInt()));
+          userToEdit.setEntity(entityService.find((int) value));
           break;
         default:
       }
@@ -165,31 +183,32 @@ public class UserService implements UserDetailsService {
   }
 
   public List<User> findAll() {
-    return (List<User>) repository.findAll();
+    return (List<User>) userRepo.findAll();
   }
 
   public User find(int id) {
-    return repository.findById(id).get();
+    Optional<User> optUser = userRepo.findById(id);
+    return optUser.orElse(null);
   }
 
   public User findByTelegramName(String telegramName) {
-    return repository.findByTelegramName(telegramName);
+    return userRepo.findByTelegramName(telegramName);
   }
 
   public User findByTelegramNameAndTelegramChat(String telegramName, String telegramChat) {
-    return repository.findByTelegramNameAndTelegramChat(telegramName, telegramChat);
+    return userRepo.findByTelegramNameAndTelegramChat(telegramName, telegramChat);
   }
 
   public User findByEmail(String email) {
-    return repository.findByEmail(email);
+    return userRepo.findByEmail(email);
   }
 
   public User save(User user) {
-    return repository.save(user);
+    return userRepo.save(user);
   }
 
   public List<Device> userDevices(int userId) {
-    return repository.userDevices(userId);
+    return userRepo.userDevices(userId);
   }
 
   @Override
@@ -224,7 +243,7 @@ public class UserService implements UserDetailsService {
       throw new UsernameNotFoundException("");
     } else if (user.isDeleted() || (user.getType() != User.Role.ADMIN
         && (user.getEntity() == null || user.getEntity().isDeleted()))) {
-      throw new UserDisabledException();
+      throw new UserDisabledException("User has been deleted or don't have an entity");
     }
 
     List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
@@ -244,13 +263,15 @@ public class UserService implements UserDetailsService {
    * @throws UserDisabledException thrown if telegram name found but the user is disabled.
    */
   public UserDetails loadUserByTelegramName(String s)
-      throws UsernameNotFoundException, UserDisabledException {
+      throws UsernameNotFoundException, UserDisabledException, TelegramChatNotFoundException {
     User user = this.findByTelegramName(s);
     if (user == null) {
       throw new UsernameNotFoundException("");
     } else if (user.isDeleted() || (user.getType() != User.Role.ADMIN
         && (user.getEntity() == null || user.getEntity().isDeleted()))) {
-      throw new UserDisabledException();
+      throw new UserDisabledException("User has been deleted or don't have an entity");
+    } else if (user.getTelegramChat() == null || user.getTelegramChat().isEmpty()) {
+      throw new TelegramChatNotFoundException();
     }
 
     List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
@@ -260,34 +281,40 @@ public class UserService implements UserDetailsService {
         user.getTelegramName(), user.getTelegramChat(), grantedAuthorities);
   }
 
-  public User editItself(User userToEdit, JsonObject fieldsToEdit)
-      throws NotAllowedToEditFieldsException, KeysNotFoundException, EntityNotFoundException,
+  public User editByUser(User userToEdit, HashMap<String, Object> fieldsToEdit)
+      throws NotAllowedToEditException, KeysNotFoundException, EntityNotFoundException,
       TfaNotPermittedException, UserRoleNotFoundException {
 
-    if (!checkFieldsEditable(User.Role.USER, fieldsToEdit.keySet())) {
-      throw new NotAllowedToEditFieldsException("You are not allowed to edit some of the specified fields");
+    if (!checkFieldsEditable(User.Role.USER, true, fieldsToEdit.keySet())) {
+      throw new NotAllowedToEditException(
+          "You are not allowed to edit some of the specified fields");
     } else {
       return this.editAndSave(userToEdit, fieldsToEdit);
     }
   }
 
-  public User editByModerator(User userToEdit, JsonObject fieldsToEdit)
-      throws NotAllowedToEditFieldsException, KeysNotFoundException, EntityNotFoundException,
+  public User editByModerator(User userToEdit, boolean itself, HashMap<String, Object> fieldsToEdit)
+      throws NotAllowedToEditException, KeysNotFoundException, EntityNotFoundException,
       TfaNotPermittedException, UserRoleNotFoundException {
 
-    if (!checkFieldsEditable(User.Role.MOD, fieldsToEdit.keySet())) {
-      throw new NotAllowedToEditFieldsException("You are not allowed to edit some of the specified fields");
+    if (!checkFieldsEditable(User.Role.MOD, itself, fieldsToEdit.keySet())) {
+      throw new NotAllowedToEditException(
+          "You are not allowed to edit some of the specified fields");
     } else {
       return this.editAndSave(userToEdit, fieldsToEdit);
     }
   }
 
-  public User editByAdministrator(User userToEdit, JsonObject fieldsToEdit)
-      throws NotAllowedToEditFieldsException, KeysNotFoundException, EntityNotFoundException,
+  public User editByAdministrator(User userToEdit, boolean itself,
+                                  HashMap<String, Object> fieldsToEdit)
+      throws NotAllowedToEditException, KeysNotFoundException, EntityNotFoundException,
       TfaNotPermittedException, UserRoleNotFoundException {
 
-    if (!checkFieldsEditable(User.Role.ADMIN, fieldsToEdit.keySet())) {
-      throw new NotAllowedToEditFieldsException("You are not allowed to edit some of the specified fields");
+    if ((!itself && userToEdit.getType() == User.Role.ADMIN)
+        || (fieldsToEdit.containsKey("type") && (int)fieldsToEdit.get("type") == 2)
+        || !checkFieldsEditable(User.Role.ADMIN, itself, fieldsToEdit.keySet())) {
+      throw new NotAllowedToEditException(
+          "You are not allowed to edit some of the specified fields");
     } else {
       return this.editAndSave(userToEdit, fieldsToEdit);
     }
@@ -345,4 +372,12 @@ public class UserService implements UserDetailsService {
       return save(newUser);
     }
 
+  public List<User> findAllByEntityId(int id) throws EntityNotFoundException {
+    Entity entity = entityService.find(id);
+    if (entity != null) {
+      return userRepo.findAllByEntity(entity);
+    } else {
+      throw new EntityNotFoundException("Entity with id furnished not found");
+    }
+  }
 }

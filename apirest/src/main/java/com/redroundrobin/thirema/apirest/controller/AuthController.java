@@ -3,18 +3,18 @@ package com.redroundrobin.thirema.apirest.controller;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.redroundrobin.thirema.apirest.config.CustomAuthenticationManager;
-import com.redroundrobin.thirema.apirest.models.AuthenticationRequest;
 import com.redroundrobin.thirema.apirest.models.AuthenticationRequestTelegram;
-import com.redroundrobin.thirema.apirest.models.UserDisabledException;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
+import com.redroundrobin.thirema.apirest.service.TelegramService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
+import com.redroundrobin.thirema.apirest.utils.exception.TelegramChatNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -27,33 +27,35 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.ResourceAccessException;
-import org.springframework.web.client.RestClientResponseException;
-import org.springframework.web.client.RestTemplate;
 
 @RestController
 public class AuthController {
 
-  @Autowired
   private CustomAuthenticationManager authenticationManager;
 
-  @Autowired
   private UserService userService;
 
-  @Autowired
   private JwtUtil jwtTokenUtil;
 
-  @Value("${telegram.url}")
-  private String telegramUrl;
+  private TelegramService telegramService;
+
+  @Autowired
+  public AuthController(CustomAuthenticationManager authenticationManager, UserService userService,
+                        JwtUtil jwtTokenUtil, TelegramService telegramService) {
+    this.authenticationManager = authenticationManager;
+    this.userService = userService;
+    this.jwtTokenUtil = jwtTokenUtil;
+    this.telegramService = telegramService;
+  }
 
   @RequestMapping(value = "/auth", method = RequestMethod.POST)
-  public ResponseEntity<?> authentication(@RequestBody AuthenticationRequest authenticationRequest)
-      throws Exception {
-    String email = authenticationRequest.getUsername();
-    String password = authenticationRequest.getPassword();
+  public ResponseEntity<Object> authentication(
+      @RequestBody Map<String, Object> authenticationRequest) throws Exception {
+    String email = (String) authenticationRequest.get("username");
+    String password = (String) authenticationRequest.get("password");
 
     if (email == null || password == null) {
-      return ResponseEntity.status(400).build();  // Bad Request
+      return new ResponseEntity(HttpStatus.BAD_REQUEST);  // Bad Request
     }
 
     UserDetails userDetails;
@@ -63,11 +65,11 @@ public class AuthController {
           new UsernamePasswordAuthenticationToken(email, password)
       );
       userDetails = userService
-          .loadUserByEmail(authenticationRequest.getUsername());
+          .loadUserByEmail(email);
     } catch (BadCredentialsException bce) {
-      return ResponseEntity.status(401).build();  // Unauthenticated
+      return new ResponseEntity(HttpStatus.UNAUTHORIZED);  // Unauthenticated
     } catch (DisabledException de) {
-      return ResponseEntity.status(403).build();  // Unauthorized
+      return new ResponseEntity(HttpStatus.FORBIDDEN);  // Unauthorized
     }
 
     HashMap<String,Object> response = new HashMap<>();
@@ -80,28 +82,19 @@ public class AuthController {
         Random rnd = new Random();
         int sixDigitsCode = 100000 + rnd.nextInt(900000);
 
-        Map<String, Object> map = new HashMap<>();
-        map.put("auth_code", sixDigitsCode); //codice fittizio
-        map.put("chat_id", user.getTelegramChat());
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(map);
+        Map<String, Object> request = new HashMap<>();
+        request.put("auth_code", sixDigitsCode); //codice fittizio
+        request.put("chat_id", user.getTelegramChat());
 
-        try {
-          RestTemplate restTemplate = new RestTemplate();
-          ResponseEntity<String> telegramResponse =
-              restTemplate.postForEntity(telegramUrl, entity, String.class);
-
-          if (telegramResponse.getStatusCode().value() != 200) {
-            throw new ResourceAccessException("");
-          }
-        } catch (RestClientResponseException | ResourceAccessException rae) {
-          return ResponseEntity.status(500).build();
+        if (!telegramService.sendTfa(request)) {
+          return  new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         response.put("tfa", true);
 
         token = jwtTokenUtil.generateTfaToken("tfa", String.valueOf(sixDigitsCode), userDetails);
       } else {
-        return ResponseEntity.status(500).build();
+        return  new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
       }
     } else {
       response.put("user", user);
@@ -115,19 +108,18 @@ public class AuthController {
   }
 
   @PostMapping(value = "/auth/tfa")
-  public ResponseEntity<?> tfaAuthentication(@RequestBody String rawData,
+  public ResponseEntity<?> tfaAuthentication(@RequestBody Map<String, Object> request,
                                            @RequestHeader("Authorization") String authorization) {
-    JsonObject data = JsonParser.parseString(rawData).getAsJsonObject();
 
-    if (!data.has("auth_code") || data.get("auth_code").getAsString().equals("")) {
-      return ResponseEntity.status(400).build();
+    if (!request.containsKey("auth_code") || ((String) request.get("auth_code")).equals("")) {
+      return new ResponseEntity(HttpStatus.BAD_REQUEST);
     }
 
-    String authCode = data.get("auth_code").getAsString();
+    String authCode = (String) request.get("auth_code");
     String tfaToken = authorization.substring(7);
 
     if (!jwtTokenUtil.isTfa(tfaToken)) {
-      return ResponseEntity.status(400).build();
+      return new ResponseEntity(HttpStatus.BAD_REQUEST);
     }
 
     String tokenAuthCode = jwtTokenUtil.extractAuthCode(tfaToken);
@@ -138,6 +130,9 @@ public class AuthController {
       final UserDetails userDetails;
 
       try {
+        if (user == null) {
+          throw new UsernameNotFoundException("User with email furnished is not found");
+        }
         userDetails = userService
             .loadUserByEmail(user.getEmail());
       } catch (UsernameNotFoundException unfe) {
@@ -161,9 +156,17 @@ public class AuthController {
   //funzione di controllo username Telegram e salvataggio chatID
   @PostMapping(value = {"/auth/telegram"})
   public ResponseEntity<?> telegramAuthentication(@RequestBody
-                                           AuthenticationRequestTelegram authenticationRequest) {
-    String telegramName = authenticationRequest.getTelegramName();
-    String chatId = authenticationRequest.getTelegramChat();
+                                           Map<String, Object> authenticationRequest) {
+    String telegramName = (String) authenticationRequest.get("telegram_name");
+    String chatId = (String) authenticationRequest.get("telegram_chat");
+
+    System.out.println(authenticationRequest);
+    System.out.println(telegramName);
+    System.out.println(chatId);
+
+    if (telegramName == null || chatId == null)  {
+      return new ResponseEntity(HttpStatus.BAD_REQUEST);
+    }
 
     int code = 2;
     String token = "";
@@ -184,7 +187,7 @@ public class AuthController {
 
         token = jwtTokenUtil.generateToken("telegram", userDetails);
       }
-    } catch (UsernameNotFoundException | UserDisabledException ue) {
+    } catch (UsernameNotFoundException | UserDisabledException | TelegramChatNotFoundException ue) {
       code = 0;
     }
 

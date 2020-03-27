@@ -2,7 +2,7 @@ package com.redroundrobin.thirema.apirest.controller;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.redroundrobin.thirema.apirest.models.UserDisabledException;
+import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.postgres.View;
 import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
@@ -23,16 +23,21 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class ViewController {
 
-  @Autowired
   private JwtUtil jwtTokenUtil;
 
-  @Autowired
   private UserService userService;
 
-  @Autowired
   private ViewService viewService;
 
-  @GetMapping(name = "/views")
+  @Autowired
+  public ViewController(JwtUtil jwtTokenUtil, UserService userService,
+                        ViewService viewService) {
+    this.jwtTokenUtil = jwtTokenUtil;
+    this.userService = userService;
+    this.viewService = viewService;
+  }
+
+  @GetMapping(value = {"/views"})
   public ResponseEntity<?> views(@RequestHeader("Authorization") String authorization) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
@@ -40,8 +45,8 @@ public class ViewController {
   }
 
 
-  @GetMapping(name = "/views/{viewId:.+}")
-  public ResponseEntity<?> views(
+  @GetMapping(value = {"/view/{viewId:.+}"})
+  public ResponseEntity<?> selectOneView(
       @RequestHeader("Authorization") String authorization,  @PathVariable("viewId") int viewId) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
