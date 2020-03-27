@@ -7,8 +7,11 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -90,8 +93,13 @@ public class JwtUtil {
   public String generateToken(String type, UserDetails userDetails) {
     Map<String, Object> claims = new HashMap<>();
     claims.put("type", type);
-    claims.put("role", User.Role.valueOf(User.Role.class,
-        userDetails.getAuthorities().stream().findFirst().get().toString()));
+    User.Role role = User.Role.USER;
+    Optional<? extends GrantedAuthority> grantedAuthority = userDetails.getAuthorities().stream()
+        .findFirst();
+    if (grantedAuthority.isPresent()) {
+      role = User.Role.valueOf(User.Role.class, grantedAuthority.get().toString());
+    }
+    claims.put("role", role);
     return createToken(claims, userDetails.getUsername());
   }
 
@@ -106,8 +114,13 @@ public class JwtUtil {
   public String generateTokenWithExpiration(String type, Date expiration,UserDetails userDetails) {
     Map<String, Object> claims = new HashMap<>();
     claims.put("type", type);
-    claims.put("role", User.Role.valueOf(User.Role.class,
-        userDetails.getAuthorities().stream().findFirst().get().toString()));
+    User.Role role = User.Role.USER;
+    Optional<? extends GrantedAuthority> grantedAuthority = userDetails.getAuthorities().stream()
+        .findFirst();
+    if (grantedAuthority.isPresent()) {
+      role = User.Role.valueOf(User.Role.class, grantedAuthority.get().toString());
+    }
+    claims.put("role", role);
     return createTokenWithExpiration(claims, expiration, userDetails.getUsername());
   }
 
@@ -124,8 +137,13 @@ public class JwtUtil {
     Map<String, Object> claims = new HashMap<>();
     claims.put("type", type);
     claims.put("tfa", true);
-    claims.put("role", User.Role.valueOf(User.Role.class,
-        userDetails.getAuthorities().stream().findFirst().get().toString()));
+    User.Role role = User.Role.USER;
+    Optional<? extends GrantedAuthority> grantedAuthority = userDetails.getAuthorities().stream()
+        .findFirst();
+    if (grantedAuthority.isPresent()) {
+      role = User.Role.valueOf(User.Role.class, grantedAuthority.get().toString());
+    }
+    claims.put("role", role);
     claims.put("auth_code", authCode);
     return createToken(claims, userDetails.getUsername());
   }
