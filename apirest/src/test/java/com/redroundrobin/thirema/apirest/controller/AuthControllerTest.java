@@ -1,510 +1,477 @@
 package com.redroundrobin.thirema.apirest.controller;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.redroundrobin.thirema.apirest.models.AuthenticationRequest;
-import com.redroundrobin.thirema.apirest.models.UserDisabledException;
+import com.redroundrobin.thirema.apirest.config.CustomAuthenticationManager;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
+import com.redroundrobin.thirema.apirest.service.TelegramService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.json.JSONObject;
+import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Bean;
-import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
-@WebMvcTest(AuthController.class)
 public class AuthControllerTest {
 
-  @Autowired
-  private MockMvc mockMvc;
+  @MockBean
+  private CustomAuthenticationManager authenticationManager;
 
   @MockBean
-  UserService userService;
+  private UserService userService;
 
-  @Autowired
-  JwtUtil jwtTokenUtil;
+  @MockBean
+  private JwtUtil jwtTokenUtil;
 
-  @TestConfiguration
-  static class AdditionalConfig {
-    @Bean
-    public JwtUtil getJwtTokenUtilBean() {
-      return new JwtUtil();
-    }
+  @MockBean
+  private TelegramService telegramService;
+
+  private AuthController authController;
+
+
+  private User admin;
+  private User adminTfa1;
+  private User adminTfa2;
+  private User disabledAdmin;
+
+  @Before
+  public void setUp() throws Exception {
+    authController = new AuthController(authenticationManager, userService, jwtTokenUtil,
+        telegramService);
+
+    admin = new User();
+    admin.setName("admin");
+    admin.setSurname("admin");
+    admin.setEmail("admin");
+    admin.setPassword("password");
+    admin.setType(User.Role.ADMIN);
+
+    disabledAdmin = new User();
+    disabledAdmin.setName("admin2");
+    disabledAdmin.setSurname("admin2");
+    disabledAdmin.setEmail("admin2");
+    disabledAdmin.setPassword("password");
+    disabledAdmin.setType(User.Role.ADMIN);
+    disabledAdmin.setDeleted(true);
+
+    adminTfa1 = new User();
+    adminTfa1.setName("adminTfa1");
+    adminTfa1.setSurname("adminTfa1");
+    adminTfa1.setEmail("adminTfa1");
+    adminTfa1.setPassword("password");
+    adminTfa1.setType(User.Role.ADMIN);
+    adminTfa1.setTelegramName("telegramName");
+    adminTfa1.setTelegramChat("telegramChat");
+    adminTfa1.setTfa(true);
+
+    adminTfa2 = new User();
+    adminTfa2.setName("adminTfa2");
+    adminTfa2.setSurname("adminTfa2");
+    adminTfa2.setEmail("adminTfa2");
+    adminTfa2.setPassword("password");
+    adminTfa2.setType(User.Role.ADMIN);
+    adminTfa2.setTelegramName("telegramName");
+    adminTfa2.setTfa(true);
+
+    List<User> users = new ArrayList<>();
+    users.add(admin);
+    users.add(disabledAdmin);
+    users.add(adminTfa1);
+    users.add(adminTfa2);
+
+    when(authenticationManager.authenticate(any(Authentication.class))).thenAnswer(i -> {
+      Authentication auth = i.getArgument(0);
+      User user = users.stream()
+          .filter(u -> u.getEmail().equals(auth.getPrincipal()))
+          .findFirst()
+          .orElse(null);
+
+      if(auth.getPrincipal().equals(user.getEmail())) {
+        if(auth.getCredentials().equals(user.getPassword())) {
+          if( !user.isDeleted() ) {
+            return new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPassword());
+          } else {
+            throw new DisabledException("User is deleted or not have an entity");
+          }
+        } else {
+          throw new BadCredentialsException("User not found or password not match");
+        }
+      } else {
+        throw new BadCredentialsException("User not found or password not match");
+      }
+    });
+
+    when(jwtTokenUtil.generateTokenWithExpiration(anyString(),any(Date.class),
+        any(UserDetails.class))).thenReturn("tokenWithTypeDateAndUserDetailsFurnished");
+    when(jwtTokenUtil.generateToken(anyString(),
+        any(UserDetails.class))).thenReturn("tokenWithTypeAndUserDetailsFurnished");
+    when(jwtTokenUtil.generateTfaToken(anyString(), anyString(),
+        any(UserDetails.class))).thenReturn("tfaTokenWithTypeAuthCodeAndUserDetailsFurnished");
+
+    when(userService.findByEmail(anyString())).thenAnswer(i -> {
+      String email = i.getArgument(0);
+      return users.stream().filter(u -> u.getEmail().equals(email)).findFirst().orElse(null);
+    });
+    when(userService.loadUserByEmail(anyString())).thenAnswer(i -> {
+      String email = i.getArgument(0);
+      User user = users.stream().filter(u -> u.getEmail().equals(email)).findFirst().orElse(null);
+
+      if( user != null && !user.isDeleted() ) {
+        List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
+        grantedAuthorities.add(new SimpleGrantedAuthority(String.valueOf(user.getType())));
+
+        return new org.springframework.security.core.userdetails.User(user.getEmail(),
+            user.getPassword(), grantedAuthorities);
+      } else if( user == null ) {
+        throw new UsernameNotFoundException("");
+      } else {
+        throw new UserDisabledException("");
+      }
+    });
+    when(userService.loadUserByTelegramName(anyString())).thenAnswer(i -> {
+      String telegramName = i.getArgument(0);
+      User user = users.stream().filter(u -> telegramName.equals(u.getTelegramName()))
+          .findFirst().orElse(null);
+
+      if( user != null && !user.isDeleted() ) {
+        List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
+        grantedAuthorities.add(new SimpleGrantedAuthority(String.valueOf(user.getType())));
+
+        return new org.springframework.security.core.userdetails.User(user.getTelegramName(),
+            user.getTelegramChat(), grantedAuthorities);
+      } else if( user == null ) {
+        throw new UsernameNotFoundException("");
+      } else {
+        throw new UserDisabledException("");
+      }
+    });
   }
 
-  private User defaultUser() throws UsernameNotFoundException, UserDisabledException {
-    User user = new User();
-    user.setName("user");
-    user.setSurname("user");
-    user.setEmail("email@test.it");
-    user.setPassword("password");
-    user.setType(User.Role.ADMIN);
 
-    List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
-    grantedAuthorities.add(new SimpleGrantedAuthority(String.valueOf(user.getType())));
 
-    org.springframework.security.core.userdetails.User userD =
-        new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(),
-            grantedAuthorities);
-
-    when(userService.findByEmail(user.getEmail())).thenReturn(user);
-    when(userService.loadUserByEmail(user.getEmail())).thenReturn(userD);
-
-    return user;
-  }
+  // authentication METHOD TESTS
 
   @Test
   public void authenticationSuccessfull() throws Exception {
-    User user = defaultUser();
 
-    JSONObject json = new JSONObject();
-    json.put("username",user.getEmail());
-    json.put("password",user.getPassword());
-    System.out.println(json.toString());
+    Map<String, Object> request = new HashMap<>();
+    request.put("username",admin.getEmail());
+    request.put("password",admin.getPassword());
 
-    MvcResult mvcResult = mockMvc.perform(
-      MockMvcRequestBuilders
-          .post("/auth")
-          .contentType(MediaType.APPLICATION_JSON_VALUE)
-          .content(json.toString()))
-        .andReturn();
+    ResponseEntity response = authController.authentication(request);
 
-    int status = mvcResult.getResponse().getStatus();
-    assertEquals(200, status);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
 
-    JsonObject response = JsonParser.parseString( mvcResult.getResponse().getContentAsString() ).getAsJsonObject();
-    assertNotEquals(response.get("token").getAsString(),"");
-    assertNotNull(response.get("user"));
+    try {
+      Map<String, Object> responseMap = (HashMap<String, Object>) response.getBody();
+
+      assertNotEquals("", (String) responseMap.get("token"));
+      assertNotNull(responseMap.get("user"));
+    } catch (ClassCastException cce) {
+      assertTrue(false);
+    }
   }
 
   @Test
-  public void authenticationError400() throws Exception {
+  public void authenticationBadRequestError400() throws Exception {
 
-    this.defaultUser();
+    Map<String, Object> request = new HashMap<>();
 
-    String uri = "/auth";
-    JsonObject request = new JsonObject();
+    ResponseEntity response = authController.authentication(request);
 
-    MvcResult mvcResult = mockMvc.perform(
-        MockMvcRequestBuilders.post(uri)
-            .contentType(MediaType.APPLICATION_JSON_VALUE)
-            .content(request.toString()))
-        .andReturn();
-
-    int status = mvcResult.getResponse().getStatus();
-    assertEquals(400, status);
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
   }
 
   @Test
-  public void authenticationError401() throws Exception {
+  public void authenticationWrongPasswordFoundError401() throws Exception {
 
-    User user = this.defaultUser();
+    Map<String, Object> request = new HashMap<>();
+    request.put("username",admin.getEmail());
+    request.put("password","wrong");
 
-    String uri = "/auth";
-    AuthenticationRequest authenticationRequest = new AuthenticationRequest(user.getEmail(),user.getPassword()+"1");
+    ResponseEntity response = authController.authentication(request);
 
-    Gson gson = new Gson();
-    String inputJson = gson.toJson(authenticationRequest);
-
-    MvcResult mvcResult = mockMvc.perform(
-        MockMvcRequestBuilders.post(uri)
-            .contentType(MediaType.APPLICATION_JSON_VALUE)
-            .content(inputJson))
-        .andReturn();
-
-    int status = mvcResult.getResponse().getStatus();
-    assertEquals(401, status);
+    assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
   }
 
   @Test
-  public void authenticationError403() throws Exception {
+  public void authenticationDisabledUserError403() throws Exception {
 
-    User user = this.defaultUser();
-    user.setDeleted(true);
+    Map<String, Object> request = new HashMap<>();
+    request.put("username",disabledAdmin.getEmail());
+    request.put("password",disabledAdmin.getPassword());
 
-    String uri = "/auth";
-    AuthenticationRequest authenticationRequest = new AuthenticationRequest(user.getEmail(),user.getPassword());
+    ResponseEntity response = authController.authentication(request);
 
-    Gson gson = new Gson();
-    String inputJson = gson.toJson(authenticationRequest);
-
-    MvcResult mvcResult = mockMvc.perform(
-        MockMvcRequestBuilders.post(uri)
-            .contentType(MediaType.APPLICATION_JSON_VALUE)
-            .content(inputJson))
-        .andReturn();
-
-    int status = mvcResult.getResponse().getStatus();
-    assertEquals(403, status);
+    assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
   }
 
-  // Test that work only with maven test
   @Test
-  public void authenticationTfaSuccessfull() throws Exception {
+  public void authenticationWithTfaSuccessfull() throws Exception {
 
-    User user = this.defaultUser();
-    user.setTfa(true);
-    user.setTelegramName("prova");
-    user.setTelegramChat("4365587567");
+    Map<String, Object> request = new HashMap<>();
+    request.put("username",adminTfa1.getEmail());
+    request.put("password",adminTfa1.getPassword());
 
-    // Creating request to api
-    String uri = "/auth";
-    AuthenticationRequest authenticationRequest = new AuthenticationRequest(user.getEmail(),user.getPassword());
+    when(telegramService.sendTfa(any(Map.class))).thenReturn(true);
 
-    Gson gson = new Gson();
-    String inputJson = gson.toJson(authenticationRequest);
+    ResponseEntity response = authController.authentication(request);
 
-    MvcResult mvcResult = mockMvc.perform(
-        MockMvcRequestBuilders.post(uri)
-            .contentType(MediaType.APPLICATION_JSON_VALUE)
-            .content(inputJson))
-        .andReturn();
+    assertEquals(HttpStatus.OK, response.getStatusCode());
 
-    // Check status and if are present tfa and token
-    int status = mvcResult.getResponse().getStatus();
-    assertEquals(200, status);
+    try {
+      Map<String, Object> responseMap = (HashMap<String, Object>) response.getBody();
 
-    JsonObject response = gson.fromJson(
-        mvcResult.getResponse().getContentAsString(), JsonObject.class);
-
-    assertTrue(response.has("tfa"));
-    assertTrue(response.has("token"));
-
-    String token = response.get("token").getAsString();
+      System.out.println(responseMap);
+      assertNotNull(responseMap.get("token"));
+      assertTrue((boolean) responseMap.get("tfa"));
+    } catch (ClassCastException cce) {
+      assertTrue(false);
+    }
   }
 
-  // Test that work only with maven test
   @Test
-  public void authenticationTfaError500() throws Exception {
+  public void authenticationWithTfaNoTelegramComunicationError500() throws Exception {
 
-    User user = this.defaultUser();
-    user.setTfa(true);
-    user.setTelegramName("prova");
+    Map<String, Object> request = new HashMap<>();
+    request.put("username",adminTfa1.getEmail());
+    request.put("password",adminTfa1.getPassword());
 
-    // Creating request to api
-    String uri = "/auth";
-    AuthenticationRequest authenticationRequest = new AuthenticationRequest(user.getEmail(),user.getPassword());
+    when(telegramService.sendTfa(any(Map.class))).thenReturn(false);
 
-    Gson gson = new Gson();
-    String inputJson = gson.toJson(authenticationRequest);
+    ResponseEntity response = authController.authentication(request);
 
-    MvcResult mvcResult = mockMvc.perform(
-        MockMvcRequestBuilders.post(uri)
-            .contentType(MediaType.APPLICATION_JSON_VALUE)
-            .content(inputJson))
-        .andReturn();
+    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+  }
 
-    // Check status and if are present tfa and token
-    int status = mvcResult.getResponse().getStatus();
-    assertEquals(500, status);
+  @Test
+  public void authenticationWithTfaUserWithoutTelegramChatError500() throws Exception {
+
+    Map<String, Object> request = new HashMap<>();
+    request.put("username",adminTfa2.getEmail());
+    request.put("password",adminTfa2.getPassword());
+
+    ResponseEntity response = authController.authentication(request);
+
+    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
   }
 
 
 
-  @WithMockUser
+  // tfaAuthentication METHOD TESTS
+
   @Test
   public void tfaAuthenticationSuccessfull() throws Exception {
 
-    User user = this.defaultUser();
+    String auth_code = "code";
+    Map<String, Object> request = new HashMap<>();
+    request.put("auth_code", auth_code);
 
-    String authCode = "456436";
+    when(jwtTokenUtil.isTfa(anyString())).thenReturn(true);
+    when(jwtTokenUtil.extractAuthCode(anyString())).thenReturn(auth_code);
+    when(jwtTokenUtil.extractUsername(anyString())).thenReturn(adminTfa1.getEmail());
 
-    UserDetails userDetails = userService.loadUserByEmail(user.getEmail());
+    ResponseEntity response = authController.tfaAuthentication(request, "tokennnnnn");
 
-    String tfaToken = jwtTokenUtil.generateTfaToken("tfa", authCode, userDetails);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
 
-    // Creating request to api
-    String uri = "/auth/tfa";
+    try {
+      Map<String, Object> responseMap = (HashMap<String, Object>) response.getBody();
 
-    JSONObject request = new JSONObject();
-    request.put("auth_code", authCode);
-
-    MvcResult mvcResult = mockMvc.perform(
-        MockMvcRequestBuilders
-            .post(uri)
-            .contentType(MediaType.APPLICATION_JSON_VALUE)
-            .header("Authorization","Bearer "+tfaToken)
-            .content(request.toString()))
-        .andReturn();
-
-    // Check status and if are present tfa and token
-    int status = mvcResult.getResponse().getStatus();
-    assertEquals(200, status);
-
-    JsonObject response = JsonParser.parseString( mvcResult.getResponse().getContentAsString() ).getAsJsonObject();
-    assertNotEquals(response.get("token").getAsString(),"");
-    assertNotNull(response.get("user"));
+      assertNotEquals("", (String) responseMap.get("token"));
+      assertNotNull(responseMap.get("user"));
+    } catch (ClassCastException cce) {
+      assertTrue(false);
+    }
   }
 
-  @WithMockUser
   @Test
-  public void tfaAuthenticationError400NoContent() throws Exception {
-    User user = this.defaultUser();
+  public void tfaAuthenticationBadRequestError400() throws Exception {
 
-    String authCode = "456436";
+    String auth_code = "code";
+    Map<String, Object> request = new HashMap<>();
 
-    UserDetails userDetails = userService.loadUserByEmail(user.getEmail());
+    when(jwtTokenUtil.isTfa(anyString())).thenReturn(true);
+    when(jwtTokenUtil.extractAuthCode(anyString())).thenReturn(auth_code);
+    when(jwtTokenUtil.extractUsername(anyString())).thenReturn(adminTfa1.getEmail());
 
-    String tfaToken = jwtTokenUtil.generateTfaToken("webapp", authCode, userDetails);
+    ResponseEntity response = authController.tfaAuthentication(request, "tokennnnnn");
 
-    // Creating request to api
-    String uri = "/auth/tfa";
-
-    JSONObject request = new JSONObject();
-    request.put("auth_code", "");
-
-    // check first 400
-    MvcResult mvcResult = mockMvc.perform(
-        MockMvcRequestBuilders
-            .post(uri)
-            .contentType(MediaType.APPLICATION_JSON_VALUE)
-            .header("Authorization","Bearer "+tfaToken)
-            .content(request.toString()))
-        .andReturn();
-
-    // Check status and if are present tfa and token
-    int status = mvcResult.getResponse().getStatus();
-    assertEquals(400, status);
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
   }
 
-  @WithMockUser
   @Test
-  public void tfaAuthenticationError400NoTfaTypeToken() throws Exception {
-    User user = this.defaultUser();
+  public void tfaAuthenticationBadRequestIsNotTfaError400() throws Exception {
 
-    String authCode = "456436";
+    String auth_code = "code";
+    Map<String, Object> request = new HashMap<>();
+    request.put("auth_code", auth_code);
 
-    UserDetails userDetails = userService.loadUserByEmail(user.getEmail());
+    when(jwtTokenUtil.isTfa(anyString())).thenReturn(false);
+    when(jwtTokenUtil.extractAuthCode(anyString())).thenReturn(auth_code);
+    when(jwtTokenUtil.extractUsername(anyString())).thenReturn(adminTfa1.getEmail());
 
-    String tfaToken = jwtTokenUtil.generateToken("webapp", userDetails);
+    ResponseEntity response = authController.tfaAuthentication(request, "tokennnnnn");
 
-    // Creating request to api
-    String uri = "/auth/tfa";
-
-    JSONObject request = new JSONObject();
-    request.put("auth_code", authCode);
-
-    // check first 400
-
-    MvcResult mvcResult = mockMvc.perform(
-        MockMvcRequestBuilders
-            .post(uri)
-            .contentType(MediaType.APPLICATION_JSON_VALUE)
-            .header("Authorization","Bearer "+tfaToken)
-            .content(request.toString()))
-        .andReturn();
-
-    // Check status and if are present tfa and token
-    int status = mvcResult.getResponse().getStatus();
-    assertEquals(400, status);
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
   }
 
-  @WithMockUser
   @Test
-  public void tfaAuthenticationError401DifferentAuthCode() throws Exception {
-    User user = this.defaultUser();
+  public void tfaAuthenticationUserNotFoundError401() throws Exception {
 
-    String authCode = "456436";
+    String auth_code = "code";
+    Map<String, Object> request = new HashMap<>();
+    request.put("auth_code", auth_code);
 
-    UserDetails userDetails = userService.loadUserByEmail(user.getEmail());
+    when(jwtTokenUtil.isTfa(anyString())).thenReturn(true);
+    when(jwtTokenUtil.extractAuthCode(anyString())).thenReturn(auth_code);
+    when(jwtTokenUtil.extractUsername(anyString())).thenReturn("noUser");
 
-    String tfaToken = jwtTokenUtil.generateTfaToken("tfa", authCode, userDetails);
+    ResponseEntity response = authController.tfaAuthentication(request, "tokennnnnn");
 
-    // Creating request to api
-    String uri = "/auth/tfa";
+    assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+  }
 
-    JSONObject request = new JSONObject();
-    request.put("auth_code", "465757");
+  @Test
+  public void tfaAuthenticationUserDisabledError403() throws Exception {
 
-    // check first 400
+    String auth_code = "code";
+    Map<String, Object> request = new HashMap<>();
+    request.put("auth_code", auth_code);
 
-    MvcResult mvcResult = mockMvc.perform(
-        MockMvcRequestBuilders
-            .post(uri)
-            .contentType(MediaType.APPLICATION_JSON_VALUE)
-            .header("Authorization","Bearer "+tfaToken)
-            .content(request.toString()))
-        .andReturn();
+    when(jwtTokenUtil.isTfa(anyString())).thenReturn(true);
+    when(jwtTokenUtil.extractAuthCode(anyString())).thenReturn(auth_code);
+    when(jwtTokenUtil.extractUsername(anyString())).thenReturn(disabledAdmin.getEmail());
 
-    // Check status and if are present tfa and token
-    int status = mvcResult.getResponse().getStatus();
-    assertEquals(401, status);
+    ResponseEntity response = authController.tfaAuthentication(request, "tokennnnnn");
+
+    assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+  }
+
+  @Test
+  public void tfaAuthenticationWrongAuthCodeError401() throws Exception {
+
+    String auth_code = "code";
+    Map<String, Object> request = new HashMap<>();
+    request.put("auth_code", auth_code);
+
+    when(jwtTokenUtil.isTfa(anyString())).thenReturn(true);
+    when(jwtTokenUtil.extractAuthCode(anyString())).thenReturn("differentAuthCode");
+    when(jwtTokenUtil.extractUsername(anyString())).thenReturn(adminTfa1.getEmail());
+
+    ResponseEntity response = authController.tfaAuthentication(request, "tokennnnnn");
+
+    assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
   }
 
 
 
+  // telegramAuthentication METHOD TESTS
+
   @Test
-  public void telegramAuthenticationSuccessfull() throws Exception {
+  public void telegramAuthenticationSuccessfullCode1() throws Exception {
 
-    User user = this.defaultUser();
-    user.setTelegramName("name");
-    user.setTelegramChat("chat");
+    Map<String, Object> request = new HashMap<>();
+    request.put("telegram_name", adminTfa2.getTelegramName());
+    request.put("telegram_chat", "chat_id");
 
-    UserDetails userDetails = userService.loadUserByEmail(user.getEmail());
+    when(userService.findByTelegramName(anyString())).thenReturn(adminTfa2);
+    when(userService.findByTelegramNameAndTelegramChat(anyString(),anyString())).thenReturn(null);
+    when(userService.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
-    when(userService.loadUserByTelegramName(user.getTelegramName())).thenReturn(userDetails);
-    when(userService.findByTelegramName(user.getTelegramName())).thenReturn(user);
-    when(userService.findByTelegramNameAndTelegramChat(user.getTelegramName(),user.getTelegramChat())).thenReturn(user);
+    ResponseEntity response = authController.telegramAuthentication(request);
 
-    // Creating request to api
-    String uri = "/auth/telegram";
+    assertEquals(HttpStatus.OK, response.getStatusCode());
 
-    JSONObject request = new JSONObject();
-    request.put("telegramName", user.getTelegramName());
-    request.put("telegramChat", user.getTelegramChat());
+    try {
+      Map<String, Object> responseMap = (HashMap<String, Object>) response.getBody();
 
-    MvcResult mvcResult = mockMvc.perform(
-        MockMvcRequestBuilders
-            .post(uri)
-            .contentType(MediaType.APPLICATION_JSON_VALUE)
-            .content(request.toString()))
-        .andReturn();
-
-    // Check status and if are present tfa and token
-    int status = mvcResult.getResponse().getStatus();
-    assertEquals(200, status);
-
-    JsonObject response = JsonParser.parseString( mvcResult.getResponse().getContentAsString() ).getAsJsonObject();
-    assertNotEquals(response.get("token").getAsString(),"");
-    assertEquals(response.get("code").getAsInt(),2);
+      assertNotEquals("", (String) responseMap.get("token"));
+      assertEquals(1,(Integer) responseMap.get("code"));
+    } catch (ClassCastException cce) {
+      assertTrue(false);
+    }
   }
 
   @Test
-  public void telegramAuthenticationCode1() throws Exception {
+  public void telegramAuthenticationSuccessfullCode2() throws Exception {
 
-    User user = this.defaultUser();
-    user.setTelegramName("name");
+    Map<String, Object> request = new HashMap<>();
+    request.put("telegram_name", adminTfa1.getTelegramName());
+    request.put("telegram_chat", adminTfa1.getTelegramChat());
 
-    String telegramChat = "asdsgfdhf";
+    when(userService.findByTelegramName(anyString())).thenReturn(adminTfa1);
+    when(userService.findByTelegramNameAndTelegramChat(anyString(),anyString()))
+        .thenReturn(adminTfa1);
+    when(userService.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
-    User userExpected = user;
-    userExpected.setTelegramChat(telegramChat);
-    when(userService.save(user)).thenReturn(userExpected);
+    ResponseEntity response = authController.telegramAuthentication(request);
 
-    UserDetails userDetails = userService.loadUserByEmail(user.getEmail());
+    assertEquals(HttpStatus.OK, response.getStatusCode());
 
-    when(userService.loadUserByTelegramName(user.getTelegramName())).thenReturn(userDetails);
-    when(userService.findByTelegramName(user.getTelegramName())).thenReturn(user);
-    when(userService.findByTelegramNameAndTelegramChat(user.getTelegramName(),telegramChat)).thenReturn(null);
+    try {
+      Map<String, Object> responseMap = (HashMap<String, Object>) response.getBody();
 
-    // Creating request to api
-    String uri = "/auth/telegram";
-
-    JSONObject request = new JSONObject();
-    request.put("telegramName", user.getTelegramName());
-    request.put("telegramChat", telegramChat);
-
-    MvcResult mvcResult = mockMvc.perform(
-        MockMvcRequestBuilders
-            .post(uri)
-            .contentType(MediaType.APPLICATION_JSON_VALUE)
-            .content(request.toString()))
-        .andReturn();
-
-    // Check status and if are present tfa and token
-    int status = mvcResult.getResponse().getStatus();
-    assertEquals(200, status);
-
-    JsonObject response = JsonParser.parseString( mvcResult.getResponse().getContentAsString() ).getAsJsonObject();
-    assertNotEquals(response.get("token").getAsString(),"");
-    assertEquals(response.get("code").getAsInt(),1);
-    assertEquals(userExpected.getTelegramChat(),telegramChat);
+      assertNotEquals("", (String) responseMap.get("token"));
+      assertEquals(2,(Integer) responseMap.get("code"));
+    } catch (ClassCastException cce) {
+      assertTrue(false);
+    }
   }
 
   @Test
-  public void telegramAuthenticationCode0() throws Exception {
+  public void telegramAuthenticationBadRequestError400() throws Exception {
 
-    User user = this.defaultUser();
-    user.setTelegramName("name");
-    user.setTelegramChat("chat");
+    Map<String, Object> request = new HashMap<>();
+    request.put("telegram_name", adminTfa2.getTelegramName());
 
-    UserDetails userDetails = userService.loadUserByEmail(user.getEmail());
+    ResponseEntity response = authController.telegramAuthentication(request);
 
-    when(userService.loadUserByTelegramName(user.getTelegramName())).thenReturn(userDetails);
-    when(userService.findByTelegramName(user.getTelegramName())).thenReturn(null);
-
-    // Creating request to api
-    String uri = "/auth/telegram";
-
-    JSONObject request = new JSONObject();
-    request.put("telegramName", user.getTelegramName());
-    request.put("telegramChat", user.getTelegramChat());
-
-    MvcResult mvcResult = mockMvc.perform(
-        MockMvcRequestBuilders
-            .post(uri)
-            .contentType(MediaType.APPLICATION_JSON_VALUE)
-            .content(request.toString()))
-        .andReturn();
-
-    // Check status and if are present tfa and token
-    int status = mvcResult.getResponse().getStatus();
-    assertEquals(200, status);
-
-    JsonObject response = JsonParser.parseString( mvcResult.getResponse().getContentAsString() ).getAsJsonObject();
-    assertTrue(!response.has("token") || response.get("token").getAsString().isEmpty());
-    assertEquals(response.get("code").getAsInt(),0);
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
   }
 
   @Test
-  public void telegramAuthenticationCode0UserDisabled() throws Exception {
+  public void telegramAuthenticationNoTelegramNameFoundCode0() throws Exception {
 
-    User user = this.defaultUser();
-    user.setTelegramName("name");
-    user.setTelegramChat("chat");
-    user.setDeleted(true);
+    Map<String, Object> request = new HashMap<>();
+    request.put("telegram_name", adminTfa2.getTelegramName());
+    request.put("telegram_chat", "chat_id");
 
-    UserDetails userDetails = userService.loadUserByEmail(user.getEmail());
+    when(userService.findByTelegramName(anyString())).thenReturn(null);
 
-    when(userService.loadUserByTelegramName(user.getTelegramName())).thenThrow(new UserDisabledException());
-    when(userService.findByTelegramName(user.getTelegramName())).thenReturn(user);
-    when(userService.findByTelegramNameAndTelegramChat(user.getTelegramName(),user.getTelegramChat())).thenReturn(user);
+    ResponseEntity response = authController.telegramAuthentication(request);
 
-    // Creating request to api
-    String uri = "/auth/telegram";
+    assertEquals(HttpStatus.OK, response.getStatusCode());
 
-    JSONObject request = new JSONObject();
-    request.put("telegramName", user.getTelegramName());
-    request.put("telegramChat", user.getTelegramChat());
+    try {
+      Map<String, Object> responseMap = (HashMap<String, Object>) response.getBody();
 
-    MvcResult mvcResult = mockMvc.perform(
-        MockMvcRequestBuilders
-            .post(uri)
-            .contentType(MediaType.APPLICATION_JSON_VALUE)
-            .content(request.toString()))
-        .andReturn();
-
-    // Check status and if are present tfa and token
-    int status = mvcResult.getResponse().getStatus();
-    assertEquals(200, status);
-
-    JsonObject response = JsonParser.parseString( mvcResult.getResponse().getContentAsString() ).getAsJsonObject();
-    assertTrue(!response.has("token") || response.get("token").getAsString().isEmpty());
-    assertEquals(response.get("code").getAsInt(),0);
+      assertEquals("", responseMap.get("token"));
+      assertEquals(0,(Integer) responseMap.get("code"));
+    } catch (ClassCastException cce) {
+      assertTrue(false);
+    }
   }
 }

@@ -2,7 +2,6 @@ package com.redroundrobin.thirema.apirest.controller;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.redroundrobin.thirema.apirest.models.UserDisabledException;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
@@ -11,10 +10,10 @@ import com.redroundrobin.thirema.apirest.utils.exception.EntityNotFoundException
 import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAllowedToEditException;
 import com.redroundrobin.thirema.apirest.utils.exception.TfaNotPermittedException;
+import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
 import com.redroundrobin.thirema.apirest.utils.exception.UserRoleNotFoundException;
 import java.util.HashMap;
 import java.util.List;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -150,7 +149,7 @@ public class UserController {
           return new ResponseEntity(errorMessage,HttpStatus.CONFLICT);
         }
       } catch (EntityNotFoundException | KeysNotFoundException | UserRoleNotFoundException nf) {
-        Logger.getLogger(nf.getMessage());
+
       }
     }
     // when db error is not for duplicate unique or when userToEdit with id furnished is not found
@@ -206,7 +205,7 @@ public class UserController {
         try {
           return ResponseEntity.ok(userService.findAllByEntityId(entity));
         } catch (EntityNotFoundException enfe) {
-          Logger.getLogger(enfe.getMessage());
+
         }
       } else if (disabledAlert != null) {
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
@@ -222,7 +221,7 @@ public class UserController {
         try {
           return ResponseEntity.ok(userService.findAllByEntityId(user.getEntity().getEntityId()));
         } catch (EntityNotFoundException enfe) {
-          Logger.getLogger(enfe.getMessage());
+
         }
       }
     }
