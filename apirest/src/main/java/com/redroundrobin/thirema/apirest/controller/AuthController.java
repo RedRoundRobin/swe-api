@@ -160,6 +160,10 @@ public class AuthController {
     String telegramName = (String) authenticationRequest.get("telegram_name");
     String chatId = (String) authenticationRequest.get("telegram_chat");
 
+    System.out.println(authenticationRequest);
+    System.out.println(telegramName);
+    System.out.println(chatId);
+
     if (telegramName == null || chatId == null)  {
       return new ResponseEntity(HttpStatus.BAD_REQUEST);
     }

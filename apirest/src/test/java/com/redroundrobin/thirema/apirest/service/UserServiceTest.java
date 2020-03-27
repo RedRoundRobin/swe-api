@@ -1,6 +1,6 @@
 package com.redroundrobin.thirema.apirest.service;
 
-import com.redroundrobin.thirema.apirest.models.UserDisabledException;
+import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
 import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
