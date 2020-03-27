@@ -50,7 +50,7 @@ public class AuthController {
 
   @RequestMapping(value = "/auth", method = RequestMethod.POST)
   public ResponseEntity<Object> authentication(
-      @RequestBody Map<String, Object> authenticationRequest) throws Exception {
+      @RequestBody Map<String, Object> authenticationRequest) {
     String email = (String) authenticationRequest.get("username");
     String password = (String) authenticationRequest.get("password");
 
@@ -68,7 +68,7 @@ public class AuthController {
           .loadUserByEmail(email);
     } catch (BadCredentialsException bce) {
       return new ResponseEntity(HttpStatus.UNAUTHORIZED);  // Unauthenticated
-    } catch (DisabledException de) {
+    } catch (DisabledException | UserDisabledException de) {
       return new ResponseEntity(HttpStatus.FORBIDDEN);  // Unauthorized
     }
 
