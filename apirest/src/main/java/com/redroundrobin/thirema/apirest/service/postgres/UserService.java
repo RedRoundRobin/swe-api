@@ -1,7 +1,6 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
 import com.google.gson.JsonObject;
-import com.redroundrobin.thirema.apirest.models.UserDisabledException;
 import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
@@ -12,6 +11,7 @@ import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAllowedToEditException;
 import com.redroundrobin.thirema.apirest.utils.exception.TelegramChatNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.TfaNotPermittedException;
+import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
 import com.redroundrobin.thirema.apirest.utils.exception.UserRoleNotFoundException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -224,7 +224,7 @@ public class UserService implements UserDetailsService {
       throw new UsernameNotFoundException("");
     } else if (user.isDeleted() || (user.getType() != User.Role.ADMIN
         && (user.getEntity() == null || user.getEntity().isDeleted()))) {
-      throw new UserDisabledException();
+      throw new UserDisabledException("User has been deleted or don't have an entity");
     }
 
     List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
@@ -250,7 +250,7 @@ public class UserService implements UserDetailsService {
       throw new UsernameNotFoundException("");
     } else if (user.isDeleted() || (user.getType() != User.Role.ADMIN
         && (user.getEntity() == null || user.getEntity().isDeleted()))) {
-      throw new UserDisabledException();
+      throw new UserDisabledException("User has been deleted or don't have an entity");
     } else if (user.getTelegramChat() == null || user.getTelegramChat().isEmpty()) {
       throw new TelegramChatNotFoundException();
     }
