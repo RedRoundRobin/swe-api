@@ -3,7 +3,9 @@ package com.redroundrobin.thirema.apirest.service.postgres;
 import com.google.gson.JsonObject;
 import com.redroundrobin.thirema.apirest.models.postgres.View;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
+import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.ViewRepository;
+import com.redroundrobin.thirema.apirest.utils.exception.UserNotFoundException;
 
 import java.util.HashSet;
 import java.util.List;
@@ -18,8 +20,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class ViewService {
 
-  @Autowired
   private ViewRepository viewRepo;
+
+  //private UserService userService;
 
   private boolean checkCreatableFields(Set<String> keys)
       throws KeysNotFoundException {
@@ -37,7 +40,24 @@ public class ViewService {
     return creatable.size() == keys.size();
   }
 
-  public List<View> findByUserId(int userId){ return viewRepo.findByUserId(userId); }
+  @Autowired
+  public ViewService(ViewRepository viewRepo/*, UserService userService*/) {
+    this.viewRepo = viewRepo;
+  //  this.userService = userService;
+  }
+
+/*  public List<View> findAllByUserId(int id) throws UserNotFoundException {
+    User user = userService.find(id);
+    if (user != null) {
+      return viewRepo.findAllByUser(user);
+    } else {
+      throw new UserNotFoundException("User with the given id not found");
+    }
+  }*/
+
+  public List<View> findAllByUser(User user) {
+    return viewRepo.findAllByUserId(user);
+  }
 
   public View findByViewId(int viewId){ return viewRepo.findByViewId(viewId); }
 

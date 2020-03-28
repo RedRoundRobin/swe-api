@@ -42,11 +42,11 @@ public class ViewController {
   public ResponseEntity<?> views(@RequestHeader("Authorization") String authorization) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
-    return ResponseEntity.ok(viewService.findByUserId(user.getUserId()));
+    return ResponseEntity.ok(viewService.findAllByUser(user));
   }
 
 
-  @GetMapping(value = {"/view/{viewId:.+}"})
+  @GetMapping(value = {"/views/{viewId:.+}"})
   public ResponseEntity<?> selectOneView(
       @RequestHeader("Authorization") String authorization,  @PathVariable("viewId") int viewId) {
     String token = authorization.substring(7);
@@ -55,15 +55,15 @@ public class ViewController {
       return ResponseEntity.ok(viewService.getViewByUserId(user.getUserId(), viewId));
     }
     catch(ViewNotFoundException e) {
-      return new ResponseEntity(HttpStatus.NOT_FOUND);
+      return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
     catch(ValuesNotAllowedException e) {
-      return new ResponseEntity(HttpStatus.BAD_REQUEST);
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
     }
   }
 
 
-  @PostMapping(name = "/views/create")
+  @PostMapping(value = "/views/create")
   public ResponseEntity<?> views(
       @RequestHeader("Authorization") String authorization,  @RequestBody String rawNewView) {
     String token = authorization.substring(7);
@@ -77,9 +77,9 @@ public class ViewController {
     }
   }
 
-  @DeleteMapping(name = "/views/delete/{viewId:.+}")
+  @DeleteMapping(value = "/views/delete/{viewId:.+}")
   public ResponseEntity<?> deleteView(
-      @RequestHeader("Authorization") String authorization,  @PathVariable("viewId") int viewToDeleteId) {
+      @RequestHeader("Authorization") String authorization, @PathVariable("viewId") int viewToDeleteId) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
     try {

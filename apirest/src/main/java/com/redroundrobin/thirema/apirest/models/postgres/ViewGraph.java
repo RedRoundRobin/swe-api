@@ -12,8 +12,8 @@ import javax.persistence.Table;
 @Table(name = "views_graphs")
 public class ViewGraph {
   @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
-  private int graphId;
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private int graph_Id;
   private int correlation;
 
   @JsonBackReference
