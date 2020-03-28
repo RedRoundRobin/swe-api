@@ -53,7 +53,7 @@ public class UserController {
                                           @PathVariable("userid") int requiredUserId) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
-    User requiredUser = userService.find(requiredUserId);
+    User requiredUser = userService.findById(requiredUserId);
     if (requiredUser != null && (user.getUserId() == requiredUserId
         || user.getType() == User.Role.ADMIN  || user.getType() == User.Role.MOD
         && requiredUser.getType() != User.Role.ADMIN
@@ -93,7 +93,7 @@ public class UserController {
     String token = authorization.substring(7);
     String editingUserEmail = jwtTokenUtil.extractUsername(token);
     User editingUser = userService.findByEmail(editingUserEmail);
-    User userToEdit = userService.find(userId);
+    User userToEdit = userService.findById(userId);
 
     if (userToEdit != null) {
       HashMap<String, Object> response = new HashMap<>();
@@ -182,7 +182,7 @@ public class UserController {
     if (user.getType() == User.Role.ADMIN) {
       return ResponseEntity.ok(entityService.findAll());
     } else {
-      User userToRetrieve = userService.find(userId);
+      User userToRetrieve = userService.findById(userId);
       if (userToRetrieve != null
           && userToRetrieve.getEntity().getEntityId() == user.getEntity().getEntityId()) {
         return ResponseEntity.ok(user.getEntity());
@@ -231,6 +231,6 @@ public class UserController {
   //un determinato user
   @GetMapping(value = {"/user/{userid:.+}"})
   public User user(@PathVariable("userid") int userId) {
-    return userService.find(userId);
+    return userService.findById(userId);
   }
 }

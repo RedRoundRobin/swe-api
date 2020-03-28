@@ -1,37 +1,18 @@
 package com.redroundrobin.thirema.apirest.service;
 
-import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
-import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
-import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
 import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
-import com.redroundrobin.thirema.apirest.service.postgres.UserService;
-import com.redroundrobin.thirema.apirest.utils.SerializeUser;
-import com.redroundrobin.thirema.apirest.utils.exception.EntityNotFoundException;
-import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
-import com.redroundrobin.thirema.apirest.utils.exception.NotAllowedToEditException;
-import com.redroundrobin.thirema.apirest.utils.exception.TelegramChatNotFoundException;
-import com.redroundrobin.thirema.apirest.utils.exception.TfaNotPermittedException;
-import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
-import com.redroundrobin.thirema.apirest.utils.exception.UserRoleNotFoundException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.xml.stream.events.EntityReference;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -41,7 +22,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
@@ -114,7 +94,7 @@ public class EntityServiceTest {
       return entities.stream().filter(e -> i.getArgument(0).equals(e.getEntityId()))
           .findFirst();
     });
-    when(sensorService.find(anyInt())).thenAnswer(i -> {
+    when(sensorService.findById(anyInt())).thenAnswer(i -> {
       return allSensors.stream().filter(s -> i.getArgument(0).equals(s.getSensorId()))
           .findFirst().orElse(null);
     });

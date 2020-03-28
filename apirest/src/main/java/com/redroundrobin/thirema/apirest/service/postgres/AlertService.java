@@ -47,7 +47,7 @@ public class AlertService {
   }
 
   public List<Alert> findAllByEntityId(int entityId) {
-    Entity entity = entityService.find(entityId);
+    Entity entity = entityService.findById(entityId);
     if (entity != null) {
       return (List<Alert>) repo.findAllByEntity(entity);
     } else {
@@ -56,7 +56,7 @@ public class AlertService {
   }
 
   public List<Alert> findAllBySensorId(int sensorId) {
-    Sensor sensor = sensorService.find(sensorId);
+    Sensor sensor = sensorService.findById(sensorId);
     if (sensor != null) {
       return (List<Alert>) repo.findAllBySensor(sensor);
     } else {
@@ -65,7 +65,7 @@ public class AlertService {
   }
 
   public List<Alert> findAllByUserId(int userId) {
-    User user = userService.find(userId);
+    User user = userService.findById(userId);
     if (user != null) {
       return (List<Alert>) repo.findAllByUsers(user);
     } else {
@@ -76,7 +76,7 @@ public class AlertService {
   public List<Alert> findAllByUsersIds(List<Integer> usersIds) {
     List<User> users = new ArrayList<>();
     usersIds.forEach(uid -> {
-      User user = userService.find(uid);
+      User user = userService.findById(uid);
       if (user != null) {
         users.add(user);
       }
@@ -88,7 +88,7 @@ public class AlertService {
     }
   }
 
-  public Alert find(int id) {
+  public Alert findById(int id) {
     return repo.findById(id).orElse(null);
   }
 }

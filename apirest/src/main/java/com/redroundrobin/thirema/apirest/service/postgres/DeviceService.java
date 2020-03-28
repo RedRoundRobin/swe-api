@@ -37,7 +37,7 @@ public class DeviceService {
   }
 
   public List<Device> findAllByGatewayId(int gatewayId) {
-    Gateway gateway = gatewayService.find(gatewayId);
+    Gateway gateway = gatewayService.findById(gatewayId);
     if (gateway != null) {
       return (List<Device>) repo.findAllByGateway(gateway);
     } else {
@@ -45,12 +45,12 @@ public class DeviceService {
     }
   }
 
-  public Device find(int id) {
+  public Device findById(int id) {
     return repo.findById(id).orElse(null);
   }
 
   public Device findBySensor(int sensorId) {
-    Sensor sensor = sensorService.find(sensorId);
+    Sensor sensor = sensorService.findById(sensorId);
     if (sensor != null) {
       return repo.findBySensors(sensor);
     } else {

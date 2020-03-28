@@ -152,7 +152,7 @@ public class UserServiceTest {
 
     when(userRepo.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
-    when(entityService.find(anyInt())).thenAnswer(i -> {
+    when(entityService.findById(anyInt())).thenAnswer(i -> {
       int id = i.getArgument(0);
       if (id == 1) {
         return entity1;
@@ -202,7 +202,7 @@ public class UserServiceTest {
   // findById method tests
   @Test
   public void findSuccessfull() {
-    User user = userService.find(6);
+    User user = userService.findById(6);
     assertEquals(user2, user);
   }
 
@@ -478,7 +478,7 @@ public class UserServiceTest {
     editedUser.setTelegramName(newTelegramName);
     editedUser.setEntity(entity2);
 
-    when(entityService.find(newEntityId)).thenReturn(entity2);
+    when(entityService.findById(newEntityId)).thenReturn(entity2);
 
     try {
       User user = userService.editByAdministrator(user1, false, fieldsToEdit);
@@ -522,7 +522,7 @@ public class UserServiceTest {
     HashMap<String, Object> fieldsToEdit = new HashMap<>();
     fieldsToEdit.put("entity_id",3);
 
-    when(entityService.find(3)).thenReturn(null);
+    when(entityService.findById(3)).thenReturn(null);
 
     try {
       User user = userService.editByAdministrator(mod1, false, fieldsToEdit);

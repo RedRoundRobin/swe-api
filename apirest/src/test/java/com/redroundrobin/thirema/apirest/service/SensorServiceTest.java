@@ -93,7 +93,7 @@ public class SensorServiceTest {
       return allSensors.stream().filter(s -> i.getArgument(0).equals(s.getSensorId()))
           .findFirst();
     });
-    when(entityService.find(anyInt())).thenAnswer(i -> {
+    when(entityService.findById(anyInt())).thenAnswer(i -> {
       return allEntities.stream().filter(e -> i.getArgument(0).equals(e.getEntityId()))
           .findFirst().orElse(null);
     });

@@ -28,12 +28,12 @@ public class GatewayService {
     return (List<Gateway>) repo.findAll();
   }
 
-  public Gateway find(int gatewayId) {
+  public Gateway findById(int gatewayId) {
     return repo.findById(gatewayId).orElse(null);
   }
 
   public Gateway findByDeviceId(int deviceId) {
-    Device device = deviceService.find(deviceId);
+    Device device = deviceService.findById(deviceId);
     if (device != null) {
       return repo.findByDevices(device);
     } else {

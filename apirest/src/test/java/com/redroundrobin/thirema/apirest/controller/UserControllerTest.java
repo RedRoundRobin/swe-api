@@ -117,32 +117,32 @@ public class UserControllerTest {
     when(jwtTokenUtil.extractRole("Bearer "+admin1Token)).thenReturn(admin1.getType());
     when(jwtTokenUtil.extractUsername(admin1Token)).thenReturn(admin1.getEmail());
     when(userService.findByEmail(admin1.getEmail())).thenReturn(admin1);
-    when(userService.find(admin1.getUserId())).thenReturn(admin1);
+    when(userService.findById(admin1.getUserId())).thenReturn(admin1);
 
     when(jwtTokenUtil.extractRole("Bearer "+admin2Token)).thenReturn(admin2.getType());
     when(jwtTokenUtil.extractUsername(admin2Token)).thenReturn(admin2.getEmail());
     when(userService.findByEmail(admin2.getEmail())).thenReturn(admin2);
-    when(userService.find(admin2.getUserId())).thenReturn(admin2);
+    when(userService.findById(admin2.getUserId())).thenReturn(admin2);
 
     when(jwtTokenUtil.extractRole("Bearer "+mod1Token)).thenReturn(mod1.getType());
     when(jwtTokenUtil.extractUsername(mod1Token)).thenReturn(mod1.getEmail());
     when(userService.findByEmail(mod1.getEmail())).thenReturn(mod1);
-    when(userService.find(mod1.getUserId())).thenReturn(mod1);
+    when(userService.findById(mod1.getUserId())).thenReturn(mod1);
 
     when(jwtTokenUtil.extractRole("Bearer "+mod11Token)).thenReturn(mod11.getType());
     when(jwtTokenUtil.extractUsername(mod11Token)).thenReturn(mod11.getEmail());
     when(userService.findByEmail(mod11.getEmail())).thenReturn(mod11);
-    when(userService.find(mod11.getUserId())).thenReturn(mod11);
+    when(userService.findById(mod11.getUserId())).thenReturn(mod11);
 
     when(jwtTokenUtil.extractRole("Bearer "+user1Token)).thenReturn(user1.getType());
     when(jwtTokenUtil.extractUsername(user1Token)).thenReturn(user1.getEmail());
     when(userService.findByEmail(user1.getEmail())).thenReturn(user1);
-    when(userService.find(user1.getUserId())).thenReturn(user1);
+    when(userService.findById(user1.getUserId())).thenReturn(user1);
 
     when(jwtTokenUtil.extractRole("Bearer "+user2Token)).thenReturn(user2.getType());
     when(jwtTokenUtil.extractUsername(user2Token)).thenReturn(user2.getEmail());
     when(userService.findByEmail(user2.getEmail())).thenReturn(user2);
-    when(userService.find(user2.getUserId())).thenReturn(user2);
+    when(userService.findById(user2.getUserId())).thenReturn(user2);
 
 
     List<User> allUsers = new ArrayList<>();
@@ -203,7 +203,7 @@ public class UserControllerTest {
   @Test
   public void editUser1ByAdmin1UserNotExistError400() throws Exception {
 
-    when(userService.find(5)).thenReturn(null);
+    when(userService.findById(5)).thenReturn(null);
 
     HashMap<String, Object> request = new HashMap<>();
     request.put("email", "newemail");

@@ -131,7 +131,7 @@ public class UserService implements UserDetailsService {
     }
 
     if (fieldsToEdit.containsKey("entity_id")
-        && entityService.find((int)fieldsToEdit.get("entity_id")) == null) {
+        && entityService.findById((int)fieldsToEdit.get("entity_id")) == null) {
       throw new EntityNotFoundException("The entity with the entityId furnished doesn't exist");
     }
 
@@ -170,7 +170,7 @@ public class UserService implements UserDetailsService {
           userToEdit.setDeleted((boolean) value);
           break;
         case "entity_id":
-          userToEdit.setEntity(entityService.find((int) value));
+          userToEdit.setEntity(entityService.findById((int) value));
           break;
         default:
       }
@@ -184,7 +184,7 @@ public class UserService implements UserDetailsService {
   }
 
   public List<User> findAllByEntityId(int entityId) throws EntityNotFoundException {
-    Entity entity = entityService.find(entityId);
+    Entity entity = entityService.findById(entityId);
     if (entity != null) {
       return (List<User>) repo.findAllByEntity(entity);
     } else {
@@ -195,7 +195,7 @@ public class UserService implements UserDetailsService {
   public List<User> findAllByDisabledAlerts(List<Integer> alertsIds) {
     List<Alert> alerts = new ArrayList<>();
     alertsIds.forEach(aid -> {
-      Alert alert = alertService.find(aid);
+      Alert alert = alertService.findById(aid);
       if (alert != null) {
         alerts.add(alert);
       }
@@ -208,7 +208,7 @@ public class UserService implements UserDetailsService {
   }
 
   public List<User> findAllByDisabledAlert(int alertId) {
-    Alert alert = alertService.find(alertId);
+    Alert alert = alertService.findById(alertId);
     if (alert != null) {
       return (List<User>) repo.findAllByDisabledAlerts(alert);
     } else {
@@ -216,7 +216,7 @@ public class UserService implements UserDetailsService {
     }
   }
 
-  public User find(int id) {
+  public User findById(int id) {
     Optional<User> optUser = repo.findById(id);
     return optUser.orElse(null);
   }
