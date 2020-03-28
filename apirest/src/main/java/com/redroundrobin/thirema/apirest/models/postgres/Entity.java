@@ -6,6 +6,9 @@ import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
@@ -28,14 +31,19 @@ public class Entity {
   @OneToMany(mappedBy = "entity")
   private List<Alert> alerts;
 
-  public Entity() {
-  }
+  @JsonManagedReference
+  @ManyToMany
+  @JoinTable(
+      name = "entity_sensors",
+      joinColumns = @JoinColumn(name = "entity_id"),
+      inverseJoinColumns = @JoinColumn(name = "sensor_id"))
+  private List<Sensor> sensors;
 
-  public int getEntityId() {
+  public int getId() {
     return entityId;
   }
 
-  public void setEntityId(int entityId) {
+  public void setId(int entityId) {
     this.entityId = entityId;
   }
 
@@ -77,5 +85,13 @@ public class Entity {
 
   public void setDeleted(boolean deleted) {
     this.deleted = deleted;
+  }
+
+  public List<Sensor> getSensors() {
+    return sensors;
+  }
+
+  public void setSensors(List<Sensor> sensors) {
+    this.sensors = sensors;
   }
 }

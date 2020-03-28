@@ -1,6 +1,7 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
 import com.google.gson.JsonObject;
+import com.redroundrobin.thirema.apirest.models.postgres.Alert;
 import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
@@ -14,6 +15,7 @@ import com.redroundrobin.thirema.apirest.utils.exception.TfaNotPermittedExceptio
 import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
 import com.redroundrobin.thirema.apirest.utils.exception.UserRoleNotFoundException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -31,17 +33,31 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserService implements UserDetailsService {
 
-  private UserRepository userRepo;
+  private UserRepository repo;
+
+  private AlertService alertService;
 
   private EntityService entityService;
 
   private SerializeUser serializeUser;
 
   @Autowired
-  public UserService(UserRepository userRepo, EntityService entityService,
-                     SerializeUser serializeUser) {
-    this.userRepo = userRepo;
+  public UserService(UserRepository userRepository) {
+    this.repo = userRepository;
+  }
+
+  @Autowired
+  public void setAlertService(AlertService alertService) {
+    this.alertService = alertService;
+  }
+
+  @Autowired
+  public void setEntityService(EntityService entityService) {
     this.entityService = entityService;
+  }
+
+  @Autowired
+  public void setSerializeUser(SerializeUser serializeUser) {
     this.serializeUser = serializeUser;
   }
 
@@ -104,7 +120,7 @@ public class UserService implements UserDetailsService {
     }
   }
 
-  private User editAndSave(User userToEdit, HashMap<String, Object> fieldsToEdit)
+  private User editAndSave(User userToEdit, Map<String, Object> fieldsToEdit)
       throws EntityNotFoundException, TfaNotPermittedException, UserRoleNotFoundException {
     if (fieldsToEdit.containsKey("two_factor_authentication")
         && (boolean)fieldsToEdit.get("two_factor_authentication")
@@ -115,7 +131,7 @@ public class UserService implements UserDetailsService {
     }
 
     if (fieldsToEdit.containsKey("entity_id")
-        && entityService.find((int)fieldsToEdit.get("entity_id")) == null) {
+        && entityService.findById((int)fieldsToEdit.get("entity_id")) == null) {
       throw new EntityNotFoundException("The entity with the entityId furnished doesn't exist");
     }
 
@@ -154,7 +170,7 @@ public class UserService implements UserDetailsService {
           userToEdit.setDeleted((boolean) value);
           break;
         case "entity_id":
-          userToEdit.setEntity(entityService.find((int) value));
+          userToEdit.setEntity(entityService.findById((int) value));
           break;
         default:
       }
@@ -164,36 +180,69 @@ public class UserService implements UserDetailsService {
   }
 
   public List<User> findAll() {
-    return (List<User>) userRepo.findAll();
+    return (List<User>) repo.findAll();
   }
 
-  public User find(int id) {
-    Optional<User> optUser = userRepo.findById(id);
+  public List<User> findAllByEntityId(int entityId) throws EntityNotFoundException {
+    Entity entity = entityService.findById(entityId);
+    if (entity != null) {
+      return (List<User>) repo.findAllByEntity(entity);
+    } else {
+      throw new EntityNotFoundException("Entity with id furnished not found");
+    }
+  }
+
+  public List<User> findAllByDisabledAlerts(List<Integer> alertsIds) {
+    List<Alert> alerts = new ArrayList<>();
+    alertsIds.forEach(aid -> {
+      Alert alert = alertService.findById(aid);
+      if (alert != null) {
+        alerts.add(alert);
+      }
+    });
+    if (!alerts.isEmpty()) {
+      return (List<User>) repo.findAllByDisabledAlertsIn(alerts);
+    } else {
+      return Collections.emptyList();
+    }
+  }
+
+  public List<User> findAllByDisabledAlert(int alertId) {
+    Alert alert = alertService.findById(alertId);
+    if (alert != null) {
+      return (List<User>) repo.findAllByDisabledAlerts(alert);
+    } else {
+      return Collections.emptyList();
+    }
+  }
+
+  public User findById(int id) {
+    Optional<User> optUser = repo.findById(id);
     return optUser.orElse(null);
   }
 
   public User findByTelegramName(String telegramName) {
-    return userRepo.findByTelegramName(telegramName);
+    return repo.findByTelegramName(telegramName);
   }
 
   public User findByTelegramNameAndTelegramChat(String telegramName, String telegramChat) {
-    return userRepo.findByTelegramNameAndTelegramChat(telegramName, telegramChat);
+    return repo.findByTelegramNameAndTelegramChat(telegramName, telegramChat);
   }
 
   public User findByEmail(String email) {
-    return userRepo.findByEmail(email);
+    return repo.findByEmail(email);
   }
 
   public User save(User user) {
-    return userRepo.save(user);
+    return repo.save(user);
   }
 
   public List<Device> userDevices(int userId) {
-    return userRepo.userDevices(userId);
+    return repo.userDevices(userId);
   }
 
   @Override
-  public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
+  public UserDetails loadUserByUsername(String s) {
     User user = this.findByEmail(s);
     if (user == null || (user.isDeleted() || (user.getType() != User.Role.ADMIN
         && (user.getEntity() == null || user.getEntity().isDeleted())))) {
@@ -217,8 +266,7 @@ public class UserService implements UserDetailsService {
    * @throws UserDisabledException thrown if user with furnished email found but the user is
   disabled.
    */
-  public UserDetails loadUserByEmail(String s)
-      throws UsernameNotFoundException, UserDisabledException {
+  public UserDetails loadUserByEmail(String s) throws UserDisabledException {
     User user = this.findByEmail(s);
     if (user == null) {
       throw new UsernameNotFoundException("");
@@ -244,7 +292,7 @@ public class UserService implements UserDetailsService {
    * @throws UserDisabledException thrown if telegram name found but the user is disabled.
    */
   public UserDetails loadUserByTelegramName(String s)
-      throws UsernameNotFoundException, UserDisabledException, TelegramChatNotFoundException {
+      throws UserDisabledException, TelegramChatNotFoundException {
     User user = this.findByTelegramName(s);
     if (user == null) {
       throw new UsernameNotFoundException("");
@@ -266,7 +314,7 @@ public class UserService implements UserDetailsService {
     return serializeUser.serializeUser(rawUser, type);
   }
 
-  public User editByUser(User userToEdit, HashMap<String, Object> fieldsToEdit)
+  public User editByUser(User userToEdit, Map<String, Object> fieldsToEdit)
       throws NotAllowedToEditException, KeysNotFoundException, EntityNotFoundException,
       TfaNotPermittedException, UserRoleNotFoundException {
 
@@ -278,7 +326,7 @@ public class UserService implements UserDetailsService {
     }
   }
 
-  public User editByModerator(User userToEdit, boolean itself, HashMap<String, Object> fieldsToEdit)
+  public User editByModerator(User userToEdit, boolean itself, Map<String, Object> fieldsToEdit)
       throws NotAllowedToEditException, KeysNotFoundException, EntityNotFoundException,
       TfaNotPermittedException, UserRoleNotFoundException {
 
@@ -291,7 +339,7 @@ public class UserService implements UserDetailsService {
   }
 
   public User editByAdministrator(User userToEdit, boolean itself,
-                                  HashMap<String, Object> fieldsToEdit)
+                                  Map<String, Object> fieldsToEdit)
       throws NotAllowedToEditException, KeysNotFoundException, EntityNotFoundException,
       TfaNotPermittedException, UserRoleNotFoundException {
 
@@ -302,15 +350,6 @@ public class UserService implements UserDetailsService {
           "You are not allowed to edit some of the specified fields");
     } else {
       return this.editAndSave(userToEdit, fieldsToEdit);
-    }
-  }
-
-  public List<User> findAllByEntityId(int id) throws EntityNotFoundException {
-    Entity entity = entityService.find(id);
-    if (entity != null) {
-      return userRepo.findAllByEntity(entity);
-    } else {
-      throw new EntityNotFoundException("Entity with id furnished not found");
     }
   }
 }

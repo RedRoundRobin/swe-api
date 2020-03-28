@@ -1,5 +1,6 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
+import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
 import com.redroundrobin.thirema.apirest.repository.postgres.GatewayRepository;
 import java.util.List;
@@ -9,14 +10,34 @@ import org.springframework.stereotype.Service;
 @Service
 public class GatewayService {
 
-  @Autowired
-  private GatewayRepository repository;
+  private GatewayRepository repo;
 
-  public List<Gateway> findAll() {
-    return (List<Gateway>) repository.findAll();
+  private DeviceService deviceService;
+
+  @Autowired
+  public GatewayService(GatewayRepository gatewayRepository) {
+    this.repo = gatewayRepository;
   }
 
-  public Gateway find(int gatewayId) {
-    return repository.findById(gatewayId).get();
+  @Autowired
+  public void setDeviceService(DeviceService deviceService) {
+    this.deviceService = deviceService;
+  }
+
+  public List<Gateway> findAll() {
+    return (List<Gateway>) repo.findAll();
+  }
+
+  public Gateway findById(int gatewayId) {
+    return repo.findById(gatewayId).orElse(null);
+  }
+
+  public Gateway findByDeviceId(int deviceId) {
+    Device device = deviceService.findById(deviceId);
+    if (device != null) {
+      return repo.findByDevices(device);
+    } else {
+      return null;
+    }
   }
 }

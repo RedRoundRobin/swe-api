@@ -21,7 +21,6 @@ public class TelegramService {
     HttpEntity<Map<String,Object>> request = new HttpEntity<>(data);
 
     try {
-      RestTemplate restTemplate = new RestTemplate();
       ResponseEntity<String> telegramResponse =
           restTemplate.postForEntity(telegramUrl, request, String.class);
 
