@@ -12,8 +12,12 @@ public class CoreController {
   protected UserService userService;
 
   @Autowired
-  public CoreController(JwtUtil jwtUtil, UserService userService) {
+  public void setJwtUtil(JwtUtil jwtUtil) {
     this.jwtUtil = jwtUtil;
+  }
+
+  @Autowired
+  public void setUserService(UserService userService) {
     this.userService = userService;
   }
 

@@ -32,7 +32,9 @@ public class CoreControllerTest {
 
   @Before
   public void setUp() {
-    coreController = new CoreController(jwtUtil, userService);
+    coreController = new CoreController();
+    coreController.setJwtUtil(jwtUtil);
+    coreController.setUserService(userService);
 
     user = new User();
     user.setEmail("email");
