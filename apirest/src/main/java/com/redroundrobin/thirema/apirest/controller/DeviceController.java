@@ -5,8 +5,6 @@ import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.DeviceService;
 import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
-import com.redroundrobin.thirema.apirest.service.postgres.UserService;
-import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import java.util.Collections;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,8 +24,7 @@ public class DeviceController extends CoreController {
   private SensorService sensorService;
 
   @Autowired
-  public DeviceController(JwtUtil jwtUtil, UserService userService, DeviceService deviceService, SensorService sensorService) {
-    super(jwtUtil, userService);
+  public DeviceController(DeviceService deviceService, SensorService sensorService) {
     this.deviceService = deviceService;
     this.sensorService = sensorService;
   }
@@ -66,7 +63,7 @@ public class DeviceController extends CoreController {
 
   //tutti i sensori di un dispositivo
   @GetMapping(value = {"/{deviceId:.+}/sensors"})
-  public List<Sensor> deviceSensors(@RequestHeader("Authorization") String authorization,
+  public List<Sensor> getSensorsByDevice(@RequestHeader("Authorization") String authorization,
                                     @PathVariable("deviceId") int deviceId) {
     User user = this.getUserFromAuthorization(authorization);
     if (user.getType() == User.Role.ADMIN) {
@@ -78,7 +75,7 @@ public class DeviceController extends CoreController {
 
   //un sensore di un dispositivo
   @GetMapping(value = {"/{deviceId:.+}/sensor/{realSensorId:.+}"})
-  public Sensor sensor(@RequestHeader("Authorization") String authorization,
+  public Sensor getSensorByDevice(@RequestHeader("Authorization") String authorization,
                        @PathVariable("deviceId") int deviceId,
                        @PathVariable("realSensorId") int realSensorId) {
     User user = this.getUserFromAuthorization(authorization);
