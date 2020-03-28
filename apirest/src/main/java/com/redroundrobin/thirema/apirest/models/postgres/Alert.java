@@ -2,11 +2,13 @@ package com.redroundrobin.thirema.apirest.models.postgres;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import java.util.List;
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
@@ -30,6 +32,10 @@ public class Alert {
   @ManyToOne
   @JoinColumn(name = "sensor_id")
   private Sensor sensor;
+
+  @JsonBackReference
+  @ManyToMany
+  private List<User> users;
 
 
   public void setAlertId(int alertId) {
@@ -78,5 +84,13 @@ public class Alert {
 
   public Entity getEntity() {
     return entity;
+  }
+
+  public List<User> getUsers() {
+    return users;
+  }
+
+  public void setUsers(List<User> users) {
+    this.users = users;
   }
 }

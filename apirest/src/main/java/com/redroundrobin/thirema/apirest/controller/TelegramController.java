@@ -20,7 +20,7 @@ public class TelegramController {
 
   //funzione di controllo username Telegram e salvataggio chatID
   @GetMapping(value = {"/status"})
-  public ResponseEntity<?> checkStatus(@RequestHeader("Authorization") String authorization) {
+  public ResponseEntity<User> checkStatus(@RequestHeader("Authorization") String authorization) {
     String token = authorization.substring(7);
 
     User user = userService.findByTelegramName(jwtTokenUtil.extractUsername(token));

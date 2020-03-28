@@ -64,11 +64,12 @@ public class ViewService {
   public View getViewByUserId(int userId, int viewId) throws
       ViewNotFoundException, ValuesNotAllowedException {
     View view = viewRepo.findByViewId(viewId);
-    if(view != null && userId == view.getUserId().getUserId())
+    if(view != null && userId == view.getUserId().getId())
       return view;
     if(!(view != null))
       throw new ViewNotFoundException("");
     throw new ValuesNotAllowedException("");
+
   }
 
   public View serializeView(JsonObject rawViewToInsert, User insertingUser)
@@ -90,7 +91,7 @@ public class ViewService {
       throw new ValuesNotAllowedException("The given view_id doesn't correspond to any view");
     }
 
-    if(viewToDelete.getUserId().getUserId() != deletingUser.getUserId())
+    if(viewToDelete.getUserId().getId() != deletingUser.getId())
       throw new NotAuthorizedToDeleteUserException("This user cannot delete the view with" +
           "the view_id given");
 

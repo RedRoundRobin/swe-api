@@ -14,6 +14,7 @@ import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
 import com.redroundrobin.thirema.apirest.utils.exception.UserRoleNotFoundException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,11 +60,11 @@ public class UserController {
                                           @PathVariable("userid") int requiredUserId) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
-    User requiredUser = userService.find(requiredUserId);
-    if (requiredUser != null && (user.getUserId() == requiredUserId
+    User requiredUser = userService.findById(requiredUserId);
+    if (requiredUser != null && (user.getId() == requiredUserId
         || user.getType() == User.Role.ADMIN  || user.getType() == User.Role.MOD
         && requiredUser.getType() != User.Role.ADMIN
-            && user.getEntity().getEntityId() == requiredUser.getEntity().getEntityId())) {
+            && user.getEntity().getId() == requiredUser.getEntity().getId())) {
       return ResponseEntity.ok(userService.userDevices(requiredUserId));
     } else {
       return new ResponseEntity(HttpStatus.FORBIDDEN);
@@ -87,7 +88,7 @@ public class UserController {
   }
 
   private boolean canEditMod(User editingUser, User userToEdit) {
-    return editingUser.getUserId() == userToEdit.getUserId()
+    return editingUser.getId() == userToEdit.getId()
         || (userToEdit.getType() == User.Role.USER
         && editingUser.getEntity().equals(userToEdit.getEntity()));
   }
@@ -95,12 +96,12 @@ public class UserController {
   /*In input prende JsonObject coi field da modificare dello userId*/
   @PutMapping(value = {"/users/{userid:.+}/edit"})
   public ResponseEntity<Object> editUser(@RequestHeader("Authorization") String authorization,
-                                         @RequestBody HashMap<String, Object> fieldsToEdit,
+                                         @RequestBody Map<String, Object> fieldsToEdit,
                                          @PathVariable("userid") int userId) {
     String token = authorization.substring(7);
     String editingUserEmail = jwtTokenUtil.extractUsername(token);
     User editingUser = userService.findByEmail(editingUserEmail);
-    User userToEdit = userService.find(userId);
+    User userToEdit = userService.findById(userId);
 
     if (userToEdit != null) {
       HashMap<String, Object> response = new HashMap<>();
@@ -110,15 +111,15 @@ public class UserController {
         if (editingUser.getType() == User.Role.ADMIN && userToEdit.getType() != User.Role.ADMIN) {
 
           user = userService.editByAdministrator(userToEdit,
-              editingUser.getUserId() == userToEdit.getUserId(), fieldsToEdit);
+              editingUser.getId() == userToEdit.getId(), fieldsToEdit);
 
         } else if (editingUser.getType() == User.Role.MOD && canEditMod(editingUser, userToEdit)) {
 
           user = userService.editByModerator(userToEdit,
-              editingUser.getUserId() == userToEdit.getUserId(), fieldsToEdit);
+              editingUser.getId() == userToEdit.getId(), fieldsToEdit);
 
         } else if (editingUser.getType() == User.Role.USER
-            && editingUser.getUserId() == userToEdit.getUserId()) {
+            && editingUser.getId() == userToEdit.getId()) {
 
           user = userService.editByUser(userToEdit, fieldsToEdit);
 
@@ -156,7 +157,7 @@ public class UserController {
           return new ResponseEntity(errorMessage,HttpStatus.CONFLICT);
         }
       } catch (EntityNotFoundException | KeysNotFoundException | UserRoleNotFoundException nf) {
-
+        // go to return BAD_REQUEST
       }
     }
     // when db error is not for duplicate unique or when userToEdit with id furnished is not found
@@ -189,9 +190,9 @@ public class UserController {
     if (user.getType() == User.Role.ADMIN) {
       return ResponseEntity.ok(entityService.findAll());
     } else {
-      User userToRetrieve = userService.find(userId);
+      User userToRetrieve = userService.findById(userId);
       if (userToRetrieve != null
-          && userToRetrieve.getEntity().getEntityId() == user.getEntity().getEntityId()) {
+          && userToRetrieve.getEntity().getId() == user.getEntity().getId()) {
         return ResponseEntity.ok(user.getEntity());
       } else {
         return new ResponseEntity(HttpStatus.FORBIDDEN);
@@ -212,7 +213,7 @@ public class UserController {
         try {
           return ResponseEntity.ok(userService.findAllByEntityId(entity));
         } catch (EntityNotFoundException enfe) {
-
+          // go to return BAD_REQUEST
         }
       } else if (disabledAlert != null) {
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
@@ -224,11 +225,11 @@ public class UserController {
       return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     } else if (user.getType() == User.Role.MOD) {
       if ((entity == null && disabledAlert == null && view == null)
-          || (entity != null && user.getEntity().getEntityId() == entity)) {
+          || (entity != null && user.getEntity().getId() == entity)) {
         try {
-          return ResponseEntity.ok(userService.findAllByEntityId(user.getEntity().getEntityId()));
+          return ResponseEntity.ok(userService.findAllByEntityId(user.getEntity().getId()));
         } catch (EntityNotFoundException enfe) {
-
+          // go to return FORBIDDE
         }
       }
     }
@@ -238,7 +239,7 @@ public class UserController {
   //un determinato user
   @GetMapping(value = {"/user/{userid:.+}"})
   public User user(@PathVariable("userid") int userId) {
-    return userService.find(userId);
+    return userService.findById(userId);
   }
 
   @DeleteMapping(value = {"/user/delete/{userid:.+}"})
@@ -256,5 +257,4 @@ public class UserController {
       return new ResponseEntity(e.getMessage() , HttpStatus.BAD_REQUEST);
     }
   }
-
 }

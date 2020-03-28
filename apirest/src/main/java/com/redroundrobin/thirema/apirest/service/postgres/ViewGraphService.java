@@ -1,23 +1,22 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
-import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
-import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
+import com.redroundrobin.thirema.apirest.models.postgres.ViewGraph;
+import com.redroundrobin.thirema.apirest.repository.postgres.ViewGraphRepository;
 import java.util.Collections;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class EntityService {
+public class ViewGraphService {
 
-  private EntityRepository repo;
+  private ViewGraphRepository repo;
 
   private SensorService sensorService;
 
-  @Autowired
-  public EntityService(EntityRepository entityRepository) {
-    this.repo = entityRepository;
+  public ViewGraphService(ViewGraphRepository repo) {
+    this.repo = repo;
   }
 
   @Autowired
@@ -25,20 +24,20 @@ public class EntityService {
     this.sensorService = sensorService;
   }
 
-  public List<Entity> findAll() {
-    return (List<Entity>) repo.findAll();
+  public List<ViewGraph> findAll() {
+    return (List<ViewGraph>) repo.findAll();
   }
 
-  public List<Entity> findAllBySensorId(int sensorId) {
+  public List<ViewGraph> findAllBySensor(int sensorId) {
     Sensor sensor = sensorService.findById(sensorId);
     if (sensor != null) {
-      return repo.findAllBySensors(sensor);
+      return (List<ViewGraph>) repo.findAllBySensor1OrSensor2(sensor, sensor);
     } else {
       return Collections.emptyList();
     }
   }
 
-  public Entity findById(int id) {
+  public ViewGraph findById(int id) {
     return repo.findById(id).orElse(null);
   }
 }

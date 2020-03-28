@@ -52,7 +52,7 @@ public class ViewController {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
     try {
-      return ResponseEntity.ok(viewService.getViewByUserId(user.getUserId(), viewId));
+      return ResponseEntity.ok(viewService.getViewByUserId(user.getId(), viewId));
     }
     catch(ViewNotFoundException e) {
       return ResponseEntity.status(HttpStatus.NOT_FOUND).build();

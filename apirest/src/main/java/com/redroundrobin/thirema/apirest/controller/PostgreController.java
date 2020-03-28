@@ -38,7 +38,7 @@ public class PostgreController {
   //un determinato gateway
   @GetMapping(value = {"/gateway/{gatewayid:.+}"})
   public Gateway gateway(@PathVariable("gatewayid") int gatewayId) {
-    return gatewayService.find(gatewayId);
+    return gatewayService.findById(gatewayId);
   }
 
   //tutti i dispositivi
@@ -50,20 +50,20 @@ public class PostgreController {
   //un determinato dispositivo
   @GetMapping(value = {"/device/{deviceid:.+}"})
   public Device device(@PathVariable("deviceid") int deviceId) {
-    return deviceService.find(deviceId);
+    return deviceService.findById(deviceId);
   }
 
   //tutti i sensori di un dispositivo
   @GetMapping(value = {"/device/{deviceid:.+}/sensors"})
   public List<Sensor> deviceSensors(@PathVariable("deviceid") int deviceId) {
-    return deviceService.find(deviceId).getSensors();
+    return deviceService.findById(deviceId).getSensors();
   }
 
   //un sensore di un dispositivo
   @GetMapping(value = {"/device/{deviceid:.+}/sensor/{sensorid:.+}"})
   public Sensor sensor(@PathVariable("deviceid") int deviceId,
                        @PathVariable("sensorid") int sensorId) {
-    return deviceService.find(deviceId).getSensors().stream()
+    return deviceService.findById(deviceId).getSensors().stream()
         .filter(sensor -> sensor.getRealSensorId() == sensorId)
         .collect(Collectors.toList())
         .get(0);
@@ -77,15 +77,15 @@ public class PostgreController {
   //tutti i dispositivi del gateway
   @GetMapping(value = {"/gateway/{gatewayid:.+}/devices"})
   public List<Device> gatewayDevices(@PathVariable("gatewayid") int gatewayid) {
-    return gatewayService.find(gatewayid).getDevices();
+    return gatewayService.findById(gatewayid).getDevices();
   }
 
   //il dispositivo del gateway
   @GetMapping(value = {"/gateway/{gatewayid:.+}/device/{deviceid:.+}"})
   public Device gatewayDevice(@PathVariable("gatewayid") int gatewayid,
                               @PathVariable("deviceid") int deviceId) {
-    return gatewayService.find(gatewayid).getDevices().stream().filter(
-        device -> device.getDeviceId() == deviceId
+    return gatewayService.findById(gatewayid).getDevices().stream().filter(
+        device -> device.getId() == deviceId
     ).collect(Collectors.toList()).get(0);
   }
 
@@ -93,8 +93,8 @@ public class PostgreController {
   @GetMapping(value = {"/gateway/{gatewayid:.+}/device/{deviceid:.+}/sensors"})
   public List<Sensor> gatewayDeviceSensors(@PathVariable("gatewayid") int gatewayid,
                                            @PathVariable("deviceid") int deviceId) {
-    return gatewayService.find(gatewayid).getDevices().stream().filter(
-        device -> device.getDeviceId() == deviceId
+    return gatewayService.findById(gatewayid).getDevices().stream().filter(
+        device -> device.getId() == deviceId
     ).collect(Collectors.toList()).get(0).getSensors();
   }
 
@@ -103,8 +103,8 @@ public class PostgreController {
   public Sensor gatewayDeviceSensor(@PathVariable("gatewayid") int gatewayid,
                                     @PathVariable("deviceid") int deviceId,
                                     @PathVariable("sensorid") int sensorId) {
-    return gatewayService.find(gatewayid).getDevices().stream().filter(
-        device -> device.getDeviceId() == deviceId
+    return gatewayService.findById(gatewayid).getDevices().stream().filter(
+        device -> device.getId() == deviceId
     ).collect(Collectors.toList()).get(0).getSensors().stream().filter(
         sensor -> sensor.getRealSensorId() == sensorId
     ).collect(Collectors.toList()).get(0);
