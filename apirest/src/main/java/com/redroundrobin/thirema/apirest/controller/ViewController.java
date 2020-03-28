@@ -2,7 +2,7 @@ package com.redroundrobin.thirema.apirest.controller;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
+import com.redroundrobin.thirema.apirest.utils.exception.*;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.postgres.View;
 import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
@@ -51,29 +51,31 @@ public class ViewController {
       @RequestHeader("Authorization") String authorization,  @PathVariable("viewId") int viewId) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
-    View view = viewService.findByViewId(viewId);
-    if(view != null && user.getUserId() == view.getUserId().getUserId())
-      return ResponseEntity.ok(view);
-    if(!(view != null))
+    try {
+      return ResponseEntity.ok(viewService.getViewByUserId(user.getUserId(), viewId));
+    }
+    catch(ViewNotFoundException e) {
       return new ResponseEntity(HttpStatus.NOT_FOUND);
-    return new ResponseEntity(HttpStatus.BAD_REQUEST);
+    }
+    catch(ValuesNotAllowedException e) {
+      return new ResponseEntity(HttpStatus.BAD_REQUEST);
+    }
   }
 
 
-  /*@PostMapping(name = "/views/create")
+  @PostMapping(name = "/views/create")
   public ResponseEntity<?> views(
       @RequestHeader("Authorization") String authorization,  @RequestBody String rawNewView) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
     JsonObject jsonNewView = JsonParser.parseString(rawNewView).getAsJsonObject();
-    if(jsonNewView.has("name")){
-      View view = new View(); //va bene costruire qua l'oggetto view?
-      view.setName(newView);
-      return ResponseEntity.ok(view);
+    try {
+      return ResponseEntity.ok(viewService.serializeView(jsonNewView, user));
     }
-    return new ResponseEntity(HttpStatus.FORBIDDEN); //risposta troppo generica...? Metto nel suo body
-    //qualcosa di piu descrittivo!!!
-  }*/
+    catch(KeysNotFoundException | MissingFieldsException e) {
+      return new ResponseEntity(e, HttpStatus.BAD_REQUEST);
+    }
+  }
 
  /* @DeleteMapping(name = "/views/delete/{viewId:.+}")
   public ResponseEntity<?> deleteView(
