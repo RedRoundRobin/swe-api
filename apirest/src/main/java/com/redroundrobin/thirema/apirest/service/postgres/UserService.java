@@ -1,6 +1,7 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
 import com.google.gson.JsonObject;
+import com.redroundrobin.thirema.apirest.models.postgres.Alert;
 import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
@@ -14,6 +15,7 @@ import com.redroundrobin.thirema.apirest.utils.exception.TfaNotPermittedExceptio
 import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
 import com.redroundrobin.thirema.apirest.utils.exception.UserRoleNotFoundException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -31,15 +33,22 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserService implements UserDetailsService {
 
-  private UserRepository userRepo;
+  private UserRepository repo;
+
+  private AlertService alertService;
 
   private EntityService entityService;
 
   private SerializeUser serializeUser;
 
   @Autowired
-  public UserService(UserRepository userRepo) {
-    this.userRepo = userRepo;
+  public UserService(UserRepository userRepository) {
+    this.repo = userRepository;
+  }
+
+  @Autowired
+  public void setAlertService(AlertService alertService) {
+    this.alertService = alertService;
   }
 
   @Autowired
@@ -171,32 +180,65 @@ public class UserService implements UserDetailsService {
   }
 
   public List<User> findAll() {
-    return (List<User>) userRepo.findAll();
+    return (List<User>) repo.findAll();
+  }
+
+  public List<User> findAllByEntityId(int entityId) throws EntityNotFoundException {
+    Entity entity = entityService.find(entityId);
+    if (entity != null) {
+      return (List<User>) repo.findAllByEntity(entity);
+    } else {
+      throw new EntityNotFoundException("Entity with id furnished not found");
+    }
+  }
+
+  public List<User> findAllByDisabledAlerts(List<Integer> alertsIds) {
+    List<Alert> alerts = new ArrayList<>();
+    alertsIds.forEach(aid -> {
+      Alert alert = alertService.find(aid);
+      if (alert != null) {
+        alerts.add(alert);
+      }
+    });
+    if (!alerts.isEmpty()) {
+      return (List<User>) repo.findAllByDisabledAlertsIn(alerts);
+    } else {
+      return Collections.emptyList();
+    }
+  }
+
+  public List<User> findAllByDisabledAlert(int alertId) {
+    Alert alert = alertService.find(alertId);
+    if (alert != null) {
+      return (List<User>) repo.findAllByDisabledAlerts(alert);
+    } else {
+      return Collections.emptyList();
+    }
   }
 
   public User find(int id) {
-    Optional<User> optUser = userRepo.findById(id);
+    Optional<User> optUser = repo.findById(id);
     return optUser.orElse(null);
   }
 
   public User findByTelegramName(String telegramName) {
-    return userRepo.findByTelegramName(telegramName);
+    return repo.findByTelegramName(telegramName);
   }
 
   public User findByTelegramNameAndTelegramChat(String telegramName, String telegramChat) {
-    return userRepo.findByTelegramNameAndTelegramChat(telegramName, telegramChat);
+    return repo.findByTelegramNameAndTelegramChat(telegramName, telegramChat);
   }
 
   public User findByEmail(String email) {
-    return userRepo.findByEmail(email);
+    return repo.findByEmail(email);
   }
 
   public User save(User user) {
-    return userRepo.save(user);
+    return repo.save(user);
   }
 
   public List<Device> userDevices(int userId) {
-    return userRepo.userDevices(userId);
+    return repo.userDevices(userId);
   }
 
   @Override
@@ -309,15 +351,6 @@ public class UserService implements UserDetailsService {
           "You are not allowed to edit some of the specified fields");
     } else {
       return this.editAndSave(userToEdit, fieldsToEdit);
-    }
-  }
-
-  public List<User> findAllByEntityId(int id) throws EntityNotFoundException {
-    Entity entity = entityService.find(id);
-    if (entity != null) {
-      return userRepo.findAllByEntity(entity);
-    } else {
-      throw new EntityNotFoundException("Entity with id furnished not found");
     }
   }
 }

@@ -1,6 +1,7 @@
 package com.redroundrobin.thirema.apirest.models.postgres;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonValue;
 import javax.persistence.Column;
 import javax.persistence.EnumType;
@@ -9,8 +10,11 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import java.util.List;
 
 @javax.persistence.Entity
 @Table(name = "users")
@@ -51,6 +55,14 @@ public class User {
   @ManyToOne
   @JoinColumn(name = "entity_id")
   private Entity entity;
+
+  @JsonManagedReference
+  @ManyToMany
+  @JoinTable(
+      name = "disabled_users_alerts",
+      joinColumns = @JoinColumn(name = "user_id"),
+      inverseJoinColumns = @JoinColumn(name = "alert_id"))
+  private List<Alert> disabledAlerts;
 
   public void setUserId(int userId) {
     this.userId = userId;
@@ -138,5 +150,13 @@ public class User {
 
   public Entity getEntity() {
     return entity;
+  }
+
+  public List<Alert> getDisabledAlerts() {
+    return disabledAlerts;
+  }
+
+  public void setDisabledAlerts(List<Alert> disabledAlerts) {
+    this.disabledAlerts = disabledAlerts;
   }
 }
