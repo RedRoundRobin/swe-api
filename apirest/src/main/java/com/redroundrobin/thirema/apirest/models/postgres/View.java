@@ -14,15 +14,6 @@ public class View {
   private int viewId;
   private String name;
 
-
-  public User getUserId() {
-    return userId;
-  }
-
-  public void setUserId(User userId) {
-    this.userId = userId;
-  }
-
   @JsonBackReference //non sono sicuro! (Fouad)
   @ManyToOne
   @JoinColumn(name = "user_id")
@@ -41,6 +32,13 @@ public class View {
   public void setViewId(int viewId) {
     this.viewId = viewId;
   }
+
+  public User getUserId() { return userId; }
+
+  public void setUserId(User userId) {
+    this.userId = userId;
+  }
+
 
   public String getName() {
     return name;

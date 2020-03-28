@@ -37,6 +37,7 @@ public class ViewController {
     this.viewService = viewService;
   }
 
+  //qualsiasi utente puo avere views da adr, anche admin
   @GetMapping(value = {"/views"})
   public ResponseEntity<?> views(@RequestHeader("Authorization") String authorization) {
     String token = authorization.substring(7);
@@ -51,7 +52,7 @@ public class ViewController {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
     View view = viewService.findByViewId(viewId);
-    if(view != null && user.getUserId() == view.getViewId())
+    if(view != null && user.getUserId() == view.getUserId().getUserId())
       return ResponseEntity.ok(view);
     if(!(view != null))
       return new ResponseEntity(HttpStatus.NOT_FOUND);
@@ -80,7 +81,7 @@ public class ViewController {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
     View view = viewService.findById(viewId);
-    if(view != null)
+    if(view != null && user.getUserId() == view.getUserId().getUserId())
       return ResponseEntity.ok(view.deleteView(viewId));
     return ResponseEntity.status(HttpStatus.FORBIDDEN); //risposta troppo generica...? Metto nel suo body
     //qualcosa di piu descrittivo!!!
