@@ -58,7 +58,7 @@ public class SensorService {
     if (device != null) {
       return (List<Sensor>) repo.findAllByDevice(device);
     } else {
-      return null;
+      return Collections.emptyList();
     }
   }
 
@@ -66,6 +66,15 @@ public class SensorService {
     Entity entity = entityService.findById(entityId);
     if (entity != null) {
       return (List<Sensor>) repo.findAllByEntities(entity);
+    } else {
+      return Collections.emptyList();
+    }
+  }
+
+  public List<Sensor> findAllByViewGraphId(int viewGraphId) {
+    ViewGraph viewGraph = viewGraphService.findById(viewGraphId);
+    if (viewGraph != null) {
+      return (List<Sensor>) repo.findAllByViewGraphs1OrViewGraphs2(viewGraph, viewGraph);
     } else {
       return Collections.emptyList();
     }
@@ -79,15 +88,6 @@ public class SensorService {
     Alert alert = alertService.findById(alertId);
     if (alert != null) {
       return repo.findByAlerts(alert);
-    } else {
-      return null;
-    }
-  }
-
-  public Sensor findByViewGraphId(int viewGraphId) {
-    ViewGraph viewGraph = viewGraphService.findById(viewGraphId);
-    if (viewGraph != null) {
-      return repo.findByViewGraphs1OrViewGraphs2(viewGraph, viewGraph);
     } else {
       return null;
     }

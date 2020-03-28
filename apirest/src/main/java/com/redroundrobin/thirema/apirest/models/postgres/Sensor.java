@@ -113,6 +113,22 @@ public class Sensor {
     this.entities = entities;
   }
 
+  public List<ViewGraph> getViewGraphs1() {
+    return viewGraphs1;
+  }
+
+  public void setViewGraphs1(List<ViewGraph> viewGraphs1) {
+    this.viewGraphs1 = viewGraphs1;
+  }
+
+  public List<ViewGraph> getViewGraphs2() {
+    return viewGraphs2;
+  }
+
+  public void setViewGraphs2(List<ViewGraph> viewGraphs2) {
+    this.viewGraphs2 = viewGraphs2;
+  }
+
   @Override
   public int hashCode() {
     int hash = 7;
