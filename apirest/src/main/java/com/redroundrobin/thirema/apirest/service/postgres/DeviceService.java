@@ -5,8 +5,6 @@ import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.repository.postgres.DeviceRepository;
-
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,7 +56,7 @@ public class DeviceService {
 
   public List<Device> findAllByEntityId(int entityId) {
     Entity entity = entityService.findById(entityId);
-    if( entity != null ) {
+    if (entity != null) {
       return (List<Device>) repo.findAllByEntityId(entityId);
     } else {
       return Collections.emptyList();
