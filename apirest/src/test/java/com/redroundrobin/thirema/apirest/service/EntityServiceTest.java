@@ -127,7 +127,7 @@ public class EntityServiceTest {
 
   @Test
   public void findEntityById() {
-    Entity entity = repo.findById(entity1.getEntityId()).orElse(null);
+    Entity entity = entityService.findById(entity1.getEntityId());
 
     assertNotNull(entity);
   }
