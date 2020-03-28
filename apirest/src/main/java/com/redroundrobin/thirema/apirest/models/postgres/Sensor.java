@@ -8,6 +8,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinColumns;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
@@ -28,18 +29,25 @@ public class Sensor {
   private int realSensorId;
 
   @JsonBackReference
+  @OneToMany(mappedBy = "sensor")
+  private List<Alert> alerts;
+
+  @JsonBackReference
   @ManyToOne
   @JoinColumn(name = "device_id")
   private Device device;
 
   @JsonBackReference
-  @OneToMany(mappedBy = "sensor")
-  private List<Alert> alerts;
-
-  @JsonBackReference
   @ManyToMany
   private List<Entity> entities;
 
+  @JsonBackReference
+  @OneToMany(mappedBy = "sensor1")
+  private List<ViewGraph> viewGraphs1;
+
+  @JsonBackReference
+  @OneToMany(mappedBy = "sensor2")
+  private List<ViewGraph> viewGraphs2;
 
   public Sensor() {
   }
