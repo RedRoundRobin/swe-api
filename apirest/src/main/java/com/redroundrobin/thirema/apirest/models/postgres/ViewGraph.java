@@ -31,11 +31,11 @@ public class ViewGraph {
   @JoinColumn(name = "sensor_2_id")
   private Sensor sensor2;
 
-  public int getGraphId() {
+  public int getId() {
     return graphId;
   }
 
-  public void setGraphId(int graphId) {
+  public void setId(int graphId) {
     this.graphId = graphId;
   }
 

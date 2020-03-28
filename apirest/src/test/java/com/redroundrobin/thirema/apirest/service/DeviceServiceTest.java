@@ -62,11 +62,11 @@ public class DeviceServiceTest {
 
     // ----------------------------------------- Set Devices --------------------------------------
     device1 = new Device();
-    device1.setDeviceId(1);
+    device1.setId(1);
     device2 = new Device();
-    device2.setDeviceId(2);
+    device2.setId(2);
     device3 = new Device();
-    device3.setDeviceId(3);
+    device3.setId(3);
 
     List<Device> allDevices = new ArrayList<>();
     allDevices.add(device1);
@@ -87,15 +87,15 @@ public class DeviceServiceTest {
 
     // ----------------------------------------- Set Sensors --------------------------------------
     sensor1 = new Sensor();
-    sensor1.setSensorId(1);
+    sensor1.setId(1);
     sensor2 = new Sensor();
-    sensor2.setSensorId(2);
+    sensor2.setId(2);
     sensor3 = new Sensor();
-    sensor3.setSensorId(3);
+    sensor3.setId(3);
     sensor4 = new Sensor();
-    sensor4.setSensorId(4);
+    sensor4.setId(4);
     sensor5 = new Sensor();
-    sensor5.setSensorId(5);
+    sensor5.setId(5);
 
     List<Sensor> allSensors = new ArrayList<>();
     allSensors.add(sensor1);
@@ -148,7 +148,7 @@ public class DeviceServiceTest {
           .collect(Collectors.toList());
     });
     when(repo.findById(anyInt())).thenAnswer(i -> {
-      return allDevices.stream().filter(d -> i.getArgument(0).equals(d.getDeviceId()))
+      return allDevices.stream().filter(d -> i.getArgument(0).equals(d.getId()))
           .findFirst();
     });
     when(repo.findBySensors(any(Sensor.class))).thenAnswer(i -> {
@@ -163,7 +163,7 @@ public class DeviceServiceTest {
     });
 
     when(sensorService.findById(anyInt())).thenAnswer(i -> {
-      return allSensors.stream().filter(s -> i.getArgument(0).equals(s.getSensorId()))
+      return allSensors.stream().filter(s -> i.getArgument(0).equals(s.getId()))
           .findFirst().orElse(null);
     });
 
@@ -194,14 +194,14 @@ public class DeviceServiceTest {
 
   @Test
   public void findDeviceById() {
-    Device device = deviceService.findById(device1.getDeviceId());
+    Device device = deviceService.findById(device1.getId());
 
     assertNotNull(device);
   }
 
   @Test
   public void findDeviceBySensorId() {
-    Device device = deviceService.findBySensorId(sensor5.getSensorId());
+    Device device = deviceService.findBySensorId(sensor5.getId());
 
     assertNotNull(device);
     assertEquals(device3 ,device);

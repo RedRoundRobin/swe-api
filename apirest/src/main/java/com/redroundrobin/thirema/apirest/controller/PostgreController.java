@@ -85,7 +85,7 @@ public class PostgreController {
   public Device gatewayDevice(@PathVariable("gatewayid") int gatewayid,
                               @PathVariable("deviceid") int deviceId) {
     return gatewayService.findById(gatewayid).getDevices().stream().filter(
-        device -> device.getDeviceId() == deviceId
+        device -> device.getId() == deviceId
     ).collect(Collectors.toList()).get(0);
   }
 
@@ -94,7 +94,7 @@ public class PostgreController {
   public List<Sensor> gatewayDeviceSensors(@PathVariable("gatewayid") int gatewayid,
                                            @PathVariable("deviceid") int deviceId) {
     return gatewayService.findById(gatewayid).getDevices().stream().filter(
-        device -> device.getDeviceId() == deviceId
+        device -> device.getId() == deviceId
     ).collect(Collectors.toList()).get(0).getSensors();
   }
 
@@ -104,7 +104,7 @@ public class PostgreController {
                                     @PathVariable("deviceid") int deviceId,
                                     @PathVariable("sensorid") int sensorId) {
     return gatewayService.findById(gatewayid).getDevices().stream().filter(
-        device -> device.getDeviceId() == deviceId
+        device -> device.getId() == deviceId
     ).collect(Collectors.toList()).get(0).getSensors().stream().filter(
         sensor -> sensor.getRealSensorId() == sensorId
     ).collect(Collectors.toList()).get(0);

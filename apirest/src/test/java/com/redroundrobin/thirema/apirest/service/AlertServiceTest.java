@@ -1,19 +1,14 @@
 package com.redroundrobin.thirema.apirest.service;
 
 import com.redroundrobin.thirema.apirest.models.postgres.Alert;
-import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
-import com.redroundrobin.thirema.apirest.models.postgres.ViewGraph;
 import com.redroundrobin.thirema.apirest.repository.postgres.AlertRepository;
-import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
 import com.redroundrobin.thirema.apirest.service.postgres.AlertService;
-import com.redroundrobin.thirema.apirest.service.postgres.DeviceService;
 import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
 import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
-import com.redroundrobin.thirema.apirest.service.postgres.ViewGraphService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -91,13 +86,13 @@ public class AlertServiceTest {
 
     // ----------------------------------------- Set Entities --------------------------------------
     entity1 = new Entity();
-    entity1.setEntityId(1);
+    entity1.setId(1);
     entity1.setName("entity1");
     entity2 = new Entity();
-    entity2.setEntityId(2);
+    entity2.setId(2);
     entity2.setName("entity2");
     entity3 = new Entity();
-    entity3.setEntityId(3);
+    entity3.setId(3);
     entity3.setName("entity3");
 
     List<Entity> allEntities = new ArrayList<>();
@@ -108,11 +103,11 @@ public class AlertServiceTest {
 
     // ----------------------------------------- Set Sensors --------------------------------------
     sensor1 = new Sensor();
-    sensor1.setSensorId(1);
+    sensor1.setId(1);
     sensor2 = new Sensor();
-    sensor2.setSensorId(2);
+    sensor2.setId(2);
     sensor3 = new Sensor();
-    sensor3.setSensorId(3);
+    sensor3.setId(3);
 
     List<Sensor> allSensors = new ArrayList<>();
     allSensors.add(sensor1);
@@ -122,11 +117,11 @@ public class AlertServiceTest {
 
     // ----------------------------------------- Set Users --------------------------------------
     user1 = new User();
-    user1.setUserId(1);
+    user1.setId(1);
     user2 = new User();
-    user2.setUserId(2);
+    user2.setId(2);
     user3 = new User();
-    user3.setUserId(3);
+    user3.setId(3);
 
     List<User> allUsers = new ArrayList<>();
     allUsers.add(user1);
@@ -208,17 +203,17 @@ public class AlertServiceTest {
     });
 
     when(entityService.findById(anyInt())).thenAnswer(i -> {
-      return allEntities.stream().filter(e -> i.getArgument(0).equals(e.getEntityId()))
+      return allEntities.stream().filter(e -> i.getArgument(0).equals(e.getId()))
           .findFirst().orElse(null);
     });
 
     when(sensorService.findById(anyInt())).thenAnswer(i -> {
-      return allSensors.stream().filter(s -> i.getArgument(0).equals(s.getSensorId()))
+      return allSensors.stream().filter(s -> i.getArgument(0).equals(s.getId()))
           .findFirst().orElse(null);
     });
 
     when(userService.findById(anyInt())).thenAnswer(i -> {
-      return allUsers.stream().filter(u -> i.getArgument(0).equals(u.getUserId()))
+      return allUsers.stream().filter(u -> i.getArgument(0).equals(u.getId()))
           .findFirst().orElse(null);
     });
 
@@ -233,7 +228,7 @@ public class AlertServiceTest {
 
   @Test
   public void findAllAlertsByEntityId() {
-    List<Alert> alerts = alertService.findAllByEntityId(entity1.getEntityId());
+    List<Alert> alerts = alertService.findAllByEntityId(entity1.getId());
 
     assertTrue(!alerts.isEmpty());
   }
@@ -247,7 +242,7 @@ public class AlertServiceTest {
 
   @Test
   public void findAllAlertsBySensorId() {
-    List<Alert> alerts = alertService.findAllBySensorId(sensor1.getSensorId());
+    List<Alert> alerts = alertService.findAllBySensorId(sensor1.getId());
 
     assertTrue(alerts.stream().count() == 2);
   }
@@ -261,7 +256,7 @@ public class AlertServiceTest {
 
   @Test
   public void findAllAlertsByUserId() {
-    List<Alert> alerts = alertService.findAllByUserId(user1.getUserId());
+    List<Alert> alerts = alertService.findAllByUserId(user1.getId());
 
     assertTrue(alerts.stream().count() == 1);
   }

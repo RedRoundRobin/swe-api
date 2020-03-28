@@ -64,11 +64,11 @@ public class User {
       inverseJoinColumns = @JoinColumn(name = "alert_id"))
   private List<Alert> disabledAlerts;
 
-  public void setUserId(int userId) {
+  public void setId(int userId) {
     this.userId = userId;
   }
 
-  public int getUserId() {
+  public int getId() {
     return userId;
   }
 

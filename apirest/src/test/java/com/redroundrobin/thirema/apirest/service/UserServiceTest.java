@@ -58,7 +58,7 @@ public class UserServiceTest {
     userService.setSerializeUser(serializeUser);
 
     admin1 = new User();
-    admin1.setUserId(1);
+    admin1.setId(1);
     admin1.setName("admin1");
     admin1.setSurname("admin1");
     admin1.setEmail("admin1");
@@ -67,7 +67,7 @@ public class UserServiceTest {
     admin1.setType(User.Role.ADMIN);
 
     admin2 = new User();
-    admin2.setUserId(2);
+    admin2.setId(2);
     admin2.setName("admin2");
     admin2.setSurname("admin2");
     admin2.setEmail("admin2");
@@ -76,10 +76,10 @@ public class UserServiceTest {
     admin2.setType(User.Role.ADMIN);
 
     entity1 = new Entity();
-    entity1.setEntityId(1);
+    entity1.setId(1);
 
     mod1 = new User();
-    mod1.setUserId(3);
+    mod1.setId(3);
     mod1.setName("mod1");
     mod1.setSurname("mod1");
     mod1.setEmail("mod1");
@@ -89,7 +89,7 @@ public class UserServiceTest {
     mod1.setEntity(entity1);
 
     mod11 = new User();
-    mod11.setUserId(4);
+    mod11.setId(4);
     mod11.setName("mod11");
     mod11.setSurname("mod11");
     mod11.setEmail("mod11");
@@ -99,7 +99,7 @@ public class UserServiceTest {
     mod11.setEntity(entity1);
 
     user1 = new User();
-    user1.setUserId(5);
+    user1.setId(5);
     user1.setName("user1");
     user1.setSurname("user1");
     user1.setEmail("user1");
@@ -109,10 +109,10 @@ public class UserServiceTest {
     user1.setEntity(entity1);
 
     entity2 = new Entity();
-    entity2.setEntityId(2);
+    entity2.setId(2);
 
     user2 = new User();
-    user2.setUserId(6);
+    user2.setId(6);
     user2.setName("user2");
     user2.setSurname("user2");
     user2.setEmail("user2");
@@ -133,7 +133,7 @@ public class UserServiceTest {
     when(userRepo.findById(anyInt())).thenAnswer(i -> {
       int id = i.getArgument(0);
       Optional<User> userFound = allUsers.stream()
-          .filter(user -> user.getUserId() == id)
+          .filter(user -> user.getId() == id)
           .findFirst();
       return userFound;
     });
@@ -175,7 +175,7 @@ public class UserServiceTest {
     User clone = new User();
     clone.setEmail(user.getEmail());
     clone.setTelegramName(user.getTelegramName());
-    clone.setUserId(user.getUserId());
+    clone.setId(user.getId());
     clone.setEntity(user.getEntity());
     clone.setDeleted(user.isDeleted());
     clone.setTelegramChat(user.getTelegramChat());
@@ -456,7 +456,7 @@ public class UserServiceTest {
     User.Role newType = User.Role.USER;
     String newTelegramName = "newTelegramName";
     boolean newDeleted = true;
-    int newEntityId = entity2.getEntityId();
+    int newEntityId = entity2.getId();
 
     HashMap<String, Object> fieldsToEdit = new HashMap<>();
 

@@ -54,10 +54,10 @@ public class UserController {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
     User requiredUser = userService.findById(requiredUserId);
-    if (requiredUser != null && (user.getUserId() == requiredUserId
+    if (requiredUser != null && (user.getId() == requiredUserId
         || user.getType() == User.Role.ADMIN  || user.getType() == User.Role.MOD
         && requiredUser.getType() != User.Role.ADMIN
-            && user.getEntity().getEntityId() == requiredUser.getEntity().getEntityId())) {
+            && user.getEntity().getId() == requiredUser.getEntity().getId())) {
       return ResponseEntity.ok(userService.userDevices(requiredUserId));
     } else {
       return new ResponseEntity(HttpStatus.FORBIDDEN);
@@ -73,14 +73,14 @@ public class UserController {
     JsonObject jsonUser = JsonParser.parseString(jsonStringUser).getAsJsonObject();
     User newUser = userService.serializeUser(jsonUser, user.getType());
     if (user.getType() == User.Role.ADMIN || user.getType() == User.Role.ADMIN
-        && user.getEntity().getEntityId() == newUser.getEntity().getEntityId()) {
+        && user.getEntity().getId() == newUser.getEntity().getId()) {
       return ResponseEntity.ok(userService.save(newUser));
     }
     return new ResponseEntity(HttpStatus.FORBIDDEN);
   }
 
   private boolean canEditMod(User editingUser, User userToEdit) {
-    return editingUser.getUserId() == userToEdit.getUserId()
+    return editingUser.getId() == userToEdit.getId()
         || (userToEdit.getType() == User.Role.USER
         && editingUser.getEntity().equals(userToEdit.getEntity()));
   }
@@ -103,15 +103,15 @@ public class UserController {
         if (editingUser.getType() == User.Role.ADMIN && userToEdit.getType() != User.Role.ADMIN) {
 
           user = userService.editByAdministrator(userToEdit,
-              editingUser.getUserId() == userToEdit.getUserId(), fieldsToEdit);
+              editingUser.getId() == userToEdit.getId(), fieldsToEdit);
 
         } else if (editingUser.getType() == User.Role.MOD && canEditMod(editingUser, userToEdit)) {
 
           user = userService.editByModerator(userToEdit,
-              editingUser.getUserId() == userToEdit.getUserId(), fieldsToEdit);
+              editingUser.getId() == userToEdit.getId(), fieldsToEdit);
 
         } else if (editingUser.getType() == User.Role.USER
-            && editingUser.getUserId() == userToEdit.getUserId()) {
+            && editingUser.getId() == userToEdit.getId()) {
 
           user = userService.editByUser(userToEdit, fieldsToEdit);
 
@@ -184,7 +184,7 @@ public class UserController {
     } else {
       User userToRetrieve = userService.findById(userId);
       if (userToRetrieve != null
-          && userToRetrieve.getEntity().getEntityId() == user.getEntity().getEntityId()) {
+          && userToRetrieve.getEntity().getId() == user.getEntity().getId()) {
         return ResponseEntity.ok(user.getEntity());
       } else {
         return new ResponseEntity(HttpStatus.FORBIDDEN);
@@ -217,9 +217,9 @@ public class UserController {
       return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     } else if (user.getType() == User.Role.MOD) {
       if ((entity == null && disabledAlert == null && view == null)
-          || (entity != null && user.getEntity().getEntityId() == entity)) {
+          || (entity != null && user.getEntity().getId() == entity)) {
         try {
-          return ResponseEntity.ok(userService.findAllByEntityId(user.getEntity().getEntityId()));
+          return ResponseEntity.ok(userService.findAllByEntityId(user.getEntity().getId()));
         } catch (EntityNotFoundException enfe) {
 
         }

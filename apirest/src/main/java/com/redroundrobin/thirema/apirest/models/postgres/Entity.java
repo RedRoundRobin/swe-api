@@ -42,11 +42,11 @@ public class Entity {
   public Entity() {
   }
 
-  public int getEntityId() {
+  public int getId() {
     return entityId;
   }
 
-  public void setEntityId(int entityId) {
+  public void setId(int entityId) {
     this.entityId = entityId;
   }
 

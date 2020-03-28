@@ -65,11 +65,11 @@ public class Sensor {
     this.realSensorId = realSensorId;
   }
 
-  public int getSensorId() {
+  public int getId() {
     return sensorId;
   }
 
-  public void setSensorId(int sensorId) {
+  public void setId(int sensorId) {
     this.sensorId = sensorId;
   }
 

@@ -51,13 +51,13 @@ public class EntityServiceTest {
     entityService.setSensorService(sensorService);
 
     sensor1 = new Sensor();
-    sensor1.setSensorId(1);
+    sensor1.setId(1);
 
     sensor2 = new Sensor();
-    sensor2.setSensorId(2);
+    sensor2.setId(2);
 
     sensor3 = new Sensor();
-    sensor3.setSensorId(3);
+    sensor3.setId(3);
 
     List<Sensor> allSensors = new ArrayList<>();
     allSensors.add(sensor1);
@@ -70,17 +70,17 @@ public class EntityServiceTest {
     sensors2.add(sensor3);
 
     entity1 = new Entity();
-    entity1.setEntityId(1);
+    entity1.setId(1);
     entity1.setName("entity1");
     entity1.setSensors(sensors1);
 
     entity2 = new Entity();
-    entity2.setEntityId(2);
+    entity2.setId(2);
     entity2.setName("entity2");
     entity2.setSensors(sensors2);
 
     entity3 = new Entity();
-    entity3.setEntityId(3);
+    entity3.setId(3);
     entity3.setName("entity3");
     entity3.setSensors(sensors1);
 
@@ -91,11 +91,11 @@ public class EntityServiceTest {
 
     when(repo.findAll()).thenReturn(entities);
     when(repo.findById(anyInt())).thenAnswer(i -> {
-      return entities.stream().filter(e -> i.getArgument(0).equals(e.getEntityId()))
+      return entities.stream().filter(e -> i.getArgument(0).equals(e.getId()))
           .findFirst();
     });
     when(sensorService.findById(anyInt())).thenAnswer(i -> {
-      return allSensors.stream().filter(s -> i.getArgument(0).equals(s.getSensorId()))
+      return allSensors.stream().filter(s -> i.getArgument(0).equals(s.getId()))
           .findFirst().orElse(null);
     });
     when(repo.findAllBySensors(any(Sensor.class))).thenAnswer(i -> {
@@ -113,7 +113,7 @@ public class EntityServiceTest {
 
   @Test
   public void findAllEntitiesBySensorId() {
-    List<Entity> entities = entityService.findAllBySensorId(sensor1.getSensorId());
+    List<Entity> entities = entityService.findAllBySensorId(sensor1.getId());
 
     assertTrue(entities.stream().count() == 2);
   }
@@ -127,7 +127,7 @@ public class EntityServiceTest {
 
   @Test
   public void findEntityById() {
-    Entity entity = entityService.findById(entity1.getEntityId());
+    Entity entity = entityService.findById(entity1.getId());
 
     assertNotNull(entity);
   }
