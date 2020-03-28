@@ -5,7 +5,6 @@ import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.repository.postgres.AlertRepository;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,7 +59,7 @@ public class AlertService {
     if (sensor != null) {
       return (List<Alert>) repo.findAllBySensor(sensor);
     } else {
-      return null;
+      return Collections.emptyList();
     }
   }
 
@@ -68,21 +67,6 @@ public class AlertService {
     User user = userService.findById(userId);
     if (user != null) {
       return (List<Alert>) repo.findAllByUsers(user);
-    } else {
-      return Collections.emptyList();
-    }
-  }
-
-  public List<Alert> findAllByUsersIds(List<Integer> usersIds) {
-    List<User> users = new ArrayList<>();
-    usersIds.forEach(uid -> {
-      User user = userService.findById(uid);
-      if (user != null) {
-        users.add(user);
-      }
-    });
-    if (!users.isEmpty()) {
-      return (List<Alert>) repo.findAllByUsersIn(users);
     } else {
       return Collections.emptyList();
     }

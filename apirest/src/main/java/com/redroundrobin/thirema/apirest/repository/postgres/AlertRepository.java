@@ -14,6 +14,4 @@ public interface AlertRepository extends CrudRepository<Alert, Integer> {
   Iterable<Alert> findAllBySensor(Sensor sensor);
 
   Iterable<Alert> findAllByUsers(User user);
-
-  Iterable<Alert> findAllByUsersIn(Iterable<User> users);
 }
