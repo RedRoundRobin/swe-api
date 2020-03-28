@@ -3,10 +3,10 @@ package com.redroundrobin.thirema.apirest.service.postgres;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.ViewGraph;
 import com.redroundrobin.thirema.apirest.repository.postgres.ViewGraphRepository;
+import java.util.Collections;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public class ViewGraphService {
@@ -33,7 +33,7 @@ public class ViewGraphService {
     if (sensor != null) {
       return (List<ViewGraph>) repo.findAllBySensor1OrSensor2(sensor, sensor);
     } else {
-      return null;
+      return Collections.emptyList();
     }
   }
 

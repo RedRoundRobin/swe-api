@@ -120,7 +120,7 @@ public class UserService implements UserDetailsService {
     }
   }
 
-  private User editAndSave(User userToEdit, HashMap<String, Object> fieldsToEdit)
+  private User editAndSave(User userToEdit, Map<String, Object> fieldsToEdit)
       throws EntityNotFoundException, TfaNotPermittedException, UserRoleNotFoundException {
     if (fieldsToEdit.containsKey("two_factor_authentication")
         && (boolean)fieldsToEdit.get("two_factor_authentication")
@@ -242,7 +242,7 @@ public class UserService implements UserDetailsService {
   }
 
   @Override
-  public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
+  public UserDetails loadUserByUsername(String s) {
     User user = this.findByEmail(s);
     if (user == null || (user.isDeleted() || (user.getType() != User.Role.ADMIN
         && (user.getEntity() == null || user.getEntity().isDeleted())))) {
@@ -266,8 +266,7 @@ public class UserService implements UserDetailsService {
    * @throws UserDisabledException thrown if user with furnished email found but the user is
   disabled.
    */
-  public UserDetails loadUserByEmail(String s)
-      throws UsernameNotFoundException, UserDisabledException {
+  public UserDetails loadUserByEmail(String s) throws UserDisabledException {
     User user = this.findByEmail(s);
     if (user == null) {
       throw new UsernameNotFoundException("");
@@ -293,7 +292,7 @@ public class UserService implements UserDetailsService {
    * @throws UserDisabledException thrown if telegram name found but the user is disabled.
    */
   public UserDetails loadUserByTelegramName(String s)
-      throws UsernameNotFoundException, UserDisabledException, TelegramChatNotFoundException {
+      throws UserDisabledException, TelegramChatNotFoundException {
     User user = this.findByTelegramName(s);
     if (user == null) {
       throw new UsernameNotFoundException("");
@@ -315,7 +314,7 @@ public class UserService implements UserDetailsService {
     return serializeUser.serializeUser(rawUser, type);
   }
 
-  public User editByUser(User userToEdit, HashMap<String, Object> fieldsToEdit)
+  public User editByUser(User userToEdit, Map<String, Object> fieldsToEdit)
       throws NotAllowedToEditException, KeysNotFoundException, EntityNotFoundException,
       TfaNotPermittedException, UserRoleNotFoundException {
 
@@ -327,7 +326,7 @@ public class UserService implements UserDetailsService {
     }
   }
 
-  public User editByModerator(User userToEdit, boolean itself, HashMap<String, Object> fieldsToEdit)
+  public User editByModerator(User userToEdit, boolean itself, Map<String, Object> fieldsToEdit)
       throws NotAllowedToEditException, KeysNotFoundException, EntityNotFoundException,
       TfaNotPermittedException, UserRoleNotFoundException {
 
@@ -340,7 +339,7 @@ public class UserService implements UserDetailsService {
   }
 
   public User editByAdministrator(User userToEdit, boolean itself,
-                                  HashMap<String, Object> fieldsToEdit)
+                                  Map<String, Object> fieldsToEdit)
       throws NotAllowedToEditException, KeysNotFoundException, EntityNotFoundException,
       TfaNotPermittedException, UserRoleNotFoundException {
 

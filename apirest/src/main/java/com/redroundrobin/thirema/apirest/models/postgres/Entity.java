@@ -39,9 +39,6 @@ public class Entity {
       inverseJoinColumns = @JoinColumn(name = "sensor_id"))
   private List<Sensor> sensors;
 
-  public Entity() {
-  }
-
   public int getId() {
     return entityId;
   }

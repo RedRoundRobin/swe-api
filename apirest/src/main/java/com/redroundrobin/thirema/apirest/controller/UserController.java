@@ -14,6 +14,7 @@ import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
 import com.redroundrobin.thirema.apirest.utils.exception.UserRoleNotFoundException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -88,7 +89,7 @@ public class UserController {
   /*In input prende JsonObject coi field da modificare dello userId*/
   @PutMapping(value = {"/users/{userid:.+}/edit"})
   public ResponseEntity<Object> editUser(@RequestHeader("Authorization") String authorization,
-                                         @RequestBody HashMap<String, Object> fieldsToEdit,
+                                         @RequestBody Map<String, Object> fieldsToEdit,
                                          @PathVariable("userid") int userId) {
     String token = authorization.substring(7);
     String editingUserEmail = jwtTokenUtil.extractUsername(token);
@@ -149,7 +150,7 @@ public class UserController {
           return new ResponseEntity(errorMessage,HttpStatus.CONFLICT);
         }
       } catch (EntityNotFoundException | KeysNotFoundException | UserRoleNotFoundException nf) {
-
+        // go to return BAD_REQUEST
       }
     }
     // when db error is not for duplicate unique or when userToEdit with id furnished is not found
@@ -205,7 +206,7 @@ public class UserController {
         try {
           return ResponseEntity.ok(userService.findAllByEntityId(entity));
         } catch (EntityNotFoundException enfe) {
-
+          // go to return BAD_REQUEST
         }
       } else if (disabledAlert != null) {
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
@@ -221,7 +222,7 @@ public class UserController {
         try {
           return ResponseEntity.ok(userService.findAllByEntityId(user.getEntity().getId()));
         } catch (EntityNotFoundException enfe) {
-
+          // go to return FORBIDDE
         }
       }
     }

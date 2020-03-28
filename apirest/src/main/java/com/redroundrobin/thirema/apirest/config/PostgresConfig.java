@@ -38,8 +38,7 @@ public class PostgresConfig {
     LocalContainerEntityManagerFactoryBean em
         = new LocalContainerEntityManagerFactoryBean();
     em.setDataSource(postgresDataSource());
-    em.setPackagesToScan(
-        new String[]{"com.redroundrobin.thirema.apirest.models.postgres"});
+    em.setPackagesToScan("com.redroundrobin.thirema.apirest.models.postgres");
 
     HibernateJpaVendorAdapter vendorAdapter
         = new HibernateJpaVendorAdapter();
