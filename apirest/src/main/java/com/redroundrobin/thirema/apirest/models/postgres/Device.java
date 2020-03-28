@@ -56,11 +56,11 @@ public class Device {
     this.realDeviceId = realDeviceId;
   }
 
-  public int getDeviceId() {
+  public int getId() {
     return deviceId;
   }
 
-  public void setDeviceId(int deviceId) {
+  public void setId(int deviceId) {
     this.deviceId = deviceId;
   }
 

@@ -19,7 +19,7 @@ public class SerializeUser {
     newUser.setEmail(rawUser.get("email").getAsString());
     if (type == User.Role.ADMIN) {
       newUser.setType(User.Role.valueOf(rawUser.get("type").getAsString()));
-      newUser.setEntity(entityService.find(rawUser.get("entity_id").getAsInt()));
+      newUser.setEntity(entityService.findById(rawUser.get("entity_id").getAsInt()));
     }
     /*manca distinzione sui campi che potrebbero essere null! Se no eccezione*/
     return newUser;
