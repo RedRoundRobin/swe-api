@@ -9,14 +9,18 @@ import org.springframework.stereotype.Service;
 @Service
 public class DeviceService {
 
-  @Autowired
   private DeviceRepository repository;
+
+  @Autowired
+  public DeviceService(DeviceRepository repository) {
+    this.repository = repository;
+  }
 
   public List<Device> findAll() {
     return (List<Device>) repository.findAll();
   }
 
   public Device find(int id) {
-    return repository.findById(id).get();
+    return repository.findById(id).orElse(null);
   }
 }

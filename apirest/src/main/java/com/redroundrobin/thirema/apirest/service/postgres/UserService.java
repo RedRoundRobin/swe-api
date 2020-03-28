@@ -38,10 +38,17 @@ public class UserService implements UserDetailsService {
   private SerializeUser serializeUser;
 
   @Autowired
-  public UserService(UserRepository userRepo, EntityService entityService,
-                     SerializeUser serializeUser) {
+  public UserService(UserRepository userRepo) {
     this.userRepo = userRepo;
+  }
+
+  @Autowired
+  public void setEntityService(EntityService entityService) {
     this.entityService = entityService;
+  }
+
+  @Autowired
+  public void setSerializeUser(SerializeUser serializeUser) {
     this.serializeUser = serializeUser;
   }
 

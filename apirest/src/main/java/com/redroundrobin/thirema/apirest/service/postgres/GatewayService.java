@@ -9,14 +9,18 @@ import org.springframework.stereotype.Service;
 @Service
 public class GatewayService {
 
-  @Autowired
   private GatewayRepository repository;
+
+  @Autowired
+  public GatewayService(GatewayRepository repository) {
+    this.repository = repository;
+  }
 
   public List<Gateway> findAll() {
     return (List<Gateway>) repository.findAll();
   }
 
   public Gateway find(int gatewayId) {
-    return repository.findById(gatewayId).get();
+    return repository.findById(gatewayId).orElse(null);
   }
 }

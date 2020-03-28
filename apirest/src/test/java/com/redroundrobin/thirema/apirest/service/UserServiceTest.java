@@ -53,7 +53,9 @@ public class UserServiceTest {
 
   @Before
   public void setUp() {
-    userService = new UserService(userRepo, entityService, serializeUser);
+    userService = new UserService(userRepo);
+    userService.setEntityService(entityService);
+    userService.setSerializeUser(serializeUser);
 
     admin1 = new User();
     admin1.setUserId(1);

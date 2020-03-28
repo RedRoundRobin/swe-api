@@ -67,7 +67,8 @@ public class EntityServiceTest {
 
   @Before
   public void setUp() {
-    entityService = new EntityService(repo, sensorService);
+    entityService = new EntityService(repo);
+    entityService.setSensorService(sensorService);
 
     sensor1 = new Sensor();
     sensor1.setSensorId(1);

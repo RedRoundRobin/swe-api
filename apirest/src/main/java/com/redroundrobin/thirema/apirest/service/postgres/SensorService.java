@@ -16,8 +16,12 @@ public class SensorService {
   private EntityService entityService;
 
   @Autowired
-  public SensorService(SensorRepository repo, EntityService entityService) {
+  public SensorService(SensorRepository repo) {
     this.repo = repo;
+  }
+
+  @Autowired
+  public void setEntityService(EntityService entityService) {
     this.entityService = entityService;
   }
 
@@ -26,7 +30,7 @@ public class SensorService {
   }
 
   public Sensor find(int sensorId) {
-    return repo.findById(sensorId).get();
+    return repo.findById(sensorId).orElse(null);
   }
 
   public List<Sensor> findAllByEntityId(int entityId) {
