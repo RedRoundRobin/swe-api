@@ -77,15 +77,20 @@ public class ViewController {
     }
   }
 
- /* @DeleteMapping(name = "/views/delete/{viewId:.+}")
+  @DeleteMapping(name = "/views/delete/{viewId:.+}")
   public ResponseEntity<?> deleteView(
-      @RequestHeader("Authorization") String authorization,  @PathVariable("name") String newView) {
+      @RequestHeader("Authorization") String authorization,  @PathVariable("viewId") int viewToDeleteId) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
-    View view = viewService.findById(viewId);
-    if(view != null && user.getUserId() == view.getUserId().getUserId())
-      return ResponseEntity.ok(view.deleteView(viewId));
-    return ResponseEntity.status(HttpStatus.FORBIDDEN); //risposta troppo generica...? Metto nel suo body
-    //qualcosa di piu descrittivo!!!
-  }*/
+    try {
+      viewService.deleteView(user, viewToDeleteId);
+      return ResponseEntity.ok("deleted view succesfully");
+    }
+    catch(NotAuthorizedToDeleteUserException e) {
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+    }
+    catch(ValuesNotAllowedException e) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    }
+  }
 }

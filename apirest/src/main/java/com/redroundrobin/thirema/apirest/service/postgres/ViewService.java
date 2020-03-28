@@ -63,4 +63,18 @@ public class ViewService {
     return viewRepo.save(newView);
   }
 
+  public void deleteView(User deletingUser, int viewToDeleteId)
+      throws NotAuthorizedToDeleteUserException, ValuesNotAllowedException {
+    View viewToDelete;
+    if((viewToDelete = viewRepo.findByViewId(viewToDeleteId)) == null) {
+      throw new ValuesNotAllowedException("The given view_id doesn't correspond to any view");
+    }
+
+    if(viewToDelete.getUserId().getUserId() != deletingUser.getUserId())
+      throw new NotAuthorizedToDeleteUserException("This user cannot delete the view with" +
+          "the view_id given");
+
+    viewRepo.delete(viewToDelete);
+  }
+
 }
