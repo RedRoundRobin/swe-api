@@ -1,0 +1,216 @@
+package com.redroundrobin.thirema.apirest.service;
+
+import com.redroundrobin.thirema.apirest.models.postgres.Device;
+import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
+import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
+import com.redroundrobin.thirema.apirest.repository.postgres.DeviceRepository;
+import com.redroundrobin.thirema.apirest.service.postgres.DeviceService;
+import com.redroundrobin.thirema.apirest.service.postgres.GatewayService;
+import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.junit4.SpringRunner;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.when;
+
+@RunWith(SpringRunner.class)
+public class DeviceServiceTest {
+
+  @MockBean
+  private DeviceRepository repo;
+
+  @MockBean
+  private GatewayService gatewayService;
+
+  @MockBean
+  private SensorService sensorService;
+
+  private DeviceService deviceService;
+
+
+  private Device device1;
+  private Device device2;
+  private Device device3;
+
+  private Gateway gateway1;
+  private Gateway gateway2;
+
+  private Sensor sensor1;
+  private Sensor sensor2;
+  private Sensor sensor3;
+  private Sensor sensor4;
+  private Sensor sensor5;
+
+
+  @Before
+  public void setUp() {
+    deviceService = new DeviceService(repo);
+    deviceService.setGatewayService(gatewayService);
+    deviceService.setSensorService(sensorService);
+
+    // ----------------------------------------- Set Devices --------------------------------------
+    device1 = new Device();
+    device1.setDeviceId(1);
+    device2 = new Device();
+    device2.setDeviceId(2);
+    device3 = new Device();
+    device3.setDeviceId(3);
+
+    List<Device> allDevices = new ArrayList<>();
+    allDevices.add(device1);
+    allDevices.add(device2);
+    allDevices.add(device3);
+
+
+    // ----------------------------------------- Set Gateways --------------------------------------
+    gateway1 = new Gateway();
+    gateway1.setId(1);
+    gateway2 = new Gateway();
+    gateway2.setId(2);
+
+    List<Gateway> allGateways = new ArrayList<>();
+    allGateways.add(gateway1);
+    allGateways.add(gateway2);
+
+
+    // ----------------------------------------- Set Sensors --------------------------------------
+    sensor1 = new Sensor();
+    sensor1.setSensorId(1);
+    sensor2 = new Sensor();
+    sensor2.setSensorId(2);
+    sensor3 = new Sensor();
+    sensor3.setSensorId(3);
+    sensor4 = new Sensor();
+    sensor4.setSensorId(4);
+    sensor5 = new Sensor();
+    sensor5.setSensorId(5);
+
+    List<Sensor> allSensors = new ArrayList<>();
+    allSensors.add(sensor1);
+    allSensors.add(sensor2);
+    allSensors.add(sensor3);
+    allSensors.add(sensor4);
+    allSensors.add(sensor5);
+
+
+    // --------------------------- Set Devices to Gateways and viceversa ---------------------------
+    List<Device> gateway1Devices = new ArrayList<>();
+    gateway1Devices.add(device1);
+    gateway1Devices.add(device2);
+    gateway1.setDevices(gateway1Devices);
+    device1.setGateway(gateway1);
+    device2.setGateway(gateway1);
+
+    List<Device> gateway2Devices = new ArrayList<>();
+    gateway2Devices.add(device3);
+    gateway2.setDevices(gateway2Devices);
+    device3.setGateway(gateway2);
+
+
+    // --------------------------- Set Devices to Sensors and viceversa ---------------------------
+    sensor1.setDevice(device1);
+    sensor2.setDevice(device1);
+    List<Sensor> device1Sensors = new ArrayList<>();
+    device1Sensors.add(sensor1);
+    device1Sensors.add(sensor2);
+    device1.setSensors(device1Sensors);
+
+    sensor3.setDevice(device2);
+    sensor4.setDevice(device2);
+    List<Sensor> device2Sensors = new ArrayList<>();
+    device2Sensors.add(sensor3);
+    device2Sensors.add(sensor4);
+    device2.setSensors(device2Sensors);
+
+    sensor5.setDevice(device3);
+    List<Sensor> device3Sensors = new ArrayList<>();
+    device3Sensors.add(sensor5);
+    device3.setSensors(device3Sensors);
+
+
+
+    when(repo.findAll()).thenReturn(allDevices);
+    when(repo.findAllByGateway(any(Gateway.class))).thenAnswer(i -> {
+      Gateway gateway = i.getArgument(0);
+      return allDevices.stream().filter(d -> gateway.equals(d.getGateway()))
+          .collect(Collectors.toList());
+    });
+    when(repo.findById(anyInt())).thenAnswer(i -> {
+      return allDevices.stream().filter(d -> i.getArgument(0).equals(d.getDeviceId()))
+          .findFirst();
+    });
+    when(repo.findBySensors(any(Sensor.class))).thenAnswer(i -> {
+      Sensor sensor = i.getArgument(0);
+      return allDevices.stream().filter(d -> d.getSensors().contains(sensor))
+          .findFirst().orElse(null);
+    });
+
+    when(gatewayService.findById(anyInt())).thenAnswer(i -> {
+      return allGateways.stream().filter(g -> i.getArgument(0).equals(g.getId()))
+          .findFirst().orElse(null);
+    });
+
+    when(sensorService.findById(anyInt())).thenAnswer(i -> {
+      return allSensors.stream().filter(s -> i.getArgument(0).equals(s.getSensorId()))
+          .findFirst().orElse(null);
+    });
+
+  }
+
+  @Test
+  public void findAllDevices() {
+    List<Device> devices = deviceService.findAll();
+
+    assertTrue(!devices.isEmpty());
+    assertTrue(devices.stream().count() == 3);
+  }
+
+  @Test
+  public void findAllDevicesByGatewayId() {
+    List<Device> devices = deviceService.findAllByGatewayId(gateway1.getId());
+
+    assertTrue(!devices.isEmpty());
+    assertTrue(devices.stream().count() == 2);
+  }
+
+  @Test
+  public void findAllDevicesByNotExistentGatewayId() {
+    List<Device> devices = deviceService.findAllByGatewayId(5);
+
+    assertTrue(devices.isEmpty());
+  }
+
+  @Test
+  public void findDeviceById() {
+    Device device = deviceService.findById(device1.getDeviceId());
+
+    assertNotNull(device);
+  }
+
+  @Test
+  public void findDeviceBySensorId() {
+    Device device = deviceService.findBySensorId(sensor5.getSensorId());
+
+    assertNotNull(device);
+    assertEquals(device3 ,device);
+  }
+
+  @Test
+  public void findDeviceByNotExistentSensorId() {
+    Device device = deviceService.findBySensorId(8);
+
+    assertNull(device);
+  }
+}

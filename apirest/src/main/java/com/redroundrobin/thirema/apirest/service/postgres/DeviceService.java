@@ -4,6 +4,8 @@ import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.repository.postgres.DeviceRepository;
+
+import java.util.Collections;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -41,7 +43,7 @@ public class DeviceService {
     if (gateway != null) {
       return (List<Device>) repo.findAllByGateway(gateway);
     } else {
-      return null;
+      return Collections.emptyList();
     }
   }
 
@@ -49,7 +51,7 @@ public class DeviceService {
     return repo.findById(id).orElse(null);
   }
 
-  public Device findBySensor(int sensorId) {
+  public Device findBySensorId(int sensorId) {
     Sensor sensor = sensorService.findById(sensorId);
     if (sensor != null) {
       return repo.findBySensors(sensor);
