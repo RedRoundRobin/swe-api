@@ -16,5 +16,11 @@ public interface SensorRepository extends CrudRepository<Sensor, Integer> {
 
   Iterable<Sensor> findAllByViewGraphs1OrViewGraphs2(ViewGraph viewGraph1, ViewGraph viewGraph2);
 
+  Iterable<Sensor> findAllByDeviceAndEntities(Device device, Entity entity);
+
   Sensor findByAlerts(Alert alert);
+
+  Sensor findByDeviceAndRealSensorId(Device device, int realSensorId);
+
+  Sensor findByDeviceAndRealSensorIdAndEntities(Device device, int realSensorId, Entity entity);
 }

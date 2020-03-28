@@ -18,9 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class PostgreController {
 
   @Autowired
-  private DeviceService deviceService;
-
-  @Autowired
   private SensorService sensorService;
 
   @Autowired
@@ -41,33 +38,6 @@ public class PostgreController {
     return gatewayService.findById(gatewayId);
   }
 
-  //tutti i dispositivi
-  @GetMapping(value = {"/devices"})
-  public List<Device> devices() {
-    return deviceService.findAll();
-  }
-
-  //un determinato dispositivo
-  @GetMapping(value = {"/device/{deviceid:.+}"})
-  public Device device(@PathVariable("deviceid") int deviceId) {
-    return deviceService.findById(deviceId);
-  }
-
-  //tutti i sensori di un dispositivo
-  @GetMapping(value = {"/device/{deviceid:.+}/sensors"})
-  public List<Sensor> deviceSensors(@PathVariable("deviceid") int deviceId) {
-    return deviceService.findById(deviceId).getSensors();
-  }
-
-  //un sensore di un dispositivo
-  @GetMapping(value = {"/device/{deviceid:.+}/sensor/{sensorid:.+}"})
-  public Sensor sensor(@PathVariable("deviceid") int deviceId,
-                       @PathVariable("sensorid") int sensorId) {
-    return deviceService.findById(deviceId).getSensors().stream()
-        .filter(sensor -> sensor.getRealSensorId() == sensorId)
-        .collect(Collectors.toList())
-        .get(0);
-  }
 
 
   //////////////////////////////////////////////////////////////////////////////////////////////////

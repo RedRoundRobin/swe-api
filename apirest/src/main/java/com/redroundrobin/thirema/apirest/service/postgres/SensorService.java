@@ -6,6 +6,8 @@ import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.ViewGraph;
 import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
+
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,6 +64,16 @@ public class SensorService {
     }
   }
 
+  public List<Sensor> findAllByDeviceIdAndEntityId(int deviceId, int entityId) {
+    Device device = deviceService.findById(deviceId);
+    Entity entity = entityService.findById(entityId);
+    if (device != null && entity != null) {
+      return (List<Sensor>) repo.findAllByDeviceAndEntities(device, entity);
+    } else {
+      return Collections.emptyList();
+    }
+  }
+
   public List<Sensor> findAllByEntityId(int entityId) {
     Entity entity = entityService.findById(entityId);
     if (entity != null) {
@@ -88,6 +100,26 @@ public class SensorService {
     Alert alert = alertService.findById(alertId);
     if (alert != null) {
       return repo.findByAlerts(alert);
+    } else {
+      return null;
+    }
+  }
+
+  public Sensor findByDeviceIdAndRealSensorId(int deviceId, int realSensorId) {
+    Device device = deviceService.findById(deviceId);
+    if (device != null) {
+      return repo.findByDeviceAndRealSensorId(device, realSensorId);
+    } else {
+      return null;
+    }
+  }
+
+  public Sensor findByDeviceIdAndRealSensorIdAndEntityId(int deviceId, int realSensorId,
+                                                         int entityId) {
+    Device device = deviceService.findById(deviceId);
+    Entity entity = entityService.findById(entityId);
+    if (device != null && entity != null) {
+      return repo.findByDeviceAndRealSensorIdAndEntities(device, realSensorId, entity);
     } else {
       return null;
     }
