@@ -29,10 +29,6 @@ public class SensorService {
     return (List<Sensor>) repo.findAll();
   }
 
-  public Sensor find(int sensorId) {
-    return repo.findById(sensorId).orElse(null);
-  }
-
   public List<Sensor> findAllByEntityId(int entityId) {
     Entity entity = entityService.find(entityId);
     if (entity != null) {
@@ -40,5 +36,9 @@ public class SensorService {
     } else {
       return Collections.emptyList();
     }
+  }
+
+  public Sensor find(int sensorId) {
+    return repo.findById(sensorId).orElse(null);
   }
 }
