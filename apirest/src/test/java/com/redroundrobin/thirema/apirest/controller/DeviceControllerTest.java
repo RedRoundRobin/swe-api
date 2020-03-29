@@ -13,6 +13,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatchers;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.ArrayList;
@@ -147,79 +148,83 @@ public class DeviceControllerTest {
 
   @Test
   public void getAllDevicesByAdmin() {
-    List<Device> devices = deviceController.getDevices(adminTokenWithBearer, null);
+    ResponseEntity<List<Device>> response = deviceController.getDevices(adminTokenWithBearer, null);
 
-    assertEquals(allDevices, devices);
+    assertEquals(allDevices, response.getBody());
   }
 
   @Test
   public void getEntity1DevicesByAdmin() {
-    List<Device> devices = deviceController.getDevices(adminTokenWithBearer, 1);
+    ResponseEntity<List<Device>> response = deviceController.getDevices(adminTokenWithBearer, 1);
 
-    assertEquals(entity1Devices, devices);
+    assertEquals(entity1Devices, response.getBody());
   }
 
   @Test
   public void getEntity2DevicesByUser() {
-    List<Device> devices = deviceController.getDevices(userTokenWithBearer, 2);
+    ResponseEntity<List<Device>> response = deviceController.getDevices(userTokenWithBearer, 2);
 
-    assertEquals(Collections.emptyList(), devices);
+    assertEquals(Collections.emptyList(), response.getBody());
   }
 
   @Test
   public void getAllDevicesByUser() {
-    List<Device> devices = deviceController.getDevices(userTokenWithBearer, null);
+    ResponseEntity<List<Device>> response = deviceController.getDevices(userTokenWithBearer, null);
 
-    assertEquals(entity1Devices, devices);
+    assertEquals(entity1Devices, response.getBody());
   }
 
 
 
   @Test
   public void getDeviceByAdmin() {
-    Device device = deviceController.getDevice(adminTokenWithBearer, device1.getId());
+    ResponseEntity<Device> response = deviceController.getDevice(adminTokenWithBearer,
+        device1.getId());
 
-    assertEquals(device1, device);
+    assertEquals(device1, response.getBody());
   }
 
   @Test
   public void getDeviceByUser() {
-    Device device = deviceController.getDevice(userTokenWithBearer, device6.getId());
+    ResponseEntity<Device> response = deviceController.getDevice(userTokenWithBearer,
+        device6.getId());
 
-    assertEquals(null, device);
+    assertEquals(null, response.getBody());
   }
 
 
 
   @Test
   public void getSensorsByDeviceIdByAdmin() {
-    List<Sensor> sensors = deviceController.getSensorsByDevice(adminTokenWithBearer, device1.getId());
+    ResponseEntity<List<Sensor>> response = deviceController.getSensorsByDevice(
+        adminTokenWithBearer, device1.getId());
 
-    assertEquals(device1Sensors, sensors);
+    assertEquals(device1Sensors, response.getBody());
   }
 
   @Test
   public void getSensorsByDeviceIdByUser() {
-    List<Sensor> sensors = deviceController.getSensorsByDevice(userTokenWithBearer, device1.getId());
+    ResponseEntity<List<Sensor>> response = deviceController.getSensorsByDevice(userTokenWithBearer,
+        device1.getId());
 
-    assertEquals(device1Sensors, sensors);
+    assertEquals(device1Sensors, response.getBody());
   }
 
 
 
   @Test
   public void getSensorByDeviceByAdmin() {
-    Sensor sensor = deviceController.getSensorByDevice(adminTokenWithBearer, device1.getId(),
-        sensor1.getRealSensorId());
+    ResponseEntity<Sensor> response = deviceController.getSensorByDevice(adminTokenWithBearer,
+        device1.getId(), sensor1.getRealSensorId());
 
-    assertEquals(sensor1, sensor);
+    assertEquals(sensor1, response.getBody());
   }
 
   @Test
   public void getSensorByDeviceByUser() {
-    Sensor sensor = deviceController.getSensorByDevice(userTokenWithBearer, device1.getId(),
-        sensor1.getRealSensorId());
+    ResponseEntity<Sensor> response = deviceController.getSensorByDevice(userTokenWithBearer,
+        device1.getId(), sensor1.getRealSensorId());
 
-    assertEquals(sensor1, sensor);
+    assertEquals(sensor1, response.getBody());
   }
 }

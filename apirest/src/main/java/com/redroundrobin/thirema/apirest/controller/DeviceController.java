@@ -8,6 +8,7 @@ import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
 import java.util.Collections;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -31,59 +32,64 @@ public class DeviceController extends CoreController {
 
   // Get all devices optionally filtered by entityId
   @GetMapping(value = {""})
-  public List<Device> getDevices(@RequestHeader("Authorization") String authorization,
-                              @RequestParam(value = "entity", required = false) Integer entityId) {
+  public ResponseEntity<List<Device>> getDevices(
+      @RequestHeader("Authorization") String authorization,
+      @RequestParam(value = "entity", required = false) Integer entityId) {
     User user = this.getUserFromAuthorization(authorization);
     if (user.getType() == User.Role.ADMIN) {
       if (entityId != null) {
-        return deviceService.findAllByEntityId(entityId);
+        return ResponseEntity.ok(deviceService.findAllByEntityId(entityId));
       } else {
-        return deviceService.findAll();
+        return ResponseEntity.ok(deviceService.findAll());
       }
     } else {
       if (entityId == null || user.getEntity().getId() == entityId) {
-        return deviceService.findAllByEntityId(user.getEntity().getId());
+        return ResponseEntity.ok(deviceService.findAllByEntityId(user.getEntity().getId()));
       } else {
-        return Collections.emptyList();
+        return ResponseEntity.ok(Collections.emptyList());
       }
     }
   }
 
   // Get device by deviceId
   @GetMapping(value = {"/{deviceId:.+}"})
-  public Device getDevice(@RequestHeader("Authorization") String authorization,
+  public ResponseEntity<Device> getDevice(@RequestHeader("Authorization") String authorization,
                           @PathVariable("deviceId") int deviceId) {
     User user = this.getUserFromAuthorization(authorization);
     if (user.getType() == User.Role.ADMIN) {
-      return deviceService.findById(deviceId);
+      return ResponseEntity.ok(deviceService.findById(deviceId));
     } else {
-      return deviceService.findByIdAndEntityId(deviceId, user.getEntity().getId());
+      return ResponseEntity.ok(
+          deviceService.findByIdAndEntityId(deviceId, user.getEntity().getId()));
     }
   }
 
   // Get all sensors by deviceId
   @GetMapping(value = {"/{deviceId:.+}/sensors"})
-  public List<Sensor> getSensorsByDevice(@RequestHeader("Authorization") String authorization,
-                                    @PathVariable("deviceId") int deviceId) {
+  public ResponseEntity<List<Sensor>> getSensorsByDevice(
+      @RequestHeader("Authorization") String authorization,
+      @PathVariable("deviceId") int deviceId) {
     User user = this.getUserFromAuthorization(authorization);
     if (user.getType() == User.Role.ADMIN) {
-      return sensorService.findAllByDeviceId(deviceId);
+      return ResponseEntity.ok(sensorService.findAllByDeviceId(deviceId));
     } else {
-      return sensorService.findAllByDeviceIdAndEntityId(deviceId, user.getEntity().getId());
+      return ResponseEntity.ok(
+          sensorService.findAllByDeviceIdAndEntityId(deviceId, user.getEntity().getId()));
     }
   }
 
   // Get sensor by deviceId and realSensorId
   @GetMapping(value = {"/{deviceId:.+}/sensor/{realSensorId:.+}"})
-  public Sensor getSensorByDevice(@RequestHeader("Authorization") String authorization,
-                       @PathVariable("deviceId") int deviceId,
-                       @PathVariable("realSensorId") int realSensorId) {
+  public ResponseEntity<Sensor> getSensorByDevice(
+      @RequestHeader("Authorization") String authorization,
+      @PathVariable("deviceId") int deviceId,
+      @PathVariable("realSensorId") int realSensorId) {
     User user = this.getUserFromAuthorization(authorization);
     if (user.getType() == User.Role.ADMIN) {
-      return sensorService.findByDeviceIdAndRealSensorId(deviceId, realSensorId);
+      return ResponseEntity.ok(sensorService.findByDeviceIdAndRealSensorId(deviceId, realSensorId));
     } else {
-      return sensorService.findByDeviceIdAndRealSensorIdAndEntityId(deviceId, realSensorId,
-          user.getEntity().getId());
+      return ResponseEntity.ok(sensorService.findByDeviceIdAndRealSensorIdAndEntityId(deviceId,
+          realSensorId, user.getEntity().getId()));
     }
   }
 }

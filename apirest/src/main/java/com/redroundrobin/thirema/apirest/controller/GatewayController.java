@@ -59,6 +59,7 @@ public class GatewayController extends CoreController {
       return new ResponseEntity(HttpStatus.FORBIDDEN);
     }
   }
+
   // Get all devices by gatewayId
   @GetMapping(value = {"/{gatewayId:.+}/devices"})
   public ResponseEntity<List<Device>> getGatewaysDevices(@RequestHeader(value = "Authorization")
@@ -89,10 +90,10 @@ public class GatewayController extends CoreController {
 
   // Get all sensors by gatewayId and realDeviceId
   @GetMapping(value = {"/{gatewayId:.+}/devices/{realDeviceId:.+}/sensors"})
-  public ResponseEntity<List<Sensor>> getGatewaysDevicesSensors(@RequestHeader(value = "Authorization")
-                                                 String authorization,
-                                           @PathVariable("gatewayId") int gatewayId,
-                                           @PathVariable("realDeviceId") int realDeviceId) {
+  public ResponseEntity<List<Sensor>> getGatewaysDevicesSensors(
+      @RequestHeader(value = "Authorization") String authorization,
+      @PathVariable("gatewayId") int gatewayId,
+      @PathVariable("realDeviceId") int realDeviceId) {
     User user = this.getUserFromAuthorization(authorization);
     if (user.getType() == User.Role.ADMIN) {
       return ResponseEntity.ok(sensorService.findAllByGatewayIdAndRealDeviceId(gatewayId,
@@ -104,15 +105,15 @@ public class GatewayController extends CoreController {
 
   // Get sensor by gatewayId and realDeviceId and realSensorId
   @GetMapping(value = {"/{gatewayId:.+}/devices/{realDeviceId:.+}/sensors/{realSensorId:.+}"})
-  public ResponseEntity<Sensor> getGatewaysDevicesSensor(@RequestHeader(value = "Authorization")
-                                                          String authorization,
-                                                    @PathVariable("gatewayId") int gatewayId,
-                                                    @PathVariable("realDeviceId") int realDeviceId,
-                                                    @PathVariable("realSensorId") int realSensorId) {
+  public ResponseEntity<Sensor> getGatewaysDevicesSensor(
+      @RequestHeader(value = "Authorization") String authorization,
+      @PathVariable("gatewayId") int gatewayId,
+      @PathVariable("realDeviceId") int realDeviceId,
+      @PathVariable("realSensorId") int realSensorId) {
     User user = this.getUserFromAuthorization(authorization);
     if (user.getType() == User.Role.ADMIN) {
-      return ResponseEntity.ok(sensorService.findByGatewayIdAndRealDeviceIdAndRealSensorId(gatewayId,
-          realDeviceId, realSensorId));
+      return ResponseEntity.ok(sensorService.findByGatewayIdAndRealDeviceIdAndRealSensorId(
+          gatewayId, realDeviceId, realSensorId));
     } else {
       return new ResponseEntity(HttpStatus.FORBIDDEN);
     }
