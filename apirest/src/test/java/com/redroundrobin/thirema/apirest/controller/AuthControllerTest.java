@@ -285,12 +285,12 @@ public class AuthControllerTest {
   @Test
   public void tfaAuthenticationSuccessfull() throws Exception {
 
-    String auth_code = "code";
+    String authCode = "code";
     Map<String, Object> request = new HashMap<>();
-    request.put("auth_code", auth_code);
+    request.put("authCode", authCode);
 
     when(jwtTokenUtil.isTfa(anyString())).thenReturn(true);
-    when(jwtTokenUtil.extractAuthCode(anyString())).thenReturn(auth_code);
+    when(jwtTokenUtil.extractAuthCode(anyString())).thenReturn(authCode);
     when(jwtTokenUtil.extractUsername(anyString())).thenReturn(adminTfa1.getEmail());
 
     ResponseEntity response = authController.tfaAuthentication(request, "tokennnnnn");
@@ -310,11 +310,11 @@ public class AuthControllerTest {
   @Test
   public void tfaAuthenticationBadRequestError400() throws Exception {
 
-    String auth_code = "code";
+    String authCode = "code";
     Map<String, Object> request = new HashMap<>();
 
     when(jwtTokenUtil.isTfa(anyString())).thenReturn(true);
-    when(jwtTokenUtil.extractAuthCode(anyString())).thenReturn(auth_code);
+    when(jwtTokenUtil.extractAuthCode(anyString())).thenReturn(authCode);
     when(jwtTokenUtil.extractUsername(anyString())).thenReturn(adminTfa1.getEmail());
 
     ResponseEntity response = authController.tfaAuthentication(request, "tokennnnnn");
@@ -325,12 +325,12 @@ public class AuthControllerTest {
   @Test
   public void tfaAuthenticationBadRequestIsNotTfaError400() throws Exception {
 
-    String auth_code = "code";
+    String authCode = "code";
     Map<String, Object> request = new HashMap<>();
-    request.put("auth_code", auth_code);
+    request.put("authCode", authCode);
 
     when(jwtTokenUtil.isTfa(anyString())).thenReturn(false);
-    when(jwtTokenUtil.extractAuthCode(anyString())).thenReturn(auth_code);
+    when(jwtTokenUtil.extractAuthCode(anyString())).thenReturn(authCode);
     when(jwtTokenUtil.extractUsername(anyString())).thenReturn(adminTfa1.getEmail());
 
     ResponseEntity response = authController.tfaAuthentication(request, "tokennnnnn");
@@ -341,12 +341,12 @@ public class AuthControllerTest {
   @Test
   public void tfaAuthenticationUserNotFoundError401() throws Exception {
 
-    String auth_code = "code";
+    String authCode = "code";
     Map<String, Object> request = new HashMap<>();
-    request.put("auth_code", auth_code);
+    request.put("authCode", authCode);
 
     when(jwtTokenUtil.isTfa(anyString())).thenReturn(true);
-    when(jwtTokenUtil.extractAuthCode(anyString())).thenReturn(auth_code);
+    when(jwtTokenUtil.extractAuthCode(anyString())).thenReturn(authCode);
     when(jwtTokenUtil.extractUsername(anyString())).thenReturn("noUser");
 
     ResponseEntity response = authController.tfaAuthentication(request, "tokennnnnn");
@@ -357,12 +357,12 @@ public class AuthControllerTest {
   @Test
   public void tfaAuthenticationUserDisabledError403() throws Exception {
 
-    String auth_code = "code";
+    String authCode = "code";
     Map<String, Object> request = new HashMap<>();
-    request.put("auth_code", auth_code);
+    request.put("authCode", authCode);
 
     when(jwtTokenUtil.isTfa(anyString())).thenReturn(true);
-    when(jwtTokenUtil.extractAuthCode(anyString())).thenReturn(auth_code);
+    when(jwtTokenUtil.extractAuthCode(anyString())).thenReturn(authCode);
     when(jwtTokenUtil.extractUsername(anyString())).thenReturn(disabledAdmin.getEmail());
 
     ResponseEntity response = authController.tfaAuthentication(request, "tokennnnnn");
@@ -373,9 +373,9 @@ public class AuthControllerTest {
   @Test
   public void tfaAuthenticationWrongAuthCodeError401() throws Exception {
 
-    String auth_code = "code";
+    String authCode = "code";
     Map<String, Object> request = new HashMap<>();
-    request.put("auth_code", auth_code);
+    request.put("authCode", authCode);
 
     when(jwtTokenUtil.isTfa(anyString())).thenReturn(true);
     when(jwtTokenUtil.extractAuthCode(anyString())).thenReturn("differentAuthCode");
@@ -394,8 +394,8 @@ public class AuthControllerTest {
   public void telegramAuthenticationSuccessfullCode1() throws Exception {
 
     Map<String, Object> request = new HashMap<>();
-    request.put("telegram_name", adminTfa2.getTelegramName());
-    request.put("telegram_chat", "chat_id");
+    request.put("telegramName", adminTfa2.getTelegramName());
+    request.put("telegramChat", "chatId");
 
     when(userService.findByTelegramName(anyString())).thenReturn(adminTfa2);
     when(userService.findByTelegramNameAndTelegramChat(anyString(),anyString())).thenReturn(null);
@@ -419,8 +419,8 @@ public class AuthControllerTest {
   public void telegramAuthenticationSuccessfullCode2() throws Exception {
 
     Map<String, Object> request = new HashMap<>();
-    request.put("telegram_name", adminTfa1.getTelegramName());
-    request.put("telegram_chat", adminTfa1.getTelegramChat());
+    request.put("telegramName", adminTfa1.getTelegramName());
+    request.put("telegramChat", adminTfa1.getTelegramChat());
 
     when(userService.findByTelegramName(anyString())).thenReturn(adminTfa1);
     when(userService.findByTelegramNameAndTelegramChat(anyString(),anyString()))
@@ -445,7 +445,7 @@ public class AuthControllerTest {
   public void telegramAuthenticationBadRequestError400() throws Exception {
 
     Map<String, Object> request = new HashMap<>();
-    request.put("telegram_name", adminTfa2.getTelegramName());
+    request.put("telegramName", adminTfa2.getTelegramName());
 
     ResponseEntity response = authController.telegramAuthentication(request);
 
@@ -456,8 +456,8 @@ public class AuthControllerTest {
   public void telegramAuthenticationNoTelegramNameFoundCode0() throws Exception {
 
     Map<String, Object> request = new HashMap<>();
-    request.put("telegram_name", adminTfa2.getTelegramName());
-    request.put("telegram_chat", "chat_id");
+    request.put("telegramName", adminTfa2.getTelegramName());
+    request.put("telegramChat", "chatId");
 
     when(userService.findByTelegramName(anyString())).thenReturn(null);
 
