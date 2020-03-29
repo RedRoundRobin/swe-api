@@ -5,6 +5,11 @@ import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 
+/*
+ * le risorse sono identificabili tramite url
+ * le operazioni devono essere implementati tramite metodi appropiati
+ * la rappresentazione delle risorse devono essere tramite un formato standard, specificato nel body
+ */
 public class CoreController {
 
   protected JwtUtil jwtUtil;
