@@ -39,7 +39,8 @@ public class GatewayController extends CoreController {
 
   //tutti i gateway
   @GetMapping(value = {""})
-  public ResponseEntity<List<Gateway>> gateways(@RequestHeader(value = "Authorization") String authorization) {
+  public ResponseEntity<List<Gateway>> getGateways(
+      @RequestHeader(value = "Authorization") String authorization) {
     User user = this.getUserFromAuthorization(authorization);
     if (user.getType() == User.Role.ADMIN) {
       return ResponseEntity.ok(gatewayService.findAll());
@@ -50,7 +51,7 @@ public class GatewayController extends CoreController {
 
   //un determinato gateway
   @GetMapping(value = {"/{gatewayId:.+}"})
-  public ResponseEntity<Gateway> gateway(@RequestHeader(value = "Authorization")
+  public ResponseEntity<Gateway> getGateway(@RequestHeader(value = "Authorization")
                                                String authorization,
                                          @PathVariable("gatewayId") int gatewayId) {
     User user = this.getUserFromAuthorization(authorization);
@@ -62,7 +63,7 @@ public class GatewayController extends CoreController {
   }
   //tutti i dispositivi del gateway
   @GetMapping(value = {"/{gatewayId:.+}/devices"})
-  public ResponseEntity<List<Device>> gatewayDevices(@RequestHeader(value = "Authorization")
+  public ResponseEntity<List<Device>> getGatewaysDevices(@RequestHeader(value = "Authorization")
                                                            String authorization,
                                                      @PathVariable("gatewayId") int gatewayid) {
     User user = this.getUserFromAuthorization(authorization);
@@ -75,7 +76,7 @@ public class GatewayController extends CoreController {
 
   //il dispositivo del gateway
   @GetMapping(value = {"/{gatewayId:.+}/devices/{realDeviceId:.+}"})
-  public ResponseEntity<Device> gatewayDevice(@RequestHeader(value = "Authorization")
+  public ResponseEntity<Device> getGatewaysDevice(@RequestHeader(value = "Authorization")
                                                     String authorization,
                                               @PathVariable("gatewayId") int gatewayId,
                                               @PathVariable("realDeviceId") int realDeviceId) {
@@ -90,7 +91,7 @@ public class GatewayController extends CoreController {
 
   //tutti i sensori che appartengono al dispositivo del gateway
   @GetMapping(value = {"/{gatewayId:.+}/devices/{realDeviceId:.+}/sensors"})
-  public ResponseEntity<List<Sensor>> gatewayDeviceSensors(@RequestHeader(value = "Authorization")
+  public ResponseEntity<List<Sensor>> getGatewaysDevicesSensors(@RequestHeader(value = "Authorization")
                                                  String authorization,
                                            @PathVariable("gatewayId") int gatewayId,
                                            @PathVariable("realDeviceId") int realDeviceId) {
@@ -105,7 +106,7 @@ public class GatewayController extends CoreController {
 
   //il sensore che appartiene al dispositivo del gateway
   @GetMapping(value = {"/{gatewayId:.+}/devices/{realDeviceId:.+}/sensors/{realSensorId:.+}"})
-  public ResponseEntity<Sensor> gatewayDeviceSensor(@RequestHeader(value = "Authorization")
+  public ResponseEntity<Sensor> getGatewaysDevicesSensor(@RequestHeader(value = "Authorization")
                                                           String authorization,
                                                     @PathVariable("gatewayId") int gatewayId,
                                                     @PathVariable("realDeviceId") int realDeviceId,
