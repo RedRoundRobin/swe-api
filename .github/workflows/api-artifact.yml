@@ -1,4 +1,4 @@
-name: SWE Kafka-DB CI
+name: SWE API PUBLISHER
 
 on:
   push:
@@ -23,7 +23,7 @@ jobs:
       with:
         java-version: 11
     - name: Generate API 
-      run: mvn clean verify -Dspring.application.admin.enabled=true -Dsonar.login=${{ secrets.SONARCLOUD_LOGIN_KEY }} --file database-adapter/pom.xml -e
+      run: mvn clean verify -Dspring.application.admin.enabled=true -Dsonar.login=${{ secrets.SONARCLOUD_LOGIN_KEY }} --file apirest/pom.xml -e
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Commit files
