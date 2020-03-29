@@ -7,6 +7,7 @@ import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.DeviceService;
 import com.redroundrobin.thirema.apirest.service.postgres.GatewayService;
 import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,9 +16,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = {"/gateways"})
@@ -37,7 +35,7 @@ public class GatewayController extends CoreController {
     this.sensorService = sensorService;
   }
 
-  //tutti i gateway
+  // Get all gateways
   @GetMapping(value = {""})
   public ResponseEntity<List<Gateway>> getGateways(
       @RequestHeader(value = "Authorization") String authorization) {
@@ -49,7 +47,7 @@ public class GatewayController extends CoreController {
     }
   }
 
-  //un determinato gateway
+  // Get gateway by gatewayId
   @GetMapping(value = {"/{gatewayId:.+}"})
   public ResponseEntity<Gateway> getGateway(@RequestHeader(value = "Authorization")
                                                String authorization,
@@ -61,7 +59,7 @@ public class GatewayController extends CoreController {
       return new ResponseEntity(HttpStatus.FORBIDDEN);
     }
   }
-  //tutti i dispositivi del gateway
+  // Get all devices by gatewayId
   @GetMapping(value = {"/{gatewayId:.+}/devices"})
   public ResponseEntity<List<Device>> getGatewaysDevices(@RequestHeader(value = "Authorization")
                                                            String authorization,
@@ -74,7 +72,7 @@ public class GatewayController extends CoreController {
     }
   }
 
-  //il dispositivo del gateway
+  // Get device by gatewayId and realDeviceId
   @GetMapping(value = {"/{gatewayId:.+}/devices/{realDeviceId:.+}"})
   public ResponseEntity<Device> getGatewaysDevice(@RequestHeader(value = "Authorization")
                                                     String authorization,
@@ -89,7 +87,7 @@ public class GatewayController extends CoreController {
     }
   }
 
-  //tutti i sensori che appartengono al dispositivo del gateway
+  // Get all sensors by gatewayId and realDeviceId
   @GetMapping(value = {"/{gatewayId:.+}/devices/{realDeviceId:.+}/sensors"})
   public ResponseEntity<List<Sensor>> getGatewaysDevicesSensors(@RequestHeader(value = "Authorization")
                                                  String authorization,
@@ -104,7 +102,7 @@ public class GatewayController extends CoreController {
     }
   }
 
-  //il sensore che appartiene al dispositivo del gateway
+  // Get sensor by gatewayId and realDeviceId and realSensorId
   @GetMapping(value = {"/{gatewayId:.+}/devices/{realDeviceId:.+}/sensors/{realSensorId:.+}"})
   public ResponseEntity<Sensor> getGatewaysDevicesSensor(@RequestHeader(value = "Authorization")
                                                           String authorization,

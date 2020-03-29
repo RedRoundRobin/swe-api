@@ -29,7 +29,7 @@ public class DeviceController extends CoreController {
     this.sensorService = sensorService;
   }
 
-  //tutti i dispositivi
+  // Get all devices optionally filtered by entityId
   @GetMapping(value = {""})
   public List<Device> getDevices(@RequestHeader("Authorization") String authorization,
                               @RequestParam(value = "entity", required = false) Integer entityId) {
@@ -49,7 +49,7 @@ public class DeviceController extends CoreController {
     }
   }
 
-  //un determinato dispositivo
+  // Get device by deviceId
   @GetMapping(value = {"/{deviceId:.+}"})
   public Device getDevice(@RequestHeader("Authorization") String authorization,
                           @PathVariable("deviceId") int deviceId) {
@@ -61,7 +61,7 @@ public class DeviceController extends CoreController {
     }
   }
 
-  //tutti i sensori di un dispositivo
+  // Get all sensors by deviceId
   @GetMapping(value = {"/{deviceId:.+}/sensors"})
   public List<Sensor> getSensorsByDevice(@RequestHeader("Authorization") String authorization,
                                     @PathVariable("deviceId") int deviceId) {
@@ -73,7 +73,7 @@ public class DeviceController extends CoreController {
     }
   }
 
-  //un sensore di un dispositivo
+  // Get sensor by deviceId and realSensorId
   @GetMapping(value = {"/{deviceId:.+}/sensor/{realSensorId:.+}"})
   public Sensor getSensorByDevice(@RequestHeader("Authorization") String authorization,
                        @PathVariable("deviceId") int deviceId,
