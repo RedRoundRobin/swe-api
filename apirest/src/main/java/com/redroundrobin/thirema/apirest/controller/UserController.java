@@ -86,9 +86,10 @@ public class UserController {
 
   // Edit user by userId and a map with data to edit
   @PutMapping(value = {"/users/{userid:.+}/edit"})
-  public ResponseEntity<Map<String, Object>> editUser(@RequestHeader("Authorization") String authorization,
-                                         @RequestBody Map<String, Object> fieldsToEdit,
-                                         @PathVariable("userid") int userId) {
+  public ResponseEntity<Map<String, Object>> editUser(
+      @RequestHeader("Authorization") String authorization,
+      @RequestBody Map<String, Object> fieldsToEdit,
+      @PathVariable("userid") int userId) {
     String token = authorization.substring(7);
     String editingUserEmail = jwtTokenUtil.extractUsername(token);
     User editingUser = userService.findByEmail(editingUserEmail);
@@ -198,14 +199,13 @@ public class UserController {
         return ResponseEntity.ok(userService.findAll());
       }
       return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-    } else if (user.getType() == User.Role.MOD) {
-      if ((entity == null && disabledAlert == null && view == null)
-          || (entity != null && user.getEntity().getId() == entity)) {
-        try {
-          return ResponseEntity.ok(userService.findAllByEntityId(user.getEntity().getId()));
-        } catch (EntityNotFoundException enfe) {
-          // go to return FORBIDDE
-        }
+    } else if (user.getType() == User.Role.MOD
+        && (entity == null && disabledAlert == null && view == null)
+        || (entity != null && user.getEntity().getId() == entity)) {
+      try {
+        return ResponseEntity.ok(userService.findAllByEntityId(user.getEntity().getId()));
+      } catch (EntityNotFoundException enfe) {
+        // go to return FORBIDDE
       }
     }
     return new ResponseEntity(HttpStatus.FORBIDDEN);
