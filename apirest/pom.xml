@@ -194,6 +194,24 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <plugin>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-maven-plugin</artifactId>
+                <version>0.2</version>
+                <executions>
+                    <execution>
+                        <id>integration-test</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <apiDocsUrl>http://localhost:9999/v3/api-docs.yml</apiDocsUrl>
+                    <outputFileName>openapi.yml</outputFileName>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>
