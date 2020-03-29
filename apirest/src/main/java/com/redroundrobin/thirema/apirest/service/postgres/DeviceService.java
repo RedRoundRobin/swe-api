@@ -79,4 +79,13 @@ public class DeviceService {
   public Device findByIdAndEntityId(int id, int entityId) {
     return repo.findByIdAndEntityId(id, entityId);
   }
+
+  public Device findByGatewayIdAndRealDeviceId(int gatewayId, int realDeviceId) {
+    Gateway gateway = gatewayService.findById(gatewayId);
+    if (gateway != null) {
+      return repo.findByGatewayAndRealDeviceId(gateway, realDeviceId);
+    } else {
+      return null;
+    }
+  }
 }

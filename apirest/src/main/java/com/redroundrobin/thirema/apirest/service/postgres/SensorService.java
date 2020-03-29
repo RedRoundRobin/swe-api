@@ -90,6 +90,10 @@ public class SensorService {
     }
   }
 
+  public List<Sensor> findAllByGatewayIdAndRealDeviceId(int gatewayId, int realDeviceId) {
+    return (List<Sensor>) repo.findAllByGatewayIdAndRealDeviceId(gatewayId, realDeviceId);
+  }
+
   public Sensor findById(int sensorId) {
     return repo.findById(sensorId).orElse(null);
   }
@@ -121,5 +125,10 @@ public class SensorService {
     } else {
       return null;
     }
+  }
+
+  public Sensor findByGatewayIdAndRealDeviceIdAndRealSensorId(int gatewayId, int realDeviceId,
+                                                              int realSensorId) {
+    return repo.findByGatewayIdAndRealDeviceIdAndRealSensorId(gatewayId,realDeviceId,realSensorId);
   }
 }

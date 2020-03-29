@@ -26,17 +26,7 @@ public class PostgreController {
   @Autowired
   private JwtUtil jwtTokenUtil;
 
-  //tutti i gateway
-  @GetMapping(value = {"/gateways"})
-  public List<Gateway> gateways() {
-    return gatewayService.findAll();
-  }
 
-  //un determinato gateway
-  @GetMapping(value = {"/gateway/{gatewayid:.+}"})
-  public Gateway gateway(@PathVariable("gatewayid") int gatewayId) {
-    return gatewayService.findById(gatewayId);
-  }
 
 
 
@@ -44,41 +34,7 @@ public class PostgreController {
   //////////////////////////////////////////////DEBUG///////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////////////////////////
 
-  //tutti i dispositivi del gateway
-  @GetMapping(value = {"/gateway/{gatewayid:.+}/devices"})
-  public List<Device> gatewayDevices(@PathVariable("gatewayid") int gatewayid) {
-    return gatewayService.findById(gatewayid).getDevices();
-  }
 
-  //il dispositivo del gateway
-  @GetMapping(value = {"/gateway/{gatewayid:.+}/device/{deviceid:.+}"})
-  public Device gatewayDevice(@PathVariable("gatewayid") int gatewayid,
-                              @PathVariable("deviceid") int deviceId) {
-    return gatewayService.findById(gatewayid).getDevices().stream().filter(
-        device -> device.getId() == deviceId
-    ).collect(Collectors.toList()).get(0);
-  }
-
-  //tutti i sensori che appartengono al dispositivo del gateway
-  @GetMapping(value = {"/gateway/{gatewayid:.+}/device/{deviceid:.+}/sensors"})
-  public List<Sensor> gatewayDeviceSensors(@PathVariable("gatewayid") int gatewayid,
-                                           @PathVariable("deviceid") int deviceId) {
-    return gatewayService.findById(gatewayid).getDevices().stream().filter(
-        device -> device.getId() == deviceId
-    ).collect(Collectors.toList()).get(0).getSensors();
-  }
-
-  //il sensore che appartiene al dispositivo del gateway
-  @GetMapping(value = {"/gateway/{gatewayid:.+}/device/{deviceid:.+}/sensor/{sensorid:.+}"})
-  public Sensor gatewayDeviceSensor(@PathVariable("gatewayid") int gatewayid,
-                                    @PathVariable("deviceid") int deviceId,
-                                    @PathVariable("sensorid") int sensorId) {
-    return gatewayService.findById(gatewayid).getDevices().stream().filter(
-        device -> device.getId() == deviceId
-    ).collect(Collectors.toList()).get(0).getSensors().stream().filter(
-        sensor -> sensor.getRealSensorId() == sensorId
-    ).collect(Collectors.toList()).get(0);
-  }
 
   //tutti i sensori
   @GetMapping(value = {"/sensors"})

@@ -20,4 +20,6 @@ public interface DeviceRepository extends CrudRepository<Device, Integer> {
   @Query("SELECT D FROM Entity E "
       + "JOIN E.sensors S JOIN S.device D WHERE D.deviceId = :id AND E.entityId = :entityId")
   Device findByIdAndEntityId(int id, int entityId);
+
+  Device findByGatewayAndRealDeviceId(Gateway gateway, int realDeviceId);
 }
