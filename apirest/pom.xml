@@ -208,7 +208,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <apiDocsUrl>http://localhost:9999/v3/api-docs.yml</apiDocsUrl>
+                    <apiDocsUrl>http://localhost:8080/v3/api-docs.yml</apiDocsUrl>
                     <outputFileName>openapi.yml</outputFileName>
                 </configuration>
             </plugin>
