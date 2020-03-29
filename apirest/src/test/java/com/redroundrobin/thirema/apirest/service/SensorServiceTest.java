@@ -3,6 +3,7 @@ package com.redroundrobin.thirema.apirest.service;
 import com.redroundrobin.thirema.apirest.models.postgres.Alert;
 import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
+import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.ViewGraph;
 import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
@@ -69,6 +70,9 @@ public class SensorServiceTest {
 
   private ViewGraph viewGraph1;
   private ViewGraph viewGraph2;
+
+  private Gateway gateway1;
+  private Gateway gateway2;
 
 
   @Before
@@ -158,6 +162,18 @@ public class SensorServiceTest {
     allViewGraphs.add(viewGraph2);
 
 
+    // --------------------------------------- Set Gateways -------------------------------------
+    gateway1 = new Gateway();
+    gateway1.setId(1);
+
+    gateway2 = new Gateway();
+    gateway1.setId(2);
+
+    List<Gateway> allGateways = new ArrayList<>();
+    allGateways.add(gateway1);
+    allGateways.add(gateway2);
+
+
 
     // -------------------------- Set sensors to alerts and viceversa --------------------------
     List<Alert> sensor1Alerts = new ArrayList<>();
@@ -222,6 +238,17 @@ public class SensorServiceTest {
     sensor3.setViewGraphs2(Collections.emptyList());
 
 
+    // -------------------------- Set Devices to Gateways and viceversa --------------------------
+    device1.setGateway(gateway1);
+    List<Device> gateway1Devices = new ArrayList<>();
+    gateway1Devices.add(device1);
+    gateway1.setDevices(gateway1Devices);
+
+    device2.setGateway(gateway2);
+    List<Device> gateway2Devices = new ArrayList<>();
+    gateway2Devices.add(device2);
+    gateway2.setDevices(gateway2Devices);
+
 
     when(repo.findAll()).thenReturn(allSensors);
     when(repo.findAllByDevice(any(Device.class))).thenAnswer(i -> {
@@ -244,6 +271,12 @@ public class SensorServiceTest {
     when(repo.findAllByViewGraphs1OrViewGraphs2(any(ViewGraph.class),any(ViewGraph.class))).thenAnswer(i -> {
       return allSensors.stream().filter(s -> s.getViewGraphs1().contains(
           i.getArgument(0)) || s.getViewGraphs2().contains(i.getArgument(1)))
+          .collect(Collectors.toList());
+    });
+    when(repo.findAllByGatewayIdAndRealDeviceId(anyInt(),anyInt())).thenAnswer(i -> {
+      return allSensors.stream()
+          .filter(s -> i.getArgument(0).equals(s.getDevice().getGateway().getId())
+              && i.getArgument(1).equals(s.getDevice().getRealDeviceId()))
           .collect(Collectors.toList());
     });
     when(repo.findById(anyInt())).thenAnswer(i -> {
@@ -269,6 +302,13 @@ public class SensorServiceTest {
       return allSensors.stream()
           .filter(s -> device.equals(s.getDevice()) && realSensorId == s.getRealSensorId()
               && s.getEntities().contains(entity))
+          .findFirst().orElse(null);
+    });
+    when(repo.findByGatewayIdAndRealDeviceIdAndRealSensorId(anyInt(), anyInt(), anyInt())).thenAnswer(i -> {
+      return allSensors.stream()
+          .filter(s -> i.getArgument(0).equals(s.getDevice().getGateway().getId())
+              && i.getArgument(1).equals(s.getDevice().getRealDeviceId())
+              && i.getArgument(2).equals(s.getRealSensorId()))
           .findFirst().orElse(null);
     });
 
@@ -356,6 +396,19 @@ public class SensorServiceTest {
     assertTrue(sensors.stream().count() == 0);
   }
 
+
+
+  @Test
+  public void findAllSensorsByGatewayIdAndRealDeviceId() {
+    List<Sensor> sensors = sensorService.findAllByGatewayIdAndRealDeviceId(gateway1.getId(),
+        device1.getRealDeviceId());
+
+    System.out.println(sensors);
+    assertTrue(sensors.stream().count() == 2);
+  }
+
+
+
   @Test
   public void findSensorById() {
     Sensor sensor = sensorService.findById(sensor1.getId());
@@ -403,5 +456,13 @@ public class SensorServiceTest {
     Sensor sensor = sensorService.findByDeviceIdAndRealSensorIdAndEntityId(device1.getId(), sensor1.getRealSensorId(),5);
 
     assertNull(sensor);
+  }
+
+  @Test
+  public void findSensorByGatewayIdAndRealDeviceIdAndRealSensorId() {
+    Sensor sensor = sensorService.findByGatewayIdAndRealDeviceIdAndRealSensorId(gateway1.getId(),
+        device1.getRealDeviceId(), sensor1.getRealSensorId());
+
+    assertEquals(sensor1,sensor);
   }
 }
