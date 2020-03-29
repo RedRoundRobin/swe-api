@@ -62,6 +62,16 @@ public class SensorService {
     }
   }
 
+  public List<Sensor> findAllByDeviceIdAndEntityId(int deviceId, int entityId) {
+    Device device = deviceService.findById(deviceId);
+    Entity entity = entityService.findById(entityId);
+    if (device != null && entity != null) {
+      return (List<Sensor>) repo.findAllByDeviceAndEntities(device, entity);
+    } else {
+      return Collections.emptyList();
+    }
+  }
+
   public List<Sensor> findAllByEntityId(int entityId) {
     Entity entity = entityService.findById(entityId);
     if (entity != null) {
@@ -80,6 +90,10 @@ public class SensorService {
     }
   }
 
+  public List<Sensor> findAllByGatewayIdAndRealDeviceId(int gatewayId, int realDeviceId) {
+    return (List<Sensor>) repo.findAllByGatewayIdAndRealDeviceId(gatewayId, realDeviceId);
+  }
+
   public Sensor findById(int sensorId) {
     return repo.findById(sensorId).orElse(null);
   }
@@ -91,5 +105,30 @@ public class SensorService {
     } else {
       return null;
     }
+  }
+
+  public Sensor findByDeviceIdAndRealSensorId(int deviceId, int realSensorId) {
+    Device device = deviceService.findById(deviceId);
+    if (device != null) {
+      return repo.findByDeviceAndRealSensorId(device, realSensorId);
+    } else {
+      return null;
+    }
+  }
+
+  public Sensor findByDeviceIdAndRealSensorIdAndEntityId(int deviceId, int realSensorId,
+                                                         int entityId) {
+    Device device = deviceService.findById(deviceId);
+    Entity entity = entityService.findById(entityId);
+    if (device != null && entity != null) {
+      return repo.findByDeviceAndRealSensorIdAndEntities(device, realSensorId, entity);
+    } else {
+      return null;
+    }
+  }
+
+  public Sensor findByGatewayIdAndRealDeviceIdAndRealSensorId(int gatewayId, int realDeviceId,
+                                                              int realSensorId) {
+    return repo.findByGatewayIdAndRealDeviceIdAndRealSensorId(gatewayId,realDeviceId,realSensorId);
   }
 }

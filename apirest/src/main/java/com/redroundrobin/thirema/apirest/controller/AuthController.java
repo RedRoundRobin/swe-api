@@ -44,7 +44,7 @@ public class AuthController {
   }
 
   @PostMapping(value = "/auth")
-  public ResponseEntity<Object> authentication(
+  public ResponseEntity<Map<String, Object>> authentication(
       @RequestBody Map<String, Object> authenticationRequest) {
     String email = (String) authenticationRequest.get("username");
     String password = (String) authenticationRequest.get("password");

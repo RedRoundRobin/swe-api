@@ -1,7 +1,6 @@
 package com.redroundrobin.thirema.apirest.models.postgres;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
 import java.util.Objects;
 import javax.persistence.CascadeType;
@@ -29,11 +28,11 @@ public class Device {
   @Column(name = "real_device_id")
   private int realDeviceId;
 
-  @JsonManagedReference
-  @OneToMany(mappedBy = "device", cascade = CascadeType.ALL)
+  @JsonIgnore
+  @OneToMany(mappedBy = "device", cascade = CascadeType.MERGE)
   private List<Sensor> sensors;
 
-  @JsonBackReference
+  @JsonIgnore
   @ManyToOne
   @JoinColumn(name = "gateway_id")
   private Gateway gateway;
