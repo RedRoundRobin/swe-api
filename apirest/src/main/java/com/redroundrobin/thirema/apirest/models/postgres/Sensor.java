@@ -36,7 +36,7 @@ public class Sensor {
   private Device device;
 
   @JsonBackReference
-  @ManyToMany
+  @ManyToMany(mappedBy = "sensors")
   private List<Entity> entities;
 
   @JsonBackReference

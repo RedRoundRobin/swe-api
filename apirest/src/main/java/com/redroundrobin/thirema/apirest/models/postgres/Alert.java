@@ -34,7 +34,7 @@ public class Alert {
   private Sensor sensor;
 
   @JsonBackReference
-  @ManyToMany
+  @ManyToMany(mappedBy = "disabledAlerts")
   private List<User> users;
 
 
