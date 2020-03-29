@@ -194,6 +194,11 @@ public class DeviceServiceTest {
       return allDevices.stream().filter(d -> d.getSensors().contains(sensor))
           .findFirst().orElse(null);
     });
+    when(repo.findByGatewayAndRealDeviceId(any(Gateway.class), anyInt())).thenAnswer(i -> {
+      return allDevices.stream().filter(d -> d.getGateway().equals(i.getArgument(0))
+          && i.getArgument(1).equals(d.getRealDeviceId()))
+          .findFirst().orElse(null);
+    });
 
     when(entityService.findById(anyInt())).thenAnswer(i -> {
       if (i.getArgument(0).equals(entity1.getId())) {
@@ -280,5 +285,23 @@ public class DeviceServiceTest {
     Device device = deviceService.findByIdAndEntityId(device1.getId(), entity1.getId());
 
     assertNotNull(device);
+  }
+
+
+
+  @Test
+  public void findDeviceByGatewayIdAndRealSensorId() {
+    Device device = deviceService.findByGatewayIdAndRealDeviceId(gateway1.getId(),
+        device1.getRealDeviceId());
+
+    assertNotNull(device);
+    assertEquals(device1 ,device);
+  }
+
+  @Test
+  public void findDeviceByNotExistentGatewayIdAndRealSensorId() {
+    Device device = deviceService.findByGatewayIdAndRealDeviceId(8, 1);
+
+    assertNull(device);
   }
 }
