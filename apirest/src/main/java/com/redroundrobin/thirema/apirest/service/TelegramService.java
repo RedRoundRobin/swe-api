@@ -18,6 +18,7 @@ public class TelegramService {
   private RestTemplate restTemplate = new RestTemplate();
 
   public boolean sendTfa(Map<String, Object> data) {
+    data.put("req_type", "authentication");
     HttpEntity<Map<String,Object>> request = new HttpEntity<>(data);
 
     try {
