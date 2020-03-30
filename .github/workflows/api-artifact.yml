@@ -17,7 +17,7 @@ jobs:
     - name: Checkout api-docs
       uses: actions/checkout@master
       with:
-        repository: Maxelweb/api-docs
+        repository: RedRoundRobin/api-docs
         path: api-docs
         persist-credentials: false
         fetch-depth: 0
@@ -36,7 +36,7 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN_ACTION }}
         branch: master 
         directory: api-docs
-        repository: Maxelweb/api-docs
+        repository: RedRoundRobin/api-docs
     - name: Slack Notification
       uses: homoluctus/slatify@v2.0.1
       if: failure()
