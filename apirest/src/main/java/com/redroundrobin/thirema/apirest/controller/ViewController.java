@@ -23,9 +23,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequestMapping(value = "/views")
 public class ViewController {
 
   private JwtUtil jwtTokenUtil;
@@ -43,30 +45,14 @@ public class ViewController {
   }
 
   //qualsiasi utente puo avere views da adr, anche admin
-  @GetMapping(value = {"/views"})
+  @GetMapping(value = {""})
   public ResponseEntity<List<View>> views(@RequestHeader("Authorization") String authorization) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
     return ResponseEntity.ok(viewService.findAllByUser(user));
   }
-
-
-  @GetMapping(value = {"/views/{viewId:.+}"})
-  public ResponseEntity<View> selectOneView(
-      @RequestHeader("Authorization") String authorization,  @PathVariable("viewId") int viewId) {
-    String token = authorization.substring(7);
-    User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
-    try {
-      return ResponseEntity.ok(viewService.getViewByUserId(user.getId(), viewId));
-    } catch (ViewNotFoundException e) {
-      return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-    } catch (ValuesNotAllowedException e) {
-      return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-    }
-  }
-
-
-  @PostMapping(value = "/views/create")
+  
+  @PostMapping(value = "")
   public ResponseEntity<View> createView(
       @RequestHeader("Authorization") String authorization,  @RequestBody String rawNewView) {
     String token = authorization.substring(7);
@@ -79,7 +65,7 @@ public class ViewController {
     }
   }
 
-  @DeleteMapping(value = "/views/delete/{viewId:.+}")
+  @DeleteMapping(value = "/{viewId:.+}")
   public ResponseEntity<?> deleteView(
       @RequestHeader("Authorization") String authorization,
       @PathVariable("viewId") int viewToDeleteId) {
@@ -90,6 +76,20 @@ public class ViewController {
       return ResponseEntity.ok("deleted view succesfully");
     } catch (NotAuthorizedToDeleteUserException e) {
       return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+    } catch (ValuesNotAllowedException e) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    }
+  }
+
+  @GetMapping(value = {"/{viewId:.+}"})
+  public ResponseEntity<View> selectOneView(
+      @RequestHeader("Authorization") String authorization,  @PathVariable("viewId") int viewId) {
+    String token = authorization.substring(7);
+    User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
+    try {
+      return ResponseEntity.ok(viewService.getViewByUserId(user.getId(), viewId));
+    } catch (ViewNotFoundException e) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     } catch (ValuesNotAllowedException e) {
       return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
     }

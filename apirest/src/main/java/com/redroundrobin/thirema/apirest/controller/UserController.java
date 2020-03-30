@@ -34,15 +34,23 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequestMapping(value = "/users")
 public class UserController {
 
   private JwtUtil jwtTokenUtil;
 
   private UserService userService;
+
+  private boolean canEditMod(User editingUser, User userToEdit) {
+    return editingUser.getId() == userToEdit.getId()
+        || (userToEdit.getType() == User.Role.USER
+        && editingUser.getEntity().equals(userToEdit.getEntity()));
+  }
 
   @Autowired
   public UserController(JwtUtil jwtTokenUtil, UserService userService,
@@ -51,27 +59,45 @@ public class UserController {
     this.userService = userService;
   }
 
-  // Get all devices by userId
-  @GetMapping(value = {"/users/{userid:.+}/devices"})
-  public ResponseEntity<Object> getUserDevices(@RequestHeader("Authorization") String authorization,
-                                          @PathVariable("userid") int requiredUserId) {
+  // Get all users
+  @GetMapping(value = {""})
+  public ResponseEntity<List<User>> getUsers(@RequestHeader("Authorization") String authorization,
+                                             @RequestParam(value = "entity", required = false) Integer entity,
+                                             @RequestParam(value = "disabledAlert", required = false) Integer disabledAlert,
+                                             @RequestParam(value = "view", required = false) Integer view) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
-    User requiredUser = userService.findById(requiredUserId);
-    if (requiredUser != null && (user.getId() == requiredUserId
-        || user.getType() == User.Role.ADMIN  || user.getType() == User.Role.MOD
-        && requiredUser.getType() != User.Role.ADMIN
-            && user.getEntity().getId() == requiredUser.getEntity().getId())) {
-      return ResponseEntity.ok(userService.userDevices(requiredUserId));
-    } else {
-      return new ResponseEntity(HttpStatus.FORBIDDEN);
+    if (user.getType() == User.Role.ADMIN) {
+      if (entity != null) {
+        try {
+          return ResponseEntity.ok(userService.findAllByEntityId(entity));
+        } catch (EntityNotFoundException enfe) {
+          // go to return BAD_REQUEST
+        }
+      } else if (disabledAlert != null) {
+        return new ResponseEntity(HttpStatus.BAD_REQUEST);
+      } else if (view != null) {
+        return new ResponseEntity(HttpStatus.BAD_REQUEST);
+      } else {
+        return ResponseEntity.ok(userService.findAll());
+      }
+      return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    } else if (user.getType() == User.Role.MOD
+        && (entity == null && disabledAlert == null && view == null)
+        || (entity != null && user.getEntity().getId() == entity)) {
+      try {
+        return ResponseEntity.ok(userService.findAllByEntityId(user.getEntity().getId()));
+      } catch (EntityNotFoundException enfe) {
+        // go to return FORBIDDE
+      }
     }
+    return new ResponseEntity(HttpStatus.FORBIDDEN);
   }
 
   // Create new user
-  @PostMapping(value = {"/users/create"})
+  @PostMapping(value = {""})
   public ResponseEntity<User> createUser(@RequestHeader("Authorization") String authorization,
-                                           @RequestBody String jsonStringUser) {
+                                         @RequestBody String jsonStringUser) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
     JsonObject jsonUser = JsonParser.parseString(jsonStringUser).getAsJsonObject();
@@ -84,14 +110,28 @@ public class UserController {
     }
   }
 
-  private boolean canEditMod(User editingUser, User userToEdit) {
-    return editingUser.getId() == userToEdit.getId()
-        || (userToEdit.getType() == User.Role.USER
-        && editingUser.getEntity().equals(userToEdit.getEntity()));
+  @DeleteMapping(value = {"/{userid:.+}"})
+  public ResponseEntity<?> deleteEntityUser(@RequestHeader("Authorization") String authorization,
+                                            @PathVariable("userid") int userToDeleteId) {
+    String token = authorization.substring(7);
+    User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
+    try {
+      return ResponseEntity.ok(userService.deleteUser(user, userToDeleteId));
+    } catch (NotAuthorizedToDeleteUserException e) {
+      return new ResponseEntity(e.getMessage(), HttpStatus.FORBIDDEN);
+    } catch (ValuesNotAllowedException e) {
+      return new ResponseEntity(e.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  // Get user by userId
+  @GetMapping(value = {"/{userid:.+}"})
+  public User user(@PathVariable("userid") int userId) {
+    return userService.findById(userId);
   }
 
   // Edit user by userId and a map with data to edit
-  @PutMapping(value = {"/users/{userid:.+}/edit"})
+  @PutMapping(value = {"/{userid:.+}"})
   public ResponseEntity<Map<String, Object>> editUser(
       @RequestHeader("Authorization") String authorization,
       @RequestBody Map<String, Object> fieldsToEdit,
@@ -163,78 +203,20 @@ public class UserController {
     return new ResponseEntity(HttpStatus.BAD_REQUEST);
   }
 
-  // Get user entity by userId
-  @GetMapping(value = {"users/{userId:.+}/entity"})
-  public ResponseEntity<Entity> getUserEntity(
-      @RequestHeader("Authorization") String authorization, @PathVariable("userId") int userId)  {
+  // Get all devices by userId
+  @GetMapping(value = {"/{userid:.+}/devices"})
+  public ResponseEntity<Object> getUserDevices(@RequestHeader("Authorization") String authorization,
+                                          @PathVariable("userid") int requiredUserId) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
-    if (user.getType() == User.Role.ADMIN) {
-      return new ResponseEntity(HttpStatus.OK);
+    User requiredUser = userService.findById(requiredUserId);
+    if (requiredUser != null && (user.getId() == requiredUserId
+        || user.getType() == User.Role.ADMIN  || user.getType() == User.Role.MOD
+        && requiredUser.getType() != User.Role.ADMIN
+            && user.getEntity().getId() == requiredUser.getEntity().getId())) {
+      return ResponseEntity.ok(userService.userDevices(requiredUserId));
     } else {
-      User userToRetrieve = userService.findById(userId);
-      if (userToRetrieve != null
-          && userToRetrieve.getEntity().getId() == user.getEntity().getId()) {
-        return ResponseEntity.ok(user.getEntity());
-      } else {
-        return new ResponseEntity(HttpStatus.FORBIDDEN);
-      }
-    }
-  }
-
-  // Get all users
-  @GetMapping(value = {"/users"})
-  public ResponseEntity<List<User>> getUsers(@RequestHeader("Authorization") String authorization,
-          @RequestParam(value = "entity", required = false) Integer entity,
-          @RequestParam(value = "disabledAlert", required = false) Integer disabledAlert,
-          @RequestParam(value = "view", required = false) Integer view) {
-    String token = authorization.substring(7);
-    User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
-    if (user.getType() == User.Role.ADMIN) {
-      if (entity != null) {
-        try {
-          return ResponseEntity.ok(userService.findAllByEntityId(entity));
-        } catch (EntityNotFoundException enfe) {
-          // go to return BAD_REQUEST
-        }
-      } else if (disabledAlert != null) {
-        return new ResponseEntity(HttpStatus.BAD_REQUEST);
-      } else if (view != null) {
-        return new ResponseEntity(HttpStatus.BAD_REQUEST);
-      } else {
-        return ResponseEntity.ok(userService.findAll());
-      }
-      return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-    } else if (user.getType() == User.Role.MOD
-        && (entity == null && disabledAlert == null && view == null)
-        || (entity != null && user.getEntity().getId() == entity)) {
-      try {
-        return ResponseEntity.ok(userService.findAllByEntityId(user.getEntity().getId()));
-      } catch (EntityNotFoundException enfe) {
-        // go to return FORBIDDE
-      }
-    }
-    return new ResponseEntity(HttpStatus.FORBIDDEN);
-  }
-
-  // Get user by userId
-  @GetMapping(value = {"/user/{userid:.+}"})
-  public User user(@PathVariable("userid") int userId) {
-    return userService.findById(userId);
-  }
-
-
-  @DeleteMapping(value = {"/user/delete/{userid:.+}"})
-  public ResponseEntity<?> deleteEntityUser(@RequestHeader("Authorization") String authorization,
-                               @PathVariable("userid") int userToDeleteId) {
-    String token = authorization.substring(7);
-    User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
-    try {
-      return ResponseEntity.ok(userService.deleteUser(user, userToDeleteId));
-    } catch (NotAuthorizedToDeleteUserException e) {
-      return new ResponseEntity(e.getMessage(), HttpStatus.FORBIDDEN);
-    } catch (ValuesNotAllowedException e) {
-      return new ResponseEntity(e.getMessage(), HttpStatus.BAD_REQUEST);
+      return new ResponseEntity(HttpStatus.FORBIDDEN);
     }
   }
 }
