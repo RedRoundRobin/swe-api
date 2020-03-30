@@ -1,10 +1,12 @@
 package com.redroundrobin.thirema.apirest.service;
 
 import com.redroundrobin.thirema.apirest.models.postgres.Device;
+import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.repository.postgres.DeviceRepository;
 import com.redroundrobin.thirema.apirest.service.postgres.DeviceService;
+import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
 import com.redroundrobin.thirema.apirest.service.postgres.GatewayService;
 import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
 import org.junit.Before;
@@ -23,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
@@ -30,6 +33,9 @@ public class DeviceServiceTest {
 
   @MockBean
   private DeviceRepository repo;
+
+  @MockBean
+  private EntityService entityService;
 
   @MockBean
   private GatewayService gatewayService;
@@ -44,6 +50,8 @@ public class DeviceServiceTest {
   private Device device2;
   private Device device3;
 
+  private Entity entity1;
+
   private Gateway gateway1;
   private Gateway gateway2;
 
@@ -57,6 +65,7 @@ public class DeviceServiceTest {
   @Before
   public void setUp() {
     deviceService = new DeviceService(repo);
+    deviceService.setEntityService(entityService);
     deviceService.setGatewayService(gatewayService);
     deviceService.setSensorService(sensorService);
 
@@ -72,6 +81,10 @@ public class DeviceServiceTest {
     allDevices.add(device1);
     allDevices.add(device2);
     allDevices.add(device3);
+
+    // ----------------------------------------- Set Entities --------------------------------------
+    entity1 = new Entity();
+    entity1.setId(1);
 
 
     // ----------------------------------------- Set Gateways --------------------------------------
@@ -140,6 +153,20 @@ public class DeviceServiceTest {
     device3.setSensors(device3Sensors);
 
 
+    // --------------------------- Set Entities to Sensors and viceversa ---------------------------
+    List<Sensor> entity1Sensor = new ArrayList<>();
+    entity1Sensor.add(sensor1);
+    entity1Sensor.add(sensor3);
+    entity1.setSensors(entity1Sensor);
+    List<Entity> sensor1Entities = new ArrayList<>();
+    sensor1Entities.add(entity1);
+    sensor1.setEntities(sensor1Entities);
+    sensor3.setEntities(sensor1Entities);
+    List<Device> entity1Devices = new ArrayList<>();
+    entity1Devices.add(device1);
+    entity1Devices.add(device2);
+
+
 
     when(repo.findAll()).thenReturn(allDevices);
     when(repo.findAllByGateway(any(Gateway.class))).thenAnswer(i -> {
@@ -147,14 +174,38 @@ public class DeviceServiceTest {
       return allDevices.stream().filter(d -> gateway.equals(d.getGateway()))
           .collect(Collectors.toList());
     });
+    when(repo.findAllByEntityId(anyInt())).thenAnswer(i -> {
+      if (i.getArgument(0).equals(entity1.getId())) {
+        return entity1Devices;
+      } else {
+        return null;
+      }
+    });
     when(repo.findById(anyInt())).thenAnswer(i -> {
       return allDevices.stream().filter(d -> i.getArgument(0).equals(d.getId()))
           .findFirst();
+    });
+    when(repo.findByIdAndEntityId(anyInt(), eq(entity1.getId()))).thenAnswer(i -> {
+      return entity1Devices.stream().filter(d -> i.getArgument(0).equals(d.getId()))
+          .findFirst().orElse(null);
     });
     when(repo.findBySensors(any(Sensor.class))).thenAnswer(i -> {
       Sensor sensor = i.getArgument(0);
       return allDevices.stream().filter(d -> d.getSensors().contains(sensor))
           .findFirst().orElse(null);
+    });
+    when(repo.findByGatewayAndRealDeviceId(any(Gateway.class), anyInt())).thenAnswer(i -> {
+      return allDevices.stream().filter(d -> d.getGateway().equals(i.getArgument(0))
+          && i.getArgument(1).equals(d.getRealDeviceId()))
+          .findFirst().orElse(null);
+    });
+
+    when(entityService.findById(anyInt())).thenAnswer(i -> {
+      if (i.getArgument(0).equals(entity1.getId())) {
+        return entity1;
+      } else {
+        return null;
+      }
     });
 
     when(gatewayService.findById(anyInt())).thenAnswer(i -> {
@@ -193,6 +244,21 @@ public class DeviceServiceTest {
   }
 
   @Test
+  public void findAllDevicesByEntityId() {
+    List<Device> devices = deviceService.findAllByEntityId(entity1.getId());
+
+    assertTrue(!devices.isEmpty());
+    assertTrue(devices.stream().count() == 2);
+  }
+
+  @Test
+  public void findAllDevicesByNotExistentEntityId() {
+    List<Device> devices = deviceService.findAllByEntityId(5);
+
+    assertTrue(devices.isEmpty());
+  }
+
+  @Test
   public void findDeviceById() {
     Device device = deviceService.findById(device1.getId());
 
@@ -210,6 +276,31 @@ public class DeviceServiceTest {
   @Test
   public void findDeviceByNotExistentSensorId() {
     Device device = deviceService.findBySensorId(8);
+
+    assertNull(device);
+  }
+
+  @Test
+  public void findDeviceByIdAndEntityId() {
+    Device device = deviceService.findByIdAndEntityId(device1.getId(), entity1.getId());
+
+    assertNotNull(device);
+  }
+
+
+
+  @Test
+  public void findDeviceByGatewayIdAndRealSensorId() {
+    Device device = deviceService.findByGatewayIdAndRealDeviceId(gateway1.getId(),
+        device1.getRealDeviceId());
+
+    assertNotNull(device);
+    assertEquals(device1 ,device);
+  }
+
+  @Test
+  public void findDeviceByNotExistentGatewayIdAndRealSensorId() {
+    Device device = deviceService.findByGatewayIdAndRealDeviceId(8, 1);
 
     assertNull(device);
   }

@@ -19,7 +19,6 @@ import com.redroundrobin.thirema.apirest.utils.exception.UserRoleNotFoundExcepti
 import com.redroundrobin.thirema.apirest.utils.exception.ValuesNotAllowedException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -87,10 +86,10 @@ public class UserService implements UserDetailsService {
     editable.add("email");
     editable.add("password");
     editable.add("type");
-    editable.add("telegram_name");
-    editable.add("two_factor_authentication");
+    editable.add("telegramName");
+    editable.add("twoFactorAuthentication");
     editable.add("deleted");
-    editable.add("entity_id");
+    editable.add("entityId");
 
     boolean onlyExistingKeys = keys.stream()
         .filter(key -> !editable.contains(key))
@@ -104,7 +103,7 @@ public class UserService implements UserDetailsService {
           if (itself) {
             editable.remove("type");
             editable.remove("deleted");
-            editable.remove("entity_id");
+            editable.remove("entityId");
           }
 
           break;
@@ -113,11 +112,11 @@ public class UserService implements UserDetailsService {
             editable.remove("deleted");
           } else {
             editable.remove("password");
-            editable.remove("telegram_name");
-            editable.remove("two_factor_authentication");
+            editable.remove("telegramName");
+            editable.remove("twoFactorAuthentication");
           }
           editable.remove("type");
-          editable.remove("entity_id");
+          editable.remove("entityId");
 
           break;
         case USER:
@@ -125,7 +124,7 @@ public class UserService implements UserDetailsService {
           editable.remove("surname");
           editable.remove("type");
           editable.remove("deleted");
-          editable.remove("entity_id");
+          editable.remove("entityId");
 
           break;
         default:
@@ -140,18 +139,17 @@ public class UserService implements UserDetailsService {
 
   private User editAndSave(User userToEdit, Map<String, Object> fieldsToEdit)
       throws EntityNotFoundException, TfaNotPermittedException, UserRoleNotFoundException {
-    if (fieldsToEdit.containsKey("two_factor_authentication")
-        && (boolean)fieldsToEdit.get("two_factor_authentication")
-        && (fieldsToEdit.containsKey("telegram_name")
+    if (fieldsToEdit.containsKey("twoFactorAuthentication")
+        && (boolean)fieldsToEdit.get("twoFactorAuthentication")
+        && (fieldsToEdit.containsKey("telegramName")
         || userToEdit.getTelegramChat().isEmpty())) {
-      throw new TfaNotPermittedException("TFA can't be edited because either telegram_name is "
-          + "in the request or telegram chat is not present");
+      throw new TfaNotPermittedException("TFA can't be edited because either telegramName is "
+          + "in the request or telegram chat not present");
     }
 
-
-    if (fieldsToEdit.containsKey("entity_id")
-        && entityService.findById((int)fieldsToEdit.get("entity_id")) == null) {
-      throw new EntityNotFoundException("The entity with the entityId given doesn't exist");
+    if (fieldsToEdit.containsKey("entityId")
+        && entityService.findById((int)fieldsToEdit.get("entityId")) == null) {
+      throw new EntityNotFoundException("The entity with the entityId furnished doesn't exist");
     }
 
     for (Map.Entry<String, Object> entry : fieldsToEdit.entrySet()) {
@@ -177,18 +175,18 @@ public class UserService implements UserDetailsService {
             throw new UserRoleNotFoundException("The inserted role is not found");
           }
           break;
-        case "telegram_name":
+        case "telegramName":
           userToEdit.setTelegramName((String) value);
           userToEdit.setTfa(false);
           userToEdit.setTelegramChat(null);
           break;
-        case "two_factor_authentication":
+        case "twoFactorAuthentication":
           userToEdit.setTfa((boolean) value);
           break;
         case "deleted":
           userToEdit.setDeleted((boolean) value);
           break;
-        case "entity_id":
+        case "entityId":
           userToEdit.setEntity(entityService.findById((int) value));
           break;
         default:

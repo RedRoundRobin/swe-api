@@ -2,6 +2,7 @@ package com.redroundrobin.thirema.apirest.controller;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
@@ -43,17 +44,14 @@ public class UserController {
 
   private UserService userService;
 
-  private EntityService entityService;
-
   @Autowired
   public UserController(JwtUtil jwtTokenUtil, UserService userService,
                         EntityService entityService) {
     this.jwtTokenUtil = jwtTokenUtil;
     this.userService = userService;
-    this.entityService = entityService;
   }
 
-  //richiesta fatta da un utente autenticato per vedere i device visibili a un altro utente
+  // Get all devices by userId
   @GetMapping(value = {"/users/{userid:.+}/devices"})
   public ResponseEntity<Object> getUserDevices(@RequestHeader("Authorization") String authorization,
                                           @PathVariable("userid") int requiredUserId) {
@@ -70,7 +68,7 @@ public class UserController {
     }
   }
 
-  //creazione di un nuovo utente
+  // Create new user
   @PostMapping(value = {"/users/create"})
   public ResponseEntity<User> createUser(@RequestHeader("Authorization") String authorization,
                                            @RequestBody String jsonStringUser) {
@@ -92,11 +90,12 @@ public class UserController {
         && editingUser.getEntity().equals(userToEdit.getEntity()));
   }
 
-  /*In input prende JsonObject coi field da modificare dello userId*/
+  // Edit user by userId and a map with data to edit
   @PutMapping(value = {"/users/{userid:.+}/edit"})
-  public ResponseEntity<Object> editUser(@RequestHeader("Authorization") String authorization,
-                                         @RequestBody Map<String, Object> fieldsToEdit,
-                                         @PathVariable("userid") int userId) {
+  public ResponseEntity<Map<String, Object>> editUser(
+      @RequestHeader("Authorization") String authorization,
+      @RequestBody Map<String, Object> fieldsToEdit,
+      @PathVariable("userid") int userId) {
     String token = authorization.substring(7);
     String editingUserEmail = jwtTokenUtil.extractUsername(token);
     User editingUser = userService.findByEmail(editingUserEmail);
@@ -136,7 +135,7 @@ public class UserController {
         return ResponseEntity.ok(response);
 
       } catch (UsernameNotFoundException unfe) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        return new ResponseEntity(HttpStatus.UNAUTHORIZED);
       } catch (NotAllowedToEditException | UserDisabledException natef) {
         return new ResponseEntity(HttpStatus.FORBIDDEN);
       } catch (TfaNotPermittedException tnpe) {
@@ -164,30 +163,14 @@ public class UserController {
     return new ResponseEntity(HttpStatus.BAD_REQUEST);
   }
 
-  //dato un token valido restituisce l'ente di appertenenza o tutti gli enti
-  //se il token è di un amministratore
-  @GetMapping(value = {"users/entities"})
-  public ResponseEntity<Object> getAnotherUserEntity(
-      @RequestHeader("Authorization") String authorization) {
-    String token = authorization.substring(7);
-    User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
-    if (user.getType() == User.Role.ADMIN) {
-      return ResponseEntity.ok(entityService.findAll());
-    } else {
-      //utente moderatore || utente membro
-      return ResponseEntity.ok(user.getEntity());
-    }
-  }
-
-  //dato un token valido restituisce l'ente di appertenenza o tutti gli enti
-  //se il token è di un amministratore
-  @GetMapping(value = {"users/{userId:.+}/entities"})
-  public ResponseEntity<Object> getUserEntity(
+  // Get user entity by userId
+  @GetMapping(value = {"users/{userId:.+}/entity"})
+  public ResponseEntity<Entity> getUserEntity(
       @RequestHeader("Authorization") String authorization, @PathVariable("userId") int userId)  {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
     if (user.getType() == User.Role.ADMIN) {
-      return ResponseEntity.ok(entityService.findAll());
+      return new ResponseEntity(HttpStatus.OK);
     } else {
       User userToRetrieve = userService.findById(userId);
       if (userToRetrieve != null
@@ -199,7 +182,7 @@ public class UserController {
     }
   }
 
-  //tutti gli user
+  // Get all users
   @GetMapping(value = {"/users"})
   public ResponseEntity<List<User>> getUsers(@RequestHeader("Authorization") String authorization,
           @RequestParam(value = "entity", required = false) Integer entity,
@@ -222,20 +205,19 @@ public class UserController {
         return ResponseEntity.ok(userService.findAll());
       }
       return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-    } else if (user.getType() == User.Role.MOD) {
-      if ((entity == null && disabledAlert == null && view == null)
-          || (entity != null && user.getEntity().getId() == entity)) {
-        try {
-          return ResponseEntity.ok(userService.findAllByEntityId(user.getEntity().getId()));
-        } catch (EntityNotFoundException enfe) {
-          // go to return FORBIDDE
-        }
+    } else if (user.getType() == User.Role.MOD
+        && (entity == null && disabledAlert == null && view == null)
+        || (entity != null && user.getEntity().getId() == entity)) {
+      try {
+        return ResponseEntity.ok(userService.findAllByEntityId(user.getEntity().getId()));
+      } catch (EntityNotFoundException enfe) {
+        // go to return FORBIDDE
       }
     }
-    return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+    return new ResponseEntity(HttpStatus.FORBIDDEN);
   }
 
-  //un determinato user
+  // Get user by userId
   @GetMapping(value = {"/user/{userid:.+}"})
   public User user(@PathVariable("userid") int userId) {
     return userService.findById(userId);

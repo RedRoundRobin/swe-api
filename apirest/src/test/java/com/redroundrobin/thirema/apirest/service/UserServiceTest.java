@@ -421,7 +421,7 @@ public class UserServiceTest {
     String newTelegramName = "newTelegramName";
 
     HashMap<String, Object> fieldsToEdit = new HashMap<>();
-    fieldsToEdit.put("telegram_name",newTelegramName);
+    fieldsToEdit.put("telegramName",newTelegramName);
 
     User editedUser = cloneUser(admin1);
     editedUser.setTelegramName(newTelegramName);
@@ -461,9 +461,9 @@ public class UserServiceTest {
     fieldsToEdit.put("email",newEmail);
     fieldsToEdit.put("password",newPassword);
     fieldsToEdit.put("type",0);
-    fieldsToEdit.put("telegram_name",newTelegramName);
+    fieldsToEdit.put("telegramName",newTelegramName);
     fieldsToEdit.put("deleted", newDeleted);
-    fieldsToEdit.put("entity_id", newEntityId);
+    fieldsToEdit.put("entityId", newEntityId);
 
     User editedUser = cloneUser(user1);
     editedUser.setName(newName);
@@ -516,7 +516,7 @@ public class UserServiceTest {
     // modificare entity con valore inesistente
 
     HashMap<String, Object> fieldsToEdit = new HashMap<>();
-    fieldsToEdit.put("entity_id",3);
+    fieldsToEdit.put("entityId",3);
 
     when(entityService.findById(3)).thenReturn(null);
 
@@ -599,7 +599,7 @@ public class UserServiceTest {
 
     HashMap<String, Object> fieldsToEdit = new HashMap<>();
     fieldsToEdit.put("name",newName);
-    fieldsToEdit.put("two_factor_authentication",tfa);
+    fieldsToEdit.put("twoFactorAuthentication",tfa);
 
     User editedUser = cloneUser(mod11);
     editedUser.setName(newName);
@@ -622,7 +622,7 @@ public class UserServiceTest {
     // modificare name, surname, email, deleted
 
     HashMap<String, Object> fieldsToEdit = new HashMap<>();
-    fieldsToEdit.put("entity_id",2);
+    fieldsToEdit.put("entityId",2);
 
     try {
       User user = userService.editByModerator(mod11, true, fieldsToEdit);
@@ -646,7 +646,7 @@ public class UserServiceTest {
     String newTelegramName = "newTelegramName";
 
     HashMap<String, Object> fieldsToEdit = new HashMap<>();
-    fieldsToEdit.put("telegramName",newTelegramName);
+    fieldsToEdit.put("telegram_name",newTelegramName);
 
     try {
       User user = userService.editByUser(user1, fieldsToEdit);
@@ -688,8 +688,8 @@ public class UserServiceTest {
     boolean newTfa = true;
 
     HashMap<String, Object> fieldsToEdit = new HashMap<>();
-    fieldsToEdit.put("telegram_name",newTelegramName);
-    fieldsToEdit.put("two_factor_authentication",newTfa);
+    fieldsToEdit.put("telegramName",newTelegramName);
+    fieldsToEdit.put("twoFactorAuthentication",newTfa);
 
     try {
       User user = userService.editByUser(user1, fieldsToEdit);
