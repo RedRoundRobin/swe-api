@@ -50,6 +50,7 @@ public class UserService implements UserDetailsService {
     creatable.add("email");
     creatable.add("type");
     creatable.add("entity_id");
+    creatable.add("password");  //SOLUZIONE TEMPORANEA: NON PREVISTA DA USE CASES
 
     boolean onlyCreatableKeys = keys.stream()
         .filter(key -> !creatable.contains(key))

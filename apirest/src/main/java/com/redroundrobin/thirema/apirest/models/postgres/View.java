@@ -17,7 +17,7 @@ public class View {
   @JsonBackReference //non sono sicuro! (Fouad)
   @ManyToOne
   @JoinColumn(name = "user_id")
-  private User userId;
+  private User user;
 
   @JsonManagedReference
   @OneToMany(mappedBy = "view")
@@ -33,10 +33,10 @@ public class View {
     this.viewId = viewId;
   }
 
-  public User getUserId() { return userId; }
+  public User getUser() { return user; }
 
-  public void setUserId(User userId) {
-    this.userId = userId;
+  public void setUser(User userId) {
+    this.user = userId;
   }
 
 

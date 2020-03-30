@@ -73,7 +73,7 @@ public class UserController {
 
   //creazione di un nuovo utente
   @PostMapping(value = {"/users/create"})
-  public ResponseEntity<Object> createUser(@RequestHeader("Authorization") String authorization,
+  public ResponseEntity<User> createUser(@RequestHeader("Authorization") String authorization,
                                            @RequestBody String jsonStringUser) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
@@ -241,6 +241,7 @@ public class UserController {
   public User user(@PathVariable("userid") int userId) {
     return userService.findById(userId);
   }
+
 
   @DeleteMapping(value = {"/user/delete/{userid:.+}"})
   public ResponseEntity<?> deleteEntityUser(@RequestHeader("Authorization") String authorization,

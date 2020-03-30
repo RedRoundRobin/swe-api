@@ -3,9 +3,7 @@ package com.redroundrobin.thirema.apirest.service.postgres;
 import com.google.gson.JsonObject;
 import com.redroundrobin.thirema.apirest.models.postgres.View;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
-import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.ViewRepository;
-import com.redroundrobin.thirema.apirest.utils.exception.UserNotFoundException;
 
 import java.util.HashSet;
 import java.util.List;
@@ -13,8 +11,6 @@ import java.util.Set;
 
 import com.redroundrobin.thirema.apirest.utils.exception.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -22,7 +18,6 @@ public class ViewService {
 
   private ViewRepository viewRepo;
 
-  //private UserService userService;
 
   private boolean checkCreatableFields(Set<String> keys)
       throws KeysNotFoundException {
@@ -41,30 +36,23 @@ public class ViewService {
   }
 
   @Autowired
-  public ViewService(ViewRepository viewRepo/*, UserService userService*/) {
+  public ViewService(ViewRepository viewRepo) {
     this.viewRepo = viewRepo;
-  //  this.userService = userService;
   }
 
-/*  public List<View> findAllByUserId(int id) throws UserNotFoundException {
-    User user = userService.find(id);
-    if (user != null) {
-      return viewRepo.findAllByUser(user);
-    } else {
-      throw new UserNotFoundException("User with the given id not found");
-    }
-  }*/
 
   public List<View> findAllByUser(User user) {
     return viewRepo.findAllByUserId(user);
   }
 
-  public View findByViewId(int viewId){ return viewRepo.findByViewId(viewId); }
+  public View findByViewId(int viewId){
+    return viewRepo.findByViewId(viewId);
+  }
 
   public View getViewByUserId(int userId, int viewId) throws
       ViewNotFoundException, ValuesNotAllowedException {
     View view = viewRepo.findByViewId(viewId);
-    if(view != null && userId == view.getUserId().getId())
+    if(view != null && userId == view.getUser().getId())
       return view;
     if(!(view != null))
       throw new ViewNotFoundException("");
@@ -80,7 +68,7 @@ public class ViewService {
 
     View newView = new View();
     newView.setName(rawViewToInsert.get("name").getAsString());
-    newView.setUserId(insertingUser);
+    newView.setUser(insertingUser);
     return viewRepo.save(newView);
   }
 
@@ -91,11 +79,10 @@ public class ViewService {
       throw new ValuesNotAllowedException("The given view_id doesn't correspond to any view");
     }
 
-    if(viewToDelete.getUserId().getId() != deletingUser.getId())
+    if(viewToDelete.getUser().getId() != deletingUser.getId())
       throw new NotAuthorizedToDeleteUserException("This user cannot delete the view with" +
           "the view_id given");
 
     viewRepo.delete(viewToDelete);
   }
-
 }

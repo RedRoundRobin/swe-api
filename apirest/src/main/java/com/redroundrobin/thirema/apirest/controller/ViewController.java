@@ -2,6 +2,7 @@ package com.redroundrobin.thirema.apirest.controller;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import java.util.List;
 import com.redroundrobin.thirema.apirest.utils.exception.*;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.postgres.View;
@@ -39,7 +40,7 @@ public class ViewController {
 
   //qualsiasi utente puo avere views da adr, anche admin
   @GetMapping(value = {"/views"})
-  public ResponseEntity<?> views(@RequestHeader("Authorization") String authorization) {
+  public ResponseEntity<List<View>> views(@RequestHeader("Authorization") String authorization) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
     return ResponseEntity.ok(viewService.findAllByUser(user));
@@ -47,7 +48,7 @@ public class ViewController {
 
 
   @GetMapping(value = {"/views/{viewId:.+}"})
-  public ResponseEntity<?> selectOneView(
+  public ResponseEntity<View> selectOneView(
       @RequestHeader("Authorization") String authorization,  @PathVariable("viewId") int viewId) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
@@ -64,7 +65,7 @@ public class ViewController {
 
 
   @PostMapping(value = "/views/create")
-  public ResponseEntity<?> views(
+  public ResponseEntity<View> createView(
       @RequestHeader("Authorization") String authorization,  @RequestBody String rawNewView) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
