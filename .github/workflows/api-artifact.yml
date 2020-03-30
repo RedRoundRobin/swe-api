@@ -20,6 +20,8 @@ jobs:
         repository: RedRoundRobin/swe-kafka-db
         path: swe-kafka-db
         ref: develop
+    - name: Change directory
+      run: cd swe-kafka-db
     - name: Start databases
       run: docker-compose -f kafka/docker-compose.yml up -d
     - name: Checkout swe-api
@@ -27,6 +29,8 @@ jobs:
       with:
         path: swe-api
         fetch-depth: 0
+    - name: Change directory
+      run: cd swe-api
     - name: Setup JDK 11
       uses: actions/setup-java@v1
       with:
