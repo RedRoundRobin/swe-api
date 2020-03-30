@@ -36,7 +36,7 @@ jobs:
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add api-rest/openapi.yaml
+        git add apirest/openapi.yaml
         git commit -m "[BOT] Aggiornata la documentazione API" -a
       working-directory: swe-api
     - name: Push changes
