@@ -9,6 +9,11 @@ jobs:
   api_update:
     runs-on: ubuntu-latest
     steps:
+    - name: Checkout swe-api
+      uses: actions/checkout@v2
+      with:
+        path: swe-api
+        fetch-depth: 0
     - name: Checkout api-docs
       uses: actions/checkout@v2
       with:
