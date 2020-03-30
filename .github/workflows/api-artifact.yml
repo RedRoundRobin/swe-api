@@ -36,7 +36,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Move new api in apirest folder
-      run: mv apirest/target/openapi.yaml apirest/
+      run: mv swe-api/apirest/target/openapi.yaml swe-api/apirest/
     - name: Commit files
       run: |
         git config --local user.email "action@github.com"
