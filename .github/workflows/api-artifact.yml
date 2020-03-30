@@ -43,7 +43,7 @@ jobs:
       uses: ad-m/github-push-action@master
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        branch: ${{ github.ref }}
+        branch: ${{ github.head_ref }}
         directory: swe-api
     - name: Slack Notification
       uses: homoluctus/slatify@v2.0.1
