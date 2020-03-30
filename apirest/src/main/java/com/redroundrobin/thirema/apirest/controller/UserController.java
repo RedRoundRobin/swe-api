@@ -219,24 +219,4 @@ public class UserController {
       return new ResponseEntity(HttpStatus.FORBIDDEN);
     }
   }
-
-  // Get user entity by userId
-  @GetMapping(value = {"{userId:.+}/entity"})
-  public ResponseEntity<Entity> getUserEntity(
-      @RequestHeader("Authorization") String authorization, @PathVariable("userId") int userId)  {
-    String token = authorization.substring(7);
-    User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
-    if (user.getType() == User.Role.ADMIN) {
-      return new ResponseEntity(HttpStatus.OK);
-    } else {
-      User userToRetrieve = userService.findById(userId);
-      if (userToRetrieve != null
-          && userToRetrieve.getEntity().getId() == user.getEntity().getId()) {
-        return ResponseEntity.ok(user.getEntity());
-      } else {
-        return new ResponseEntity(HttpStatus.FORBIDDEN);
-      }
-    }
-  }
-
 }
