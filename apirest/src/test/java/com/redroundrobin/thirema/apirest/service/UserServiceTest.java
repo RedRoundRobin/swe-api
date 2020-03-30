@@ -7,7 +7,6 @@ import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
-import com.redroundrobin.thirema.apirest.utils.SerializeUser;
 import com.redroundrobin.thirema.apirest.utils.exception.*;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,9 +35,6 @@ public class UserServiceTest {
   @MockBean
   private EntityService entityService;
 
-  @MockBean
-  private SerializeUser serializeUser;
-
   private UserService userService;
 
   private User admin1;
@@ -53,9 +49,9 @@ public class UserServiceTest {
 
   @Before
   public void setUp() {
+
     userService = new UserService(userRepo);
     userService.setEntityService(entityService);
-    userService.setSerializeUser(serializeUser);
 
     admin1 = new User();
     admin1.setId(1);

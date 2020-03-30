@@ -6,14 +6,17 @@ import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
-import com.redroundrobin.thirema.apirest.utils.SerializeUser;
 import com.redroundrobin.thirema.apirest.utils.exception.EntityNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAllowedToEditException;
+import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedToDeleteUserException;
+import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedToInsertUserException;
 import com.redroundrobin.thirema.apirest.utils.exception.TelegramChatNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.TfaNotPermittedException;
 import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
 import com.redroundrobin.thirema.apirest.utils.exception.UserRoleNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.ValuesNotAllowedException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -38,7 +41,27 @@ public class UserService implements UserDetailsService {
 
   private EntityService entityService;
 
-  private SerializeUser serializeUser;
+  private boolean checkCreatableFields(Set<String> keys)
+      throws KeysNotFoundException {
+    Set<String> creatable = new HashSet<>();
+    creatable.add("name");
+    creatable.add("surname");
+    creatable.add("email");
+    creatable.add("type");
+    creatable.add("entity_id");
+    creatable.add("password");  //SOLUZIONE TEMPORANEA: NON PREVISTA DA USE CASES
+
+    boolean onlyCreatableKeys = keys.stream()
+        .filter(key -> !creatable.contains(key))
+        .count() == 0;
+
+    if (!onlyCreatableKeys) {
+      throw new KeysNotFoundException("There are some keys that either do not exist"
+          + " or you are not allowed to edit them");
+    }
+
+    return creatable.size() == keys.size();
+  }
 
   @Autowired
   public UserService(UserRepository userRepository) {
@@ -53,11 +76,6 @@ public class UserService implements UserDetailsService {
   @Autowired
   public void setEntityService(EntityService entityService) {
     this.entityService = entityService;
-  }
-
-  @Autowired
-  public void setSerializeUser(SerializeUser serializeUser) {
-    this.serializeUser = serializeUser;
   }
 
   private boolean checkFieldsEditable(User.Role role, boolean itself, Set<String> keys)
@@ -78,7 +96,7 @@ public class UserService implements UserDetailsService {
         .count() == 0;
 
     if (!onlyExistingKeys) {
-      throw new KeysNotFoundException("There are some keys that doesn't exist");
+      throw new KeysNotFoundException("There are some keys that don't exist");
     } else {
       switch (role) {
         case ADMIN:
@@ -282,7 +300,7 @@ public class UserService implements UserDetailsService {
   }
 
   /**
-   * Method that return the UserDetails created with the telegram name furnished as @s and the
+   * Method that return the UserDetails created with the telegram name given as @s and the
    * chat id taken from the database.
    *
    * @param s the telegram name to create the UserDetails
@@ -309,9 +327,6 @@ public class UserService implements UserDetailsService {
         user.getTelegramName(), user.getTelegramChat(), grantedAuthorities);
   }
 
-  public User serializeUser(JsonObject rawUser, User.Role type) {
-    return serializeUser.serializeUser(rawUser, type);
-  }
 
   public User editByUser(User userToEdit, Map<String, Object> fieldsToEdit)
       throws NotAllowedToEditException, KeysNotFoundException, EntityNotFoundException,
@@ -350,5 +365,81 @@ public class UserService implements UserDetailsService {
     } else {
       return this.editAndSave(userToEdit, fieldsToEdit);
     }
+  }
+
+  public User serializeUser(JsonObject rawUserToInsert, User insertingUser)
+      throws KeysNotFoundException, MissingFieldsException, ValuesNotAllowedException,
+      UserRoleNotFoundException, EntityNotFoundException, NotAuthorizedToInsertUserException {
+    if (!checkCreatableFields(rawUserToInsert.keySet())) {
+      throw new MissingFieldsException("Some necessary fields are missing: cannot create user");
+    }
+
+    Entity userToInsertEntity;
+    if ((userToInsertEntity = entityService.findById(
+        (rawUserToInsert.get("entity_id")).getAsInt())) == null) {
+      throw new EntityNotFoundException("The entity with the entityId given doesn't exist");
+    }
+
+    User.Role userToInsertType;
+    try {
+      userToInsertType = User.Role.valueOf(rawUserToInsert.get("type").getAsString());
+    } catch (IllegalArgumentException iae) {
+      throw new UserRoleNotFoundException("The given role doesn't exist");
+    } catch (NullPointerException nptr) {
+      throw new UserRoleNotFoundException("The type parameter cannot be null");
+    }
+
+    //qui so che entity_id dato esiste && so il tipo dello user che si vuole inserire
+    //NB: IL MODERATORE PUO INSERIRE SOLO MEMBRI!! VA BENE??
+    if (insertingUser.getType() != User.Role.ADMIN
+        && insertingUser.getType() == User.Role.MOD
+        && (userToInsertEntity.getId() != insertingUser.getEntity().getId()
+        || userToInsertType != User.Role.USER)) {
+      throw new NotAuthorizedToInsertUserException();
+    }
+
+    User newUser = new User();
+    newUser.setEntity(userToInsertEntity);
+    newUser.setType(userToInsertType);
+
+    if (rawUserToInsert.get("name").getAsString() != null) {
+      newUser.setName(rawUserToInsert.get("name").getAsString());
+    } else {
+      throw new ValuesNotAllowedException("The name field cannot be null");
+    }
+
+    if (rawUserToInsert.get("surname").getAsString() != null) {
+      newUser.setSurname(rawUserToInsert.get("name").getAsString());
+    } else {
+      throw new ValuesNotAllowedException("The surname field cannot be null");
+    }
+
+    String email = rawUserToInsert.get("email").getAsString();
+    if (email != null && repo.findByEmail(email) == null) {
+      newUser.setEmail(email);
+    } else {
+      throw new ValuesNotAllowedException("Either the email field you inserted is"
+        + "null or it is already used");
+    }
+    return save(newUser);
+  }
+
+  public User deleteUser(User deletingUser, int userToDeleteId)
+      throws NotAuthorizedToDeleteUserException, ValuesNotAllowedException {
+    User userToDelete;
+    if ((userToDelete = findById(userToDeleteId)) == null) {
+      throw new ValuesNotAllowedException("The given user_id doesn't correspond to any user");
+    }
+
+    if (deletingUser.getType() == User.Role.USER
+        || deletingUser.getType() == User.Role.MOD
+        && (userToDelete.getType() != User.Role.USER)) {
+      throw new NotAuthorizedToDeleteUserException("This user cannot delete "
+          + "the user with the user_id given");
+    }
+
+    userToDelete.setDeleted(true);
+    userToDelete.setEntity(null);
+    return save(userToDelete);
   }
 }

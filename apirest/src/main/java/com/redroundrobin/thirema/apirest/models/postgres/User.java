@@ -15,6 +15,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 @javax.persistence.Entity
@@ -56,6 +57,10 @@ public class User {
   @ManyToOne
   @JoinColumn(name = "entity_id")
   private Entity entity;
+
+  @JsonManagedReference
+  @OneToMany(mappedBy = "user")
+  private List<View> views;
 
   @JsonManagedReference
   @ManyToMany
