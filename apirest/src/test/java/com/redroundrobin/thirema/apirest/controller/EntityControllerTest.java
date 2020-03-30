@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -80,6 +81,9 @@ public class EntityControllerTest {
     user.setEmail("user");
     user.setType(User.Role.USER);
 
+    List<User> allUsers = new ArrayList<>();
+    allUsers.add(user);
+
 
     // ----------------------------------------- Set Entities --------------------------------------
     entity1 = new Entity();
@@ -139,6 +143,16 @@ public class EntityControllerTest {
     entity3.setSensors(entity3Sensors);
 
 
+    // -------------------------- Set sensors to users and viceversa --------------------------
+    List<User> entity1Users = new ArrayList<>();
+    entity1Users.add(user);
+    entity1.setUsers(entity1Users);
+    user.setEntity(entity1);
+
+    entity2.setUsers(Collections.emptyList());
+    entity3.setUsers(Collections.emptyList());
+
+
 
     // Core Controller needed mock
     user.setEntity(entity1);
@@ -161,11 +175,45 @@ public class EntityControllerTest {
         return Collections.emptyList();
       }
     });
+    when(entityService.findAllBySensorIdAndUserId(anyInt(), anyInt())).thenAnswer(i -> {
+      Sensor sensor = allSensors.stream()
+          .filter(s -> i.getArgument(0).equals(s.getId()))
+          .findFirst().orElse(null);
+      User user = allUsers.stream().filter(u -> i.getArgument(1).equals(u.getId())).findFirst().orElse(null);
+      if (sensor != null && user != null) {
+        return allEntities.stream()
+            .filter(e -> e.getSensors().contains(sensor) && e.getUsers().contains(user))
+            .collect(Collectors.toList());
+      } else {
+        return Collections.emptyList();
+      }
+    });
+    when(entityService.findAllByUserId(anyInt())).thenAnswer(i -> {
+      User user = allUsers.stream()
+          .filter(u -> i.getArgument(0).equals(u.getId()))
+          .findFirst().orElse(null);
+      if (user != null) {
+        return allEntities.stream()
+            .filter(e -> e.getUsers().contains(user))
+            .collect(Collectors.toList());
+      } else {
+        return Collections.emptyList();
+      }
+    });
+  }
+
+  @Test
+  public void getAllEntitiesBySensorIdAndUserIdByAdmin() {
+    ResponseEntity<List<Entity>> response = entityController.getEntities(
+        adminTokenWithBearer, sensor1.getId(), user.getId());
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(user.getEntity(), response.getBody().get(0));
   }
 
   @Test
   public void getAllEntitiesByAdmin() {
-    ResponseEntity<List<Entity>> response = entityController.getEntities(adminTokenWithBearer, null);
+    ResponseEntity<List<Entity>> response = entityController.getEntities(adminTokenWithBearer, null, null);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertEquals(allEntities, response.getBody());
@@ -174,16 +222,41 @@ public class EntityControllerTest {
   @Test
   public void getAllEntitiesBySensorByAdmin() {
     ResponseEntity<List<Entity>> response = entityController.getEntities(
-        adminTokenWithBearer, sensor1.getId());
+        adminTokenWithBearer, sensor1.getId(), null);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertEquals(sensor1And2Entities, response.getBody());
   }
 
   @Test
-  public void getAllEntitiesByUserError403() {
-    ResponseEntity<List<Entity>> response = entityController.getEntities(userTokenWithBearer, null);
+  public void getAllEntitiesByUserIdByAdmin() {
+    ResponseEntity<List<Entity>> response = entityController.getEntities(adminTokenWithBearer, null, user.getId());
 
-    assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(user.getEntity(), response.getBody().get(0));
+  }
+
+  @Test
+  public void getAllEntitiesByUser() {
+    ResponseEntity<List<Entity>> response = entityController.getEntities(userTokenWithBearer, null, null);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(user.getEntity(), response.getBody().get(0));
+  }
+
+  @Test
+  public void getAllEntitiesByUserWithDifferentUserId() {
+    ResponseEntity<List<Entity>> response = entityController.getEntities(userTokenWithBearer, null, admin.getId());
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(Collections.emptyList(), response.getBody());
+  }
+
+  @Test
+  public void getAllEntitiesBySensorId() {
+    ResponseEntity<List<Entity>> response = entityController.getEntities(userTokenWithBearer, sensor1.getId(), null);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(user.getEntity(), response.getBody().stream().findFirst().orElse(null));
   }
 }
