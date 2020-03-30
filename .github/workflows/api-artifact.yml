@@ -14,11 +14,14 @@ jobs:
       with:
         path: swe-api
         fetch-depth: 0
+        persist-credentials: false
     - name: Checkout api-docs
-      uses: actions/checkout@v2
+      uses: actions/checkout@master
       with:
         repository: Maxelweb/api-docs
         path: api-docs
+        persist-credentials: false
+        fetch-depth: 0
     - name: Move new api in api-docs repo
       run: mv swe-api/apirest/openapi.yaml api-docs/
     - name: Commit files
