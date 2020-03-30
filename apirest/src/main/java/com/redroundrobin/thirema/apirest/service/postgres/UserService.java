@@ -8,15 +8,15 @@ import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 import com.redroundrobin.thirema.apirest.utils.exception.EntityNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
-import com.redroundrobin.thirema.apirest.utils.exception.TfaNotPermittedException;
-import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedToDeleteUserException;
-import com.redroundrobin.thirema.apirest.utils.exception.UserRoleNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
-import com.redroundrobin.thirema.apirest.utils.exception.ValuesNotAllowedException;
-import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedToInsertUserException;
-import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
-import com.redroundrobin.thirema.apirest.utils.exception.TelegramChatNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAllowedToEditException;
+import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedToDeleteUserException;
+import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedToInsertUserException;
+import com.redroundrobin.thirema.apirest.utils.exception.TelegramChatNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.TfaNotPermittedException;
+import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
+import com.redroundrobin.thirema.apirest.utils.exception.UserRoleNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.ValuesNotAllowedException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -56,9 +56,10 @@ public class UserService implements UserDetailsService {
         .filter(key -> !creatable.contains(key))
         .count() == 0;
 
-    if (!onlyCreatableKeys)
-      throw new KeysNotFoundException("There are some keys that either do not exist or you are not" +
-          "allowed to edit them");
+    if (!onlyCreatableKeys) {
+      throw new KeysNotFoundException("There are some keys that either do not exist"
+          + " or you are not allowed to edit them");
+    }
 
     return creatable.size() == keys.size();
   }
@@ -371,7 +372,7 @@ public class UserService implements UserDetailsService {
   public User serializeUser(JsonObject rawUserToInsert, User insertingUser)
       throws KeysNotFoundException, MissingFieldsException, ValuesNotAllowedException,
       UserRoleNotFoundException, EntityNotFoundException, NotAuthorizedToInsertUserException {
-    if(!checkCreatableFields(rawUserToInsert.keySet())) {
+    if (!checkCreatableFields(rawUserToInsert.keySet())) {
       throw new MissingFieldsException("Some necessary fields are missing: cannot create user");
     }
 
@@ -383,56 +384,61 @@ public class UserService implements UserDetailsService {
 
     User.Role userToInsertType;
     try {
-        userToInsertType = User.Role.valueOf(rawUserToInsert.get("type").getAsString());
-    }
-    catch (IllegalArgumentException iae) {
+      userToInsertType = User.Role.valueOf(rawUserToInsert.get("type").getAsString());
+    } catch (IllegalArgumentException iae) {
       throw new UserRoleNotFoundException("The given role doesn't exist");
-    }
-    catch (NullPointerException nptr) {
+    } catch (NullPointerException nptr) {
       throw new UserRoleNotFoundException("The type parameter cannot be null");
     }
 
     //qui so che entity_id dato esiste && so il tipo dello user che si vuole inserire
     //NB: IL MODERATORE PUO INSERIRE SOLO MEMBRI!! VA BENE??
-    if(insertingUser.getType() != User.Role.ADMIN &&
-        insertingUser.getType() == User.Role.MOD &&
-        (userToInsertEntity.getId() != insertingUser.getEntity().getId()
-        || userToInsertType != User.Role.USER) )
+    if (insertingUser.getType() != User.Role.ADMIN
+        && insertingUser.getType() == User.Role.MOD
+        && (userToInsertEntity.getId() != insertingUser.getEntity().getId()
+        || userToInsertType != User.Role.USER)) {
       throw new NotAuthorizedToInsertUserException();
-
-      User newUser = new User();
-      newUser.setEntity(userToInsertEntity);
-      newUser.setType(userToInsertType);
-
-      if (rawUserToInsert.get("name").getAsString() != null)
-        newUser.setName(rawUserToInsert.get("name").getAsString());
-      else throw new ValuesNotAllowedException("The name field cannot be null");
-
-      if (rawUserToInsert.get("surname").getAsString() != null)
-        newUser.setSurname(rawUserToInsert.get("name").getAsString());
-      else throw new ValuesNotAllowedException("The surname field cannot be null");
-
-      String email = rawUserToInsert.get("email").getAsString();
-      if (email != null && repo.findByEmail(email) == null)
-        newUser.setEmail(email);
-      else throw new ValuesNotAllowedException("Either the email field you inserted is" +
-          "null or it is already used");
-
-      return save(newUser);
     }
+
+    User newUser = new User();
+    newUser.setEntity(userToInsertEntity);
+    newUser.setType(userToInsertType);
+
+    if (rawUserToInsert.get("name").getAsString() != null) {
+      newUser.setName(rawUserToInsert.get("name").getAsString());
+    } else {
+      throw new ValuesNotAllowedException("The name field cannot be null");
+    }
+
+    if (rawUserToInsert.get("surname").getAsString() != null) {
+      newUser.setSurname(rawUserToInsert.get("name").getAsString());
+    } else {
+      throw new ValuesNotAllowedException("The surname field cannot be null");
+    }
+
+    String email = rawUserToInsert.get("email").getAsString();
+    if (email != null && repo.findByEmail(email) == null) {
+      newUser.setEmail(email);
+    } else {
+      throw new ValuesNotAllowedException("Either the email field you inserted is"
+        + "null or it is already used");
+    }
+    return save(newUser);
+  }
 
   public User deleteUser(User deletingUser, int userToDeleteId)
       throws NotAuthorizedToDeleteUserException, ValuesNotAllowedException {
     User userToDelete;
-    if((userToDelete = findById(userToDeleteId)) == null) {
+    if ((userToDelete = findById(userToDeleteId)) == null) {
       throw new ValuesNotAllowedException("The given user_id doesn't correspond to any user");
     }
 
-    if(deletingUser.getType() == User.Role.USER
-        || deletingUser.getType() == User.Role.MOD && (
-            userToDelete.getType() != User.Role.USER))
-      throw new NotAuthorizedToDeleteUserException("This user cannot delete the user with" +
-          "the user_id given");
+    if (deletingUser.getType() == User.Role.USER
+        || deletingUser.getType() == User.Role.MOD
+        && (userToDelete.getType() != User.Role.USER)) {
+      throw new NotAuthorizedToDeleteUserException("This user cannot delete "
+          + "the user with the user_id given");
+    }
 
     userToDelete.setDeleted(true);
     userToDelete.setEntity(null);

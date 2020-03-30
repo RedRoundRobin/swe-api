@@ -8,10 +8,14 @@ import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import com.redroundrobin.thirema.apirest.utils.exception.EntityNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAllowedToEditException;
+import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedToDeleteUserException;
+import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedToInsertUserException;
 import com.redroundrobin.thirema.apirest.utils.exception.TfaNotPermittedException;
 import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
 import com.redroundrobin.thirema.apirest.utils.exception.UserRoleNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.ValuesNotAllowedException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,15 +26,10 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import com.redroundrobin.thirema.apirest.utils.exception.UserRoleNotFoundException;
-import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
-import com.redroundrobin.thirema.apirest.utils.exception.ValuesNotAllowedException;
-import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedToInsertUserException;
-import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedToDeleteUserException;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -80,10 +79,10 @@ public class UserController {
     JsonObject jsonUser = JsonParser.parseString(jsonStringUser).getAsJsonObject();
     try {
       return ResponseEntity.ok(userService.serializeUser(jsonUser, user));
-    }
-    catch(KeysNotFoundException | MissingFieldsException | ValuesNotAllowedException
-        | UserRoleNotFoundException | EntityNotFoundException | NotAuthorizedToInsertUserException e){
-      return new ResponseEntity(e.getMessage() , HttpStatus.BAD_REQUEST);
+    } catch (KeysNotFoundException | MissingFieldsException | ValuesNotAllowedException
+        | UserRoleNotFoundException | EntityNotFoundException
+        | NotAuthorizedToInsertUserException e) {
+      return new ResponseEntity(e.getMessage(), HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -250,12 +249,10 @@ public class UserController {
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
     try {
       return ResponseEntity.ok(userService.deleteUser(user, userToDeleteId));
-    }
-    catch(NotAuthorizedToDeleteUserException e){
-      return new ResponseEntity(e.getMessage() , HttpStatus.FORBIDDEN);
-    }
-    catch(ValuesNotAllowedException e){
-      return new ResponseEntity(e.getMessage() , HttpStatus.BAD_REQUEST);
+    } catch (NotAuthorizedToDeleteUserException e) {
+      return new ResponseEntity(e.getMessage(), HttpStatus.FORBIDDEN);
+    } catch (ValuesNotAllowedException e) {
+      return new ResponseEntity(e.getMessage(), HttpStatus.BAD_REQUEST);
     }
   }
 }
