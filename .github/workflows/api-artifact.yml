@@ -48,7 +48,7 @@ jobs:
       uses: ad-m/github-push-action@master
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        branch: develop
+        branch: master
         directory: api-docs
     - name: Slack Notification
       uses: homoluctus/slatify@v2.0.1
