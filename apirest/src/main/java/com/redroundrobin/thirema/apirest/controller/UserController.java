@@ -9,10 +9,14 @@ import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import com.redroundrobin.thirema.apirest.utils.exception.EntityNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAllowedToEditException;
+import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedToDeleteUserException;
+import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedToInsertUserException;
 import com.redroundrobin.thirema.apirest.utils.exception.TfaNotPermittedException;
 import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
 import com.redroundrobin.thirema.apirest.utils.exception.UserRoleNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.ValuesNotAllowedException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +27,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -70,12 +75,13 @@ public class UserController {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
     JsonObject jsonUser = JsonParser.parseString(jsonStringUser).getAsJsonObject();
-    User newUser = userService.serializeUser(jsonUser, user.getType());
-    if (user.getType() == User.Role.ADMIN || user.getType() == User.Role.ADMIN
-        && user.getEntity().getId() == newUser.getEntity().getId()) {
-      return ResponseEntity.ok(userService.save(newUser));
+    try {
+      return ResponseEntity.ok(userService.serializeUser(jsonUser, user));
+    } catch (KeysNotFoundException | MissingFieldsException | ValuesNotAllowedException
+        | UserRoleNotFoundException | EntityNotFoundException
+        | NotAuthorizedToInsertUserException e) {
+      return new ResponseEntity(e.getMessage(), HttpStatus.BAD_REQUEST);
     }
-    return new ResponseEntity(HttpStatus.FORBIDDEN);
   }
 
   private boolean canEditMod(User editingUser, User userToEdit) {
@@ -215,5 +221,20 @@ public class UserController {
   @GetMapping(value = {"/user/{userid:.+}"})
   public User user(@PathVariable("userid") int userId) {
     return userService.findById(userId);
+  }
+
+
+  @DeleteMapping(value = {"/user/delete/{userid:.+}"})
+  public ResponseEntity<?> deleteEntityUser(@RequestHeader("Authorization") String authorization,
+                               @PathVariable("userid") int userToDeleteId) {
+    String token = authorization.substring(7);
+    User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
+    try {
+      return ResponseEntity.ok(userService.deleteUser(user, userToDeleteId));
+    } catch (NotAuthorizedToDeleteUserException e) {
+      return new ResponseEntity(e.getMessage(), HttpStatus.FORBIDDEN);
+    } catch (ValuesNotAllowedException e) {
+      return new ResponseEntity(e.getMessage(), HttpStatus.BAD_REQUEST);
+    }
   }
 }

@@ -18,6 +18,11 @@ public class TelegramController {
   @Autowired
   private JwtUtil jwtTokenUtil;
 
+  public TelegramController(JwtUtil jwtTokenUtil, UserService userService) {
+    this.jwtTokenUtil = jwtTokenUtil;
+    this.userService = userService;
+  }
+
   //funzione di controllo username Telegram e salvataggio chatID
   @GetMapping(value = {"/status"})
   public ResponseEntity<User> checkStatus(@RequestHeader("Authorization") String authorization) {
