@@ -30,21 +30,26 @@ jobs:
       run: mvn clean verify -Dspring.application.admin.enabled=true -Dsonar.login=${{ secrets.SONARCLOUD_LOGIN_KEY }} --file swe-api/apirest/pom.xml -e
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    - name: Move new api in apirest folder
-      run: mv swe-api/apirest/target/openapi.yaml swe-api/apirest/
+    - name: Checkout swe-kafka-db
+      uses: actions/checkout@v2
+      with:
+        repository: RedRoundRobin/api-docs
+        path: api-docs
+    - name: Move new api in api-docs repo
+      run: mv swe-api/apirest/target/openapi.yaml api-docs/
     - name: Commit files
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git add apirest/openapi.yaml
         git commit -m "[BOT] Aggiornata la documentazione API" -a
-      working-directory: swe-api
+      working-directory: api-docs
     - name: Push changes
       uses: ad-m/github-push-action@master
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         branch: develop
-        directory: swe-api
+        directory: api-docs
     - name: Slack Notification
       uses: homoluctus/slatify@v2.0.1
       if: always()
