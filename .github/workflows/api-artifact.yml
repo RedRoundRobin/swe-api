@@ -50,6 +50,7 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN_ACTION }}
         branch: master 
         directory: api-docs
+        repository: RedRoundRobin/api-docs
     - name: Slack Notification
       uses: homoluctus/slatify@v2.0.1
       if: failure()
