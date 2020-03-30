@@ -101,7 +101,7 @@ public class ViewServiceTest {
       return viewFound.orElse(null);
     });
 
-    when(viewRepo.findAllByUserId(any(User.class))).thenAnswer(i -> {
+    when(viewRepo.findAllByUser(any(User.class))).thenAnswer(i -> {
       User user = i.getArgument(0);
       List<View> views = allViews.stream()
           .filter(view -> view.getUser() == user).collect(Collectors.toList());

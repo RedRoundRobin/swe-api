@@ -63,6 +63,7 @@ public class UserService implements UserDetailsService {
     return creatable.size() == keys.size();
   }
 
+  @Autowired
   public UserService(UserRepository userRepository) {
     this.repo = userRepository;
   }

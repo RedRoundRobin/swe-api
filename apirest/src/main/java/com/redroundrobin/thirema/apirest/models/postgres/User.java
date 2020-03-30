@@ -58,7 +58,7 @@ public class User {
   private Entity entity;
 
   @JsonManagedReference
-  @OneToMany(mappedBy = "userId")
+  @OneToMany(mappedBy = "user")
   private List<View> views;
 
   @JsonManagedReference
