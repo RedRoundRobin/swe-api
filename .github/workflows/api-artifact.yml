@@ -45,7 +45,7 @@ jobs:
       working-directory: swe-api
     - name: Push changes
       uses: ad-m/github-push-action@master
+      working-directory: swe-api
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         branch: feature/testApiDocs
-      working-directory: swe-api
