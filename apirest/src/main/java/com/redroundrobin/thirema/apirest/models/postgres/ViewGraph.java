@@ -1,6 +1,8 @@
 package com.redroundrobin.thirema.apirest.models.postgres;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -31,6 +33,7 @@ public class ViewGraph {
   @JoinColumn(name = "sensor_2_id")
   private Sensor sensor2;
 
+  @JsonProperty(value = "viewGraphId")
   public int getId() {
     return graphId;
   }
