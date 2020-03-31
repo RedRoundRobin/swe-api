@@ -121,7 +121,7 @@ public class ViewServiceTest {
       return views;
     });
 
-    when(viewRepo.findByIdAndUser(anyInt(), any(User.class))).thenAnswer(i -> {
+    when(viewRepo.findByViewIdAndUser(anyInt(), any(User.class))).thenAnswer(i -> {
       return allViews.stream()
           .filter(v -> i.getArgument(0).equals(v.getId())
               && i.getArgument(1).equals(v.getUser())).findFirst().orElse(null);

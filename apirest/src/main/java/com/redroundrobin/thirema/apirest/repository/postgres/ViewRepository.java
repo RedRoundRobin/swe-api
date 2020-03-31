@@ -11,5 +11,5 @@ import org.springframework.stereotype.Repository;
 public interface ViewRepository extends CrudRepository<View, Integer> {
   List<View> findAllByUser(User user);
 
-  View findByIdAndUser(int viewId, User user);
+  View findByViewIdAndUser(int viewId, User user);
 }

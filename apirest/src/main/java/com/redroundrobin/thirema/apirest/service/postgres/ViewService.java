@@ -8,7 +8,7 @@ import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedToDeleteUserException;
 import com.redroundrobin.thirema.apirest.utils.exception.ValuesNotAllowedException;
-import com.redroundrobin.thirema.apirest.utils.exception.ViewNotFoundException;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -60,7 +60,7 @@ public class ViewService {
   public View findByIdAndUserId(int viewId, int userId) {
     User user = userService.findById(userId);
     if (user != null) {
-      return viewRepo.findByIdAndUser(viewId, user);
+      return viewRepo.findByViewIdAndUser(viewId, user);
     } else {
       return null;
     }

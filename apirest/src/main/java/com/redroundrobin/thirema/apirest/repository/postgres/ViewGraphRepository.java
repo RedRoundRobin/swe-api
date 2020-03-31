@@ -14,14 +14,14 @@ public interface ViewGraphRepository extends CrudRepository<ViewGraph, Integer> 
 
   Iterable<ViewGraph> findAllByView(View view);
 
-  @Query("SELECT VG FROM ViewGraph VG JOIN VG.view V JOIN V.userId U WHERE U.userId = :userId")
+  @Query("SELECT VG FROM ViewGraph VG JOIN VG.view V JOIN V.user U WHERE U.userId = :userId")
   Iterable<ViewGraph> findAllByUserId(int userId);
 
-  @Query("SELECT VG FROM ViewGraph VG JOIN VG.view V JOIN V.userId U "
+  @Query("SELECT VG FROM ViewGraph VG JOIN VG.view V JOIN V.user U "
       + "WHERE U.userId = :userId AND V.viewId = :viewId")
   Iterable<ViewGraph> findAllByUserIdAndViewId(int userId, int viewId);
 
-  @Query("SELECT VG FROM ViewGraph VG JOIN VG.view V JOIN V.userId U "
+  @Query("SELECT VG FROM ViewGraph VG JOIN VG.view V JOIN V.user U "
       + "WHERE VG.graphId = :id AND U.userId = :userId")
   ViewGraph findByIdAndUserId(int id, int userId);
 }

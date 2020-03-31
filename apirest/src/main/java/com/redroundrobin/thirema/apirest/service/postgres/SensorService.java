@@ -101,7 +101,7 @@ public class SensorService {
   public Sensor findByIdAndEntityId(int sensorId, int entityId) {
     Entity entity = entityService.findById(entityId);
     if (entity != null) {
-      return repo.findByIdAndEntities(sensorId, entity);
+      return repo.findBySensorIdAndEntities(sensorId, entity);
     } else {
       return null;
     }

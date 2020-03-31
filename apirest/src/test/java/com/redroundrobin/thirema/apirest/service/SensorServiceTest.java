@@ -283,7 +283,7 @@ public class SensorServiceTest {
       return allSensors.stream().filter(s -> i.getArgument(0).equals(s.getId()))
           .findFirst();
     });
-    when(repo.findByIdAndEntities(anyInt(), any(Entity.class))).thenAnswer(i -> {
+    when(repo.findBySensorIdAndEntities(anyInt(), any(Entity.class))).thenAnswer(i -> {
       return allSensors.stream().filter(s -> i.getArgument(0).equals(s.getId()) && s.getEntities().contains(i.getArgument(1)))
           .findFirst().orElse(null);
     });
