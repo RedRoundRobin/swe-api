@@ -63,78 +63,51 @@ public class UserService implements UserDetailsService {
     return creatable.size() == keys.size();
   }
 
-  @Autowired
-  public UserService(UserRepository userRepository) {
-    this.repo = userRepository;
-  }
+  private boolean checkFieldsEditable(User.Role role, boolean itself, Set<String> keys) {
+    Set<String> notEditable = new HashSet<>();
 
-  @Autowired
-  public void setAlertService(AlertService alertService) {
-    this.alertService = alertService;
-  }
+    switch (role) {
+      case ADMIN:
+        if (itself) {
+          notEditable.add("type");
+          notEditable.add("deleted");
+          notEditable.add("entityId");
+        }
 
-  @Autowired
-  public void setEntityService(EntityService entityService) {
-    this.entityService = entityService;
-  }
+        break;
+      case MOD:
+        if (itself) {
+          notEditable.add("deleted");
+        } else {
+          notEditable.add("password");
+          notEditable.add("telegramName");
+          notEditable.add("twoFactorAuthentication");
+        }
+        notEditable.add("type");
+        notEditable.add("entityId");
 
-  private boolean checkFieldsEditable(User.Role role, boolean itself, Set<String> keys)
-      throws KeysNotFoundException {
-    Set<String> editable = new HashSet<>();
-    editable.add("name");
-    editable.add("surname");
-    editable.add("email");
-    editable.add("password");
-    editable.add("type");
-    editable.add("telegramName");
-    editable.add("twoFactorAuthentication");
-    editable.add("deleted");
-    editable.add("entityId");
+        break;
+      case USER:
+        notEditable.add("name");
+        notEditable.add("surname");
+        notEditable.add("type");
+        notEditable.add("deleted");
+        notEditable.add("entityId");
 
-    boolean onlyExistingKeys = keys.stream()
-        .filter(key -> !editable.contains(key))
-        .count() == 0;
-
-    if (!onlyExistingKeys) {
-      throw new KeysNotFoundException("There are some keys that don't exist");
-    } else {
-      switch (role) {
-        case ADMIN:
-          if (itself) {
-            editable.remove("type");
-            editable.remove("deleted");
-            editable.remove("entityId");
-          }
-
-          break;
-        case MOD:
-          if (itself) {
-            editable.remove("deleted");
-          } else {
-            editable.remove("password");
-            editable.remove("telegramName");
-            editable.remove("twoFactorAuthentication");
-          }
-          editable.remove("type");
-          editable.remove("entityId");
-
-          break;
-        case USER:
-          editable.remove("name");
-          editable.remove("surname");
-          editable.remove("type");
-          editable.remove("deleted");
-          editable.remove("entityId");
-
-          break;
-        default:
-          editable.clear();
-      }
-
-      return keys.stream()
-          .filter(key -> !editable.contains(key))
-          .count() == 0;
+        break;
+      default:
+        notEditable.add("name");
+        notEditable.add("surname");
+        notEditable.add("email");
+        notEditable.add("password");
+        notEditable.add("type");
+        notEditable.add("telegramName");
+        notEditable.add("twoFactorAuthentication");
+        notEditable.add("deleted");
+        notEditable.add("entityId");
     }
+
+    return !keys.stream().anyMatch(key -> notEditable.contains(key));
   }
 
   private User editAndSave(User userToEdit, Map<String, Object> fieldsToEdit)
@@ -194,6 +167,21 @@ public class UserService implements UserDetailsService {
     }
 
     return save(userToEdit);
+  }
+
+  @Autowired
+  public UserService(UserRepository userRepository) {
+    this.repo = userRepository;
+  }
+
+  @Autowired
+  public void setAlertService(AlertService alertService) {
+    this.alertService = alertService;
+  }
+
+  @Autowired
+  public void setEntityService(EntityService entityService) {
+    this.entityService = entityService;
   }
 
   public List<User> findAll() {
@@ -329,7 +317,7 @@ public class UserService implements UserDetailsService {
 
 
   public User editByUser(User userToEdit, Map<String, Object> fieldsToEdit)
-      throws NotAllowedToEditException, KeysNotFoundException, EntityNotFoundException,
+      throws NotAllowedToEditException, EntityNotFoundException,
       TfaNotPermittedException, UserRoleNotFoundException {
 
     if (!checkFieldsEditable(User.Role.USER, true, fieldsToEdit.keySet())) {
@@ -341,7 +329,7 @@ public class UserService implements UserDetailsService {
   }
 
   public User editByModerator(User userToEdit, boolean itself, Map<String, Object> fieldsToEdit)
-      throws NotAllowedToEditException, KeysNotFoundException, EntityNotFoundException,
+      throws NotAllowedToEditException, EntityNotFoundException,
       TfaNotPermittedException, UserRoleNotFoundException {
 
     if (!checkFieldsEditable(User.Role.MOD, itself, fieldsToEdit.keySet())) {
@@ -354,7 +342,7 @@ public class UserService implements UserDetailsService {
 
   public User editByAdministrator(User userToEdit, boolean itself,
                                   Map<String, Object> fieldsToEdit)
-      throws NotAllowedToEditException, KeysNotFoundException, EntityNotFoundException,
+      throws NotAllowedToEditException, EntityNotFoundException,
       TfaNotPermittedException, UserRoleNotFoundException {
 
     if ((!itself && userToEdit.getType() == User.Role.ADMIN)

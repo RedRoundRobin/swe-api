@@ -146,7 +146,8 @@ public class UserController {
 
       User user;
       try {
-        if (editingUser.getType() == User.Role.ADMIN && userToEdit.getType() != User.Role.ADMIN) {
+        if (editingUser.getType() == User.Role.ADMIN && (userToEdit.getType() != User.Role.ADMIN
+            || editingUser.getId() == userToEdit.getId())) {
 
           user = userService.editByAdministrator(userToEdit,
               editingUser.getId() == userToEdit.getId(), fieldsToEdit);
@@ -194,12 +195,12 @@ public class UserController {
 
           return new ResponseEntity(errorMessage,HttpStatus.CONFLICT);
         }
-      } catch (EntityNotFoundException | KeysNotFoundException | UserRoleNotFoundException nf) {
+      } catch (EntityNotFoundException | UserRoleNotFoundException nf) {
         // go to return BAD_REQUEST
       }
     }
     // when db error is not for duplicate unique or when userToEdit with id furnished is not found
-    // or in case of EntityNotFoundException or KeysNotFoundException or UserRoleNotFoundException
+    // or in case of EntityNotFoundException or UserRoleNotFoundException
     return new ResponseEntity(HttpStatus.BAD_REQUEST);
   }
 

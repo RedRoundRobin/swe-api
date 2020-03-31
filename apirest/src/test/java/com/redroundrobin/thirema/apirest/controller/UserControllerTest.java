@@ -510,7 +510,7 @@ public class UserControllerTest {
         new KeysNotFoundException("telegramName doesn't exist"));
 
     HashMap<String, Object> request = new HashMap<>();
-    request.put("telegramName", newTelegramName);
+    request.put("telegram_Name", newTelegramName);
 
     ResponseEntity response = userController.editUser("Bearer " + user2Token,
         request, user2.getId());

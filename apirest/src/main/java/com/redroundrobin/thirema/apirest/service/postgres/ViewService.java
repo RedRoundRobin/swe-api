@@ -69,7 +69,7 @@ public class ViewService {
   public View serializeView(JsonObject rawViewToInsert, User insertingUser)
       throws KeysNotFoundException, MissingFieldsException {
     if (!checkCreatableFields(rawViewToInsert.keySet())) {
-      throw new MissingFieldsException("Some necessary fields are missing: cannot create user");
+      throw new MissingFieldsException("Some necessary fields are missing: cannot create view");
     }
 
     View newView = new View();

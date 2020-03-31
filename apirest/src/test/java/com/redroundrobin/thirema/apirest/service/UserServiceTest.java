@@ -638,27 +638,6 @@ public class UserServiceTest {
 
 
 
-  // editByUser method tests
-  @Test
-  public void editUser1ByItselfKeysNotFoundException() {
-    // modificare telegramName
-
-    String newTelegramName = "newTelegramName";
-
-    HashMap<String, Object> fieldsToEdit = new HashMap<>();
-    fieldsToEdit.put("telegram_name",newTelegramName);
-
-    try {
-      User user = userService.editByUser(user1, fieldsToEdit);
-
-      assertTrue(false);
-    } catch (KeysNotFoundException knfe) {
-      assertTrue(true);
-    } catch (Exception e) {
-      assertTrue(false);
-    }
-  }
-
   @Test
   public void editUser1ByItselfEditNotAllowed() {
     // modificare name
