@@ -122,10 +122,10 @@ public class UserService implements UserDetailsService {
             notEditable.add(e.getKey());
           }
         });
-    if (keys.stream().anyMatch(k -> editable.contains(k))) {
+    if (!keys.stream().anyMatch(k -> userFields.keySet().contains(k))) {
       throw new MissingFieldsException("There aren't fields that can be edited");
     } else {
-      return keys.stream().allMatch(k -> editable.contains(k) || notEditable.contains(k));
+      return keys.stream().allMatch(k -> editable.contains(k) || !notEditable.contains(k));
     }
   }
 

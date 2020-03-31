@@ -507,7 +507,7 @@ public class UserControllerTest {
     String newTelegramName = "newEmail";
 
     when(userService.editByUser(eq(user2), any(HashMap.class))).thenThrow(
-        new KeysNotFoundException("telegramName doesn't exist"));
+        new MissingFieldsException("There aren't fields that can be edited"));
 
     HashMap<String, Object> request = new HashMap<>();
     request.put("telegram_Name", newTelegramName);
@@ -649,7 +649,7 @@ public class UserControllerTest {
     jsonUser.addProperty("surname", "polo");
     jsonUser.addProperty("email", "CONTROLLOBENFORMATA!!!");
     jsonUser.addProperty("type",  0);
-    jsonUser.addProperty("entity_id", 1);
+    jsonUser.addProperty("entityId", 1);
     jsonUser.addProperty("password", "password");
 
     ResponseEntity<User> response = userController.createUser(authorization, jsonUser.toString());

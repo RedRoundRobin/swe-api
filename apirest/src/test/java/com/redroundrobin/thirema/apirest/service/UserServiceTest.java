@@ -503,7 +503,8 @@ public class UserServiceTest {
     try {
       User user = userService.editByAdministrator(user1, false, fieldsToEdit);
       assertTrue(false);
-    } catch (UserRoleNotFoundException urnfe) {
+    } catch (InvalidFieldsValuesException urnfe) {
+      assertTrue(urnfe.getMessage().contains("role"));
       assertTrue(true);
     } catch (Exception e) {
       System.out.println(e);
@@ -523,7 +524,8 @@ public class UserServiceTest {
     try {
       User user = userService.editByAdministrator(mod1, false, fieldsToEdit);
       assertTrue(false);
-    } catch (EntityNotFoundException urnfe) {
+    } catch (InvalidFieldsValuesException urnfe) {
+      assertTrue(urnfe.getMessage().contains("entity"));
       assertTrue(true);
     } catch (Exception e) {
       System.out.println(e);
@@ -675,6 +677,29 @@ public class UserServiceTest {
 
       assertTrue(false);
     } catch (TfaNotPermittedException tnpe) {
+      assertTrue(true);
+    } catch (Exception e) {
+      System.out.println(e);
+      assertTrue(false);
+    }
+  }
+
+  @Test
+  public void editUser2ByItselfWithNotExistentfields() {
+    // set telegram name and tfa true
+
+    String newTelegramName = "newName";
+    boolean newTfa = true;
+
+    HashMap<String, Object> fieldsToEdit = new HashMap<>();
+    fieldsToEdit.put("telegramaName",newTelegramName);
+    fieldsToEdit.put("tfa",newTfa);
+
+    try {
+      User user = userService.editByUser(user1, fieldsToEdit);
+
+      assertTrue(false);
+    } catch (MissingFieldsException mfe) {
       assertTrue(true);
     } catch (Exception e) {
       System.out.println(e);

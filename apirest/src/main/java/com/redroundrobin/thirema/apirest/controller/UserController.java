@@ -130,10 +130,6 @@ public class UserController {
     return userService.findById(userId);
   }
 
-  private ResponseEntity<User> editByAdmin(User editingUser, User userToEdit, Map<String, Object> fieldsToEdit) {
-
-  }
-
   // Edit user by userId and a map with data to edit
   @PutMapping(value = {"/{userid:.+}"})
   public ResponseEntity<Map<String, Object>> editUser(
