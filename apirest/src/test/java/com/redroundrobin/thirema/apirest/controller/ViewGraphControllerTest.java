@@ -1,5 +1,5 @@
 package com.redroundrobin.thirema.apirest.controller;
-/*
+
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
@@ -9,8 +9,11 @@ import com.redroundrobin.thirema.apirest.service.postgres.ViewGraphService;
 import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
+import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.EntityNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAllowedToEditException;
 import com.redroundrobin.thirema.apirest.utils.exception.TfaNotPermittedException;
 import org.junit.Before;
@@ -28,6 +31,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -37,6 +41,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
@@ -80,9 +85,15 @@ public class ViewGraphControllerTest {
   private Sensor sensor3;
   List<Sensor> allSensors;
 
+  private List<ViewGraph> view1ViewGraphs;
+  private List<ViewGraph> view2ViewGraphs;
+
+  private List<View> user1Views;
+  private List<View> user2Views;
+
 
   @Before
-  public void setUp() {
+  public void setUp() throws ElementNotFoundException, MissingFieldsException, InvalidFieldsException {
     viewGraphController = new ViewGraphController(viewGraphService);
     viewGraphController.setJwtUtil(jwtUtil);
     viewGraphController.setUserService(userService);
@@ -187,26 +198,26 @@ public class ViewGraphControllerTest {
 
 
     // -------------------------- Set viewGraphs to view and viceversa --------------------------
-    List<ViewGraph> view1ViewGraphs = new ArrayList<>();
+    view1ViewGraphs = new ArrayList<>();
     view1ViewGraphs.add(viewGraph1);
     view1ViewGraphs.add(viewGraph3);
     view1.setViewGraphs(view1ViewGraphs);
     viewGraph1.setView(view1);
     viewGraph3.setView(view1);
 
-    List<ViewGraph> view2ViewGraphs = new ArrayList<>();
+    view2ViewGraphs = new ArrayList<>();
     view2ViewGraphs.add(viewGraph2);
     view2.setViewGraphs(view2ViewGraphs);
     viewGraph2.setView(view2);
 
 
     // -------------------------- Set users to view and viceversa --------------------------
-    List<View> user1Views = new ArrayList<>();
+    user1Views = new ArrayList<>();
     user1Views.add(view1);
     view1.setUser(admin);
     admin.setViews(user1Views);
 
-    List<View> user2Views = new ArrayList<>();
+    user2Views = new ArrayList<>();
     user2Views.add(view2);
     view2.setUser(user);
     user.setViews(user2Views);
@@ -249,7 +260,7 @@ public class ViewGraphControllerTest {
     when(viewGraphService.findAll()).thenReturn(allViewGraphs);
     when(viewGraphService.findAllByUserId(anyInt())).thenAnswer(i -> {
       return allViewGraphs.stream()
-          .filter(vg -> i.getArgument(0).equals(vg.getView().getUser())).collect(Collectors.toList());
+          .filter(vg -> i.getArgument(0).equals(vg.getView().getUser().getId())).collect(Collectors.toList());
     });
     when(viewGraphService.findAllByUserIdAndViewId(anyInt(), anyInt())).thenAnswer(i -> {
       User user = allUsers.stream()
@@ -275,45 +286,254 @@ public class ViewGraphControllerTest {
           .filter(vg -> i.getArgument(0).equals(vg.getId())).findFirst().orElse(null);
     });
     when(viewGraphService.getPermissionByIdAndUserId(anyInt(), anyInt())).thenAnswer(i -> {
-      return allViewGraphs.stream()
-          .anyMatch(vg -> i.getArgument(0).equals(vg.getId())
-              && i.getArgument(1).equals(vg.getView().getUser().getId()));
+      ViewGraph viewGraph = allViewGraphs.stream()
+          .filter(vg -> i.getArgument(0).equals(vg.getId())).findFirst().orElse(null);
+      if (viewGraph != null) {
+        return i.getArgument(1).equals(viewGraph.getView().getUser().getId());
+      } else {
+        throw new ElementNotFoundException("not found");
+      }
+    });
+    when(viewGraphService.createViewGraph(any(User.class), any(HashMap.class))).thenAnswer(i -> {
+      Map<String, Object> fields = i.getArgument(1);
+      if (fields.keySet().contains("sensor1") && fields.get("sensor1").equals(sensor1.getId())) {
+        ViewGraph viewGraph = new ViewGraph();
+        viewGraph.setView(view1);
+        viewGraph.setSensor1(sensor1);
+        viewGraph.setCorrelation(ViewGraph.Correlation.COVARIANCE);
+        return viewGraph;
+      } else {
+        throw new MissingFieldsException("");
+      }
     });
   }
 
-  private User cloneUser(User user) {
-    User clone = new User();
-    clone.setEmail(user.getEmail());
-    clone.setTelegramName(user.getTelegramName());
-    clone.setId(user.getId());
-    clone.setEntity(user.getEntity());
-    clone.setDeleted(user.isDeleted());
-    clone.setTelegramChat(user.getTelegramChat());
-    clone.setName(user.getName());
-    clone.setSurname(user.getSurname());
-    clone.setType(user.getType());
-    clone.setTfa(user.getTfa());
-    clone.setPassword(user.getPassword());
-
-    return clone;
-  }
-
   @Test
-  public void getAllViewGraphsSuccessfull() throws Exception {
+  public void getAllViewGraphsSuccessfull() {
 
-    ResponseEntity response = viewGraphController.getViewGraphs("Bearer " + admin1Token);
+    ResponseEntity<List<ViewGraph>> response = viewGraphController.getViewGraphs(adminTokenWithBearer,
+        null, null);
 
     // Check status and if are present tfa and token
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertNotNull(response.getBody());
+    assertEquals(allViewGraphs, response.getBody());
   }
 
   @Test
-  public void getAllViewGraphsByUserError403() throws Exception {
+  public void getAllViewGraphsByAdminByUserIdAndViewIdSuccessfull() {
 
-    ResponseEntity response = viewGraphController.getViewGraphs("Bearer " + user1Token);
+    ResponseEntity<List<ViewGraph>> response = viewGraphController.getViewGraphs(adminTokenWithBearer,
+        user.getId(), view2.getId());
+
+    // Check status and if are present tfa and token
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(view2ViewGraphs, response.getBody());
+  }
+
+  @Test
+  public void getAllViewGraphsByAdminByUserIdSuccessfull() {
+
+    ResponseEntity<List<ViewGraph>> response = viewGraphController.getViewGraphs(adminTokenWithBearer,
+        admin.getId(), null);
+
+    // Check status and if are present tfa and token
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertTrue(!response.getBody().isEmpty());
+  }
+
+  @Test
+  public void getAllViewGraphsByAdminByViewIdSuccessfull() {
+
+    ResponseEntity<List<ViewGraph>> response = viewGraphController.getViewGraphs(adminTokenWithBearer,
+        null, view1.getId());
+
+    // Check status and if are present tfa and token
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(view1ViewGraphs, response.getBody());
+  }
+
+  @Test
+  public void getAllViewGraphsByUserByUserIdSuccessfull() {
+
+    ResponseEntity<List<ViewGraph>> response = viewGraphController.getViewGraphs(userTokenWithBearer,
+        user.getId(), null);
+
+    // Check status and if are present tfa and token
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(view2ViewGraphs, response.getBody());
+  }
+
+  @Test
+  public void getAllViewGraphsByUserByUserIdAndViewIdSuccessfull() {
+
+    ResponseEntity<List<ViewGraph>> response = viewGraphController.getViewGraphs(userTokenWithBearer,
+        user.getId(), view2.getId());
+
+    // Check status and if are present tfa and token
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(view2ViewGraphs, response.getBody());
+  }
+
+  @Test
+  public void getAllViewGraphsByUserByAdminIdEmpty() {
+
+    ResponseEntity<List<ViewGraph>> response = viewGraphController.getViewGraphs(userTokenWithBearer,
+        admin.getId(), null);
+
+    // Check status and if are present tfa and token
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertTrue(response.getBody().isEmpty());
+  }
+
+
+
+  @Test
+  public void getViewGraphByUserByIdSuccessfull() {
+
+    ResponseEntity<ViewGraph> response = viewGraphController.getViewGraph(userTokenWithBearer,
+        viewGraph2.getId());
+
+    // Check status and if are present tfa and token
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(viewGraph2, response.getBody());
+  }
+
+  @Test
+  public void getViewGraphByUserByIdNotPermitted() {
+
+    ResponseEntity<ViewGraph> response = viewGraphController.getViewGraph(userTokenWithBearer,
+        viewGraph1.getId());
 
     // Check status and if are present tfa and token
     assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
   }
-}*/
+
+  @Test
+  public void getViewGraphByUserByNotExistentId() {
+
+    ResponseEntity<ViewGraph> response = viewGraphController.getViewGraph(userTokenWithBearer,
+        9);
+
+    // Check status and if are present tfa and token
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+  }
+
+
+
+  @Test
+  public void createViewGraphByAdminSuccessfull() {
+    Map<String, Integer> newViewGraphFields = new HashMap<>();
+    newViewGraphFields.put("view", view1.getId());
+    newViewGraphFields.put("correlation", 1);
+    newViewGraphFields.put("sensor1", sensor1.getId());
+
+    ViewGraph viewGraph = new ViewGraph();
+    viewGraph.setView(view1);
+    viewGraph.setCorrelation(ViewGraph.Correlation.COVARIANCE);
+    viewGraph.setSensor1(sensor1);
+
+    ResponseEntity<ViewGraph> response = viewGraphController.createUserViewGraphs(
+        adminTokenWithBearer, newViewGraphFields);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(viewGraph.getView(), response.getBody().getView());
+    assertEquals(viewGraph.getSensor1(), response.getBody().getSensor1());
+    assertEquals(viewGraph.getCorrelation(), response.getBody().getCorrelation());
+  }
+
+
+  @Test
+  public void createViewGraphByAdminMissingNecessaryFields() {
+    Map<String, Integer> newViewGraphFields = new HashMap<>();
+    newViewGraphFields.put("view", view1.getId());
+    newViewGraphFields.put("sensor1", sensor2.getId());
+
+    ResponseEntity<ViewGraph> response = viewGraphController.createUserViewGraphs(
+        adminTokenWithBearer, newViewGraphFields);
+
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+  }
+
+
+
+  @Test
+  public void editViewGraph1ByAdminSuccessfull() throws Exception {
+    Map<String, Integer> fieldsToEdit = new HashMap<>();
+    fieldsToEdit.put("sensor1", sensor3.getId());
+
+    viewGraph1.setSensor1(sensor3);
+    when(viewGraphService.editViewGraph(admin, viewGraph1.getId(), fieldsToEdit))
+        .thenReturn(viewGraph1);
+
+    ResponseEntity<ViewGraph> response = viewGraphController.editViewGraph(
+        adminTokenWithBearer, viewGraph1.getId(), fieldsToEdit);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(viewGraph1, response.getBody());
+  }
+
+  @Test
+  public void editViewGraphByUserElementNotFoundError400() {
+    Map<String, Integer> newViewGraphFields = new HashMap<>();
+    newViewGraphFields.put("view", view1.getId());
+
+    //when(viewGraphService.editViewGraph(any(User.class), anyInt(), any(Map.class)))
+     //   .thenThrow(new ElementNotFoundException(" "));
+
+    ResponseEntity<ViewGraph> response = viewGraphController.editViewGraph(
+        userTokenWithBearer, 9, newViewGraphFields);
+
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+  }
+
+  @Test
+  public void editViewGraphByUserViewGraphNotAuthorizedError403() throws Exception {
+    Map<String, Integer> newViewGraphFields = new HashMap<>();
+    newViewGraphFields.put("view", view1.getId());
+
+    ResponseEntity<ViewGraph> response = viewGraphController.editViewGraph(
+        userTokenWithBearer, viewGraph1.getId(), newViewGraphFields);
+
+    assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+  }
+
+
+
+  @Test
+  public void deleteViewGraphByAdminSuccessfull() throws ElementNotFoundException {
+    when(viewGraphService.deleteViewGraph(anyInt())).thenReturn(true);
+
+    ResponseEntity response = viewGraphController.deleteUserViewGraph(adminTokenWithBearer,
+        viewGraph1.getId());
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+  }
+
+  @Test
+  public void deleteViewGraphByAdminConflictError409() throws ElementNotFoundException {
+    when(viewGraphService.deleteViewGraph(anyInt())).thenReturn(false);
+
+    ResponseEntity response = viewGraphController.deleteUserViewGraph(adminTokenWithBearer,
+        viewGraph1.getId());
+
+    assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+  }
+
+  @Test
+  public void deleteViewGraphByUserNotAuthorizedError403() {
+    ResponseEntity response = viewGraphController.deleteUserViewGraph(userTokenWithBearer,
+        viewGraph1.getId());
+
+    assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+  }
+
+  @Test
+  public void deleteViewGraphByAdminByNotExistentIdError400() throws ElementNotFoundException {
+    when(viewGraphService.deleteViewGraph(anyInt())).thenThrow(new ElementNotFoundException(""));
+
+    ResponseEntity response = viewGraphController.deleteUserViewGraph(adminTokenWithBearer,
+        viewGraph1.getId());
+
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+  }
+}

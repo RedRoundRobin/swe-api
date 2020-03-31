@@ -94,7 +94,7 @@ public class ViewGraphController extends CoreController {
   }
 
   @PostMapping(value = {"/{viewGraphId:.+}"})
-  public ResponseEntity<ViewGraph> editUserViewGraphs(
+  public ResponseEntity<ViewGraph> editViewGraph(
       @RequestHeader("authorization") String authorization,
       @PathVariable("viewGraphId") int viewGraphId,
       @RequestBody Map<String, Integer> newViewGraphFields) {
@@ -102,7 +102,7 @@ public class ViewGraphController extends CoreController {
     try {
       if (user.getType() == User.Role.ADMIN
         || viewGraphService.getPermissionByIdAndUserId(viewGraphId, user.getId())) {
-        return ResponseEntity.ok(viewGraphService.createViewGraph(user, newViewGraphFields));
+        return ResponseEntity.ok(viewGraphService.editViewGraph(user, viewGraphId, newViewGraphFields));
       } else {
         return new ResponseEntity(HttpStatus.FORBIDDEN);
       }

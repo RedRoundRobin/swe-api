@@ -88,7 +88,7 @@ public class UserController {
       try {
         return ResponseEntity.ok(userService.findAllByEntityId(user.getEntity().getId()));
       } catch (EntityNotFoundException enfe) {
-        // go to return FORBIDDE
+        // go to return FORBIDDEN
       }
     }
     return new ResponseEntity(HttpStatus.FORBIDDEN);
