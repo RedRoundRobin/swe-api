@@ -2,12 +2,12 @@ package com.redroundrobin.thirema.apirest.controller;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import com.redroundrobin.thirema.apirest.utils.exception.EntityNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAllowedToEditException;
@@ -130,6 +130,10 @@ public class UserController {
     return userService.findById(userId);
   }
 
+  private ResponseEntity<User> editByAdmin(User editingUser, User userToEdit, Map<String, Object> fieldsToEdit) {
+
+  }
+
   // Edit user by userId and a map with data to edit
   @PutMapping(value = {"/{userid:.+}"})
   public ResponseEntity<Map<String, Object>> editUser(
@@ -142,54 +146,37 @@ public class UserController {
     User userToEdit = userService.findById(userId);
 
     if (userToEdit != null) {
-      HashMap<String, Object> response = new HashMap<>();
 
       User user;
       try {
         if (editingUser.getType() == User.Role.ADMIN && (userToEdit.getType() != User.Role.ADMIN
             || editingUser.getId() == userToEdit.getId())) {
-
-            String email = editingUser.getEmail();
-
-            user = userService.editByAdministrator(userToEdit,
+          user = userService.editByAdministrator(userToEdit,
                 editingUser.getId() == userToEdit.getId(), fieldsToEdit);
 
-            if (user.getEmail() != email) {
-              String newToken = jwtTokenUtil.generateTokenWithExpiration("webapp",
-                  jwtTokenUtil.extractExpiration(token),
-                  userService.loadUserByEmail(user.getEmail()));
-              response.put("token", newToken);
-            }
         } else if (editingUser.getType() == User.Role.MOD && canEditMod(editingUser, userToEdit)) {
-
-          String email = editingUser.getEmail();
-
           user = userService.editByModerator(userToEdit,
               editingUser.getId() == userToEdit.getId(), fieldsToEdit);
 
-          if (user.getEmail() != email) {
-            String newToken = jwtTokenUtil.generateTokenWithExpiration("webapp",
-                jwtTokenUtil.extractExpiration(token),
-                userService.loadUserByEmail(user.getEmail()));
-            response.put("token", newToken);
-          }
-
         } else if (editingUser.getType() == User.Role.USER
             && editingUser.getId() == userToEdit.getId()) {
-
           user = userService.editByUser(userToEdit, fieldsToEdit);
 
-          if (!user.getEmail().equals(editingUserEmail)) {
-            String newToken = jwtTokenUtil.generateTokenWithExpiration("webapp",
-                jwtTokenUtil.extractExpiration(token),
-                userService.loadUserByEmail(user.getEmail()));
-            response.put("token", newToken);
-          }
         } else {
           return new ResponseEntity(HttpStatus.FORBIDDEN);
         }
 
+        HashMap<String, Object> response = new HashMap<>();
         response.put("user",user);
+
+        if (editingUser.getId() == userToEdit.getId() &&
+            !user.getEmail().equals(editingUserEmail)) {
+          String newToken = jwtTokenUtil.generateTokenWithExpiration("webapp",
+              jwtTokenUtil.extractExpiration(token),
+              userService.loadUserByEmail(user.getEmail()));
+          response.put("token", newToken);
+        }
+
         return ResponseEntity.ok(response);
 
       } catch (UsernameNotFoundException unfe) {
@@ -212,12 +199,12 @@ public class UserController {
 
           return new ResponseEntity(errorMessage,HttpStatus.CONFLICT);
         }
-      } catch (EntityNotFoundException | UserRoleNotFoundException nf) {
+      } catch (MissingFieldsException | InvalidFieldsValuesException nf) {
         // go to return BAD_REQUEST
       }
     }
     // when db error is not for duplicate unique or when userToEdit with id furnished is not found
-    // or in case of EntityNotFoundException or UserRoleNotFoundException
+    // or there are missing edit fields or invalid values
     return new ResponseEntity(HttpStatus.BAD_REQUEST);
   }
 
