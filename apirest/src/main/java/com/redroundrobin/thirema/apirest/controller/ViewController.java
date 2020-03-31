@@ -4,7 +4,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.postgres.View;
-import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.service.postgres.ViewService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
@@ -86,12 +85,11 @@ public class ViewController {
       @RequestHeader("Authorization") String authorization,  @PathVariable("viewId") int viewId) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
-    try {
-      return ResponseEntity.ok(viewService.getViewByUserId(user.getId(), viewId));
-    } catch (ViewNotFoundException e) {
-      return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-    } catch (ValuesNotAllowedException e) {
-      return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    View view = viewService.findByIdAndUserId(viewId, user.getId());
+    if (view != null) {
+      return ResponseEntity.ok(view);
+    } else {
+      return new ResponseEntity(HttpStatus.BAD_REQUEST);
     }
   }
 }

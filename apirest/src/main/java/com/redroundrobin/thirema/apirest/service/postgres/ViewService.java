@@ -8,7 +8,7 @@ import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedToDeleteUserException;
 import com.redroundrobin.thirema.apirest.utils.exception.ValuesNotAllowedException;
-import com.redroundrobin.thirema.apirest.utils.exception.ViewNotFoundException;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -20,6 +20,7 @@ public class ViewService {
 
   private ViewRepository viewRepo;
 
+  private UserService userService;
 
   private boolean checkCreatableFields(Set<String> keys)
       throws KeysNotFoundException {
@@ -43,26 +44,25 @@ public class ViewService {
     this.viewRepo = viewRepo;
   }
 
+  @Autowired
+  public void setUserService(UserService userService) {
+    this.userService = userService;
+  }
 
   public List<View> findAllByUser(User user) {
     return viewRepo.findAllByUser(user);
   }
 
-  public View findByViewId(int viewId) {
-    return viewRepo.findByViewId(viewId);
+  public View findById(int viewId) {
+    return viewRepo.findById(viewId).orElse(null);
   }
 
-  public View getViewByUserId(int userId, int viewId) throws
-      ViewNotFoundException, ValuesNotAllowedException {
-    View view = viewRepo.findByViewId(viewId);
-    if (view != null && userId == view.getUser().getId()) {
-      return view;
-    }
-
-    if (!(view != null)) {
-      throw new ViewNotFoundException("");
+  public View findByIdAndUserId(int viewId, int userId) {
+    User user = userService.findById(userId);
+    if (user != null) {
+      return viewRepo.findByViewIdAndUser(viewId, user);
     } else {
-      throw new ValuesNotAllowedException("");
+      return null;
     }
   }
 
@@ -81,7 +81,7 @@ public class ViewService {
   public void deleteView(User deletingUser, int viewToDeleteId)
       throws NotAuthorizedToDeleteUserException, ValuesNotAllowedException {
     View viewToDelete;
-    if ((viewToDelete = viewRepo.findByViewId(viewToDeleteId)) == null) {
+    if ((viewToDelete = viewRepo.findById(viewToDeleteId).orElse(null)) == null) {
       throw new ValuesNotAllowedException("The given view_id doesn't correspond to any view");
     }
 
