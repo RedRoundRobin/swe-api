@@ -1,9 +1,6 @@
 package com.redroundrobin.thirema.apirest.controller;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.redroundrobin.thirema.apirest.config.CustomAuthenticationManager;
-import com.redroundrobin.thirema.apirest.models.AuthenticationRequestTelegram;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.TelegramService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
@@ -24,8 +21,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -48,8 +43,8 @@ public class AuthController {
     this.telegramService = telegramService;
   }
 
-  @RequestMapping(value = "/auth", method = RequestMethod.POST)
-  public ResponseEntity<Object> authentication(
+  @PostMapping(value = "/auth")
+  public ResponseEntity<Map<String, Object>> authentication(
       @RequestBody Map<String, Object> authenticationRequest) {
     String email = (String) authenticationRequest.get("username");
     String password = (String) authenticationRequest.get("password");
@@ -83,8 +78,8 @@ public class AuthController {
         int sixDigitsCode = 100000 + rnd.nextInt(900000);
 
         Map<String, Object> request = new HashMap<>();
-        request.put("auth_code", sixDigitsCode); //codice fittizio
-        request.put("chat_id", user.getTelegramChat());
+        request.put("authCode", sixDigitsCode); //codice fittizio
+        request.put("chatId", user.getTelegramChat());
 
         if (!telegramService.sendTfa(request)) {
           return  new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -108,14 +103,15 @@ public class AuthController {
   }
 
   @PostMapping(value = "/auth/tfa")
-  public ResponseEntity<?> tfaAuthentication(@RequestBody Map<String, Object> request,
-                                           @RequestHeader("Authorization") String authorization) {
+  public ResponseEntity<Map<String, Object>> tfaAuthentication(
+      @RequestBody Map<String, Object> request,
+      @RequestHeader("Authorization") String authorization) {
 
-    if (!request.containsKey("auth_code") || ((String) request.get("auth_code")).equals("")) {
+    if (!request.containsKey("authCode") || ((String) request.get("authCode")).equals("")) {
       return new ResponseEntity(HttpStatus.BAD_REQUEST);
     }
 
-    String authCode = (String) request.get("auth_code");
+    String authCode = (String) request.get("authCode");
     String tfaToken = authorization.substring(7);
 
     if (!jwtTokenUtil.isTfa(tfaToken)) {
@@ -155,14 +151,10 @@ public class AuthController {
 
   //funzione di controllo username Telegram e salvataggio chatID
   @PostMapping(value = {"/auth/telegram"})
-  public ResponseEntity<?> telegramAuthentication(@RequestBody
+  public ResponseEntity<Map<String, Object>> telegramAuthentication(@RequestBody
                                            Map<String, Object> authenticationRequest) {
-    String telegramName = (String) authenticationRequest.get("telegram_name");
-    String chatId = (String) authenticationRequest.get("telegram_chat");
-
-    System.out.println(authenticationRequest);
-    System.out.println(telegramName);
-    System.out.println(chatId);
+    String telegramName = (String) authenticationRequest.get("telegramName");
+    String chatId = (String) authenticationRequest.get("telegramChat");
 
     if (telegramName == null || chatId == null)  {
       return new ResponseEntity(HttpStatus.BAD_REQUEST);

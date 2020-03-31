@@ -1,6 +1,7 @@
 package com.redroundrobin.thirema.apirest.models.postgres;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.Objects;
 import javax.persistence.CascadeType;
@@ -32,6 +33,7 @@ public class Gateway {
     this.name = name;
   }
 
+  @JsonProperty(value = "gatewayId")
   public int getId() {
     return gatewayId;
   }

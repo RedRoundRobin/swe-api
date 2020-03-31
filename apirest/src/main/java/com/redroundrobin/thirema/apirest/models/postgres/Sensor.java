@@ -1,6 +1,7 @@
 package com.redroundrobin.thirema.apirest.models.postgres;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.Objects;
 import javax.persistence.Column;
@@ -8,6 +9,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -26,14 +28,25 @@ public class Sensor {
   private int realSensorId;
 
   @JsonBackReference
+  @OneToMany(mappedBy = "sensor")
+  private List<Alert> alerts;
+
+  @JsonBackReference
   @ManyToOne
   @JoinColumn(name = "device_id")
   private Device device;
 
   @JsonBackReference
-  @OneToMany(mappedBy = "sensor")
-  private List<Alert> alerts;
+  @ManyToMany(mappedBy = "sensors")
+  private List<Entity> entities;
 
+  @JsonBackReference
+  @OneToMany(mappedBy = "sensor1")
+  private List<ViewGraph> viewGraphs1;
+
+  @JsonBackReference
+  @OneToMany(mappedBy = "sensor2")
+  private List<ViewGraph> viewGraphs2;
 
   public Sensor() {
   }
@@ -51,11 +64,12 @@ public class Sensor {
     this.realSensorId = realSensorId;
   }
 
-  public int getSensorId() {
+  @JsonProperty(value = "sensorId")
+  public int getId() {
     return sensorId;
   }
 
-  public void setSensorId(int sensorId) {
+  public void setId(int sensorId) {
     this.sensorId = sensorId;
   }
 
@@ -89,6 +103,30 @@ public class Sensor {
 
   public void setAlerts(List<Alert> alerts) {
     this.alerts = alerts;
+  }
+
+  public List<Entity> getEntities() {
+    return entities;
+  }
+
+  public void setEntities(List<Entity> entities) {
+    this.entities = entities;
+  }
+
+  public List<ViewGraph> getViewGraphs1() {
+    return viewGraphs1;
+  }
+
+  public void setViewGraphs1(List<ViewGraph> viewGraphs1) {
+    this.viewGraphs1 = viewGraphs1;
+  }
+
+  public List<ViewGraph> getViewGraphs2() {
+    return viewGraphs2;
+  }
+
+  public void setViewGraphs2(List<ViewGraph> viewGraphs2) {
+    this.viewGraphs2 = viewGraphs2;
   }
 
   @Override
