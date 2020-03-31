@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -141,7 +140,8 @@ public class UserService implements UserDetailsService {
 
     if (fieldsToEdit.containsKey("entityId")
         && entityService.findById((int)fieldsToEdit.get("entityId")) == null) {
-      throw new InvalidFieldsValuesException("The entity with the entityId furnished doesn't exist");
+      throw new InvalidFieldsValuesException(
+          "The entity with the entityId furnished doesn't exist");
     }
 
     for (Map.Entry<String, Object> entry : fieldsToEdit.entrySet()) {

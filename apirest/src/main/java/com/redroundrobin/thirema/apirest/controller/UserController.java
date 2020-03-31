@@ -61,10 +61,11 @@ public class UserController {
 
   // Get all users
   @GetMapping(value = {""})
-  public ResponseEntity<List<User>> getUsers(@RequestHeader("Authorization") String authorization,
-                                             @RequestParam(value = "entity", required = false) Integer entity,
-                                             @RequestParam(value = "disabledAlert", required = false) Integer disabledAlert,
-                                             @RequestParam(value = "view", required = false) Integer view) {
+  public ResponseEntity<List<User>> getUsers(
+      @RequestHeader("Authorization") String authorization,
+      @RequestParam(value = "entity", required = false) Integer entity,
+      @RequestParam(value = "disabledAlert", required = false) Integer disabledAlert,
+      @RequestParam(value = "view", required = false) Integer view) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
     if (user.getType() == User.Role.ADMIN) {
@@ -165,8 +166,8 @@ public class UserController {
         HashMap<String, Object> response = new HashMap<>();
         response.put("user",user);
 
-        if (editingUser.getId() == userToEdit.getId() &&
-            !user.getEmail().equals(editingUserEmail)) {
+        if (editingUser.getId() == userToEdit.getId()
+            && !user.getEmail().equals(editingUserEmail)) {
           String newToken = jwtTokenUtil.generateTokenWithExpiration("webapp",
               jwtTokenUtil.extractExpiration(token),
               userService.loadUserByEmail(user.getEmail()));
