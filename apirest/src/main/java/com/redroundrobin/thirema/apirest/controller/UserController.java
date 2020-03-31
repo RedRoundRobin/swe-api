@@ -149,13 +149,30 @@ public class UserController {
         if (editingUser.getType() == User.Role.ADMIN && (userToEdit.getType() != User.Role.ADMIN
             || editingUser.getId() == userToEdit.getId())) {
 
-          user = userService.editByAdministrator(userToEdit,
-              editingUser.getId() == userToEdit.getId(), fieldsToEdit);
+            String email = editingUser.getEmail();
 
+            user = userService.editByAdministrator(userToEdit,
+                editingUser.getId() == userToEdit.getId(), fieldsToEdit);
+
+            if (user.getEmail() != email) {
+              String newToken = jwtTokenUtil.generateTokenWithExpiration("webapp",
+                  jwtTokenUtil.extractExpiration(token),
+                  userService.loadUserByEmail(user.getEmail()));
+              response.put("token", newToken);
+            }
         } else if (editingUser.getType() == User.Role.MOD && canEditMod(editingUser, userToEdit)) {
+
+          String email = editingUser.getEmail();
 
           user = userService.editByModerator(userToEdit,
               editingUser.getId() == userToEdit.getId(), fieldsToEdit);
+
+          if (user.getEmail() != email) {
+            String newToken = jwtTokenUtil.generateTokenWithExpiration("webapp",
+                jwtTokenUtil.extractExpiration(token),
+                userService.loadUserByEmail(user.getEmail()));
+            response.put("token", newToken);
+          }
 
         } else if (editingUser.getType() == User.Role.USER
             && editingUser.getId() == userToEdit.getId()) {
