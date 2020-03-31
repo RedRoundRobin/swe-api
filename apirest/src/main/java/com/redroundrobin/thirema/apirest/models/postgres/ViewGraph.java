@@ -2,6 +2,8 @@ package com.redroundrobin.thirema.apirest.models.postgres;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -13,11 +15,30 @@ import javax.persistence.Table;
 @javax.persistence.Entity
 @Table(name = "views_graphs")
 public class ViewGraph {
+
+  public enum Correlation {
+    NULL, COVARIANCE, PEARSON, SPEARMAN;
+
+    @JsonValue
+    public int toValue() {
+      return ordinal();
+    }
+
+    public static boolean isValid(int correlation) {
+      for( int i = 0 ; i < Correlation.values().length ; ++i ) {
+        if (correlation == i) {
+          return true;
+        }
+      }
+      return false;
+    }
+  }
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "graph_id")
   private int graphId;
-  private int correlation;
+  private Correlation correlation;
 
   @JsonBackReference
   @ManyToOne
@@ -43,11 +64,11 @@ public class ViewGraph {
     this.graphId = graphId;
   }
 
-  public int getCorrelation() {
+  public Correlation getCorrelation() {
     return correlation;
   }
 
-  public void setCorrelation(int correlation) {
+  public void setCorrelation(Correlation correlation) {
     this.correlation = correlation;
   }
 

@@ -166,4 +166,12 @@ public class User {
   public void setDisabledAlerts(List<Alert> disabledAlerts) {
     this.disabledAlerts = disabledAlerts;
   }
+
+  public List<View> getViews() {
+    return views;
+  }
+
+  public void setViews(List<View> views) {
+    this.views = views;
+  }
 }

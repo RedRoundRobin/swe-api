@@ -3,6 +3,7 @@ import com.google.gson.JsonObject;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.postgres.View;
 import com.redroundrobin.thirema.apirest.repository.postgres.ViewRepository;
+import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.service.postgres.ViewService;
 import com.redroundrobin.thirema.apirest.utils.exception.*;
 import org.junit.Before;
@@ -25,6 +26,9 @@ public class ViewServiceTest {
   @MockBean
   private ViewRepository viewRepo;
 
+  @MockBean
+  private UserService userService;
+
   private ViewService viewService;
 
   private User admin1;
@@ -39,6 +43,7 @@ public class ViewServiceTest {
   public void setUp() {
 
     viewService = new ViewService(viewRepo);
+    viewService.setUserService(userService);
 
     admin1 = new User(); //utente a cui non ho dato alcuna vista
     admin1.setId(1);
@@ -67,24 +72,32 @@ public class ViewServiceTest {
     user1.setPassword("password");
     user1.setType(User.Role.USER);
 
+    List<User> allUsers = new ArrayList<>();
+    allUsers.add(user1);
+    allUsers.add(mod1);
+    allUsers.add(admin1);
+
     view1= new View();
     view1.setUser(user1);
-    view1.setViewId(1);
+    view1.setId(1);
     view1.setName("view1");
+    List<View> user1Views = new ArrayList<>();
+    user1Views.add(view1);
+    user1.setViews(user1Views);
 
     view2= new View();
     view2.setUser(user1);
-    view2.setViewId(2);
+    view2.setId(2);
     view2.setName("view2");
 
     view3= new View();
     view3.setUser(mod1);
-    view3.setViewId(3);
+    view3.setId(3);
     view3.setName("view3");
 
     view4= new View();
     view4.setUser(mod1);
-    view4.setViewId(4);
+    view4.setId(4);
     view4.setName("view4");
 
     List<View> allViews = new ArrayList<>();
@@ -93,12 +106,12 @@ public class ViewServiceTest {
     allViews.add(view3);
     allViews.add(view4);
 
-    when(viewRepo.findByViewId(anyInt())).thenAnswer(i -> {
+    when(viewRepo.findById(anyInt())).thenAnswer(i -> {
       int id = i.getArgument(0);
       Optional<View> viewFound = allViews.stream()
-          .filter(view -> view.getViewId() == id)
+          .filter(view -> view.getId() == id)
           .findFirst();
-      return viewFound.orElse(null);
+      return viewFound;
     });
 
     when(viewRepo.findAllByUser(any(User.class))).thenAnswer(i -> {
@@ -107,11 +120,22 @@ public class ViewServiceTest {
           .filter(view -> view.getUser() == user).collect(Collectors.toList());
       return views;
     });
+
+    when(viewRepo.findByIdAndUser(anyInt(), any(User.class))).thenAnswer(i -> {
+      return allViews.stream()
+          .filter(v -> i.getArgument(0).equals(v.getId())
+              && i.getArgument(1).equals(v.getUser())).findFirst().orElse(null);
+    });
+
+    when(userService.findById(anyInt())).thenAnswer(i -> {
+      return allUsers.stream()
+        .filter(u -> i.getArgument(0).equals(u.getId())).findFirst().orElse(null);
+    });
   }
 
   @Test
   public void findByViewIdTest() {
-    View view = viewService.findByViewId(1);
+    View view = viewService.findById(1);
     assertEquals(view1, view);
   }
 
@@ -121,48 +145,23 @@ public class ViewServiceTest {
     assertTrue(!views.isEmpty() && views.size() == 2);
   }
 
-  // 5 == userId dello user che ho chiamato user1
+
+
   @Test
-  public void getViewByUserIdSuccesfullTest() {
-    try {
-      viewService. getViewByUserId(5, 1);
-      assertTrue(true);
-    }
-    catch(ViewNotFoundException e) {
-      assertTrue(false);
-    }
-    catch(ValuesNotAllowedException e) {
-      assertTrue(false);
-    }
+  public void findViewByIdAndUserId() {
+    View view = viewService.findByIdAndUserId(view1.getId(), user1.getId());
+
+    assertNotNull(view);
   }
 
   @Test
-  public void getViewByUserIdViewNotFoundExceptionTest() {
-    try {
-      viewService. getViewByUserId(5, 8);
-      assertTrue(false);
-    }
-    catch(ViewNotFoundException e) {
-      assertTrue(true);
-    }
-    catch(ValuesNotAllowedException e) {
-      assertTrue(false);
-    }
+  public void findViewByIdAndNotExistentUserId() {
+    View view = viewService.findByIdAndUserId(view1.getId(), 9);
+
+    assertNull(view);
   }
 
-  @Test
-  public void getViewByUserIdValuesNotAllowedExceptionTest() {
-    try {
-      viewService. getViewByUserId(5, 3);
-      assertTrue(false);
-    }
-    catch(ViewNotFoundException e) {
-      assertTrue(false);
-    }
-    catch(ValuesNotAllowedException e) {
-      assertTrue(true);
-    }
-  }
+
 
   @Test
   public void serializeViewSuccesfulTest() {

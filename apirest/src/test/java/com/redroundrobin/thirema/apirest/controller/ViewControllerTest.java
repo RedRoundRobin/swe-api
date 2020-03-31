@@ -72,19 +72,23 @@ public class ViewControllerTest {
     mod.setType(User.Role.MOD);
     mod.setEntity(entity1);
 
+    List<User> allUsers = new ArrayList<>();
+    allUsers.add(user);
+    allUsers.add(mod);
+
     view1= new View();
     view1.setUser(user);
-    view1.setViewId(1);
+    view1.setId(1);
     view1.setName("view1");
 
     view2= new View();
     view2.setUser(user);
-    view2.setViewId(2);
+    view2.setId(2);
     view2.setName("view2");
 
     view3= new View();
     view3.setUser(mod);
-    view3.setViewId(3);
+    view3.setId(3);
     view3.setName("view3");
 
     allViews = new ArrayList<>();
@@ -106,12 +110,22 @@ public class ViewControllerTest {
       return views;
   });
 
-    when(viewService.findByViewId(anyInt())).thenAnswer(i -> {
+    when(viewService.findById(anyInt())).thenAnswer(i -> {
       int viewId = i.getArgument(0);
       Optional<View> retView = allViews.stream()
-          .filter(view -> view.getViewId() == viewId)
+          .filter(view -> view.getId() == viewId)
           .findFirst();
       return retView.orElse(null);
+    });
+    when(viewService.findByIdAndUserId(anyInt(), anyInt())).thenAnswer(i -> {
+      User user = allUsers.stream()
+          .filter(u -> i.getArgument(1).equals(u.getId())).findFirst().orElse(null);
+      if (user != null) {
+        return allViews.stream().filter(v -> i.getArgument(0).equals(v.getId())
+            && v.getUser().equals(user)).findFirst().orElse(null);
+      } else {
+        return null;
+      }
     });
 
     when(viewService.serializeView(any(JsonObject.class), any(User.class))).thenAnswer(i -> {
@@ -133,11 +147,11 @@ public class ViewControllerTest {
       else throw new KeysNotFoundException("");
     });
 
-      doAnswer(i -> {
+    doAnswer(i -> {
       User deletingUser =  i.getArgument(0);
       int viewToDeleteId = i.getArgument(1);
       View viewToDelete = allViews.stream()
-          .filter(view -> view.getViewId() == viewToDeleteId)
+          .filter(view -> view.getId() == viewToDeleteId)
           .findFirst().orElse(null);
 
       if(viewToDelete == null) {
@@ -172,9 +186,9 @@ public class ViewControllerTest {
   public void selectOneViewSuccesfulTest() throws Exception{
     String authorization = "Bearer "+userToken;
 
-    when(viewService.getViewByUserId(eq(3), eq(1))).thenAnswer(i -> {
+    when(viewService.findByIdAndUserId(eq(1), eq(3))).thenAnswer(i -> {
         int viewId = i.getArgument(1);
-        return viewService.findByViewId(viewId);
+        return viewService.findById(viewId);
     });
       //attenzione a passare in questo test una view che appartine allo user sotto test!
     ResponseEntity<View> rsp = viewController.selectOneView(authorization, 1);
@@ -182,28 +196,12 @@ public class ViewControllerTest {
     assertTrue(rsp.getBody() != null);
   }
 
-
   //@GetMapping(value = {"/views/{viewId:.+}"}) test
   @Test
-  public void selectOneViewNotFoundExceptionTest() throws Exception{
+  public void selectOneViewWithNotExistent() throws Exception{
     String authorization = "Bearer "+userToken;
 
-    when(viewService.getViewByUserId(eq(3), eq(4))).thenThrow(
-        new ViewNotFoundException("")
-    );
-
-    ResponseEntity<View> rsp  = viewController.selectOneView(authorization, 4);
-    assertTrue(rsp.getStatusCode() == HttpStatus.NOT_FOUND);
-  }
-
-  //@GetMapping(value = {"/views/{viewId:.+}"}) test
-  @Test
-  public void selectOneValuesNotAllowedExceptionTest() throws Exception{
-    String authorization = "Bearer "+userToken;
-
-    when(viewService.getViewByUserId(eq(3), eq(4))).thenThrow(
-        new ValuesNotAllowedException("")
-    );
+    when(viewService.findByIdAndUserId(eq(4), eq(3))).thenReturn(null);
 
     ResponseEntity<View> rsp  = viewController.selectOneView(authorization, 4);
     assertTrue(rsp.getStatusCode() == HttpStatus.BAD_REQUEST);

@@ -283,6 +283,10 @@ public class SensorServiceTest {
       return allSensors.stream().filter(s -> i.getArgument(0).equals(s.getId()))
           .findFirst();
     });
+    when(repo.findByIdAndEntities(anyInt(), any(Entity.class))).thenAnswer(i -> {
+      return allSensors.stream().filter(s -> i.getArgument(0).equals(s.getId()) && s.getEntities().contains(i.getArgument(1)))
+          .findFirst().orElse(null);
+    });
     when(repo.findByAlerts(any(Alert.class))).thenAnswer(i -> {
       Alert alert = i.getArgument(0);
       return allSensors.stream().filter(s -> s.getAlerts().contains(alert))
@@ -340,6 +344,8 @@ public class SensorServiceTest {
     assertTrue(!sensors.isEmpty());
   }
 
+
+
   @Test
   public void findAllSensorsByDeviceId() {
     List<Sensor> sensors = sensorService.findAllByDeviceId(device1.getId());
@@ -353,6 +359,8 @@ public class SensorServiceTest {
 
     assertTrue(sensors.stream().count() == 0);
   }
+
+
 
   @Test
   public void findAllSensorsByDeviceIdAndEntityId() {
@@ -368,6 +376,8 @@ public class SensorServiceTest {
     assertTrue(sensors.isEmpty());
   }
 
+
+
   @Test
   public void findAllSensorsByEntityId() {
     List<Sensor> sensors = sensorService.findAllByEntityId(entity1.getId());
@@ -381,6 +391,8 @@ public class SensorServiceTest {
 
     assertTrue(sensors.stream().count() == 0);
   }
+
+
 
   @Test
   public void findAllSensorsByViewGraphId() {
@@ -416,6 +428,24 @@ public class SensorServiceTest {
     assertNotNull(sensor);
   }
 
+
+
+  @Test
+  public void findSensorByIdAndEntityId() {
+    Sensor sensor = sensorService.findByIdAndEntityId(sensor1.getId(),entity1.getId());
+
+    assertNotNull(sensor);
+  }
+
+  @Test
+  public void findSensorByIdAndNotExistentEntityId() {
+    Sensor sensor = sensorService.findByIdAndEntityId(sensor1.getId(),9);
+
+    assertNull(sensor);
+  }
+
+
+
   @Test
   public void findSensorByAlertId() {
     Sensor sensor = sensorService.findByAlertId(alert1.getAlertId());
@@ -429,6 +459,8 @@ public class SensorServiceTest {
 
     assertNull(sensor);
   }
+
+
 
   @Test
   public void findSensorByDeviceIdAndRealSensorId() {
@@ -444,6 +476,8 @@ public class SensorServiceTest {
     assertNull(sensor);
   }
 
+
+
   @Test
   public void findSensorByDeviceIdAndRealSensorIdAndEntityId() {
     Sensor sensor = sensorService.findByDeviceIdAndRealSensorIdAndEntityId(device1.getId(), sensor1.getRealSensorId(),entity1.getId());
@@ -457,6 +491,8 @@ public class SensorServiceTest {
 
     assertNull(sensor);
   }
+
+
 
   @Test
   public void findSensorByGatewayIdAndRealDeviceIdAndRealSensorId() {

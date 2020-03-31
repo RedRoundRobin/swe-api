@@ -2,6 +2,9 @@ package com.redroundrobin.thirema.apirest.models.postgres;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 import java.util.List;
 import javax.persistence.Column;
 import javax.persistence.EnumType;
@@ -36,11 +39,12 @@ public class View {
 
   //setter and getter
 
-  public int getViewId() {
+  @JsonProperty(value = "viewId")
+  public int getId() {
     return viewId;
   }
 
-  public void setViewId(int viewId) {
+  public void setId(int viewId) {
     this.viewId = viewId;
   }
 
