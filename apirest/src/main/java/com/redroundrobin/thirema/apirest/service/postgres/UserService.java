@@ -7,6 +7,7 @@ import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 import com.redroundrobin.thirema.apirest.utils.exception.EntityNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAllowedToEditException;
@@ -19,6 +20,7 @@ import com.redroundrobin.thirema.apirest.utils.exception.UserRoleNotFoundExcepti
 import com.redroundrobin.thirema.apirest.utils.exception.ValuesNotAllowedException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +50,7 @@ public class UserService implements UserDetailsService {
     creatable.add("surname");
     creatable.add("email");
     creatable.add("type");
-    creatable.add("entity_id");
+    creatable.add("entityId");
     creatable.add("password");  //SOLUZIONE TEMPORANEA: NON PREVISTA DA USE CASES
 
     boolean onlyCreatableKeys = keys.stream()
@@ -63,82 +65,71 @@ public class UserService implements UserDetailsService {
     return creatable.size() == keys.size();
   }
 
-  @Autowired
-  public UserService(UserRepository userRepository) {
-    this.repo = userRepository;
-  }
-
-  @Autowired
-  public void setAlertService(AlertService alertService) {
-    this.alertService = alertService;
-  }
-
-  @Autowired
-  public void setEntityService(EntityService entityService) {
-    this.entityService = entityService;
-  }
-
   private boolean checkFieldsEditable(User.Role role, boolean itself, Set<String> keys)
-      throws KeysNotFoundException {
-    Set<String> editable = new HashSet<>();
-    editable.add("name");
-    editable.add("surname");
-    editable.add("email");
-    editable.add("password");
-    editable.add("type");
-    editable.add("telegramName");
-    editable.add("twoFactorAuthentication");
-    editable.add("deleted");
-    editable.add("entityId");
+      throws MissingFieldsException {
+    Map<String, Boolean> userFields = new HashMap<>();
+    userFields.put("name", true);
+    userFields.put("surname", true);
+    userFields.put("email", true);
+    userFields.put("password", true);
+    userFields.put("type", true);
+    userFields.put("telegramName", true);
+    userFields.put("twoFactorAuthentication", true);
+    userFields.put("deleted", true);
+    userFields.put("entityId", true);
 
-    boolean onlyExistingKeys = keys.stream()
-        .filter(key -> !editable.contains(key))
-        .count() == 0;
+    switch (role) {
+      case ADMIN:
+        if (itself) {
+          userFields.replace("type", false);
+          userFields.replace("deleted", false);
+          userFields.replace("entityId", false);
+        }
 
-    if (!onlyExistingKeys) {
-      throw new KeysNotFoundException("There are some keys that don't exist");
-    } else {
-      switch (role) {
-        case ADMIN:
-          if (itself) {
-            editable.remove("type");
-            editable.remove("deleted");
-            editable.remove("entityId");
-          }
+        break;
+      case MOD:
+        if (itself) {
+          userFields.replace("deleted", false);
+        } else {
+          userFields.replace("password", false);
+          userFields.replace("telegramName", false);
+          userFields.replace("twoFactorAuthentication", false);
+        }
+        userFields.replace("type", false);
+        userFields.replace("entityId", false);
 
-          break;
-        case MOD:
-          if (itself) {
-            editable.remove("deleted");
+        break;
+      case USER:
+        userFields.replace("name", false);
+        userFields.replace("surname", false);
+        userFields.replace("type", false);
+        userFields.replace("entityId", false);
+        userFields.replace("deleted", false);
+
+        break;
+      default:
+        return false;
+    }
+
+    List<String> editable = new ArrayList<>();
+    List<String> notEditable = new ArrayList<>();
+    userFields.entrySet().stream()
+        .forEach(e -> {
+          if (e.getValue()) {
+            editable.add(e.getKey());
           } else {
-            editable.remove("password");
-            editable.remove("telegramName");
-            editable.remove("twoFactorAuthentication");
+            notEditable.add(e.getKey());
           }
-          editable.remove("type");
-          editable.remove("entityId");
-
-          break;
-        case USER:
-          editable.remove("name");
-          editable.remove("surname");
-          editable.remove("type");
-          editable.remove("deleted");
-          editable.remove("entityId");
-
-          break;
-        default:
-          editable.clear();
-      }
-
-      return keys.stream()
-          .filter(key -> !editable.contains(key))
-          .count() == 0;
+        });
+    if (!keys.stream().anyMatch(k -> userFields.keySet().contains(k))) {
+      throw new MissingFieldsException("There aren't fields that can be edited");
+    } else {
+      return keys.stream().allMatch(k -> editable.contains(k) || !notEditable.contains(k));
     }
   }
 
   private User editAndSave(User userToEdit, Map<String, Object> fieldsToEdit)
-      throws EntityNotFoundException, TfaNotPermittedException, UserRoleNotFoundException {
+      throws TfaNotPermittedException, InvalidFieldsValuesException {
     if (fieldsToEdit.containsKey("twoFactorAuthentication")
         && (boolean)fieldsToEdit.get("twoFactorAuthentication")
         && (fieldsToEdit.containsKey("telegramName")
@@ -149,7 +140,8 @@ public class UserService implements UserDetailsService {
 
     if (fieldsToEdit.containsKey("entityId")
         && entityService.findById((int)fieldsToEdit.get("entityId")) == null) {
-      throw new EntityNotFoundException("The entity with the entityId furnished doesn't exist");
+      throw new InvalidFieldsValuesException(
+          "The entity with the entityId furnished doesn't exist");
     }
 
     for (Map.Entry<String, Object> entry : fieldsToEdit.entrySet()) {
@@ -172,7 +164,7 @@ public class UserService implements UserDetailsService {
           try {
             userToEdit.setType(User.Role.values()[(int)value]);
           } catch (IllegalArgumentException | ArrayIndexOutOfBoundsException iae) {
-            throw new UserRoleNotFoundException("The inserted role is not found");
+            throw new InvalidFieldsValuesException("The inserted role is not found");
           }
           break;
         case "telegramName":
@@ -194,6 +186,21 @@ public class UserService implements UserDetailsService {
     }
 
     return save(userToEdit);
+  }
+
+  @Autowired
+  public UserService(UserRepository userRepository) {
+    this.repo = userRepository;
+  }
+
+  @Autowired
+  public void setAlertService(AlertService alertService) {
+    this.alertService = alertService;
+  }
+
+  @Autowired
+  public void setEntityService(EntityService entityService) {
+    this.entityService = entityService;
   }
 
   public List<User> findAll() {
@@ -329,8 +336,8 @@ public class UserService implements UserDetailsService {
 
 
   public User editByUser(User userToEdit, Map<String, Object> fieldsToEdit)
-      throws NotAllowedToEditException, KeysNotFoundException, EntityNotFoundException,
-      TfaNotPermittedException, UserRoleNotFoundException {
+      throws InvalidFieldsValuesException, MissingFieldsException, NotAllowedToEditException,
+      TfaNotPermittedException  {
 
     if (!checkFieldsEditable(User.Role.USER, true, fieldsToEdit.keySet())) {
       throw new NotAllowedToEditException(
@@ -341,8 +348,8 @@ public class UserService implements UserDetailsService {
   }
 
   public User editByModerator(User userToEdit, boolean itself, Map<String, Object> fieldsToEdit)
-      throws NotAllowedToEditException, KeysNotFoundException, EntityNotFoundException,
-      TfaNotPermittedException, UserRoleNotFoundException {
+      throws InvalidFieldsValuesException, MissingFieldsException, NotAllowedToEditException,
+      TfaNotPermittedException {
 
     if (!checkFieldsEditable(User.Role.MOD, itself, fieldsToEdit.keySet())) {
       throw new NotAllowedToEditException(
@@ -354,8 +361,8 @@ public class UserService implements UserDetailsService {
 
   public User editByAdministrator(User userToEdit, boolean itself,
                                   Map<String, Object> fieldsToEdit)
-      throws NotAllowedToEditException, KeysNotFoundException, EntityNotFoundException,
-      TfaNotPermittedException, UserRoleNotFoundException {
+      throws InvalidFieldsValuesException, MissingFieldsException, NotAllowedToEditException,
+      TfaNotPermittedException {
 
     if ((!itself && userToEdit.getType() == User.Role.ADMIN)
         || (fieldsToEdit.containsKey("type") && (int)fieldsToEdit.get("type") == 2)
@@ -376,7 +383,7 @@ public class UserService implements UserDetailsService {
 
     Entity userToInsertEntity;
     if ((userToInsertEntity = entityService.findById(
-        (rawUserToInsert.get("entity_id")).getAsInt())) == null) {
+        (rawUserToInsert.get("entityId")).getAsInt())) == null) {
       throw new EntityNotFoundException("The entity with the entityId given doesn't exist");
     }
 
