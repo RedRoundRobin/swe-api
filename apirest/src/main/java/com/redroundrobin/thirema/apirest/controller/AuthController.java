@@ -78,8 +78,8 @@ public class AuthController {
         int sixDigitsCode = 100000 + rnd.nextInt(900000);
 
         Map<String, Object> request = new HashMap<>();
-        request.put("auth_code", sixDigitsCode); //codice fittizio
-        request.put("chat_id", user.getTelegramChat());
+        request.put("authCode", sixDigitsCode); //codice fittizio
+        request.put("chatId", user.getTelegramChat());
 
         if (!telegramService.sendTfa(request)) {
           return  new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -107,11 +107,11 @@ public class AuthController {
       @RequestBody Map<String, Object> request,
       @RequestHeader("Authorization") String authorization) {
 
-    if (!request.containsKey("auth_code") || ((String) request.get("auth_code")).equals("")) {
+    if (!request.containsKey("authCode") || ((String) request.get("authCode")).equals("")) {
       return new ResponseEntity(HttpStatus.BAD_REQUEST);
     }
 
-    String authCode = (String) request.get("auth_code");
+    String authCode = (String) request.get("authCode");
     String tfaToken = authorization.substring(7);
 
     if (!jwtTokenUtil.isTfa(tfaToken)) {
@@ -153,8 +153,8 @@ public class AuthController {
   @PostMapping(value = {"/auth/telegram"})
   public ResponseEntity<Map<String, Object>> telegramAuthentication(@RequestBody
                                            Map<String, Object> authenticationRequest) {
-    String telegramName = (String) authenticationRequest.get("telegram_name");
-    String chatId = (String) authenticationRequest.get("telegram_chat");
+    String telegramName = (String) authenticationRequest.get("telegramName");
+    String chatId = (String) authenticationRequest.get("telegramChat");
 
     if (telegramName == null || chatId == null)  {
       return new ResponseEntity(HttpStatus.BAD_REQUEST);

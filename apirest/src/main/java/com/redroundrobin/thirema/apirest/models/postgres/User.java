@@ -2,6 +2,7 @@ package com.redroundrobin.thirema.apirest.models.postgres;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.List;
 import javax.persistence.Column;
@@ -14,6 +15,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 @javax.persistence.Entity
@@ -57,6 +59,10 @@ public class User {
   private Entity entity;
 
   @JsonManagedReference
+  @OneToMany(mappedBy = "user")
+  private List<View> views;
+
+  @JsonManagedReference
   @ManyToMany
   @JoinTable(
       name = "disabled_users_alerts",
@@ -68,6 +74,7 @@ public class User {
     this.userId = userId;
   }
 
+  @JsonProperty(value = "userId")
   public int getId() {
     return userId;
   }
@@ -158,5 +165,13 @@ public class User {
 
   public void setDisabledAlerts(List<Alert> disabledAlerts) {
     this.disabledAlerts = disabledAlerts;
+  }
+
+  public List<View> getViews() {
+    return views;
+  }
+
+  public void setViews(List<View> views) {
+    this.views = views;
   }
 }

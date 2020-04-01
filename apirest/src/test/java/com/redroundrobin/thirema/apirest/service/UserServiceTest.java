@@ -7,7 +7,6 @@ import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
-import com.redroundrobin.thirema.apirest.utils.SerializeUser;
 import com.redroundrobin.thirema.apirest.utils.exception.*;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,9 +35,6 @@ public class UserServiceTest {
   @MockBean
   private EntityService entityService;
 
-  @MockBean
-  private SerializeUser serializeUser;
-
   private UserService userService;
 
   private User admin1;
@@ -53,9 +49,9 @@ public class UserServiceTest {
 
   @Before
   public void setUp() {
+
     userService = new UserService(userRepo);
     userService.setEntityService(entityService);
-    userService.setSerializeUser(serializeUser);
 
     admin1 = new User();
     admin1.setId(1);
@@ -425,7 +421,7 @@ public class UserServiceTest {
     String newTelegramName = "newTelegramName";
 
     HashMap<String, Object> fieldsToEdit = new HashMap<>();
-    fieldsToEdit.put("telegram_name",newTelegramName);
+    fieldsToEdit.put("telegramName",newTelegramName);
 
     User editedUser = cloneUser(admin1);
     editedUser.setTelegramName(newTelegramName);
@@ -465,9 +461,9 @@ public class UserServiceTest {
     fieldsToEdit.put("email",newEmail);
     fieldsToEdit.put("password",newPassword);
     fieldsToEdit.put("type",0);
-    fieldsToEdit.put("telegram_name",newTelegramName);
+    fieldsToEdit.put("telegramName",newTelegramName);
     fieldsToEdit.put("deleted", newDeleted);
-    fieldsToEdit.put("entity_id", newEntityId);
+    fieldsToEdit.put("entityId", newEntityId);
 
     User editedUser = cloneUser(user1);
     editedUser.setName(newName);
@@ -507,7 +503,8 @@ public class UserServiceTest {
     try {
       User user = userService.editByAdministrator(user1, false, fieldsToEdit);
       assertTrue(false);
-    } catch (UserRoleNotFoundException urnfe) {
+    } catch (InvalidFieldsValuesException urnfe) {
+      assertTrue(urnfe.getMessage().contains("role"));
       assertTrue(true);
     } catch (Exception e) {
       System.out.println(e);
@@ -520,14 +517,15 @@ public class UserServiceTest {
     // modificare entity con valore inesistente
 
     HashMap<String, Object> fieldsToEdit = new HashMap<>();
-    fieldsToEdit.put("entity_id",3);
+    fieldsToEdit.put("entityId",3);
 
     when(entityService.findById(3)).thenReturn(null);
 
     try {
       User user = userService.editByAdministrator(mod1, false, fieldsToEdit);
       assertTrue(false);
-    } catch (EntityNotFoundException urnfe) {
+    } catch (InvalidFieldsValuesException urnfe) {
+      assertTrue(urnfe.getMessage().contains("entity"));
       assertTrue(true);
     } catch (Exception e) {
       System.out.println(e);
@@ -603,7 +601,7 @@ public class UserServiceTest {
 
     HashMap<String, Object> fieldsToEdit = new HashMap<>();
     fieldsToEdit.put("name",newName);
-    fieldsToEdit.put("two_factor_authentication",tfa);
+    fieldsToEdit.put("twoFactorAuthentication",tfa);
 
     User editedUser = cloneUser(mod11);
     editedUser.setName(newName);
@@ -626,7 +624,7 @@ public class UserServiceTest {
     // modificare name, surname, email, deleted
 
     HashMap<String, Object> fieldsToEdit = new HashMap<>();
-    fieldsToEdit.put("entity_id",2);
+    fieldsToEdit.put("entityId",2);
 
     try {
       User user = userService.editByModerator(mod11, true, fieldsToEdit);
@@ -641,27 +639,6 @@ public class UserServiceTest {
   }
 
 
-
-  // editByUser method tests
-  @Test
-  public void editUser1ByItselfKeysNotFoundException() {
-    // modificare telegramName
-
-    String newTelegramName = "newTelegramName";
-
-    HashMap<String, Object> fieldsToEdit = new HashMap<>();
-    fieldsToEdit.put("telegramName",newTelegramName);
-
-    try {
-      User user = userService.editByUser(user1, fieldsToEdit);
-
-      assertTrue(false);
-    } catch (KeysNotFoundException knfe) {
-      assertTrue(true);
-    } catch (Exception e) {
-      assertTrue(false);
-    }
-  }
 
   @Test
   public void editUser1ByItselfEditNotAllowed() {
@@ -692,14 +669,37 @@ public class UserServiceTest {
     boolean newTfa = true;
 
     HashMap<String, Object> fieldsToEdit = new HashMap<>();
-    fieldsToEdit.put("telegram_name",newTelegramName);
-    fieldsToEdit.put("two_factor_authentication",newTfa);
+    fieldsToEdit.put("telegramName",newTelegramName);
+    fieldsToEdit.put("twoFactorAuthentication",newTfa);
 
     try {
       User user = userService.editByUser(user1, fieldsToEdit);
 
       assertTrue(false);
     } catch (TfaNotPermittedException tnpe) {
+      assertTrue(true);
+    } catch (Exception e) {
+      System.out.println(e);
+      assertTrue(false);
+    }
+  }
+
+  @Test
+  public void editUser2ByItselfWithNotExistentfields() {
+    // set telegram name and tfa true
+
+    String newTelegramName = "newName";
+    boolean newTfa = true;
+
+    HashMap<String, Object> fieldsToEdit = new HashMap<>();
+    fieldsToEdit.put("telegramaName",newTelegramName);
+    fieldsToEdit.put("tfa",newTfa);
+
+    try {
+      User user = userService.editByUser(user1, fieldsToEdit);
+
+      assertTrue(false);
+    } catch (MissingFieldsException mfe) {
       assertTrue(true);
     } catch (Exception e) {
       System.out.println(e);

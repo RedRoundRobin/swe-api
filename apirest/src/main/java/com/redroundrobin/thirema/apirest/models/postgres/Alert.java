@@ -2,6 +2,7 @@ package com.redroundrobin.thirema.apirest.models.postgres;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
@@ -42,6 +43,7 @@ public class Alert {
     this.alertId = alertId;
   }
 
+  @JsonProperty(value = "alertId")
   public int getAlertId() {
     return alertId;
   }

@@ -98,6 +98,15 @@ public class SensorService {
     return repo.findById(sensorId).orElse(null);
   }
 
+  public Sensor findByIdAndEntityId(int sensorId, int entityId) {
+    Entity entity = entityService.findById(entityId);
+    if (entity != null) {
+      return repo.findBySensorIdAndEntities(sensorId, entity);
+    } else {
+      return null;
+    }
+  }
+
   public Sensor findByAlertId(int alertId) {
     Alert alert = alertService.findById(alertId);
     if (alert != null) {

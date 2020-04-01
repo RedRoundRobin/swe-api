@@ -1,6 +1,7 @@
 package com.redroundrobin.thirema.apirest.models.postgres;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.Objects;
 import javax.persistence.CascadeType;
@@ -55,6 +56,7 @@ public class Device {
     this.realDeviceId = realDeviceId;
   }
 
+  @JsonProperty(value = "deviceId")
   public int getId() {
     return deviceId;
   }

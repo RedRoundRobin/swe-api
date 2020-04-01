@@ -29,6 +29,8 @@ public interface SensorRepository extends CrudRepository<Sensor, Integer> {
 
   Sensor findByDeviceAndRealSensorIdAndEntities(Device device, int realSensorId, Entity entity);
 
+  Sensor findBySensorIdAndEntities(int sensorId, Entity entity);
+
   @Query("SELECT S FROM Gateway G JOIN G.devices D JOIN D.sensors S "
       + "WHERE G.gatewayId = :gatewayId AND D.realDeviceId = :realDeviceId "
       + "AND S.realSensorId = :realSensorId")

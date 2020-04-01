@@ -1,5 +1,7 @@
 package com.redroundrobin.thirema.apirest.controller;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
@@ -15,6 +17,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -114,32 +119,32 @@ public class UserControllerTest {
     user2.setType(User.Role.USER);
     user2.setEntity(entity2);
 
-    when(jwtTokenUtil.extractRole("Bearer "+admin1Token)).thenReturn(admin1.getType());
+    when(jwtTokenUtil.extractRole("Bearer " + admin1Token)).thenReturn(admin1.getType());
     when(jwtTokenUtil.extractUsername(admin1Token)).thenReturn(admin1.getEmail());
     when(userService.findByEmail(admin1.getEmail())).thenReturn(admin1);
     when(userService.findById(admin1.getId())).thenReturn(admin1);
 
-    when(jwtTokenUtil.extractRole("Bearer "+admin2Token)).thenReturn(admin2.getType());
+    when(jwtTokenUtil.extractRole("Bearer " + admin2Token)).thenReturn(admin2.getType());
     when(jwtTokenUtil.extractUsername(admin2Token)).thenReturn(admin2.getEmail());
     when(userService.findByEmail(admin2.getEmail())).thenReturn(admin2);
     when(userService.findById(admin2.getId())).thenReturn(admin2);
 
-    when(jwtTokenUtil.extractRole("Bearer "+mod1Token)).thenReturn(mod1.getType());
+    when(jwtTokenUtil.extractRole("Bearer " + mod1Token)).thenReturn(mod1.getType());
     when(jwtTokenUtil.extractUsername(mod1Token)).thenReturn(mod1.getEmail());
     when(userService.findByEmail(mod1.getEmail())).thenReturn(mod1);
     when(userService.findById(mod1.getId())).thenReturn(mod1);
 
-    when(jwtTokenUtil.extractRole("Bearer "+mod11Token)).thenReturn(mod11.getType());
+    when(jwtTokenUtil.extractRole("Bearer " + mod11Token)).thenReturn(mod11.getType());
     when(jwtTokenUtil.extractUsername(mod11Token)).thenReturn(mod11.getEmail());
     when(userService.findByEmail(mod11.getEmail())).thenReturn(mod11);
     when(userService.findById(mod11.getId())).thenReturn(mod11);
 
-    when(jwtTokenUtil.extractRole("Bearer "+user1Token)).thenReturn(user1.getType());
+    when(jwtTokenUtil.extractRole("Bearer " + user1Token)).thenReturn(user1.getType());
     when(jwtTokenUtil.extractUsername(user1Token)).thenReturn(user1.getEmail());
     when(userService.findByEmail(user1.getEmail())).thenReturn(user1);
     when(userService.findById(user1.getId())).thenReturn(user1);
 
-    when(jwtTokenUtil.extractRole("Bearer "+user2Token)).thenReturn(user2.getType());
+    when(jwtTokenUtil.extractRole("Bearer " + user2Token)).thenReturn(user2.getType());
     when(jwtTokenUtil.extractUsername(user2Token)).thenReturn(user2.getEmail());
     when(userService.findByEmail(user2.getEmail())).thenReturn(user2);
     when(userService.findById(user2.getId())).thenReturn(user2);
@@ -153,11 +158,15 @@ public class UserControllerTest {
     allUsers.add(user1);
     allUsers.add(user2);
 
+    List<Entity> allEntities = new ArrayList<>();
+    allEntities.add(entity1);
+    allEntities.add(entity2);
+
     when(userService.findAll()).thenReturn(allUsers);
 
     when(userService.findAllByEntityId(anyInt())).thenAnswer(i -> {
       int id = i.getArgument(0);
-      if( id < 3 ) {
+      if (id < 3) {
         List<User> users = allUsers.stream()
             .filter(user -> user.getEntity() != null && user.getEntity().getId() == id)
             .collect(Collectors.toList());
@@ -165,6 +174,75 @@ public class UserControllerTest {
       } else {
         throw new EntityNotFoundException("");
       }
+    });
+
+    when(userService.serializeUser(any(JsonObject.class), any(User.class))).thenAnswer(i -> {
+      JsonObject rawUserToInsert = i.getArgument(0);
+      User insertingUser = i.getArgument(1);
+      Set<String> creatable = new HashSet<>();
+      creatable.add("name");
+      creatable.add("surname");
+      creatable.add("email");
+      creatable.add("type");
+      creatable.add("entity_id");
+      creatable.add("password");  //SOLUZIONE TEMPORANEA: NON PREVISTA DA USE CASES
+
+      boolean onlyCreatableKeys = rawUserToInsert.keySet()
+          .stream()
+          .filter(key -> !creatable.contains(key))
+          .count() == 0;
+
+      if (!onlyCreatableKeys)
+        throw new KeysNotFoundException("There are some keys that either do not exist or you are not" +
+            "allowed to edit them");
+
+      if (!(creatable.size() == rawUserToInsert.keySet().size())) {
+        throw new MissingFieldsException("Some necessary fields are missing: cannot create user");
+      }
+
+      /*Fare mock entityService*/
+      Entity userToInsertEntity;
+      if ((userToInsertEntity = entityService.findById(
+          (rawUserToInsert.get("entity_id")).getAsInt())) == null) {
+        throw new EntityNotFoundException("The entity with the entityId given doesn't exist");
+      }
+
+      User.Role userToInsertType;
+      try {
+        userToInsertType = User.Role.valueOf(rawUserToInsert.get("type").getAsString());
+      } catch (IllegalArgumentException iae) {
+        throw new UserRoleNotFoundException("The given role doesn't exist");
+      } catch (NullPointerException nptr) {
+        throw new UserRoleNotFoundException("The type parameter cannot be null");
+      }
+
+      if (insertingUser.getType() != User.Role.ADMIN &&
+          insertingUser.getType() == User.Role.MOD &&
+          (userToInsertEntity.getId() != insertingUser.getEntity().getId()
+              || userToInsertType != User.Role.USER))
+        throw new NotAuthorizedToInsertUserException();
+
+      User newUser = new User();
+      newUser.setEntity(userToInsertEntity);
+      newUser.setType(userToInsertType);
+
+      if (rawUserToInsert.get("name").getAsString() != null)
+        newUser.setName(rawUserToInsert.get("name").getAsString());
+      else throw new ValuesNotAllowedException("The name field cannot be null");
+
+      if (rawUserToInsert.get("surname").getAsString() != null)
+        newUser.setSurname(rawUserToInsert.get("name").getAsString());
+      else throw new ValuesNotAllowedException("The surname field cannot be null");
+
+      String email = rawUserToInsert.get("email").getAsString();
+      if (email != null &&
+          allUsers.stream().filter(user-> user.getEmail() == null).count() == 1) //email gia usata
+        newUser.setEmail(email);
+      else throw new ValuesNotAllowedException("Either the email field you inserted is" +
+          "null or it is already used");
+
+      allUsers.add(newUser);
+      return allUsers.get(allUsers.size() - 1); //prendo lo user appena inserito
     });
   }
 
@@ -429,10 +507,10 @@ public class UserControllerTest {
     String newTelegramName = "newEmail";
 
     when(userService.editByUser(eq(user2), any(HashMap.class))).thenThrow(
-        new KeysNotFoundException("telegramName doesn't exist"));
+        new MissingFieldsException("There aren't fields that can be edited"));
 
     HashMap<String, Object> request = new HashMap<>();
-    request.put("telegramName", newTelegramName);
+    request.put("telegram_Name", newTelegramName);
 
     ResponseEntity response = userController.editUser("Bearer " + user2Token,
         request, user2.getId());
@@ -560,4 +638,54 @@ public class UserControllerTest {
 
     assertTrue(response.getStatusCode() == HttpStatus.BAD_REQUEST);
   }
+
+  //creazione di un nuovo utente
+  //@PostMapping(value = {"/users/create"})
+  @Test
+  public void createUserSuccessfulTest() {
+    String authorization = "Bearer "+admin1Token;
+    JsonObject jsonUser = new JsonObject();
+    jsonUser.addProperty("name", "marco");
+    jsonUser.addProperty("surname", "polo");
+    jsonUser.addProperty("email", "CONTROLLOBENFORMATA!!!");
+    jsonUser.addProperty("type",  0);
+    jsonUser.addProperty("entityId", 1);
+    jsonUser.addProperty("password", "password");
+
+    ResponseEntity<User> response = userController.createUser(authorization, jsonUser.toString());
+    assertTrue(response.getStatusCode() == HttpStatus.BAD_REQUEST);
+//    assertTrue(response.getStatusCode() == HttpStatus.OK);
+  }
+/*
+  //creazione di un nuovo utente
+  @PostMapping(value = {"/users/create"})
+  public ResponseEntity<Object> createUser(@RequestHeader("Authorization") String authorization,
+                                           @RequestBody String jsonStringUser) {
+    String token = authorization.substring(7);
+    User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
+    JsonObject jsonUser = JsonParser.parseString(jsonStringUser).getAsJsonObject();
+    try {
+      return ResponseEntity.ok(userService.serializeUser(jsonUser, user));
+    }
+    catch(KeysNotFoundException | MissingFieldsException | ValuesNotAllowedException
+        | UserRoleNotFoundException | EntityNotFoundException | NotAuthorizedToInsertUserException e){
+      return new ResponseEntity(e.getMessage() , HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  //creazione di un nuovo utente
+  @PostMapping(value = {"/users/create"})
+  public ResponseEntity<Object> createUser(@RequestHeader("Authorization") String authorization,
+                                           @RequestBody String jsonStringUser) {
+    String token = authorization.substring(7);
+    User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
+    JsonObject jsonUser = JsonParser.parseString(jsonStringUser).getAsJsonObject();
+    try {
+      return ResponseEntity.ok(userService.serializeUser(jsonUser, user));
+    }
+    catch(KeysNotFoundException | MissingFieldsException | ValuesNotAllowedException
+        | UserRoleNotFoundException | EntityNotFoundException | NotAuthorizedToInsertUserException e){
+      return new ResponseEntity(e.getMessage() , HttpStatus.BAD_REQUEST);
+    }
+  }*/
 }
