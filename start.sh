@@ -1,7 +1,7 @@
 #!/bin/sh
 mvn clean package
 
-mv .. targer/apirest-*.jar
+mv ./targer/apirest-*.jar ../
 
 cd ..
 
