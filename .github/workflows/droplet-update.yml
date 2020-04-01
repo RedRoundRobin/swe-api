@@ -1,0 +1,21 @@
+name: Droplet Update
+
+on: 
+  push:
+    branches:
+      - develop
+
+jobs:
+  update:
+    name: Droplet Update
+    runs-on: ubuntu-latest
+    steps:
+    - name: Executing remote SSH commands
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USERNAME }}
+        passphrase: ${{ secrets.SSH_PASSPHRASE }}
+        key: ${{ secrets.SSH_KEY }}
+        port: ${{ secrets.SSH_PORT }}
+        script: ./mr_wolf.sh
