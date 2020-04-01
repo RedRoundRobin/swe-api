@@ -1,6 +1,8 @@
 #!/bin/sh
 cd apirest
 
+apk update
+apk add maven
 mvn clean package
 
 mv ./target/apirest-*.jar ../../apirest.jar
