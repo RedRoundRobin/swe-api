@@ -1,9 +1,11 @@
 #!/bin/sh
+cd apirest
+
 mvn clean package
 
 mv ./targer/apirest-*.jar ../
 
-cd ..
+cd ../..
 
 rm -rf temp 
 
