@@ -11,13 +11,19 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 @javax.persistence.Entity
 @Table(name = "alerts")
 public class Alert {
   @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
+  @GeneratedValue(generator = "alerts_alert_id_seq", strategy = GenerationType.SEQUENCE)
+  @SequenceGenerator(
+      name = "alerts_alert_id_seq",
+      sequenceName = "alerts_alert_id_seq",
+      allocationSize = 50
+  )
   @Column(name = "alert_id")
   private int alertId;
   private double threshold;

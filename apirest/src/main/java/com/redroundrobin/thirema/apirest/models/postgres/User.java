@@ -16,6 +16,7 @@ import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 @javax.persistence.Entity
@@ -32,7 +33,12 @@ public class User {
   }
 
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @GeneratedValue(generator = "user_user_id_seq", strategy = GenerationType.SEQUENCE)
+  @SequenceGenerator(
+      name = "users_user_id_seq",
+      sequenceName = "users_user_id_seq",
+      allocationSize = 50
+  )
   @Column(name = "user_id")
   private int userId;
   private String name;
