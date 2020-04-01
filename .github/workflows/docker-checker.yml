@@ -12,7 +12,7 @@ jobs:
     - name: Lint Dockerfile
       uses: brpaz/hadolint-action@master
       with:
-        dockerfile: "docker/Dockerfile"
+        dockerfile: "Dockerfile"
 
 
     #- name: Build with docker-compose
