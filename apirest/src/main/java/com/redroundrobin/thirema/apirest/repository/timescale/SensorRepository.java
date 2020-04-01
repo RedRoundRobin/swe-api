@@ -1,8 +1,35 @@
 package com.redroundrobin.thirema.apirest.repository.timescale;
 
-import com.redroundrobin.thirema.apirest.models.timescale.Sensor;
 import java.sql.Timestamp;
-import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
+import com.redroundrobin.thirema.apirest.models.timescale.Sensor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
 
-public interface SensorRepository extends JpaRepository<Sensor, Timestamp> {
+@Repository(value = "timescaleSensorRepository")
+public interface SensorRepository extends CrudRepository<Sensor, Timestamp> {
+
+  Iterable<Sensor> findAllByGatewayIdAndDeviceIdAndSensorIdOrderByTimeDesc(int gatewayId, int deviceId,
+                                                            int sensorId);
+
+  Iterable<Sensor> findAllByGatewayIdAndDeviceIdAndSensorIdIn(int gatewayId, int deviceId,
+                                                             List<Integer> sensorIds);
+
+  Iterable<Sensor> findAllByGatewayIdAndDeviceIdInAndSensorIdIn(int gatewayId,
+                                                               List<Integer> deviceIds,
+                                                               List<Integer> sensorIds);
+
+  Iterable<Sensor> findAllByGatewayIdInAndDeviceIdInAndSensorIdIn(List<Integer> gatewayIds,
+                                                                 List<Integer> deviceIds,
+                                                                 List<Integer> sensorIds);
+
+  @Query(value = "SELECT * FROM Alert WHERE gatewayId = :gatewayId AND deviceId = :deviceId "
+      + "AND sensorId = :sensorId ORDER BY time DESC LIMIT :resultsNumber ORDER BY time DESC",
+      nativeQuery = true)
+  Iterable<Sensor> findTopNByGatewayIdAndDeviceIdAndSensorId(int resultsNumber, int gatewayId,
+                                                              int deviceId, int sensorId);
+
+  Sensor findTopByGatewayIdAndDeviceIdAndSensorIdOrderByTimeDesc(int gatewayId, int deviceId,
+                                                                int sensorId);
 }
