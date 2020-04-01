@@ -33,7 +33,7 @@ public class User {
   }
 
   @Id
-  @GeneratedValue(generator = "user_user_id_seq", strategy = GenerationType.SEQUENCE)
+  @GeneratedValue(generator = "users_user_id_seq", strategy = GenerationType.SEQUENCE)
   @SequenceGenerator(
       name = "users_user_id_seq",
       sequenceName = "users_user_id_seq",

@@ -387,9 +387,15 @@ public class UserService implements UserDetailsService {
       throw new EntityNotFoundException("The entity with the entityId given doesn't exist");
     }
 
-    User.Role userToInsertType;
+    int userToInsertType;
     try {
-      userToInsertType = User.Role.valueOf(rawUserToInsert.get("type").getAsString());
+      userToInsertType = rawUserToInsert.get("type").getAsInt();
+      if(userToInsertType == 2) {
+        throw new ValuesNotAllowedException("Not allowed to insert an admin");
+      }
+      if(userToInsertType != 1 && userToInsertType != 0) {
+        throw new ValuesNotAllowedException("The type parameter given is not allowed");
+      }
     } catch (IllegalArgumentException iae) {
       throw new UserRoleNotFoundException("The given role doesn't exist");
     } catch (NullPointerException nptr) {
@@ -398,16 +404,19 @@ public class UserService implements UserDetailsService {
 
     //qui so che entity_id dato esiste && so il tipo dello user che si vuole inserire
     //NB: IL MODERATORE PUO INSERIRE SOLO MEMBRI!! VA BENE??
-    if (insertingUser.getType() != User.Role.ADMIN
-        && insertingUser.getType() == User.Role.MOD
-        && (userToInsertEntity.getId() != insertingUser.getEntity().getId()
-        || userToInsertType != User.Role.USER)) {
+    if (insertingUser.getType() == User.Role.USER
+        || (insertingUser.getType() == User.Role.MOD
+        && userToInsertEntity.getId() != insertingUser.getEntity().getId())) {
       throw new NotAuthorizedToInsertUserException();
     }
 
     User newUser = new User();
     newUser.setEntity(userToInsertEntity);
-    newUser.setType(userToInsertType);
+    if (userToInsertType == 0) {
+      newUser.setType(User.Role.USER);
+    } else {
+      newUser.setType(User.Role.MOD);
+    }
 
     if (rawUserToInsert.get("name").getAsString() != null) {
       newUser.setName(rawUserToInsert.get("name").getAsString());
@@ -416,9 +425,15 @@ public class UserService implements UserDetailsService {
     }
 
     if (rawUserToInsert.get("surname").getAsString() != null) {
-      newUser.setSurname(rawUserToInsert.get("name").getAsString());
+      newUser.setSurname(rawUserToInsert.get("surname").getAsString());
     } else {
       throw new ValuesNotAllowedException("The surname field cannot be null");
+    }
+
+    if (rawUserToInsert.get("password").getAsString() != null) {
+      newUser.setPassword(rawUserToInsert.get("password").getAsString());
+    } else {
+      throw new ValuesNotAllowedException("The password field cannot be null");
     }
 
     String email = rawUserToInsert.get("email").getAsString();
@@ -446,7 +461,6 @@ public class UserService implements UserDetailsService {
     }
 
     userToDelete.setDeleted(true);
-    userToDelete.setEntity(null);
     return save(userToDelete);
   }
 }
