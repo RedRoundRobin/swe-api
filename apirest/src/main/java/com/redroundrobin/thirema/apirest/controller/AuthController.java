@@ -154,7 +154,7 @@ public class AuthController {
   public ResponseEntity<Map<String, Object>> telegramAuthentication(@RequestBody
                                            Map<String, Object> authenticationRequest) {
     String telegramName = (String) authenticationRequest.get("telegramName");
-    String chatId = (String) authenticationRequest.get("telegramChat");
+    String chatId = (String) Integer.toString((int) authenticationRequest.get("telegramChat"));
 
     if (telegramName == null || chatId == null)  {
       return new ResponseEntity(HttpStatus.BAD_REQUEST);

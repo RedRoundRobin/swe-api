@@ -8,7 +8,6 @@ import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedToDeleteUserException;
 import com.redroundrobin.thirema.apirest.utils.exception.ValuesNotAllowedException;
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;

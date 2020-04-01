@@ -5,15 +5,13 @@ import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.postgres.View;
 import com.redroundrobin.thirema.apirest.models.postgres.ViewGraph;
 import com.redroundrobin.thirema.apirest.repository.postgres.ViewGraphRepository;
-
+import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsException;
+import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
-import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsException;
-import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
