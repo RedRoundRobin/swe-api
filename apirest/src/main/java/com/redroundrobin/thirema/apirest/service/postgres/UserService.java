@@ -446,7 +446,6 @@ public class UserService implements UserDetailsService {
     }
 
     userToDelete.setDeleted(true);
-    userToDelete.setEntity(null);
     return save(userToDelete);
   }
 }
