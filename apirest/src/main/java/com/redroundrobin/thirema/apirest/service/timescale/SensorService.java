@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +45,8 @@ public class SensorService {
               (List<Sensor>) repo.findAllByGatewayIdAndDeviceIdAndSensorIdOrderByTimeDesc(gatewayId,
                   realDeviceId, realSensorId));
         }
+      } else {
+        sensorsData.put(id, Collections.emptyList());
       }
     }
 
@@ -84,6 +87,12 @@ public class SensorService {
     this.repo = repo;
   }
 
+  @Autowired
+  public void setSensorService(
+      com.redroundrobin.thirema.apirest.service.postgres.SensorService sensorService) {
+    this.sensorService = sensorService;
+  }
+
   public Map<Integer, List<Sensor>> findAllForEachSensor() {
     return findTopNForEachSensorByOptionalEntity(null, null);
   }
@@ -118,11 +127,5 @@ public class SensorService {
                                                                       List<Integer> sensorIds,
                                                                       int entityId) {
     return findTopNBySensorIdListAndOptionalEntityId(resultsNumber, sensorIds, entityId);
-  }
-
-  public Sensor findLastOneByGatewayIdAndDeviceIdAndSensorId(int gatewayId, int deviceId,
-                                                            int sensorId) {
-    return repo.findTopByGatewayIdAndDeviceIdAndSensorIdOrderByTimeDesc(gatewayId, deviceId,
-        sensorId);
   }
 }

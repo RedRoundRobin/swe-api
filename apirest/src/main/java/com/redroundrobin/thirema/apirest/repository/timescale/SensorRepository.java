@@ -13,17 +13,6 @@ public interface SensorRepository extends CrudRepository<Sensor, Timestamp> {
   Iterable<Sensor> findAllByGatewayIdAndDeviceIdAndSensorIdOrderByTimeDesc(int gatewayId, int deviceId,
                                                             int sensorId);
 
-  Iterable<Sensor> findAllByGatewayIdAndDeviceIdAndSensorIdIn(int gatewayId, int deviceId,
-                                                             List<Integer> sensorIds);
-
-  Iterable<Sensor> findAllByGatewayIdAndDeviceIdInAndSensorIdIn(int gatewayId,
-                                                               List<Integer> deviceIds,
-                                                               List<Integer> sensorIds);
-
-  Iterable<Sensor> findAllByGatewayIdInAndDeviceIdInAndSensorIdIn(List<Integer> gatewayIds,
-                                                                 List<Integer> deviceIds,
-                                                                 List<Integer> sensorIds);
-
   @Query(value = "SELECT * FROM Alert WHERE gatewayId = :gatewayId AND deviceId = :deviceId "
       + "AND sensorId = :sensorId ORDER BY time DESC LIMIT :resultsNumber ORDER BY time DESC",
       nativeQuery = true)
