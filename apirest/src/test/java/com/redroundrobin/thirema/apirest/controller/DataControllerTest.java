@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -208,6 +209,7 @@ public class DataControllerTest {
     id4Sensors.add(sensor1222);
     id4Sensors.add(sensor1223);
 
+
     allSensorsMap = new HashMap<>();
     allSensorsMap.put(1, id1Sensors);
     allSensorsMap.put(2, id2Sensors);
@@ -307,6 +309,23 @@ public class DataControllerTest {
           }
           return responseMap;
         });
+    when(sensorService.findLastValueBySensorId(anyInt())).thenAnswer(i -> {
+      return allSensorsMap.get(i.getArgument(0)).stream()
+          .sorted((v1, v2) -> Long.compare(v2.getTime().getTime(), v1.getTime().getTime()))
+          .findFirst().orElse(null);
+    });
+    when(sensorService.findLastValueBySensorIdAndEntityId(anyInt(), anyInt())).thenAnswer(i -> {
+      int id = i.getArgument(0);
+      int entityId = i.getArgument(1);
+      if ((entityId == 1 && (id == 1 || id == 3))
+          || (entityId == 2 && (id == 2 || id == 4))) {
+        return allSensorsMap.get(id).stream()
+            .sorted((v1, v2) -> Long.compare(v2.getTime().getTime(), v1.getTime().getTime()))
+            .findFirst().orElse(null);
+      } else {
+        return null;
+      }
+    });
   }
 
   @Test
@@ -441,4 +460,22 @@ public class DataControllerTest {
   }
 
 
+
+  @Test
+  public void getLastSensorValueByAdminSuccesfull() {
+    ResponseEntity<Sensor> response = dataController.getLastSensorValue(
+        adminTokenWithBearer, 1);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertNotNull(response.getBody());
+  }
+
+  @Test
+  public void getLastSensorValueByUserSuccesfull() {
+    ResponseEntity<Sensor> response = dataController.getLastSensorValue(
+        userTokenWithBearer, 1);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertNotNull(response.getBody());
+  }
 }

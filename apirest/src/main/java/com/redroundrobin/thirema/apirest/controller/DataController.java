@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.websocket.server.PathParam;
+
 @RestController
 @RequestMapping(value = "/data")
 public class DataController extends CoreController {
@@ -85,6 +87,19 @@ public class DataController extends CoreController {
       return ResponseEntity.ok(getSensorsValuesByAdmin(sensorIds, limit, entityId));
     } else {
       return ResponseEntity.ok(getSensorsValuesByUser(user, sensorIds, limit, entityId));
+    }
+  }
+
+  @GetMapping(value = {"/{sensorId:.+}"})
+  public ResponseEntity<Sensor> getLastSensorValue(
+      @RequestHeader(value = "Authorization") String authorization,
+      @PathParam("sensorId") int sensorId) {
+    User user = getUserFromAuthorization(authorization);
+    if (user.getType() == User.Role.ADMIN) {
+      return ResponseEntity.ok(timescaleSensorService.findLastValueBySensorId(sensorId));
+    } else {
+      return ResponseEntity.ok(timescaleSensorService.findLastValueBySensorIdAndEntityId(sensorId,
+          user.getEntity().getId()));
     }
   }
 }

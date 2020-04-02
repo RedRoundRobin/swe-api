@@ -1,6 +1,7 @@
 package com.redroundrobin.thirema.apirest.service.timescale;
 
 import com.redroundrobin.thirema.apirest.models.postgres.Device;
+import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
 import com.redroundrobin.thirema.apirest.models.timescale.Sensor;
 import com.redroundrobin.thirema.apirest.repository.timescale.SensorRepository;
@@ -18,6 +19,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
@@ -64,7 +67,7 @@ public class SensorServiceTest {
   @Before
   public void setUp() {
     sensorService = new SensorService(repo);
-    sensorService.setTimescaleSensorService(postgreSensorService);
+    sensorService.setPostgreSensorService(postgreSensorService);
 
 
     // ------------------------------------ Set Timescale Sensors ---------------------------------
@@ -204,26 +207,38 @@ public class SensorServiceTest {
     allDevices.add(device2);
 
 
+    // -------------------------------------- Set Devices ----------------------------------------
+    Entity entity1 = new Entity();
+    entity1.setId(1);
+
+    List<Entity> sensor1Entities = new ArrayList<>();
+    sensor1Entities.add(entity1);
+
+
     // ----------------------------------- Set Postgre Sensors ------------------------------------
     sensor1 = new com.redroundrobin.thirema.apirest.models.postgres.Sensor();
     sensor1.setId(1);
     sensor1.setRealSensorId(1);
     sensor1.setDevice(device1);
+    sensor1.setEntities(sensor1Entities);
 
     sensor2 = new com.redroundrobin.thirema.apirest.models.postgres.Sensor();
     sensor2.setId(2);
     sensor2.setRealSensorId(2);
     sensor2.setDevice(device1);
+    sensor2.setEntities(Collections.emptyList());
 
     sensor3 = new com.redroundrobin.thirema.apirest.models.postgres.Sensor();
     sensor3.setId(3);
     sensor3.setRealSensorId(1);
     sensor3.setDevice(device2);
+    sensor3.setEntities(Collections.emptyList());
 
     sensor4 = new com.redroundrobin.thirema.apirest.models.postgres.Sensor();
     sensor4.setId(4);
     sensor4.setRealSensorId(2);
     sensor4.setDevice(device2);
+    sensor4.setEntities(Collections.emptyList());
 
     allPostgreSensors = new ArrayList<>();
     allPostgreSensors.add(sensor1);
@@ -387,5 +402,35 @@ public class SensorServiceTest {
 
     assertEquals(1, sensors.keySet().size());
     assertTrue(sensors.get(1).size() == 1);
+  }
+
+
+  @Test
+  public void findTopBySensorId() {
+    Sensor sensor = sensorService.findLastValueBySensorId(1);
+
+    assertNotNull(sensor);
+  }
+
+  @Test
+  public void findTopByNotExistentSensorId() {
+    Sensor sensor = sensorService.findLastValueBySensorId(15);
+
+    assertNull(sensor);
+  }
+
+
+  @Test
+  public void findTopBySensorIdAndEntityId() {
+    Sensor sensor = sensorService.findLastValueBySensorIdAndEntityId(1, 1);
+
+    assertNotNull(sensor);
+  }
+
+  @Test
+  public void findTopBySensorIdAndNotExistentEntityId() {
+    Sensor sensor = sensorService.findLastValueBySensorIdAndEntityId(1,15);
+
+    assertNull(sensor);
   }
 }
