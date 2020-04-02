@@ -2,8 +2,6 @@ package com.redroundrobin.thirema.apirest.models.timescale;
 
 import java.sql.Timestamp;
 import javax.persistence.Column;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
@@ -12,11 +10,12 @@ import javax.persistence.Table;
 public class Log {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
   private Timestamp time;
 
   @Column(name = "user_id", nullable = false)
   private int userId;
+
+  private String ip;
 
   private String operation;
 
@@ -36,6 +35,14 @@ public class Log {
 
   public void setUserId(int userId) {
     this.userId = userId;
+  }
+
+  public String getIp() {
+    return ip;
+  }
+
+  public void setIp(String ip) {
+    this.ip = ip;
   }
 
   public String getOperation() {
