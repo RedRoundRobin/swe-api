@@ -23,16 +23,9 @@ public class DataController extends CoreController {
 
   private SensorService timescaleSensorService;
 
-  private com.redroundrobin.thirema.apirest.service.postgres.SensorService sensorService;
-
   @Autowired
   public DataController(@Qualifier("timescaleSensorService") SensorService timescaleSensorService) {
     this.timescaleSensorService = timescaleSensorService;
-  }
-
-  public void setSensorService(
-      com.redroundrobin.thirema.apirest.service.postgres.SensorService sensorService) {
-    this.sensorService = sensorService;
   }
 
   @GetMapping(value = {""})
