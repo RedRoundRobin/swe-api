@@ -24,28 +24,23 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-public class AuthController {
+public class AuthController extends CoreController {
 
   private CustomAuthenticationManager authenticationManager;
-
-  private UserService userService;
-
-  private JwtUtil jwtTokenUtil;
 
   private TelegramService telegramService;
 
   @Autowired
-  public AuthController(CustomAuthenticationManager authenticationManager, UserService userService,
-                        JwtUtil jwtTokenUtil, TelegramService telegramService) {
+  public AuthController(CustomAuthenticationManager authenticationManager,
+                        TelegramService telegramService) {
     this.authenticationManager = authenticationManager;
-    this.userService = userService;
-    this.jwtTokenUtil = jwtTokenUtil;
     this.telegramService = telegramService;
   }
 
   @PostMapping(value = "/auth")
   public ResponseEntity<Map<String, Object>> authentication(
-      @RequestBody Map<String, Object> authenticationRequest) {
+      @RequestBody Map<String, Object> authenticationRequest,
+      @RequestHeader(value = "x-forwarded-for", required = false) String ip) {
     String email = (String) authenticationRequest.get("username");
     String password = (String) authenticationRequest.get("password");
 
@@ -87,14 +82,18 @@ public class AuthController {
 
         response.put("tfa", true);
 
-        token = jwtTokenUtil.generateTfaToken("tfa", String.valueOf(sixDigitsCode), userDetails);
+        token = jwtUtil.generateTfaToken("tfa", String.valueOf(sixDigitsCode), userDetails);
+
+        logService.createLog(user.getId(), ip, "login", "sent tfa code");
       } else {
         return  new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
       }
     } else {
       response.put("user", user);
 
-      token = jwtTokenUtil.generateToken("webapp", userDetails);
+      token = jwtUtil.generateToken("webapp", userDetails);
+
+      logService.createLog(user.getId(), ip, "login", "webapp");
     }
 
     response.put("token", token);
@@ -105,7 +104,8 @@ public class AuthController {
   @PostMapping(value = "/auth/tfa")
   public ResponseEntity<Map<String, Object>> tfaAuthentication(
       @RequestBody Map<String, Object> request,
-      @RequestHeader("Authorization") String authorization) {
+      @RequestHeader("Authorization") String authorization,
+      @RequestHeader("X-Forwarded-For") String ip) {
 
     if (!request.containsKey("authCode") || ((String) request.get("authCode")).equals("")) {
       return new ResponseEntity(HttpStatus.BAD_REQUEST);
@@ -114,14 +114,14 @@ public class AuthController {
     String authCode = (String) request.get("authCode");
     String tfaToken = authorization.substring(7);
 
-    if (!jwtTokenUtil.isTfa(tfaToken)) {
+    if (!jwtUtil.isTfa(tfaToken)) {
       return new ResponseEntity(HttpStatus.BAD_REQUEST);
     }
 
-    String tokenAuthCode = jwtTokenUtil.extractAuthCode(tfaToken);
+    String tokenAuthCode = jwtUtil.extractAuthCode(tfaToken);
 
     if (tokenAuthCode.equals(authCode)) {
-      User user = userService.findByEmail(jwtTokenUtil.extractUsername(tfaToken));
+      User user = userService.findByEmail(jwtUtil.extractUsername(tfaToken));
 
       final UserDetails userDetails;
 
@@ -137,11 +137,13 @@ public class AuthController {
         return ResponseEntity.status(403).build();
       }
 
-      final String token = jwtTokenUtil.generateToken("webapp", userDetails);
+      final String token = jwtUtil.generateToken("webapp", userDetails);
 
       HashMap<String, Object> response = new HashMap<>();
       response.put("token", token);
       response.put("user", user);
+
+      logService.createLog(user.getId(), ip, "login", "tfa confirmed");
 
       return ResponseEntity.ok(response);
     } else {
@@ -151,10 +153,13 @@ public class AuthController {
 
   //funzione di controllo username Telegram e salvataggio chatID
   @PostMapping(value = {"/auth/telegram"})
-  public ResponseEntity<Map<String, Object>> telegramAuthentication(@RequestBody
-                                           Map<String, Object> authenticationRequest) {
+  public ResponseEntity<Map<String, Object>> telegramAuthentication(
+      @RequestBody Map<String, Object> authenticationRequest,
+      @RequestHeader("X-Forwarded-For") String ip) {
     String telegramName = (String) authenticationRequest.get("telegramName");
     String chatId = (String) authenticationRequest.get("telegramChat");
+
+    User user = userService.findByTelegramName(telegramName);
 
     if (telegramName == null || chatId == null)  {
       return new ResponseEntity(HttpStatus.BAD_REQUEST);
@@ -168,7 +173,6 @@ public class AuthController {
     } else if (userService.findByTelegramNameAndTelegramChat(telegramName, chatId) == null) {
       code = 1;
 
-      User user = userService.findByTelegramName(telegramName);
       user.setTelegramChat(chatId);
       userService.save(user);
     }
@@ -177,7 +181,9 @@ public class AuthController {
       if (code != 0) {
         final UserDetails userDetails = userService.loadUserByTelegramName(telegramName);
 
-        token = jwtTokenUtil.generateToken("telegram", userDetails);
+        token = jwtUtil.generateToken("telegram", userDetails);
+
+        logService.createLog(user.getId(), ip, "login", "telegram");
       }
     } catch (UsernameNotFoundException | UserDisabledException | TelegramChatNotFoundException ue) {
       code = 0;

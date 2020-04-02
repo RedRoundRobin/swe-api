@@ -6,6 +6,7 @@ import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
+import com.redroundrobin.thirema.apirest.service.timescale.LogService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import com.redroundrobin.thirema.apirest.utils.exception.*;
 import org.junit.Before;
@@ -28,6 +29,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -42,6 +44,9 @@ public class UserControllerTest {
 
   @MockBean
   EntityService entityService;
+
+  @MockBean
+  LogService logService;
 
   private UserController userController;
 
@@ -63,7 +68,10 @@ public class UserControllerTest {
 
   @Before
   public void setUp() throws Exception {
-    userController = new UserController(jwtTokenUtil, userService, entityService);
+    userController = new UserController();
+    userController.setJwtUtil(jwtTokenUtil);
+    userController.setLogService(logService);
+    userController.setUserService(userService);
 
     admin1 = new User();
     admin1.setId(1);
@@ -180,6 +188,8 @@ public class UserControllerTest {
     List<Entity> allEntities = new ArrayList<>();
     allEntities.add(entity1);
     allEntities.add(entity2);
+
+    doNothing().when(logService).createLog(anyInt(), anyString(), anyString(), anyString());
 
     when(userService.findAll()).thenReturn(allUsers);
 
@@ -331,7 +341,7 @@ public class UserControllerTest {
     HashMap<String, Object> request = new HashMap<>();
     request.put("email", "newemail");
 
-    ResponseEntity response = userController.editUser("Bearer " + admin1Token,
+    ResponseEntity response = userController.editUser("Bearer " + admin1Token, "localhost",
         request, admin2.getId());
 
     ResponseEntity expected = new ResponseEntity(HttpStatus.FORBIDDEN);
@@ -348,7 +358,7 @@ public class UserControllerTest {
     HashMap<String, Object> request = new HashMap<>();
     request.put("email", "newemail");
 
-    ResponseEntity response = userController.editUser("Bearer " + admin1Token,
+    ResponseEntity response = userController.editUser("Bearer " + admin1Token,"localhost",
         request, 10);
 
     ResponseEntity expected = new ResponseEntity(HttpStatus.BAD_REQUEST);
@@ -375,7 +385,7 @@ public class UserControllerTest {
     HashMap<String, Object> request = new HashMap<>();
     request.put("password", "newpassword");
 
-    ResponseEntity response = userController.editUser("Bearer " + user1Token,
+    ResponseEntity response = userController.editUser("Bearer " + user1Token,"localhost",
         request, user1.getId());
 
     ResponseEntity expected = new ResponseEntity(HttpStatus.UNAUTHORIZED);
@@ -393,7 +403,7 @@ public class UserControllerTest {
     HashMap<String, Object> request = new HashMap<>();
     request.put("user_id", user1.getId());
 
-    ResponseEntity response = userController.editUser("Bearer " + admin1Token,
+    ResponseEntity response = userController.editUser("Bearer " + admin1Token,"localhost",
         request, user1.getId());
 
     ResponseEntity expected = new ResponseEntity(HttpStatus.FORBIDDEN);
@@ -414,7 +424,7 @@ public class UserControllerTest {
     HashMap<String, Object> request = new HashMap<>();
     request.put("email", newEmail);
 
-    ResponseEntity response = userController.editUser("Bearer " + admin1Token,
+    ResponseEntity response = userController.editUser("Bearer " + admin1Token,"localhost",
         request, user1.getId());
 
     HashMap<String, Object> expectedBody = new HashMap<>();
@@ -447,7 +457,7 @@ public class UserControllerTest {
     HashMap<String, Object> request = new HashMap<>();
     request.put("email", newEmail);
 
-    ResponseEntity response = userController.editUser("Bearer " + user1Token,
+    ResponseEntity response = userController.editUser("Bearer " + user1Token,"localhost",
         request, user1.getId());
 
     HashMap<String, Object> expectedBody = new HashMap<>();
@@ -465,7 +475,7 @@ public class UserControllerTest {
     HashMap<String, Object> request = new HashMap<>();
     request.put("email", "newEmail");
 
-    ResponseEntity response = userController.editUser("Bearer " + user1Token,
+    ResponseEntity response = userController.editUser("Bearer " + user1Token,"localhost",
         request, user2.getId());
 
     ResponseEntity expected = new ResponseEntity(HttpStatus.FORBIDDEN);
@@ -486,7 +496,7 @@ public class UserControllerTest {
     HashMap<String, Object> request = new HashMap<>();
     request.put("email", newEmail);
 
-    ResponseEntity response = userController.editUser("Bearer " + mod1Token,
+    ResponseEntity response = userController.editUser("Bearer " + mod1Token,"localhost",
         request, user1.getId());
 
     HashMap<String, Object> expectedBody = new HashMap<>();
@@ -510,7 +520,7 @@ public class UserControllerTest {
     HashMap<String, Object> request = new HashMap<>();
     request.put("telegram_name", newTelegramName);
 
-    ResponseEntity response = userController.editUser("Bearer " + user2Token,
+    ResponseEntity response = userController.editUser("Bearer " + user2Token,"localhost",
         request, user2.getId());
 
     String expectedBody = "The value of telegram_name already exists";
@@ -533,7 +543,7 @@ public class UserControllerTest {
     HashMap<String, Object> request = new HashMap<>();
     request.put("telegram_name", newTelegramName);
 
-    ResponseEntity response = userController.editUser("Bearer " + user2Token,
+    ResponseEntity response = userController.editUser("Bearer " + user2Token,"localhost",
         request, user2.getId());
 
     String expectedBody = "";
@@ -554,7 +564,7 @@ public class UserControllerTest {
     HashMap<String, Object> request = new HashMap<>();
     request.put("telegram_name", newTelegramName);
 
-    ResponseEntity response = userController.editUser("Bearer " + user2Token,
+    ResponseEntity response = userController.editUser("Bearer " + user2Token,"localhost",
         request, user2.getId());
 
     ResponseEntity expected = new ResponseEntity(HttpStatus.BAD_REQUEST);
@@ -574,7 +584,7 @@ public class UserControllerTest {
     HashMap<String, Object> request = new HashMap<>();
     request.put("telegram_Name", newTelegramName);
 
-    ResponseEntity response = userController.editUser("Bearer " + user2Token,
+    ResponseEntity response = userController.editUser("Bearer " + user2Token,"localhost",
         request, user2.getId());
 
     ResponseEntity expected = new ResponseEntity(HttpStatus.BAD_REQUEST);
@@ -597,7 +607,7 @@ public class UserControllerTest {
     HashMap<String, Object> request = new HashMap<>();
     request.put("telegramName", newTelegramName);
 
-    ResponseEntity response = userController.editUser("Bearer " + mod1Token,
+    ResponseEntity response = userController.editUser("Bearer " + mod1Token,"localhost",
         request, mod1.getId());
 
     ResponseEntity expected = new ResponseEntity(tfaError, HttpStatus.CONFLICT);
@@ -617,7 +627,7 @@ public class UserControllerTest {
     HashMap<String, Object> request = new HashMap<>();
     request.put("email", newEmail);
 
-    ResponseEntity response = userController.editUser("Bearer " + mod1Token,
+    ResponseEntity response = userController.editUser("Bearer " + mod1Token,"localhost",
         request, mod11.getId());
 
     ResponseEntity expected = new ResponseEntity(HttpStatus.FORBIDDEN);
@@ -714,7 +724,7 @@ public class UserControllerTest {
     jsonUser.addProperty("entityId", 1);
     jsonUser.addProperty("password", "password");
 
-    ResponseEntity<User> response = userController.createUser(authorization, jsonUser.toString());
+    ResponseEntity<User> response = userController.createUser(authorization, "localhost", jsonUser.toString());
     assertTrue(response.getStatusCode() == HttpStatus.OK);
     assertTrue(response.getBody() != null);
   }
@@ -730,7 +740,7 @@ public class UserControllerTest {
     jsonUser.addProperty("entityId", 1);
     jsonUser.addProperty("password", "password");
 
-    ResponseEntity<User> response = userController.createUser(authorization, jsonUser.toString());
+    ResponseEntity<User> response = userController.createUser(authorization, "localhost", jsonUser.toString());
     assertTrue(response.getStatusCode() == HttpStatus.OK);
     assertTrue(response.getBody() != null);
   }
@@ -746,7 +756,7 @@ public class UserControllerTest {
     jsonUser.addProperty("entityId", 1);
     jsonUser.addProperty("password", "password");
 
-    ResponseEntity<User> response = userController.createUser(authorization, jsonUser.toString());
+    ResponseEntity<User> response = userController.createUser(authorization, "localhost", jsonUser.toString());
     assertTrue(response.getStatusCode() == HttpStatus.BAD_REQUEST);
     assertTrue(response.getBody() == null);
   }
@@ -755,7 +765,7 @@ public class UserControllerTest {
   public void deleteUser1ByAdmin1SuccesfulTest() {
     String authorization = "Bearer "+admin1Token;
 
-    ResponseEntity<?> response = userController.deleteUser(authorization, user1.getId());
+    ResponseEntity<?> response = userController.deleteUser(authorization, "localhost", user1.getId());
     assertTrue(response.getStatusCode() == HttpStatus.OK);
     assertEquals(response.getBody(),  user1);
     assertTrue(user1.isDeleted());
@@ -765,7 +775,7 @@ public class UserControllerTest {
   public void deleteUser1ByMod1SuccesfulTest() {
     String authorization = "Bearer "+mod1Token;
 
-    ResponseEntity<?> response = userController.deleteUser(authorization, user1.getId());
+    ResponseEntity<?> response = userController.deleteUser(authorization, "localhost", user1.getId());
     assertTrue(response.getStatusCode() == HttpStatus.OK);
     assertEquals(response.getBody(),  user1);
     assertTrue(user1.isDeleted());
@@ -775,7 +785,7 @@ public class UserControllerTest {
   public void deleteUser1ByMod2NotAuthorizedExceptionTest() {
     String authorization = "Bearer "+mod2Token;
 
-    ResponseEntity<?> response = userController.deleteUser(authorization, user1.getId());
+    ResponseEntity<?> response = userController.deleteUser(authorization, "localhost", user1.getId());
     assertTrue(response.getStatusCode() == HttpStatus.FORBIDDEN);
     assertTrue(response.getBody() != null);
   }
@@ -785,7 +795,7 @@ public class UserControllerTest {
     String authorization = "Bearer "+mod2Token;
     int notExistingId = 50;
 
-    ResponseEntity<?> response = userController.deleteUser(authorization, notExistingId);
+    ResponseEntity<?> response = userController.deleteUser(authorization, "localhost", notExistingId);
     assertTrue(response.getStatusCode() == HttpStatus.BAD_REQUEST);
     assertTrue(response.getBody() != null);
   }
