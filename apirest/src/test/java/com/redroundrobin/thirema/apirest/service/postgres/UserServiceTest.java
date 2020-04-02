@@ -608,7 +608,6 @@ public class UserServiceTest {
     String newPassword = "newPassword";
     User.Role newType = User.Role.USER;
     String newTelegramName = "newTelegramName";
-    boolean newDeleted = true;
     int newEntityId = entity2.getId();
 
     HashMap<String, Object> fieldsToEdit = new HashMap<>();
@@ -619,7 +618,6 @@ public class UserServiceTest {
     fieldsToEdit.put("password",newPassword);
     fieldsToEdit.put("type",0);
     fieldsToEdit.put("telegramName",newTelegramName);
-    fieldsToEdit.put("deleted", newDeleted);
     fieldsToEdit.put("entityId", newEntityId);
 
     User editedUser = cloneUser(user1);
@@ -725,13 +723,11 @@ public class UserServiceTest {
     fieldsToEdit.put("name",newName);
     fieldsToEdit.put("surname",newSurname);
     fieldsToEdit.put("email",newEmail);
-    fieldsToEdit.put("deleted", newDeleted);
 
     User editedUser = cloneUser(user2);
     editedUser.setName(newName);
     editedUser.setSurname(newSurname);
     editedUser.setEmail(newEmail);
-    editedUser.setDeleted(newDeleted);
 
     try {
       User user = userService.editByModerator(user2, false, fieldsToEdit);
@@ -740,7 +736,6 @@ public class UserServiceTest {
       assertEquals(editedUser.getName(), user.getName());
       assertEquals(editedUser.getSurname(), user.getSurname());
       assertEquals(editedUser.getEmail(), user.getEmail());
-      assertEquals(editedUser.isDeleted(), user.isDeleted());
     } catch (Exception e) {
       System.out.println(e);
       assertTrue(false);
