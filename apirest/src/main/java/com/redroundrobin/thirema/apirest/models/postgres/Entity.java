@@ -11,13 +11,19 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 @javax.persistence.Entity
 @Table(name = "entities")
 public class Entity {
   @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
+  @GeneratedValue(generator = "entities_entity_id_seq", strategy = GenerationType.SEQUENCE)
+  @SequenceGenerator(
+      name = "entities_entity_id_seq",
+      sequenceName = "entities_entity_id_seq",
+      allocationSize = 50
+  )
   @Column(name = "entity_id")
   private int entityId;
   private String name;
