@@ -12,6 +12,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 @javax.persistence.Entity
@@ -19,7 +20,12 @@ import javax.persistence.Table;
 public class Device {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
+  @GeneratedValue(generator = "devices_device_id_seq", strategy = GenerationType.SEQUENCE)
+  @SequenceGenerator(
+      name = "devices_device_id_seq",
+      sequenceName = "devices_device_id_seq",
+      allocationSize = 50
+  )
   @Column(name = "device_id")
   private int deviceId;
 

@@ -106,7 +106,7 @@ public class UserController extends CoreController {
   }
 
   @DeleteMapping(value = {"/{userid:.+}"})
-  public ResponseEntity<?> deleteEntityUser(@RequestHeader("Authorization") String authorization,
+  public ResponseEntity<?> deleteUser(@RequestHeader("Authorization") String authorization,
                                             @PathVariable("userid") int userToDeleteId) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtUtil.extractUsername(token));

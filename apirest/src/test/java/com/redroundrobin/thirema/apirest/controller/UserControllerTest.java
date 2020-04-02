@@ -17,6 +17,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -46,6 +48,7 @@ public class UserControllerTest {
   private String admin1Token = "admin1Token";
   private String admin2Token = "admin2Token";
   private String mod1Token = "mod1Token";
+  private String mod2Token = "mod2Token";
   private String mod11Token = "mod11Token";
   private String user1Token = "user1Token";
   private String user2Token = "user2Token";
@@ -53,6 +56,7 @@ public class UserControllerTest {
   private User admin1;
   private User admin2;
   private User mod1;
+  private User mod2;
   private User mod11;
   private User user1;
   private User user2;
@@ -121,6 +125,15 @@ public class UserControllerTest {
     user2.setType(User.Role.USER);
     user2.setEntity(entity2);
 
+    mod2 = new User();
+    mod2.setId(7);
+    mod2.setName("mod2");
+    mod2.setSurname("mod2");
+    mod2.setEmail("mod2");
+    mod2.setPassword("password");
+    mod2.setType(User.Role.MOD);
+    mod2.setEntity(entity2);
+
     when(jwtTokenUtil.extractRole("Bearer " + admin1Token)).thenReturn(admin1.getType());
     when(jwtTokenUtil.extractUsername(admin1Token)).thenReturn(admin1.getEmail());
     when(userService.findByEmail(admin1.getEmail())).thenReturn(admin1);
@@ -151,6 +164,11 @@ public class UserControllerTest {
     when(userService.findByEmail(user2.getEmail())).thenReturn(user2);
     when(userService.findById(user2.getId())).thenReturn(user2);
 
+    when(jwtTokenUtil.extractRole("Bearer " + mod2Token)).thenReturn(mod2.getType());
+    when(jwtTokenUtil.extractUsername(mod2Token)).thenReturn(mod2.getEmail());
+    when(userService.findByEmail(mod2.getEmail())).thenReturn(mod2);
+    when(userService.findById(mod2.getId())).thenReturn(mod2);
+
 
     List<User> allUsers = new ArrayList<>();
     allUsers.add(admin1);
@@ -159,6 +177,7 @@ public class UserControllerTest {
     allUsers.add(mod11);
     allUsers.add(user1);
     allUsers.add(user2);
+    allUsers.add(mod2);
 
     List<Entity> allEntities = new ArrayList<>();
     allEntities.add(entity1);
@@ -178,6 +197,28 @@ public class UserControllerTest {
       }
     });
 
+    when(userService.deleteUser(any(User.class), anyInt())).thenAnswer(i -> {
+      User deletingUser = i.getArgument(0);
+      int userToDeleteId = i.getArgument(1);
+      User userToDelete;
+      if ((userToDelete = allUsers.stream()
+          .filter(user -> user.getId() == userToDeleteId)
+          .findFirst().orElse(null)) == null) {
+        throw new ValuesNotAllowedException("The given user_id doesn't correspond to any user");
+      }
+
+      if (deletingUser.getType() == User.Role.USER
+          || deletingUser.getType() == User.Role.MOD
+          && ((userToDelete.getType() != User.Role.USER)
+          || deletingUser.getEntity().getId() != userToDelete.getEntity().getId())) {
+        throw new NotAuthorizedToDeleteUserException("This user cannot delete "
+            + "the user with the user_id given");
+      }
+
+      userToDelete.setDeleted(true);
+      return userToDelete;
+  });
+
     when(userService.serializeUser(any(JsonObject.class), any(User.class))).thenAnswer(i -> {
       JsonObject rawUserToInsert = i.getArgument(0);
       User insertingUser = i.getArgument(1);
@@ -186,7 +227,7 @@ public class UserControllerTest {
       creatable.add("surname");
       creatable.add("email");
       creatable.add("type");
-      creatable.add("entity_id");
+      creatable.add("entityId");
       creatable.add("password");  //SOLUZIONE TEMPORANEA: NON PREVISTA DA USE CASES
 
       boolean onlyCreatableKeys = rawUserToInsert.keySet()
@@ -202,43 +243,64 @@ public class UserControllerTest {
         throw new MissingFieldsException("Some necessary fields are missing: cannot create user");
       }
 
-      /*Fare mock entityService*/
       Entity userToInsertEntity;
-      if ((userToInsertEntity = entityService.findById(
-          (rawUserToInsert.get("entity_id")).getAsInt())) == null) {
+      if ((userToInsertEntity =
+          allEntities.stream().filter(entity ->
+              entity.getId() == (rawUserToInsert.get("entityId")).getAsInt())
+              .findFirst().orElse(null)) == null) {
         throw new EntityNotFoundException("The entity with the entityId given doesn't exist");
       }
 
-      User.Role userToInsertType;
+      int userToInsertType;
       try {
-        userToInsertType = User.Role.valueOf(rawUserToInsert.get("type").getAsString());
-      } catch (IllegalArgumentException iae) {
-        throw new UserRoleNotFoundException("The given role doesn't exist");
-      } catch (NullPointerException nptr) {
-        throw new UserRoleNotFoundException("The type parameter cannot be null");
+        userToInsertType = rawUserToInsert.get("type").getAsInt();
+        if(userToInsertType == 2) {
+          throw new ValuesNotAllowedException("Not allowed to insert an admin");
+        }
+        if(userToInsertType != 1 && userToInsertType != 0) {
+          throw new ValuesNotAllowedException("The type parameter given is not allowed");
+        }
+      } catch (IllegalArgumentException | ClassCastException iae) {
+        throw new ValuesNotAllowedException("The role must be an integer corresponding to an existing type");
       }
 
-      if (insertingUser.getType() != User.Role.ADMIN &&
-          insertingUser.getType() == User.Role.MOD &&
-          (userToInsertEntity.getId() != insertingUser.getEntity().getId()
-              || userToInsertType != User.Role.USER))
+      //qui so che entity_id dato esiste && so il tipo dello user che si vuole inserire
+      //NB: IL MODERATORE PUO INSERIRE SOLO MEMBRI!! VA BENE??
+      if (insertingUser.getType() == User.Role.USER
+          || (insertingUser.getType() == User.Role.MOD
+          && userToInsertEntity.getId() != insertingUser.getEntity().getId())) {
         throw new NotAuthorizedToInsertUserException();
+      }
 
       User newUser = new User();
       newUser.setEntity(userToInsertEntity);
-      newUser.setType(userToInsertType);
+      if (userToInsertType == 0) {
+        newUser.setType(User.Role.USER);
+      } else {
+        newUser.setType(User.Role.MOD);
+      }
 
-      if (rawUserToInsert.get("name").getAsString() != null)
+      if (rawUserToInsert.get("name").getAsString() != null) {
         newUser.setName(rawUserToInsert.get("name").getAsString());
-      else throw new ValuesNotAllowedException("The name field cannot be null");
+      } else {
+        throw new ValuesNotAllowedException("The name field cannot be null");
+      }
 
-      if (rawUserToInsert.get("surname").getAsString() != null)
-        newUser.setSurname(rawUserToInsert.get("name").getAsString());
-      else throw new ValuesNotAllowedException("The surname field cannot be null");
+      if (rawUserToInsert.get("surname").getAsString() != null) {
+        newUser.setSurname(rawUserToInsert.get("surname").getAsString());
+      } else {
+        throw new ValuesNotAllowedException("The surname field cannot be null");
+      }
+
+      if (rawUserToInsert.get("password").getAsString() != null) {
+        newUser.setPassword(rawUserToInsert.get("password").getAsString());
+      } else {
+        throw new ValuesNotAllowedException("The password field cannot be null");
+      }
 
       String email = rawUserToInsert.get("email").getAsString();
       if (email != null &&
-          allUsers.stream().filter(user-> user.getEmail() == null).count() == 1) //email gia usata
+          allUsers.stream().filter(user-> user.getEmail() == email).count() == 0) //email gia usata
         newUser.setEmail(email);
       else throw new ValuesNotAllowedException("Either the email field you inserted is" +
           "null or it is already used");
@@ -644,50 +706,90 @@ public class UserControllerTest {
   //creazione di un nuovo utente
   //@PostMapping(value = {"/users/create"})
   @Test
-  public void createUserSuccessfulTest() {
+  public void createUserSuccessfulByAdmin1Test() {
     String authorization = "Bearer "+admin1Token;
     JsonObject jsonUser = new JsonObject();
     jsonUser.addProperty("name", "marco");
     jsonUser.addProperty("surname", "polo");
-    jsonUser.addProperty("email", "CONTROLLOBENFORMATA!!!");
+    jsonUser.addProperty("email", "createUserSuccessfulByAdmin1");
+    jsonUser.addProperty("type",  0);
+    jsonUser.addProperty("entityId", 1);
+    jsonUser.addProperty("password", "password");
+
+    ResponseEntity<User> response = userController.createUser(authorization, jsonUser.toString());
+    assertTrue(response.getStatusCode() == HttpStatus.OK);
+    assertTrue(response.getBody() != null);
+  }
+
+  @Test
+  public void createUserSuccessfullyByMod1Test() {
+    String authorization = "Bearer "+mod1Token;
+    JsonObject jsonUser = new JsonObject();
+    jsonUser.addProperty("name", "marco");
+    jsonUser.addProperty("surname", "polo");
+    jsonUser.addProperty("email", "createUserSuccessfullyByMod1");
+    jsonUser.addProperty("type",  0);
+    jsonUser.addProperty("entityId", 1);
+    jsonUser.addProperty("password", "password");
+
+    ResponseEntity<User> response = userController.createUser(authorization, jsonUser.toString());
+    assertTrue(response.getStatusCode() == HttpStatus.OK);
+    assertTrue(response.getBody() != null);
+  }
+
+  @Test
+  public void createUserByMod2NotAuthorizedToInsertUserExceptionTest() {
+    String authorization = "Bearer "+mod2Token;
+    JsonObject jsonUser = new JsonObject();
+    jsonUser.addProperty("name", "marco");
+    jsonUser.addProperty("surname", "polo");
+    jsonUser.addProperty("email", "createUserByMod2");
     jsonUser.addProperty("type",  0);
     jsonUser.addProperty("entityId", 1);
     jsonUser.addProperty("password", "password");
 
     ResponseEntity<User> response = userController.createUser(authorization, jsonUser.toString());
     assertTrue(response.getStatusCode() == HttpStatus.BAD_REQUEST);
-//    assertTrue(response.getStatusCode() == HttpStatus.OK);
-  }
-/*
-  //creazione di un nuovo utente
-  @PostMapping(value = {"/users/create"})
-  public ResponseEntity<Object> createUser(@RequestHeader("Authorization") String authorization,
-                                           @RequestBody String jsonStringUser) {
-    String token = authorization.substring(7);
-    User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
-    JsonObject jsonUser = JsonParser.parseString(jsonStringUser).getAsJsonObject();
-    try {
-      return ResponseEntity.ok(userService.serializeUser(jsonUser, user));
-    }
-    catch(KeysNotFoundException | MissingFieldsException | ValuesNotAllowedException
-        | UserRoleNotFoundException | EntityNotFoundException | NotAuthorizedToInsertUserException e){
-      return new ResponseEntity(e.getMessage() , HttpStatus.BAD_REQUEST);
-    }
+    assertTrue(response.getBody() == null);
   }
 
-  //creazione di un nuovo utente
-  @PostMapping(value = {"/users/create"})
-  public ResponseEntity<Object> createUser(@RequestHeader("Authorization") String authorization,
-                                           @RequestBody String jsonStringUser) {
-    String token = authorization.substring(7);
-    User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
-    JsonObject jsonUser = JsonParser.parseString(jsonStringUser).getAsJsonObject();
-    try {
-      return ResponseEntity.ok(userService.serializeUser(jsonUser, user));
-    }
-    catch(KeysNotFoundException | MissingFieldsException | ValuesNotAllowedException
-        | UserRoleNotFoundException | EntityNotFoundException | NotAuthorizedToInsertUserException e){
-      return new ResponseEntity(e.getMessage() , HttpStatus.BAD_REQUEST);
-    }
-  }*/
+  @Test
+  public void deleteUser1ByAdmin1SuccesfulTest() {
+    String authorization = "Bearer "+admin1Token;
+
+    ResponseEntity<?> response = userController.deleteUser(authorization, user1.getId());
+    assertTrue(response.getStatusCode() == HttpStatus.OK);
+    assertEquals(response.getBody(),  user1);
+    assertTrue(user1.isDeleted());
+  }
+
+  @Test
+  public void deleteUser1ByMod1SuccesfulTest() {
+    String authorization = "Bearer "+mod1Token;
+
+    ResponseEntity<?> response = userController.deleteUser(authorization, user1.getId());
+    assertTrue(response.getStatusCode() == HttpStatus.OK);
+    assertEquals(response.getBody(),  user1);
+    assertTrue(user1.isDeleted());
+  }
+
+  @Test
+  public void deleteUser1ByMod2NotAuthorizedExceptionTest() {
+    String authorization = "Bearer "+mod2Token;
+
+    ResponseEntity<?> response = userController.deleteUser(authorization, user1.getId());
+    assertTrue(response.getStatusCode() == HttpStatus.FORBIDDEN);
+    assertTrue(response.getBody() != null);
+  }
+
+  @Test
+  public void deleteUser1ByModValuesNotAllowedExceptionTest() {
+    String authorization = "Bearer "+mod2Token;
+    int notExistingId = 50;
+
+    ResponseEntity<?> response = userController.deleteUser(authorization, notExistingId);
+    assertTrue(response.getStatusCode() == HttpStatus.BAD_REQUEST);
+    assertTrue(response.getBody() != null);
+  }
+
 }

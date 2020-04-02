@@ -12,6 +12,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 @javax.persistence.Entity
@@ -19,7 +20,12 @@ import javax.persistence.Table;
 public class Sensor {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
+  @GeneratedValue(generator = "sensors_sensor_id_seq", strategy = GenerationType.SEQUENCE)
+  @SequenceGenerator(
+      name = "sensors_sensor_id_seq",
+      sequenceName = "sensors_sensor_id_seq",
+      allocationSize = 50
+  )
   @Column(name = "sensor_id")
   private int sensorId;
   private String type;

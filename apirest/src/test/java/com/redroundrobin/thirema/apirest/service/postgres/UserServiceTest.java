@@ -1,5 +1,6 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
+import com.google.gson.JsonObject;
 import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
 import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
@@ -41,6 +42,7 @@ public class UserServiceTest {
   private User admin2;
   private User mod1;
   private User mod11;
+  private User mod2;
   private User user1;
   private User user2;
 
@@ -94,6 +96,19 @@ public class UserServiceTest {
     mod11.setType(User.Role.MOD);
     mod11.setEntity(entity1);
 
+    entity2 = new Entity();
+    entity2.setId(2);
+
+    mod2 = new User();
+    mod2.setId(7);
+    mod2.setName("mod2");
+    mod2.setSurname("mod2");
+    mod2.setEmail("mod2");
+    mod2.setTelegramName("TNmod2");
+    mod2.setPassword("password");
+    mod2.setType(User.Role.MOD);
+    mod2.setEntity(entity2);
+
     user1 = new User();
     user1.setId(5);
     user1.setName("user1");
@@ -103,9 +118,6 @@ public class UserServiceTest {
     user1.setPassword("password");
     user1.setType(User.Role.USER);
     user1.setEntity(entity1);
-
-    entity2 = new Entity();
-    entity2.setId(2);
 
     user2 = new User();
     user2.setId(6);
@@ -147,6 +159,13 @@ public class UserServiceTest {
     when(userRepo.userDevices(anyInt())).thenReturn(devices);
 
     when(userRepo.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
+
+    when(userRepo.findByEmail(anyString())).thenAnswer(i -> {
+      String emailNewUser = i.getArgument(0);
+      return allUsers.stream()
+          .filter(user -> user.getEmail() == emailNewUser)
+          .findFirst().orElse(null);
+    });
 
     when(entityService.findById(anyInt())).thenAnswer(i -> {
       int id = i.getArgument(0);
@@ -406,11 +425,149 @@ public class UserServiceTest {
 
 
   // serializeUser method tests
-  /*@Test
-  public void serializeUserSuccessfull() {
+  @Test
+  public void serializeUserByMod1SuccessfullTest() {
+    JsonObject fieldsToCreate = new JsonObject();
+    String name = "marco";
+    String surname = "franco";
+    String email = "email"; //controllo ben formata lato webapp
+    String password = "password";
+    int type = 0;
+    int entityId = 1;
+    fieldsToCreate.addProperty("name", name);
+    fieldsToCreate.addProperty("surname", surname);
+    fieldsToCreate.addProperty("email", email);
+    fieldsToCreate.addProperty("password", password);
+    fieldsToCreate.addProperty("type", type);
+    fieldsToCreate.addProperty("entityId", entityId);
 
-  }*/
+    try {
+      User user = userService.serializeUser(fieldsToCreate, mod1);
+      assertTrue(true);
+    } catch (Exception e) {
+      assertTrue(false);
+    }
+  }
 
+  @Test
+  public void serializeUserByAdmin1SuccessfullTest() {
+    JsonObject fieldsToCreate = new JsonObject();
+    String name = "marco";
+    String surname = "franco";
+    String email = "email"; //controllo ben formata lato webapp
+    String password = "password";
+    int type = 0;
+    int entityId = 1;
+    fieldsToCreate.addProperty("name", name);
+    fieldsToCreate.addProperty("surname", surname);
+    fieldsToCreate.addProperty("email", email);
+    fieldsToCreate.addProperty("password", password);
+    fieldsToCreate.addProperty("type", type);
+    fieldsToCreate.addProperty("entityId", entityId);
+
+    try {
+      User user = userService.serializeUser(fieldsToCreate, admin1);
+      assertTrue(true);
+    } catch (Exception e) {
+      assertTrue(false);
+    }
+  }
+
+  @Test
+  public void serializeMod1ByAdmin1SuccessfullTest() {
+    JsonObject fieldsToCreate = new JsonObject();
+    String name = "marco";
+    String surname = "franco";
+    String email = "email"; //controllo ben formata lato webapp
+    String password = "password";
+    int type = 1;
+    int entityId = 1;
+    fieldsToCreate.addProperty("name", name);
+    fieldsToCreate.addProperty("surname", surname);
+    fieldsToCreate.addProperty("email", email);
+    fieldsToCreate.addProperty("password", password);
+    fieldsToCreate.addProperty("type", type);
+    fieldsToCreate.addProperty("entityId", entityId);
+
+    try {
+      User user = userService.serializeUser(fieldsToCreate, admin1);
+      assertTrue(true);
+    } catch (Exception e) {
+      assertTrue(false);
+    }
+  }
+
+  @Test
+  public void serializeUserByUser1ExceptionTest() {
+    JsonObject fieldsToCreate = new JsonObject();
+    String name = "marco";
+    String surname = "franco";
+    String email = "email"; //controllo ben formata lato webapp
+    String password = "password";
+    int type = 0;
+    int entityId = 1;
+    fieldsToCreate.addProperty("name", name);
+    fieldsToCreate.addProperty("surname", surname);
+    fieldsToCreate.addProperty("email", email);
+    fieldsToCreate.addProperty("password", password);
+    fieldsToCreate.addProperty("type", type);
+    fieldsToCreate.addProperty("entityId", entityId);
+
+    try {
+      User user = userService.serializeUser(fieldsToCreate, user1);
+      assertTrue(false);
+    } catch (Exception e) {
+      assertTrue(true);
+    }
+  }
+
+  @Test
+  public void serializeUserByUser1ExceptionMissingFieldTest() {
+    JsonObject fieldsToCreate = new JsonObject();
+    String name = "marco";
+    String surname = "franco";
+    String email = "email"; //controllo ben formata lato webapp
+    String password = "password";
+    int type = 0;
+    int entityId = 1;
+    fieldsToCreate.addProperty("name", name);
+    fieldsToCreate.addProperty("surname", surname);
+    fieldsToCreate.addProperty("email", email);
+    fieldsToCreate.addProperty("password", password);
+    fieldsToCreate.addProperty("type", type);
+    fieldsToCreate.addProperty("entityId", entityId);
+
+    try {
+      User user = userService.serializeUser(fieldsToCreate, user1);
+      assertTrue(false);
+    } catch (Exception e) {
+      assertTrue(true);
+    }
+  }
+
+  @Test
+  public void serializeAdmin2ByAdmin1UnsuccesfulTest() {
+    JsonObject fieldsToCreate = new JsonObject();
+    String name = "marco";
+    String surname = "franco";
+    String email = "email"; //controllo ben formata lato webapp
+    String password = "password";
+    int type = 2;
+    int entityId = 1;
+    fieldsToCreate.addProperty("name", name);
+    fieldsToCreate.addProperty("surname", surname);
+    fieldsToCreate.addProperty("email", email);
+    fieldsToCreate.addProperty("password", password);
+    fieldsToCreate.addProperty("type", type);
+    fieldsToCreate.addProperty("entityId", entityId);
+
+    try {
+      User user = userService.serializeUser(fieldsToCreate, admin1);
+      assertTrue(false);
+    } catch (Exception e) {
+      assertTrue(true);
+    }
+  }
 
 
   // editByAdmin method tests
@@ -731,4 +888,70 @@ public class UserServiceTest {
       assertTrue(true);
     }
   }
+
+
+  @Test
+  public void deleteUser1SuccesfullyByAdmin1Test() {
+    try {
+      User expected = user1;
+      User actual = userService.deleteUser(admin1, user1.getId());
+      assertEquals(expected, actual);
+      assertEquals(actual.isDeleted(), true);
+    } catch (Exception e) {
+      assertTrue(false);
+    }
+  }
+
+  @Test
+  public void deleteUser1SuccesfullyByAdmin2Test() {
+    try {
+      User expected = user1;
+      User actual = userService.deleteUser(admin2, user1.getId());
+      assertEquals(expected, actual);
+      assertEquals(actual.isDeleted(), true);
+    } catch (Exception e) {
+      assertTrue(false);
+    }
+  }
+
+  @Test
+  public void deleteUser1SuccesfullyByMod1Test() {
+    try {
+      User expected = user1;
+      User actual = userService.deleteUser(mod1, user1.getId());
+      assertEquals(expected, actual);
+      assertEquals(actual.isDeleted(), true);
+    } catch (Exception e) {
+      assertTrue(false);
+    }
+  }
+
+  @Test
+  public void deleteUser1NotAuthorizedToDeleteUserExceptionByUser2Test() {
+    try {
+      User expected = user1;
+      User actual = userService.deleteUser(user2, user1.getId());
+      assertEquals(expected, actual);
+      assertEquals(actual.isDeleted(), false);
+    } catch (NotAuthorizedToDeleteUserException e) {
+      assertTrue(true);
+    } catch (ValuesNotAllowedException e) {
+      assertTrue(false);
+    }
+  }
+
+  @Test
+  public void deleteUser1NotAuthorizedToDeleteUserExceptionByMod11Test() {
+      try {
+        User expected = user1;
+        User actual = userService.deleteUser(mod2, user1.getId());
+        assertEquals(expected, actual);
+        assertEquals(actual.isDeleted(), false);
+      } catch (NotAuthorizedToDeleteUserException e) {
+        assertTrue(true);
+      } catch (ValuesNotAllowedException e) {
+        assertTrue(false);
+      }
+  }
+
 }
