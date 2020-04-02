@@ -75,22 +75,19 @@ public class UserService implements UserDetailsService {
     userFields.put("type", true);
     userFields.put("telegramName", true);
     userFields.put("twoFactorAuthentication", true);
-    userFields.put("deleted", true);
     userFields.put("entityId", true);
+    userFields.put("deleted", false);
 
     switch (role) {
       case ADMIN:
         if (itself) {
           userFields.replace("type", false);
-          userFields.replace("deleted", false);
           userFields.replace("entityId", false);
         }
 
         break;
       case MOD:
-        if (itself) {
-          userFields.replace("deleted", false);
-        } else {
+        if (!itself) {
           userFields.replace("password", false);
           userFields.replace("telegramName", false);
           userFields.replace("twoFactorAuthentication", false);
@@ -104,7 +101,6 @@ public class UserService implements UserDetailsService {
         userFields.replace("surname", false);
         userFields.replace("type", false);
         userFields.replace("entityId", false);
-        userFields.replace("deleted", false);
 
         break;
       default:
@@ -174,9 +170,6 @@ public class UserService implements UserDetailsService {
           break;
         case "twoFactorAuthentication":
           userToEdit.setTfa((boolean) value);
-          break;
-        case "deleted":
-          userToEdit.setDeleted((boolean) value);
           break;
         case "entityId":
           userToEdit.setEntity(entityService.findById((int) value));
