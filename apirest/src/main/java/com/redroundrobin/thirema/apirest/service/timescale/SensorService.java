@@ -2,22 +2,20 @@ package com.redroundrobin.thirema.apirest.service.timescale;
 
 import com.redroundrobin.thirema.apirest.models.timescale.Sensor;
 import com.redroundrobin.thirema.apirest.repository.timescale.SensorRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
 
 @Service(value = "timescaleSensorService")
 public class SensorService {
 
   private SensorRepository repo;
 
-  private com.redroundrobin.thirema.apirest.service.postgres.SensorService sensorService;
+  private com.redroundrobin.thirema.apirest.service.postgres.SensorService timescaleSensorService;
 
   private Map<Integer, List<Sensor>> findTopNBySensorIdListAndOptionalEntityId(
       Integer resultsNumber, List<Integer> sensorIds, Integer entityId) {
@@ -26,9 +24,9 @@ public class SensorService {
     for (Integer id : sensorIds) {
       com.redroundrobin.thirema.apirest.models.postgres.Sensor sensor;
       if (entityId != null) {
-        sensor = sensorService.findByIdAndEntityId(id, entityId);
+        sensor = timescaleSensorService.findByIdAndEntityId(id, entityId);
       } else {
-        sensor = sensorService.findById(id);
+        sensor = timescaleSensorService.findById(id);
       }
 
       if (sensor != null) {
@@ -59,9 +57,9 @@ public class SensorService {
 
     List<com.redroundrobin.thirema.apirest.models.postgres.Sensor> postgreSensors;
     if (entityId != null) {
-      postgreSensors = sensorService.findAllByEntityId(entityId);
+      postgreSensors = timescaleSensorService.findAllByEntityId(entityId);
     } else {
-      postgreSensors = sensorService.findAll();
+      postgreSensors = timescaleSensorService.findAll();
     }
 
     for (com.redroundrobin.thirema.apirest.models.postgres.Sensor s : postgreSensors) {
@@ -88,9 +86,9 @@ public class SensorService {
   }
 
   @Autowired
-  public void setSensorService(
-      com.redroundrobin.thirema.apirest.service.postgres.SensorService sensorService) {
-    this.sensorService = sensorService;
+  public void setTimescaleSensorService(
+      com.redroundrobin.thirema.apirest.service.postgres.SensorService timescaleSensorService) {
+    this.timescaleSensorService = timescaleSensorService;
   }
 
   public Map<Integer, List<Sensor>> findAllForEachSensor() {

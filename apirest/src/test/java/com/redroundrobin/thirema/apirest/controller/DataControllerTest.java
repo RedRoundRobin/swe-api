@@ -1,11 +1,8 @@
 package com.redroundrobin.thirema.apirest.controller;
 
-import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
-import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.timescale.Sensor;
-import com.redroundrobin.thirema.apirest.repository.timescale.SensorRepository;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.service.timescale.SensorService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
@@ -314,7 +311,7 @@ public class DataControllerTest {
 
   @Test
   public void getAllTimescaleAlertsByAdmin() {
-    ResponseEntity<Map<Integer, List<Sensor>>> response = dataController.getTimescaleAlerts(
+    ResponseEntity<Map<Integer, List<Sensor>>> response = dataController.getSensorsValues(
         adminTokenWithBearer, null, null, null);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -324,7 +321,7 @@ public class DataControllerTest {
 
   @Test
   public void getAllTimescaleAlertsWithLimitByAdmin() {
-    ResponseEntity<Map<Integer, List<Sensor>>> response = dataController.getTimescaleAlerts(
+    ResponseEntity<Map<Integer, List<Sensor>>> response = dataController.getSensorsValues(
         adminTokenWithBearer, null, 1, null);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -334,7 +331,7 @@ public class DataControllerTest {
 
   @Test
   public void getAllTimescaleAlertsWithEntityIdByAdmin() {
-    ResponseEntity<Map<Integer, List<Sensor>>> response = dataController.getTimescaleAlerts(
+    ResponseEntity<Map<Integer, List<Sensor>>> response = dataController.getSensorsValues(
         adminTokenWithBearer, null, null, 1);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -344,7 +341,7 @@ public class DataControllerTest {
 
   @Test
   public void getAllTimescaleAlertsWithSensorIdListByAdmin() {
-    ResponseEntity<Map<Integer, List<Sensor>>> response = dataController.getTimescaleAlerts(
+    ResponseEntity<Map<Integer, List<Sensor>>> response = dataController.getSensorsValues(
         adminTokenWithBearer, new Integer[]{1,3}, null, null);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -354,7 +351,7 @@ public class DataControllerTest {
 
   @Test
   public void getAllTimescaleAlertsWithLimitAndEntityIdByAdmin() {
-    ResponseEntity<Map<Integer, List<Sensor>>> response = dataController.getTimescaleAlerts(
+    ResponseEntity<Map<Integer, List<Sensor>>> response = dataController.getSensorsValues(
         adminTokenWithBearer, null, 2, 2);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -364,7 +361,7 @@ public class DataControllerTest {
 
   @Test
   public void getAllTimescaleAlertsWithLimitAndSensorIdListByAdmin() {
-    ResponseEntity<Map<Integer, List<Sensor>>> response = dataController.getTimescaleAlerts(
+    ResponseEntity<Map<Integer, List<Sensor>>> response = dataController.getSensorsValues(
         adminTokenWithBearer, new Integer[]{1,2}, 5, null);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -374,7 +371,7 @@ public class DataControllerTest {
 
   @Test
   public void getAllTimescaleAlertsWithSensorIdListAndEntityIdByAdmin() {
-    ResponseEntity<Map<Integer, List<Sensor>>> response = dataController.getTimescaleAlerts(
+    ResponseEntity<Map<Integer, List<Sensor>>> response = dataController.getSensorsValues(
         adminTokenWithBearer, new Integer[]{1,2}, null, 1);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -385,7 +382,7 @@ public class DataControllerTest {
 
   @Test
   public void getAllTimescaleAlertsWithLimitAndSensorIdListAndEntityIdByAdmin() {
-    ResponseEntity<Map<Integer, List<Sensor>>> response = dataController.getTimescaleAlerts(
+    ResponseEntity<Map<Integer, List<Sensor>>> response = dataController.getSensorsValues(
         adminTokenWithBearer, new Integer[]{1}, 1, 1);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -395,7 +392,7 @@ public class DataControllerTest {
 
   @Test
   public void getAllTimescaleAlertsWithEntityIdByUser() {
-    ResponseEntity<Map<Integer, List<Sensor>>> response = dataController.getTimescaleAlerts(
+    ResponseEntity<Map<Integer, List<Sensor>>> response = dataController.getSensorsValues(
         userTokenWithBearer, null, null, 1);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -405,7 +402,7 @@ public class DataControllerTest {
 
   @Test
   public void getAllTimescaleAlertsByUserAnotherEntity() {
-    ResponseEntity<Map<Integer, List<Sensor>>> response = dataController.getTimescaleAlerts(
+    ResponseEntity<Map<Integer, List<Sensor>>> response = dataController.getSensorsValues(
         userTokenWithBearer, null, null, 2);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -414,7 +411,7 @@ public class DataControllerTest {
 
   @Test
   public void getAllTimescaleAlertsWithLimitAndEntityIdByUser() {
-    ResponseEntity<Map<Integer, List<Sensor>>> response = dataController.getTimescaleAlerts(
+    ResponseEntity<Map<Integer, List<Sensor>>> response = dataController.getSensorsValues(
         userTokenWithBearer, null, 1, 1);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -424,7 +421,7 @@ public class DataControllerTest {
 
   @Test
   public void getAllTimescaleAlertsWithSensorIdListAndEntityIdByUser() {
-    ResponseEntity<Map<Integer, List<Sensor>>> response = dataController.getTimescaleAlerts(
+    ResponseEntity<Map<Integer, List<Sensor>>> response = dataController.getSensorsValues(
         userTokenWithBearer, new Integer[]{1,2,3}, null, 1);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -435,7 +432,7 @@ public class DataControllerTest {
 
   @Test
   public void getAllTimescaleAlertsWithLimitAndSensorIdListAndEntityIdByUser() {
-    ResponseEntity<Map<Integer, List<Sensor>>> response = dataController.getTimescaleAlerts(
+    ResponseEntity<Map<Integer, List<Sensor>>> response = dataController.getSensorsValues(
         userTokenWithBearer, new Integer[]{3}, 2, 1);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
