@@ -11,7 +11,6 @@ import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedToDeleteUserException;
 import com.redroundrobin.thirema.apirest.utils.exception.ValuesNotAllowedException;
-import com.redroundrobin.thirema.apirest.utils.exception.ViewNotFoundException;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -65,7 +64,7 @@ public class ViewController {
   }
 
   @DeleteMapping(value = "/{viewId:.+}")
-  public ResponseEntity<?> deleteView(
+  public ResponseEntity<String> deleteView(
       @RequestHeader("Authorization") String authorization,
       @PathVariable("viewId") int viewToDeleteId) {
     String token = authorization.substring(7);

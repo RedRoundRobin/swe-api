@@ -3,17 +3,12 @@ package com.redroundrobin.thirema.apirest.controller;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.postgres.ViewGraph;
 import com.redroundrobin.thirema.apirest.service.postgres.ViewGraphService;
-import com.redroundrobin.thirema.apirest.service.postgres.UserService;
-import com.redroundrobin.thirema.apirest.utils.JwtUtil;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -101,8 +96,9 @@ public class ViewGraphController extends CoreController {
     User user = this.getUserFromAuthorization(authorization);
     try {
       if (user.getType() == User.Role.ADMIN
-        || viewGraphService.getPermissionByIdAndUserId(viewGraphId, user.getId())) {
-        return ResponseEntity.ok(viewGraphService.editViewGraph(user, viewGraphId, newViewGraphFields));
+          || viewGraphService.getPermissionByIdAndUserId(viewGraphId, user.getId())) {
+        return ResponseEntity.ok(viewGraphService.editViewGraph(user, viewGraphId,
+            newViewGraphFields));
       } else {
         return new ResponseEntity(HttpStatus.FORBIDDEN);
       }
