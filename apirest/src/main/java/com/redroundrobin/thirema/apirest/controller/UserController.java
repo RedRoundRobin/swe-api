@@ -92,12 +92,16 @@ public class UserController extends CoreController {
   // Create new user
   @PostMapping(value = {""})
   public ResponseEntity<User> createUser(@RequestHeader("Authorization") String authorization,
+                                         @RequestHeader(value = "x-forwarded-for") String ip,
                                          @RequestBody String jsonStringUser) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtUtil.extractUsername(token));
     JsonObject jsonUser = JsonParser.parseString(jsonStringUser).getAsJsonObject();
     try {
-      return ResponseEntity.ok(userService.serializeUser(jsonUser, user));
+      User createdUser = userService.serializeUser(jsonUser, user);
+      logService.createLog(user.getId(), ip, "user.created",
+          Integer.toString(createdUser.getId()));
+      return ResponseEntity.ok(createdUser);
     } catch (KeysNotFoundException | MissingFieldsException | ValuesNotAllowedException
         | UserRoleNotFoundException | EntityNotFoundException
         | NotAuthorizedToInsertUserException e) {
@@ -107,11 +111,15 @@ public class UserController extends CoreController {
 
   @DeleteMapping(value = {"/{userid:.+}"})
   public ResponseEntity<?> deleteUser(@RequestHeader("Authorization") String authorization,
-                                            @PathVariable("userid") int userToDeleteId) {
+                                      @RequestHeader(value = "x-forwarded-for") String ip,
+                                      @PathVariable("userid") int userToDeleteId) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtUtil.extractUsername(token));
     try {
-      return ResponseEntity.ok(userService.deleteUser(user, userToDeleteId));
+      User deletedUser = userService.deleteUser(user, userToDeleteId);
+      logService.createLog(user.getId(), ip, "user.deleted",
+          Integer.toString(deletedUser.getId()));
+      return ResponseEntity.ok(deletedUser);
     } catch (NotAuthorizedToDeleteUserException e) {
       return new ResponseEntity(e.getMessage(), HttpStatus.FORBIDDEN);
     } catch (ValuesNotAllowedException e) {
