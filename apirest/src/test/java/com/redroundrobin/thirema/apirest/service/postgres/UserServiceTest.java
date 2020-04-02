@@ -1,4 +1,4 @@
-package com.redroundrobin.thirema.apirest.service;
+package com.redroundrobin.thirema.apirest.service.postgres;
 
 import com.google.gson.JsonObject;
 import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;

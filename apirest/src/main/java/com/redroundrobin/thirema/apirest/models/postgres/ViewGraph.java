@@ -3,7 +3,6 @@ package com.redroundrobin.thirema.apirest.models.postgres;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
-
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -26,7 +25,7 @@ public class ViewGraph {
     }
 
     public static boolean isValid(int correlation) {
-      for( int i = 0 ; i < Correlation.values().length ; ++i ) {
+      for (int i = 0; i < Correlation.values().length; ++i) {
         if (correlation == i) {
           return true;
         }
