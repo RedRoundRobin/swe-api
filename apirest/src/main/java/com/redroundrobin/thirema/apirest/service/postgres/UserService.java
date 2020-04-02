@@ -396,10 +396,8 @@ public class UserService implements UserDetailsService {
       if(userToInsertType != 1 && userToInsertType != 0) {
         throw new ValuesNotAllowedException("The type parameter given is not allowed");
       }
-    } catch (IllegalArgumentException iae) {
-      throw new UserRoleNotFoundException("The given role doesn't exist");
-    } catch (NullPointerException nptr) {
-      throw new UserRoleNotFoundException("The type parameter cannot be null");
+    } catch (IllegalArgumentException | ClassCastException iae) {
+      throw new ValuesNotAllowedException("The role must be an integer corresponding to an existing type");
     }
 
     //qui so che entity_id dato esiste && so il tipo dello user che si vuole inserire
@@ -455,7 +453,8 @@ public class UserService implements UserDetailsService {
 
     if (deletingUser.getType() == User.Role.USER
         || deletingUser.getType() == User.Role.MOD
-        && (userToDelete.getType() != User.Role.USER)) {
+        && ((userToDelete.getType() != User.Role.USER)
+        || deletingUser.getEntity().getId() != userToDelete.getEntity().getId())) {
       throw new NotAuthorizedToDeleteUserException("This user cannot delete "
           + "the user with the user_id given");
     }
