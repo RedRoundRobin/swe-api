@@ -11,13 +11,19 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 @javax.persistence.Entity
 @Table(name = "views")
 public class View {
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @GeneratedValue(generator = "views_view_id_seq", strategy = GenerationType.SEQUENCE)
+  @SequenceGenerator(
+      name = "views_view_id_seq",
+      sequenceName = "views_view_id_seq",
+      allocationSize = 50
+  )
   @Column(name = "view_id")
   private int viewId;
   private String name;

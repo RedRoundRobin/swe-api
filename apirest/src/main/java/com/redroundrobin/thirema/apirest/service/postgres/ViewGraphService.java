@@ -171,11 +171,7 @@ public class ViewGraphService {
   public boolean deleteViewGraph(int viewGraphId) throws ElementNotFoundException {
     if (repo.existsById(viewGraphId)) {
       repo.deleteById(viewGraphId);
-      if (!repo.existsById(viewGraphId)) {
-        return true;
-      } else {
-        return false;
-      }
+      return !repo.existsById(viewGraphId);
     } else {
       throw ElementNotFoundException.defaultMessage("ViewGraph");
     }

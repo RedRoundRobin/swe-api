@@ -40,11 +40,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping(value = "/users")
-public class UserController {
-
-  private JwtUtil jwtTokenUtil;
-
-  private UserService userService;
+public class UserController extends CoreController {
 
   private boolean canEditMod(User editingUser, User userToEdit) {
     return editingUser.getId() == userToEdit.getId()
@@ -53,10 +49,8 @@ public class UserController {
   }
 
   @Autowired
-  public UserController(JwtUtil jwtTokenUtil, UserService userService,
-                        EntityService entityService) {
-    this.jwtTokenUtil = jwtTokenUtil;
-    this.userService = userService;
+  public UserController() {
+
   }
 
   // Get all users
@@ -67,7 +61,7 @@ public class UserController {
       @RequestParam(value = "disabledAlert", required = false) Integer disabledAlert,
       @RequestParam(value = "view", required = false) Integer view) {
     String token = authorization.substring(7);
-    User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
+    User user = userService.findByEmail(jwtUtil.extractUsername(token));
     if (user.getType() == User.Role.ADMIN) {
       if (entity != null) {
         try {
@@ -98,12 +92,16 @@ public class UserController {
   // Create new user
   @PostMapping(value = {""})
   public ResponseEntity<User> createUser(@RequestHeader("Authorization") String authorization,
+                                         @RequestHeader(value = "x-forwarded-for") String ip,
                                          @RequestBody String jsonStringUser) {
     String token = authorization.substring(7);
-    User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
+    User user = userService.findByEmail(jwtUtil.extractUsername(token));
     JsonObject jsonUser = JsonParser.parseString(jsonStringUser).getAsJsonObject();
     try {
-      return ResponseEntity.ok(userService.serializeUser(jsonUser, user));
+      User createdUser = userService.serializeUser(jsonUser, user);
+      logService.createLog(user.getId(), ip, "user.created",
+          Integer.toString(createdUser.getId()));
+      return ResponseEntity.ok(createdUser);
     } catch (KeysNotFoundException | MissingFieldsException | ValuesNotAllowedException
         | UserRoleNotFoundException | EntityNotFoundException
         | NotAuthorizedToInsertUserException e) {
@@ -112,12 +110,16 @@ public class UserController {
   }
 
   @DeleteMapping(value = {"/{userid:.+}"})
-  public ResponseEntity<?> deleteEntityUser(@RequestHeader("Authorization") String authorization,
-                                            @PathVariable("userid") int userToDeleteId) {
+  public ResponseEntity<?> deleteUser(@RequestHeader("Authorization") String authorization,
+                                      @RequestHeader(value = "x-forwarded-for") String ip,
+                                      @PathVariable("userid") int userToDeleteId) {
     String token = authorization.substring(7);
-    User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
+    User user = userService.findByEmail(jwtUtil.extractUsername(token));
     try {
-      return ResponseEntity.ok(userService.deleteUser(user, userToDeleteId));
+      User deletedUser = userService.deleteUser(user, userToDeleteId);
+      logService.createLog(user.getId(), ip, "user.deleted",
+          Integer.toString(deletedUser.getId()));
+      return ResponseEntity.ok(deletedUser);
     } catch (NotAuthorizedToDeleteUserException e) {
       return new ResponseEntity(e.getMessage(), HttpStatus.FORBIDDEN);
     } catch (ValuesNotAllowedException e) {
@@ -135,10 +137,11 @@ public class UserController {
   @PutMapping(value = {"/{userid:.+}"})
   public ResponseEntity<Map<String, Object>> editUser(
       @RequestHeader("Authorization") String authorization,
+      @RequestHeader(value = "x-forwarded-for") String ip,
       @RequestBody Map<String, Object> fieldsToEdit,
       @PathVariable("userid") int userId) {
     String token = authorization.substring(7);
-    String editingUserEmail = jwtTokenUtil.extractUsername(token);
+    String editingUserEmail = jwtUtil.extractUsername(token);
     User editingUser = userService.findByEmail(editingUserEmail);
     User userToEdit = userService.findById(userId);
 
@@ -163,13 +166,31 @@ public class UserController {
           return new ResponseEntity(HttpStatus.FORBIDDEN);
         }
 
+        if (editingUser.getId() == userToEdit.getId()) {
+          if (fieldsToEdit.containsKey("password")) {
+            logService.createLog(editingUser.getId(), ip, "user.password_edit", "");
+          }
+          if (!fieldsToEdit.containsKey("password") || fieldsToEdit.size() > 1) {
+            logService.createLog(editingUser.getId(), ip, "user.settings_edit", "");
+          }
+        } else {
+          if (fieldsToEdit.containsKey("password")) {
+            logService.createLog(editingUser.getId(), ip, "user.password_reset",
+                Integer.toString(userId));
+          }
+          if (fieldsToEdit.keySet().stream().anyMatch(k -> !k.equals("password"))) {
+            logService.createLog(editingUser.getId(), ip, "user.edit",
+                Integer.toString(userId));
+          }
+        }
+
         HashMap<String, Object> response = new HashMap<>();
         response.put("user",user);
 
         if (editingUser.getId() == userToEdit.getId()
             && !user.getEmail().equals(editingUserEmail)) {
-          String newToken = jwtTokenUtil.generateTokenWithExpiration("webapp",
-              jwtTokenUtil.extractExpiration(token),
+          String newToken = jwtUtil.generateTokenWithExpiration("webapp",
+              jwtUtil.extractExpiration(token),
               userService.loadUserByEmail(user.getEmail()));
           response.put("token", newToken);
         }
@@ -210,7 +231,7 @@ public class UserController {
   public ResponseEntity<Object> getUserDevices(@RequestHeader("Authorization") String authorization,
                                           @PathVariable("userid") int requiredUserId) {
     String token = authorization.substring(7);
-    User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
+    User user = userService.findByEmail(jwtUtil.extractUsername(token));
     User requiredUser = userService.findById(requiredUserId);
     if (requiredUser != null && (user.getId() == requiredUserId
         || user.getType() == User.Role.ADMIN  || user.getType() == User.Role.MOD

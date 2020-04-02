@@ -1,4 +1,4 @@
-package com.redroundrobin.thirema.apirest.service;
+package com.redroundrobin.thirema.apirest.service.postgres;
 
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;

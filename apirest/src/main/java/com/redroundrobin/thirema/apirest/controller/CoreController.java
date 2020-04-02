@@ -2,6 +2,7 @@ package com.redroundrobin.thirema.apirest.controller;
 
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
+import com.redroundrobin.thirema.apirest.service.timescale.LogService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -14,11 +15,18 @@ public class CoreController {
 
   protected JwtUtil jwtUtil;
 
+  protected LogService logService;
+
   protected UserService userService;
 
   @Autowired
   public void setJwtUtil(JwtUtil jwtUtil) {
     this.jwtUtil = jwtUtil;
+  }
+
+  @Autowired
+  public void setLogService(LogService logService) {
+    this.logService = logService;
   }
 
   @Autowired

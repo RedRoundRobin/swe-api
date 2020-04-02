@@ -10,13 +10,19 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 @javax.persistence.Entity
 @Table(name = "gateways")
 public class Gateway {
   @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
+  @GeneratedValue(generator = "gateways_gateway_id_seq", strategy = GenerationType.SEQUENCE)
+  @SequenceGenerator(
+      name = "gateways_gateway_id_seq",
+      sequenceName = "gateways_gateway_id_seq",
+      allocationSize = 50
+  )
   @Column(name = "gateway_id")
   private int gatewayId;
   private String name;
