@@ -15,14 +15,14 @@ public class Sensor {
   @GeneratedValue(strategy = GenerationType.AUTO)
   private Timestamp time;
 
-  @Column(name = "gateway_id", nullable = false)
-  private int gatewayId;
+  @Column(name = "gateway_name", nullable = false)
+  private String gatewayName;
 
-  @Column(name = "device_id", nullable = false)
-  private int deviceId;
+  @Column(name = "real_device_id", nullable = false)
+  private int realDeviceId;
 
-  @Column(name = "sensor_id", nullable = false)
-  private int sensorId;
+  @Column(name = "real_sensor_id", nullable = false)
+  private int realSensorId;
 
   private double value;
 
@@ -34,28 +34,28 @@ public class Sensor {
     this.time = time;
   }
 
-  public int getGatewayId() {
-    return gatewayId;
+  public String getGatewayName() {
+    return gatewayName;
   }
 
-  public void setGatewayId(int gatewayId) {
-    this.gatewayId = gatewayId;
+  public void setGatewayName(String gatewayName) {
+    this.gatewayName = gatewayName;
   }
 
-  public int getDeviceId() {
-    return deviceId;
+  public int getRealDeviceId() {
+    return realDeviceId;
   }
 
-  public void setDeviceId(int deviceId) {
-    this.deviceId = deviceId;
+  public void setRealDeviceId(int realDeviceId) {
+    this.realDeviceId = realDeviceId;
   }
 
-  public int getSensorId() {
-    return sensorId;
+  public int getRealSensorId() {
+    return realSensorId;
   }
 
-  public void setSensorId(int sensorId) {
-    this.sensorId = sensorId;
+  public void setRealSensorId(int realSensorId) {
+    this.realSensorId = realSensorId;
   }
 
   public double getValue() {
