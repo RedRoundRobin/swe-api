@@ -11,7 +11,6 @@ import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesExce
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
 import com.redroundrobin.thirema.apirest.utils.exception.TelegramChatNotFoundException;
-import com.redroundrobin.thirema.apirest.utils.exception.TfaNotPermittedException;
 import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
 import com.redroundrobin.thirema.apirest.utils.exception.ValuesNotAllowedException;
 import java.util.ArrayList;
@@ -120,12 +119,12 @@ public class UserService implements UserDetailsService {
   }
 
   private User editAndSave(User userToEdit, Map<String, Object> fieldsToEdit)
-      throws TfaNotPermittedException, InvalidFieldsValuesException {
+      throws ConflictException, InvalidFieldsValuesException {
     if (fieldsToEdit.containsKey("twoFactorAuthentication")
         && (boolean)fieldsToEdit.get("twoFactorAuthentication")
         && (fieldsToEdit.containsKey("telegramName")
         || userToEdit.getTelegramChat().isEmpty())) {
-      throw new TfaNotPermittedException("TFA can't be edited because either telegramName is "
+      throw new ConflictException("TFA can't be edited because either telegramName is "
           + "in the request or telegram chat not present");
     }
 
@@ -325,7 +324,7 @@ public class UserService implements UserDetailsService {
 
   public User editByUser(User userToEdit, Map<String, Object> fieldsToEdit)
       throws InvalidFieldsValuesException, MissingFieldsException, NotAuthorizedException,
-      TfaNotPermittedException  {
+      ConflictException  {
 
     if (!checkFieldsEditable(User.Role.USER, true, fieldsToEdit.keySet())) {
       throw new NotAuthorizedException(
@@ -337,7 +336,7 @@ public class UserService implements UserDetailsService {
 
   public User editByModerator(User userToEdit, boolean itself, Map<String, Object> fieldsToEdit)
       throws InvalidFieldsValuesException, MissingFieldsException, NotAuthorizedException,
-      TfaNotPermittedException {
+      ConflictException {
 
     if ((fieldsToEdit.containsKey("type") && (int)fieldsToEdit.get("type") > 0)
         || !checkFieldsEditable(User.Role.MOD, itself, fieldsToEdit.keySet())) {
@@ -351,10 +350,10 @@ public class UserService implements UserDetailsService {
   public User editByAdministrator(User userToEdit, boolean itself,
                                   Map<String, Object> fieldsToEdit)
       throws InvalidFieldsValuesException, MissingFieldsException, NotAuthorizedException,
-      TfaNotPermittedException {
+      ConflictException {
 
     if ((!itself && userToEdit.getType() == User.Role.ADMIN)
-        || (fieldsToEdit.containsKey("type") && (int)fieldsToEdit.get("type") > 1)
+        || (fieldsToEdit.containsKey("type") && (int)fieldsToEdit.get("type") == 2)
         || !checkFieldsEditable(User.Role.ADMIN, itself, fieldsToEdit.keySet())) {
       throw new NotAuthorizedException(
           "You are not allowed to edit some of the specified fields");
@@ -410,7 +409,7 @@ public class UserService implements UserDetailsService {
     } else if (email == null) {
       throw new ValuesNotAllowedException();
     } else {
-      throw new ConflictException();
+      throw new ConflictException("");
     }
 
     return save(newUser);

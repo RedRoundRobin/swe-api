@@ -828,7 +828,7 @@ public class UserServiceTest {
       User user = userService.editByUser(user1, fieldsToEdit);
 
       assertTrue(false);
-    } catch (TfaNotPermittedException tnpe) {
+    } catch (ConflictException ce) {
       assertTrue(true);
     } catch (Exception e) {
       System.out.println(e);

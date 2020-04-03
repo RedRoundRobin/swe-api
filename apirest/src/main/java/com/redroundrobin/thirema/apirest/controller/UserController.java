@@ -7,7 +7,6 @@ import com.redroundrobin.thirema.apirest.utils.exception.ConflictException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
-import com.redroundrobin.thirema.apirest.utils.exception.TfaNotPermittedException;
 import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
 import com.redroundrobin.thirema.apirest.utils.exception.ValuesNotAllowedException;
 import java.util.HashMap;
@@ -15,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,11 +37,6 @@ public class UserController extends CoreController {
     return editingUser.getId() == userToEdit.getId()
         || (userToEdit.getType() == User.Role.USER
         && editingUser.getEntity().equals(userToEdit.getEntity()));
-  }
-
-  @Autowired
-  public UserController() {
-
   }
 
   // Get all users
@@ -89,7 +82,7 @@ public class UserController extends CoreController {
     } catch (MissingFieldsException | ValuesNotAllowedException e) {
       return new ResponseEntity(HttpStatus.BAD_REQUEST);
     } catch(ConflictException e) {
-      return new ResponseEntity(e.getMessage(), HttpStatus.CONFLICT);
+      return new ResponseEntity(HttpStatus.CONFLICT);
     } catch (NotAuthorizedException e) {
       return new ResponseEntity(HttpStatus.FORBIDDEN);
     }
@@ -187,8 +180,8 @@ public class UserController extends CoreController {
         return new ResponseEntity(HttpStatus.UNAUTHORIZED);
       } catch (NotAuthorizedException | UserDisabledException natef) {
         return new ResponseEntity(HttpStatus.FORBIDDEN);
-      } catch (TfaNotPermittedException tnpe) {
-        return new ResponseEntity(tnpe.getMessage(),HttpStatus.CONFLICT);
+      } catch (ConflictException ce) {
+        return new ResponseEntity(ce.getMessage(),HttpStatus.CONFLICT);
       } catch (DataIntegrityViolationException dive) {
         if (dive.getMostSpecificCause().getMessage()
             .startsWith("ERROR: duplicate key value violates unique constraint")) {

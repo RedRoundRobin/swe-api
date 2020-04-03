@@ -296,7 +296,7 @@ public class UserControllerTest {
       else if(email == null) {
         throw new ValuesNotAllowedException();
       } else {
-        throw new ConflictException();
+        throw new ConflictException("");
       }
       allUsers.add(newUser);
       return allUsers.get(allUsers.size() - 1); //prendo lo user appena inserito
@@ -587,7 +587,7 @@ public class UserControllerTest {
     String tfaError = "TFA can't be edited because either telegram_name is "
         + "in the request or telegram chat not present";
     when(userService.editByModerator(eq(mod1), eq(true), any(HashMap.class))).thenThrow(
-        new TfaNotPermittedException(tfaError));
+        new ConflictException(tfaError));
 
     HashMap<String, Object> request = new HashMap<>();
     request.put("telegramName", newTelegramName);
