@@ -1,23 +1,23 @@
 package com.redroundrobin.thirema.apirest.utils;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequestWrapper;
 
 final class CustomHttpServletRequestWrapper extends HttpServletRequestWrapper {
   // holds custom header and value mapping
   private final Map<String, String> customHeaders;
 
-  public CustomHttpServletRequestWrapper(HttpServletRequest request){
+  public CustomHttpServletRequestWrapper(HttpServletRequest request) {
     super(request);
     this.customHeaders = new HashMap<>();
   }
 
-  public void putHeader(String name, String value){
+  public void putHeader(String name, String value) {
     this.customHeaders.put(name, value);
   }
 
@@ -31,7 +31,7 @@ final class CustomHttpServletRequestWrapper extends HttpServletRequestWrapper {
   }
 
   /**
-   * get the Header names
+   * get the Header names.
    */
   @Override
   public Enumeration<String> getHeaderNames() {
