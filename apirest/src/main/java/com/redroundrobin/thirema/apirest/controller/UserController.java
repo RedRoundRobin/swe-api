@@ -6,11 +6,13 @@ import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
+import com.redroundrobin.thirema.apirest.utils.exception.ConflictException;
 import com.redroundrobin.thirema.apirest.utils.exception.EntityNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAllowedToEditException;
+import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedToDeleteUserException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedToInsertUserException;
 import com.redroundrobin.thirema.apirest.utils.exception.TfaNotPermittedException;
@@ -102,15 +104,17 @@ public class UserController extends CoreController {
       logService.createLog(user.getId(), ip, "user.created",
           Integer.toString(createdUser.getId()));
       return ResponseEntity.ok(createdUser);
-    } catch (KeysNotFoundException | MissingFieldsException | ValuesNotAllowedException
-        | UserRoleNotFoundException | EntityNotFoundException
-        | NotAuthorizedToInsertUserException e) {
-      return new ResponseEntity(e.getMessage(), HttpStatus.BAD_REQUEST);
+    } catch (MissingFieldsException | ValuesNotAllowedException e) {
+      return new ResponseEntity(HttpStatus.BAD_REQUEST);
+    } catch(ConflictException e) {
+      return new ResponseEntity(e.getMessage(), HttpStatus.CONFLICT);
+    } catch (NotAuthorizedException e) {
+      return new ResponseEntity(HttpStatus.FORBIDDEN);
     }
   }
 
   @DeleteMapping(value = {"/{userid:.+}"})
-  public ResponseEntity<?> deleteUser(@RequestHeader("Authorization") String authorization,
+  public ResponseEntity<User> deleteUser(@RequestHeader("Authorization") String authorization,
                                       @RequestHeader(value = "x-forwarded-for") String ip,
                                       @PathVariable("userid") int userToDeleteId) {
     String token = authorization.substring(7);
