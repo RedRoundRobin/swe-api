@@ -3,21 +3,14 @@ package com.redroundrobin.thirema.apirest.controller;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
-import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
-import com.redroundrobin.thirema.apirest.service.postgres.UserService;
-import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import com.redroundrobin.thirema.apirest.utils.exception.ConflictException;
-import com.redroundrobin.thirema.apirest.utils.exception.EntityNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
-import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAllowedToEditException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedToDeleteUserException;
-import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedToInsertUserException;
 import com.redroundrobin.thirema.apirest.utils.exception.TfaNotPermittedException;
 import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
-import com.redroundrobin.thirema.apirest.utils.exception.UserRoleNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.ValuesNotAllowedException;
 import java.util.HashMap;
 import java.util.List;
@@ -66,11 +59,7 @@ public class UserController extends CoreController {
     User user = userService.findByEmail(jwtUtil.extractUsername(token));
     if (user.getType() == User.Role.ADMIN) {
       if (entity != null) {
-        try {
-          return ResponseEntity.ok(userService.findAllByEntityId(entity));
-        } catch (EntityNotFoundException enfe) {
-          // go to return BAD_REQUEST
-        }
+        return ResponseEntity.ok(userService.findAllByEntityId(entity));
       } else if (disabledAlert != null) {
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
       } else if (view != null) {
@@ -78,15 +67,10 @@ public class UserController extends CoreController {
       } else {
         return ResponseEntity.ok(userService.findAll());
       }
-      return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     } else if (user.getType() == User.Role.MOD
         && (entity == null && disabledAlert == null && view == null)
         || (entity != null && user.getEntity().getId() == entity)) {
-      try {
-        return ResponseEntity.ok(userService.findAllByEntityId(user.getEntity().getId()));
-      } catch (EntityNotFoundException enfe) {
-        // go to return FORBIDDEN
-      }
+      return ResponseEntity.ok(userService.findAllByEntityId(user.getEntity().getId()));
     }
     return new ResponseEntity(HttpStatus.FORBIDDEN);
   }

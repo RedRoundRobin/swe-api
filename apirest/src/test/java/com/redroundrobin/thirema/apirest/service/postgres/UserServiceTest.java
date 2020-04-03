@@ -864,24 +864,16 @@ public class UserServiceTest {
   // findAllByEntityId method test
   @Test
   public void findAllByEntityIdSuccessfull() {
-    try {
-      List<User> users = userService.findAllByEntityId(1);
+    List<User> users = userService.findAllByEntityId(1);
 
-      assertTrue(!users.isEmpty());
-    } catch (EntityNotFoundException enfe) {
-      assertTrue(false);
-    }
+    assertTrue(!users.isEmpty());
   }
 
   @Test
-  public void findAllByEntityIdEntityNotFoundException() {
-    try {
-      List<User> users = userService.findAllByEntityId(3);
+  public void findAllByNotExistentEntityIdEmptyList() {
+    List<User> users = userService.findAllByEntityId(3);
 
-      assertTrue(false);
-    } catch (EntityNotFoundException enfe) {
-      assertTrue(true);
-    }
+    assertTrue(users.isEmpty());
   }
 
 

@@ -201,7 +201,7 @@ public class UserControllerTest {
             .collect(Collectors.toList());
         return users;
       } else {
-        throw new EntityNotFoundException("");
+        return Collections.emptyList();
       }
     });
 
@@ -644,13 +644,13 @@ public class UserControllerTest {
   }
 
   @Test
-  public void getAllUsersByAdmin1EntityNotFoundError400() {
+  public void getAllUsersByAdmin1NotExistentEntityEmptyList() {
     String authorization = "Bearer "+admin1Token;
 
     ResponseEntity<List<User>> response = userController.getUsers(authorization,3, null, null);
 
-    System.out.println(response.getStatusCode());
-    assertTrue(response.getStatusCode() == HttpStatus.BAD_REQUEST);
+    assertTrue(response.getStatusCode() == HttpStatus.OK);
+    assertTrue(response.getBody().isEmpty());
   }
 
   @Test
