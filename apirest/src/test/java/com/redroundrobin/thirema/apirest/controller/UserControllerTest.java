@@ -768,7 +768,11 @@ public class UserControllerTest {
 
     ResponseEntity<?> response = userController.deleteUser(authorization, "localhost", user1.getId());
     assertTrue(response.getStatusCode() == HttpStatus.OK);
-    assertEquals(response.getBody(),  user1);
+
+    User expected = user1;
+    User actual = response.getBody();
+
+    assertEquals(expected, actual);
     assertTrue(user1.isDeleted());
   }
 
@@ -778,7 +782,11 @@ public class UserControllerTest {
 
     ResponseEntity<?> response = userController.deleteUser(authorization, "localhost", user1.getId());
     assertTrue(response.getStatusCode() == HttpStatus.OK);
-    assertEquals(response.getBody(),  user1);
+    
+    User expected = user1;
+    User actual = response.getBody();
+
+    assertEquals(expected, actual);
     assertTrue(user1.isDeleted());
   }
 
