@@ -15,7 +15,8 @@ public class Log {
   @Column(name = "user_id", nullable = false)
   private int userId;
 
-  private String ip;
+  @Column(name = "ip_addr")
+  private String ipAddr;
 
   private String operation;
 
@@ -37,12 +38,12 @@ public class Log {
     this.userId = userId;
   }
 
-  public String getIp() {
-    return ip;
+  public String getIpAddr() {
+    return ipAddr;
   }
 
-  public void setIp(String ip) {
-    this.ip = ip;
+  public void setIpAddr(String ip) {
+    this.ipAddr = ip;
   }
 
   public String getOperation() {

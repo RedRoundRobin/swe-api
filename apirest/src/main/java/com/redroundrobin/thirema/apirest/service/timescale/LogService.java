@@ -21,7 +21,7 @@ public class LogService {
     Log newLog = new Log();
     newLog.setTime(Timestamp.from(Instant.now()));
     newLog.setUserId(userId);
-    newLog.setIp(ip);
+    newLog.setIpAddr(ip != null ? ip : "unknown");
     newLog.setOperation(operation);
     newLog.setData(data);
 
