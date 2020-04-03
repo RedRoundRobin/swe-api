@@ -36,6 +36,11 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                                   FilterChain chain)
       throws ServletException, IOException {
 
+    CustomHttpServletRequestWrapper customRequest = new CustomHttpServletRequestWrapper(request);
+    if (customRequest.getHeader("X-Forwarded-For") == null) {
+      customRequest.putHeader("X-Forwarded-For", customRequest.getRemoteAddr());
+    }
+
     final String authorizationHeader = request.getHeader("Authorization");
 
     String username = null;
@@ -91,6 +96,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
       }
     }
-    chain.doFilter(request, response);
+    chain.doFilter(customRequest, response);
   }
 }
