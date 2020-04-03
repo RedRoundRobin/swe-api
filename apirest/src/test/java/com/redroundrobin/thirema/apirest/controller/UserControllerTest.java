@@ -766,7 +766,7 @@ public class UserControllerTest {
   public void deleteUser1ByAdmin1SuccesfulTest() {
     String authorization = "Bearer "+admin1Token;
 
-    ResponseEntity<?> response = userController.deleteUser(authorization, "localhost", user1.getId());
+    ResponseEntity<User> response = userController.deleteUser(authorization, "localhost", user1.getId());
     assertTrue(response.getStatusCode() == HttpStatus.OK);
 
     User expected = user1;
@@ -780,7 +780,7 @@ public class UserControllerTest {
   public void deleteUser1ByMod1SuccesfulTest() {
     String authorization = "Bearer "+mod1Token;
 
-    ResponseEntity<?> response = userController.deleteUser(authorization, "localhost", user1.getId());
+    ResponseEntity<User> response = userController.deleteUser(authorization, "localhost", user1.getId());
     assertTrue(response.getStatusCode() == HttpStatus.OK);
     
     User expected = user1;
@@ -794,7 +794,7 @@ public class UserControllerTest {
   public void deleteUser1ByMod2NotAuthorizedExceptionTest() {
     String authorization = "Bearer "+mod2Token;
 
-    ResponseEntity<?> response = userController.deleteUser(authorization, "localhost", user1.getId());
+    ResponseEntity<User> response = userController.deleteUser(authorization, "localhost", user1.getId());
     assertTrue(response.getStatusCode() == HttpStatus.FORBIDDEN);
     assertTrue(response.getBody() != null);
   }
@@ -804,7 +804,7 @@ public class UserControllerTest {
     String authorization = "Bearer "+mod2Token;
     int notExistingId = 50;
 
-    ResponseEntity<?> response = userController.deleteUser(authorization, "localhost", notExistingId);
+    ResponseEntity<User> response = userController.deleteUser(authorization, "localhost", notExistingId);
     assertTrue(response.getStatusCode() == HttpStatus.BAD_REQUEST);
     assertTrue(response.getBody() != null);
   }

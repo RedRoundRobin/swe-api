@@ -114,7 +114,7 @@ public class UserController extends CoreController {
   }
 
   @DeleteMapping(value = {"/{userid:.+}"})
-  public ResponseEntity<?> deleteUser(@RequestHeader("Authorization") String authorization,
+  public ResponseEntity<User> deleteUser(@RequestHeader("Authorization") String authorization,
                                       @RequestHeader(value = "x-forwarded-for") String ip,
                                       @PathVariable("userid") int userToDeleteId) {
     String token = authorization.substring(7);
