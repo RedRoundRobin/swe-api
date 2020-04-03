@@ -221,7 +221,7 @@ public class ViewServiceTest {
       viewService.deleteView(user1, 1);
       assertTrue(true);
     }
-    catch(NotAuthorizedToDeleteUserException e) {
+    catch(NotAuthorizedException e) {
       assertTrue(false);
     }
     catch(ValuesNotAllowedException e) {
@@ -235,7 +235,7 @@ public class ViewServiceTest {
       viewService.deleteView(user1, 3);
       assertTrue(false);
     }
-    catch(NotAuthorizedToDeleteUserException e) {
+    catch(NotAuthorizedException e) {
       assertTrue(true);
     }
     catch(ValuesNotAllowedException e) {
@@ -249,7 +249,7 @@ public class ViewServiceTest {
       viewService.deleteView(user1, 8);
       assertTrue(false);
     }
-    catch(NotAuthorizedToDeleteUserException e) {
+    catch(NotAuthorizedException e) {
       assertTrue(false);
     }
     catch(ValuesNotAllowedException e) {

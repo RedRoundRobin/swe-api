@@ -9,7 +9,7 @@ import com.redroundrobin.thirema.apirest.service.postgres.ViewService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
-import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedToDeleteUserException;
+import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
 import com.redroundrobin.thirema.apirest.utils.exception.ValuesNotAllowedException;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,7 +72,7 @@ public class ViewController {
     try {
       viewService.deleteView(user, viewToDeleteId);
       return ResponseEntity.ok("deleted view succesfully");
-    } catch (NotAuthorizedToDeleteUserException e) {
+    } catch (NotAuthorizedException e) {
       return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     } catch (ValuesNotAllowedException e) {
       return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();

@@ -920,7 +920,7 @@ public class UserServiceTest {
       User actual = userService.deleteUser(user2, user1.getId());
       assertEquals(expected, actual);
       assertEquals(actual.isDeleted(), false);
-    } catch (NotAuthorizedToDeleteUserException e) {
+    } catch (NotAuthorizedException e) {
       assertTrue(true);
     } catch (ValuesNotAllowedException e) {
       assertTrue(false);
@@ -934,7 +934,7 @@ public class UserServiceTest {
         User actual = userService.deleteUser(mod2, user1.getId());
         assertEquals(expected, actual);
         assertEquals(actual.isDeleted(), false);
-      } catch (NotAuthorizedToDeleteUserException e) {
+      } catch (NotAuthorizedException e) {
         assertTrue(true);
       } catch (ValuesNotAllowedException e) {
         assertTrue(false);

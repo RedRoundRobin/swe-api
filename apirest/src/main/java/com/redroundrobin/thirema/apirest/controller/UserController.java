@@ -7,7 +7,6 @@ import com.redroundrobin.thirema.apirest.utils.exception.ConflictException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
-import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedToDeleteUserException;
 import com.redroundrobin.thirema.apirest.utils.exception.TfaNotPermittedException;
 import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
 import com.redroundrobin.thirema.apirest.utils.exception.ValuesNotAllowedException;
@@ -107,7 +106,7 @@ public class UserController extends CoreController {
       logService.createLog(user.getId(), ip, "user.deleted",
           Integer.toString(deletedUser.getId()));
       return ResponseEntity.ok(deletedUser);
-    } catch (NotAuthorizedToDeleteUserException e) {
+    } catch (NotAuthorizedException e) {
       return new ResponseEntity(e.getMessage(), HttpStatus.FORBIDDEN);
     } catch (ValuesNotAllowedException e) {
       return new ResponseEntity(e.getMessage(), HttpStatus.BAD_REQUEST);

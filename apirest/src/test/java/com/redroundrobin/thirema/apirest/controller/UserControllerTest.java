@@ -219,7 +219,7 @@ public class UserControllerTest {
           || deletingUser.getType() == User.Role.MOD
           && ((userToDelete.getType() != User.Role.USER)
           || deletingUser.getEntity().getId() != userToDelete.getEntity().getId())) {
-        throw new NotAuthorizedToDeleteUserException("This user cannot delete "
+        throw new NotAuthorizedException("This user cannot delete "
             + "the user with the user_id given");
       }
 

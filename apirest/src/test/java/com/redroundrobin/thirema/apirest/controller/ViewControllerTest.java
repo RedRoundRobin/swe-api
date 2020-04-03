@@ -160,7 +160,7 @@ public class ViewControllerTest {
       }
 
       else if(viewToDelete.getUser().getId() != deletingUser.getId()) {
-        throw new NotAuthorizedToDeleteUserException("This user cannot delete the view with" +
+        throw new NotAuthorizedException("This user cannot delete the view with" +
             "the view_id given");
       }
       else {

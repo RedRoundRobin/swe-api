@@ -10,7 +10,6 @@ import com.redroundrobin.thirema.apirest.utils.exception.ConflictException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
-import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedToDeleteUserException;
 import com.redroundrobin.thirema.apirest.utils.exception.TelegramChatNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.TfaNotPermittedException;
 import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
@@ -418,7 +417,7 @@ public class UserService implements UserDetailsService {
   }
 
   public User deleteUser(User deletingUser, int userToDeleteId)
-      throws NotAuthorizedToDeleteUserException, ValuesNotAllowedException {
+      throws NotAuthorizedException, ValuesNotAllowedException {
     User userToDelete;
     if ((userToDelete = findById(userToDeleteId)) == null) {
       throw new ValuesNotAllowedException();
@@ -428,7 +427,7 @@ public class UserService implements UserDetailsService {
         || deletingUser.getType() == User.Role.MOD
         && ((userToDelete.getType() != User.Role.USER)
         || deletingUser.getEntity().getId() != userToDelete.getEntity().getId())) {
-      throw new NotAuthorizedToDeleteUserException("");
+      throw new NotAuthorizedException("");
     }
 
     userToDelete.setDeleted(true);

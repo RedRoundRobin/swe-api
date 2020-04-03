@@ -6,7 +6,7 @@ import com.redroundrobin.thirema.apirest.models.postgres.View;
 import com.redroundrobin.thirema.apirest.repository.postgres.ViewRepository;
 import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
-import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedToDeleteUserException;
+import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
 import com.redroundrobin.thirema.apirest.utils.exception.ValuesNotAllowedException;
 import java.util.HashSet;
 import java.util.List;
@@ -78,14 +78,14 @@ public class ViewService {
   }
 
   public void deleteView(User deletingUser, int viewToDeleteId)
-      throws NotAuthorizedToDeleteUserException, ValuesNotAllowedException {
+      throws NotAuthorizedException, ValuesNotAllowedException {
     View viewToDelete;
     if ((viewToDelete = viewRepo.findById(viewToDeleteId).orElse(null)) == null) {
       throw new ValuesNotAllowedException("The given view_id doesn't correspond to any view");
     }
 
     if (viewToDelete.getUser().getId() != deletingUser.getId()) {
-      throw new NotAuthorizedToDeleteUserException("This user cannot delete the view with"
+      throw new NotAuthorizedException("This user cannot delete the view with"
           + "the view_id given");
     }
 
