@@ -244,11 +244,10 @@ public class UserControllerTest {
           .count() == 0;
 
       if (!onlyCreatableKeys)
-        throw new KeysNotFoundException("There are some keys that either do not exist or you are not" +
-            "allowed to edit them");
+        throw new ValuesNotAllowedException();
 
       if (!(creatable.size() == rawUserToInsert.keySet().size())) {
-        throw new MissingFieldsException("Some necessary fields are missing: cannot create user");
+        throw new MissingFieldsException();
       }
 
       Entity userToInsertEntity;
@@ -256,20 +255,14 @@ public class UserControllerTest {
           allEntities.stream().filter(entity ->
               entity.getId() == (rawUserToInsert.get("entityId")).getAsInt())
               .findFirst().orElse(null)) == null) {
-        throw new EntityNotFoundException("The entity with the entityId given doesn't exist");
+        throw new ValuesNotAllowedException();
       }
 
       int userToInsertType;
-      try {
-        userToInsertType = rawUserToInsert.get("type").getAsInt();
-        if(userToInsertType == 2) {
-          throw new ValuesNotAllowedException("Not allowed to insert an admin");
-        }
-        if(userToInsertType != 1 && userToInsertType != 0) {
-          throw new ValuesNotAllowedException("The type parameter given is not allowed");
-        }
-      } catch (IllegalArgumentException | ClassCastException iae) {
-        throw new ValuesNotAllowedException("The role must be an integer corresponding to an existing type");
+      if ((userToInsertType =
+          rawUserToInsert.get("type").getAsInt()) == 2 ||
+          userToInsertType != 1 && userToInsertType != 0) {
+        throw new ValuesNotAllowedException();
       }
 
       //qui so che entity_id dato esiste && so il tipo dello user che si vuole inserire
@@ -277,42 +270,34 @@ public class UserControllerTest {
       if (insertingUser.getType() == User.Role.USER
           || (insertingUser.getType() == User.Role.MOD
           && userToInsertEntity.getId() != insertingUser.getEntity().getId())) {
-        throw new NotAuthorizedToInsertUserException();
+        throw new NotAuthorizedException();
       }
 
       User newUser = new User();
       newUser.setEntity(userToInsertEntity);
-      if (userToInsertType == 0) {
-        newUser.setType(User.Role.USER);
-      } else {
-        newUser.setType(User.Role.MOD);
-      }
+      newUser.setType(User.Role.values()[(int)userToInsertType]);
 
-      if (rawUserToInsert.get("name").getAsString() != null) {
+      if (rawUserToInsert.get("name").getAsString() != null
+          || rawUserToInsert.get("surname").getAsString() != null
+          || rawUserToInsert.get("password").getAsString() != null) {
         newUser.setName(rawUserToInsert.get("name").getAsString());
-      } else {
-        throw new ValuesNotAllowedException("The name field cannot be null");
-      }
-
-      if (rawUserToInsert.get("surname").getAsString() != null) {
         newUser.setSurname(rawUserToInsert.get("surname").getAsString());
-      } else {
-        throw new ValuesNotAllowedException("The surname field cannot be null");
-      }
-
-      if (rawUserToInsert.get("password").getAsString() != null) {
         newUser.setPassword(rawUserToInsert.get("password").getAsString());
       } else {
-        throw new ValuesNotAllowedException("The password field cannot be null");
+        throw new ValuesNotAllowedException();
       }
 
       String email = rawUserToInsert.get("email").getAsString();
+      long debug =  allUsers.stream().filter(user-> user.getEmail().equals(email)).count();
       if (email != null &&
-          allUsers.stream().filter(user-> user.getEmail() == email).count() == 0) //email gia usata
+          allUsers.stream().filter(user-> user.getEmail().equals(email))
+              .count() == 0) //email gia usata
         newUser.setEmail(email);
-      else throw new ValuesNotAllowedException("Either the email field you inserted is" +
-          "null or it is already used");
-
+      else if(email == null) {
+        throw new ValuesNotAllowedException();
+      } else {
+        throw new ConflictException();
+      }
       allUsers.add(newUser);
       return allUsers.get(allUsers.size() - 1); //prendo lo user appena inserito
     });
@@ -746,7 +731,23 @@ public class UserControllerTest {
   }
 
   @Test
-  public void createUserByMod2NotAuthorizedToInsertUserExceptionTest() {
+  public void createUserByMod1ConflictExceptionTest() {
+    String authorization = "Bearer "+mod1Token;
+    JsonObject jsonUser = new JsonObject();
+    jsonUser.addProperty("name", "marco");
+    jsonUser.addProperty("surname", "polo");
+    jsonUser.addProperty("email", user1.getEmail());
+    jsonUser.addProperty("type",  0);
+    jsonUser.addProperty("entityId", 1);
+    jsonUser.addProperty("password", "password");
+
+    ResponseEntity<User> response = userController.createUser(authorization, "localhost", jsonUser.toString());
+    assertTrue(response.getStatusCode() == HttpStatus.CONFLICT);
+    assertTrue(response.getBody() == null);
+  }
+
+  @Test
+  public void createUserByMod2NotAuthorizedExceptionTest() {
     String authorization = "Bearer "+mod2Token;
     JsonObject jsonUser = new JsonObject();
     jsonUser.addProperty("name", "marco");
@@ -757,7 +758,7 @@ public class UserControllerTest {
     jsonUser.addProperty("password", "password");
 
     ResponseEntity<User> response = userController.createUser(authorization, "localhost", jsonUser.toString());
-    assertTrue(response.getStatusCode() == HttpStatus.BAD_REQUEST);
+    assertTrue(response.getStatusCode() == HttpStatus.FORBIDDEN);
     assertTrue(response.getBody() == null);
   }
 
@@ -765,9 +766,13 @@ public class UserControllerTest {
   public void deleteUser1ByAdmin1SuccesfulTest() {
     String authorization = "Bearer "+admin1Token;
 
-    ResponseEntity<?> response = userController.deleteUser(authorization, "localhost", user1.getId());
+    ResponseEntity<User> response = userController.deleteUser(authorization, "localhost", user1.getId());
     assertTrue(response.getStatusCode() == HttpStatus.OK);
-    assertEquals(response.getBody(),  user1);
+
+    User expected = user1;
+    User actual = response.getBody();
+
+    assertEquals(expected, actual);
     assertTrue(user1.isDeleted());
   }
 
@@ -775,9 +780,13 @@ public class UserControllerTest {
   public void deleteUser1ByMod1SuccesfulTest() {
     String authorization = "Bearer "+mod1Token;
 
-    ResponseEntity<?> response = userController.deleteUser(authorization, "localhost", user1.getId());
+    ResponseEntity<User> response = userController.deleteUser(authorization, "localhost", user1.getId());
     assertTrue(response.getStatusCode() == HttpStatus.OK);
-    assertEquals(response.getBody(),  user1);
+    
+    User expected = user1;
+    User actual = response.getBody();
+
+    assertEquals(expected, actual);
     assertTrue(user1.isDeleted());
   }
 
@@ -785,7 +794,7 @@ public class UserControllerTest {
   public void deleteUser1ByMod2NotAuthorizedExceptionTest() {
     String authorization = "Bearer "+mod2Token;
 
-    ResponseEntity<?> response = userController.deleteUser(authorization, "localhost", user1.getId());
+    ResponseEntity<User> response = userController.deleteUser(authorization, "localhost", user1.getId());
     assertTrue(response.getStatusCode() == HttpStatus.FORBIDDEN);
     assertTrue(response.getBody() != null);
   }
@@ -795,7 +804,7 @@ public class UserControllerTest {
     String authorization = "Bearer "+mod2Token;
     int notExistingId = 50;
 
-    ResponseEntity<?> response = userController.deleteUser(authorization, "localhost", notExistingId);
+    ResponseEntity<User> response = userController.deleteUser(authorization, "localhost", notExistingId);
     assertTrue(response.getStatusCode() == HttpStatus.BAD_REQUEST);
     assertTrue(response.getBody() != null);
   }
