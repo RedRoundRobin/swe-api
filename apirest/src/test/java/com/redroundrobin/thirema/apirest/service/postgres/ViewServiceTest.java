@@ -3,8 +3,6 @@ import com.google.gson.JsonObject;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.postgres.View;
 import com.redroundrobin.thirema.apirest.repository.postgres.ViewRepository;
-import com.redroundrobin.thirema.apirest.service.postgres.UserService;
-import com.redroundrobin.thirema.apirest.service.postgres.ViewService;
 import com.redroundrobin.thirema.apirest.utils.exception.*;
 import org.junit.Before;
 import org.junit.Test;
@@ -224,7 +222,7 @@ public class ViewServiceTest {
     catch(NotAuthorizedException e) {
       assertTrue(false);
     }
-    catch(ValuesNotAllowedException e) {
+    catch(InvalidFieldsValuesException e) {
       assertTrue(false);
     }
   }
@@ -238,7 +236,7 @@ public class ViewServiceTest {
     catch(NotAuthorizedException e) {
       assertTrue(true);
     }
-    catch(ValuesNotAllowedException e) {
+    catch(InvalidFieldsValuesException e) {
       assertTrue(false);
     }
   }
@@ -252,7 +250,7 @@ public class ViewServiceTest {
     catch(NotAuthorizedException e) {
       assertTrue(false);
     }
-    catch(ValuesNotAllowedException e) {
+    catch(InvalidFieldsValuesException e) {
       assertTrue(true);
     }
   }

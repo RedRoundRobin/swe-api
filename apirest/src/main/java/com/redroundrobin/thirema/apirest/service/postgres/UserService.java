@@ -12,7 +12,7 @@ import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
 import com.redroundrobin.thirema.apirest.utils.exception.TelegramChatNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
-import com.redroundrobin.thirema.apirest.utils.exception.ValuesNotAllowedException;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,7 +39,7 @@ public class UserService implements UserDetailsService {
   private EntityService entityService;
 
   private boolean checkCreatableFields(Set<String> keys)
-      throws ValuesNotAllowedException {
+      throws InvalidFieldsValuesException {
     Set<String> creatable = new HashSet<>();
     creatable.add("name");
     creatable.add("surname");
@@ -53,7 +53,7 @@ public class UserService implements UserDetailsService {
         .count() == 0;
 
     if (!onlyCreatableKeys) {
-      throw new ValuesNotAllowedException();
+      throw new InvalidFieldsValuesException();
     }
 
     return creatable.size() == keys.size();
@@ -363,7 +363,7 @@ public class UserService implements UserDetailsService {
   }
 
   public User serializeUser(JsonObject rawUserToInsert, User insertingUser)
-      throws MissingFieldsException, ValuesNotAllowedException,
+      throws MissingFieldsException, InvalidFieldsValuesException,
       ConflictException, NotAuthorizedException {
     if (!checkCreatableFields(rawUserToInsert.keySet())) {
       throw new MissingFieldsException();
@@ -372,14 +372,14 @@ public class UserService implements UserDetailsService {
     Entity userToInsertEntity;
     if ((userToInsertEntity = entityService.findById(
         (rawUserToInsert.get("entityId")).getAsInt())) == null) {
-      throw new ValuesNotAllowedException();
+      throw new InvalidFieldsValuesException();
     }
 
     int userToInsertType;
     if ((userToInsertType =
         rawUserToInsert.get("type").getAsInt()) == 2 ||
         userToInsertType != 1 && userToInsertType != 0) {
-        throw new ValuesNotAllowedException();
+        throw new InvalidFieldsValuesException();
     }
 
     //qui so che entity_id dato esiste && so il tipo dello user che si vuole inserire
@@ -400,14 +400,14 @@ public class UserService implements UserDetailsService {
       newUser.setSurname(rawUserToInsert.get("surname").getAsString());
       newUser.setPassword(rawUserToInsert.get("password").getAsString());
     } else {
-      throw new ValuesNotAllowedException();
+      throw new InvalidFieldsValuesException();
     }
 
     String email = rawUserToInsert.get("email").getAsString();
     if(email != null && repo.findByEmail(email) == null) {
       newUser.setEmail(email);
     } else if (email == null) {
-      throw new ValuesNotAllowedException();
+      throw new InvalidFieldsValuesException();
     } else {
       throw new ConflictException("");
     }
@@ -416,10 +416,10 @@ public class UserService implements UserDetailsService {
   }
 
   public User deleteUser(User deletingUser, int userToDeleteId)
-      throws NotAuthorizedException, ValuesNotAllowedException {
+      throws NotAuthorizedException, InvalidFieldsValuesException {
     User userToDelete;
     if ((userToDelete = findById(userToDeleteId)) == null) {
-      throw new ValuesNotAllowedException();
+      throw new InvalidFieldsValuesException();
     }
 
     if (deletingUser.getType() == User.Role.USER

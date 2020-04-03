@@ -1,7 +1,6 @@
 package com.redroundrobin.thirema.apirest.controller;
 
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
@@ -18,11 +17,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -212,7 +206,7 @@ public class UserControllerTest {
       if ((userToDelete = allUsers.stream()
           .filter(user -> user.getId() == userToDeleteId)
           .findFirst().orElse(null)) == null) {
-        throw new ValuesNotAllowedException("The given user_id doesn't correspond to any user");
+        throw new InvalidFieldsValuesException("The given user_id doesn't correspond to any user");
       }
 
       if (deletingUser.getType() == User.Role.USER
@@ -244,7 +238,7 @@ public class UserControllerTest {
           .count() == 0;
 
       if (!onlyCreatableKeys)
-        throw new ValuesNotAllowedException();
+        throw new InvalidFieldsValuesException();
 
       if (!(creatable.size() == rawUserToInsert.keySet().size())) {
         throw new MissingFieldsException();
@@ -255,14 +249,14 @@ public class UserControllerTest {
           allEntities.stream().filter(entity ->
               entity.getId() == (rawUserToInsert.get("entityId")).getAsInt())
               .findFirst().orElse(null)) == null) {
-        throw new ValuesNotAllowedException();
+        throw new InvalidFieldsValuesException();
       }
 
       int userToInsertType;
       if ((userToInsertType =
           rawUserToInsert.get("type").getAsInt()) == 2 ||
           userToInsertType != 1 && userToInsertType != 0) {
-        throw new ValuesNotAllowedException();
+        throw new InvalidFieldsValuesException();
       }
 
       //qui so che entity_id dato esiste && so il tipo dello user che si vuole inserire
@@ -284,7 +278,7 @@ public class UserControllerTest {
         newUser.setSurname(rawUserToInsert.get("surname").getAsString());
         newUser.setPassword(rawUserToInsert.get("password").getAsString());
       } else {
-        throw new ValuesNotAllowedException();
+        throw new InvalidFieldsValuesException();
       }
 
       String email = rawUserToInsert.get("email").getAsString();
@@ -294,7 +288,7 @@ public class UserControllerTest {
               .count() == 0) //email gia usata
         newUser.setEmail(email);
       else if(email == null) {
-        throw new ValuesNotAllowedException();
+        throw new InvalidFieldsValuesException();
       } else {
         throw new ConflictException("");
       }

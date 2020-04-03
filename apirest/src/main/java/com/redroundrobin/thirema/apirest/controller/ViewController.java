@@ -10,7 +10,7 @@ import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
-import com.redroundrobin.thirema.apirest.utils.exception.ValuesNotAllowedException;
+
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -74,7 +74,7 @@ public class ViewController {
       return ResponseEntity.ok("deleted view succesfully");
     } catch (NotAuthorizedException e) {
       return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-    } catch (ValuesNotAllowedException e) {
+    } catch (InvalidFieldsValuesException e) {
       return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
     }
   }

@@ -6,8 +6,6 @@ import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
-import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
-import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.utils.exception.*;
 import org.junit.Before;
 import org.junit.Test;
@@ -922,7 +920,7 @@ public class UserServiceTest {
       assertEquals(actual.isDeleted(), false);
     } catch (NotAuthorizedException e) {
       assertTrue(true);
-    } catch (ValuesNotAllowedException e) {
+    } catch (InvalidFieldsValuesException e) {
       assertTrue(false);
     }
   }
@@ -936,7 +934,7 @@ public class UserServiceTest {
         assertEquals(actual.isDeleted(), false);
       } catch (NotAuthorizedException e) {
         assertTrue(true);
-      } catch (ValuesNotAllowedException e) {
+      } catch (InvalidFieldsValuesException e) {
         assertTrue(false);
       }
   }

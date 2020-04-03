@@ -8,7 +8,7 @@ import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesExce
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
 import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
-import com.redroundrobin.thirema.apirest.utils.exception.ValuesNotAllowedException;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -79,7 +79,7 @@ public class UserController extends CoreController {
       logService.createLog(user.getId(), ip, "user.created",
           Integer.toString(createdUser.getId()));
       return ResponseEntity.ok(createdUser);
-    } catch (MissingFieldsException | ValuesNotAllowedException e) {
+    } catch (MissingFieldsException | InvalidFieldsValuesException e) {
       return new ResponseEntity(HttpStatus.BAD_REQUEST);
     } catch(ConflictException e) {
       return new ResponseEntity(HttpStatus.CONFLICT);
@@ -101,7 +101,7 @@ public class UserController extends CoreController {
       return ResponseEntity.ok(deletedUser);
     } catch (NotAuthorizedException e) {
       return new ResponseEntity(e.getMessage(), HttpStatus.FORBIDDEN);
-    } catch (ValuesNotAllowedException e) {
+    } catch (InvalidFieldsValuesException e) {
       return new ResponseEntity(e.getMessage(), HttpStatus.BAD_REQUEST);
     }
   }
