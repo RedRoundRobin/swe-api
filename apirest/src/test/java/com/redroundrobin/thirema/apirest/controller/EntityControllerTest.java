@@ -200,6 +200,9 @@ public class EntityControllerTest {
         return Collections.emptyList();
       }
     });
+    when(entityService.findById(anyInt())).thenAnswer(i -> {
+      return allEntities.stream().filter(e -> i.getArgument(0).equals(e.getId())).findFirst().orElse(null);
+    });
   }
 
   @Test
@@ -258,5 +261,22 @@ public class EntityControllerTest {
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertEquals(user.getEntity(), response.getBody().stream().findFirst().orElse(null));
+  }
+
+
+
+  @Test
+  public void getEntityByIdByAdminSuccessfull() {
+    ResponseEntity<Entity> response = entityController.getEntity(adminTokenWithBearer, entity3.getId());
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(entity3, response.getBody());
+  }
+
+  @Test
+  public void getEntityByIdByUserNotAllowerError403() {
+    ResponseEntity<Entity> response = entityController.getEntity(userTokenWithBearer, entity3.getId());
+
+    assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
   }
 }

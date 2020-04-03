@@ -1,5 +1,6 @@
 package com.redroundrobin.thirema.apirest.models.postgres;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
@@ -30,15 +31,15 @@ public class Entity {
   private String location;
   private boolean deleted;
 
-  @JsonManagedReference
+  @JsonIgnore
   @OneToMany(mappedBy = "entity")
   private List<User> users;
 
-  @JsonManagedReference
+  @JsonIgnore
   @OneToMany(mappedBy = "entity")
   private List<Alert> alerts;
 
-  @JsonManagedReference
+  @JsonIgnore
   @ManyToMany
   @JoinTable(
       name = "entity_sensors",

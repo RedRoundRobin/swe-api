@@ -1,9 +1,11 @@
 package com.redroundrobin.thirema.apirest.models.postgres;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIdentityReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import java.util.List;
 import javax.persistence.Column;
 import javax.persistence.EnumType;
@@ -59,16 +61,17 @@ public class User {
   private boolean tfa;
   private boolean deleted;
 
-  @JsonBackReference
   @ManyToOne
   @JoinColumn(name = "entity_id")
+  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "entityId")
+  @JsonIdentityReference(alwaysAsId = true)
   private Entity entity;
 
-  @JsonManagedReference
+  @JsonIgnore
   @OneToMany(mappedBy = "user")
   private List<View> views;
 
-  @JsonManagedReference
+  @JsonIgnore
   @ManyToMany
   @JoinTable(
       name = "disabled_users_alerts",

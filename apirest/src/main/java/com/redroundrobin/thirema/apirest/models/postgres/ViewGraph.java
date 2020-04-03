@@ -1,8 +1,10 @@
 package com.redroundrobin.thirema.apirest.models.postgres;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIdentityReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -45,19 +47,22 @@ public class ViewGraph {
   private int graphId;
   private Correlation correlation;
 
-  @JsonBackReference
   @ManyToOne
   @JoinColumn(name = "view_id")
+  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "viewId")
+  @JsonIdentityReference(alwaysAsId = true)
   private View view;
 
-  @JsonBackReference
   @ManyToOne
   @JoinColumn(name = "sensor_1_id")
+  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "sensorId")
+  @JsonIdentityReference(alwaysAsId = true)
   private Sensor sensor1;
 
-  @JsonBackReference
   @ManyToOne
   @JoinColumn(name = "sensor_2_id")
+  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "sensorId")
+  @JsonIdentityReference(alwaysAsId = true)
   private Sensor sensor2;
 
   @JsonProperty(value = "viewGraphId")

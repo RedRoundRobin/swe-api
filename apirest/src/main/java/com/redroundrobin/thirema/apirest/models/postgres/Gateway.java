@@ -1,6 +1,6 @@
 package com.redroundrobin.thirema.apirest.models.postgres;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.Objects;
@@ -27,7 +27,7 @@ public class Gateway {
   private int gatewayId;
   private String name;
 
-  @JsonManagedReference
+  @JsonIgnore
   @OneToMany(mappedBy = "gateway", cascade = CascadeType.ALL)
   private List<Device> devices;
 

@@ -6,11 +6,8 @@ import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.postgres.View;
 import com.redroundrobin.thirema.apirest.models.postgres.ViewGraph;
 import com.redroundrobin.thirema.apirest.repository.postgres.ViewGraphRepository;
-import com.redroundrobin.thirema.apirest.service.postgres.ViewGraphService;
-import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
-import com.redroundrobin.thirema.apirest.service.postgres.ViewService;
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
-import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsException;
+import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import org.junit.Before;
 import org.junit.Test;
@@ -426,7 +423,7 @@ public class ViewGraphServiceTest {
   }
 
   @Test
-  public void createViewGraphWithInvalidViewThrowsInvalidFieldsException() {
+  public void createViewGraphWithInvalidViewThrowsInvalidFieldsValuesException() {
     Map<String, Integer> newViewGraphFields = new HashMap<>();
     newViewGraphFields.put("correlation", ViewGraph.Correlation.NULL.toValue());
     newViewGraphFields.put("view", view2.getId());
@@ -436,7 +433,7 @@ public class ViewGraphServiceTest {
       ViewGraph viewGraph = viewGraphService.createViewGraph(user1, newViewGraphFields);
 
       assertTrue(false);
-    } catch (InvalidFieldsException e) {
+    } catch (InvalidFieldsValuesException e) {
       assertEquals("The view with provided id is not found or not authorized", e.getMessage());
       assertTrue(true);
     } catch (Exception e) {
@@ -445,7 +442,7 @@ public class ViewGraphServiceTest {
   }
 
   @Test
-  public void addViewGraphWithInvalidSensor2ThrowsInvalidFieldsException() {
+  public void addViewGraphWithInvalidSensor2ThrowsInvalidFieldsValuesException() {
     Map<String, Integer> newViewGraphFields = new HashMap<>();
     newViewGraphFields.put("correlation", ViewGraph.Correlation.NULL.toValue());
     newViewGraphFields.put("view", view1.getId());
@@ -455,7 +452,7 @@ public class ViewGraphServiceTest {
       ViewGraph viewGraph = viewGraphService.createViewGraph(user1, newViewGraphFields);
 
       assertTrue(false);
-    } catch (InvalidFieldsException e) {
+    } catch (InvalidFieldsValuesException e) {
       assertEquals("The sensor2 with provided id is not found or not authorized", e.getMessage());
       assertTrue(true);
     } catch (Exception e) {
@@ -474,7 +471,7 @@ public class ViewGraphServiceTest {
       ViewGraph viewGraph = viewGraphService.editViewGraph(user1, viewGraph1.getId(), fieldsToEdit);
 
       assertEquals(ViewGraph.Correlation.PEARSON, viewGraph.getCorrelation());
-    } catch (InvalidFieldsException e) {
+    } catch (InvalidFieldsValuesException e) {
       assertTrue(false);
     } catch (Exception e) {
       assertTrue(false);
@@ -482,7 +479,7 @@ public class ViewGraphServiceTest {
   }
 
   @Test
-  public void editViewGraphWithNotExistentViewGraphIdThrowsInvalidFieldsException() {
+  public void editViewGraphWithNotExistentViewGraphIdThrowsInvalidFieldsValuesException() {
     Map<String, Integer> fieldsToEdit = new HashMap<>();
     fieldsToEdit.put("correlation", ViewGraph.Correlation.PEARSON.toValue());
 
@@ -490,7 +487,7 @@ public class ViewGraphServiceTest {
       ViewGraph viewGraph = viewGraphService.editViewGraph(user1, 9, fieldsToEdit);
 
       assertEquals(ViewGraph.Correlation.PEARSON, viewGraph.getCorrelation());
-    } catch (InvalidFieldsException e) {
+    } catch (InvalidFieldsValuesException e) {
       assertEquals("The viewGraph with provided id is not found", e.getMessage());
       assertTrue(true);
     } catch (Exception e) {
@@ -499,7 +496,7 @@ public class ViewGraphServiceTest {
   }
 
   @Test
-  public void editViewGraphWithInvalidSensor1ThrowsInvalidFieldsException() {
+  public void editViewGraphWithInvalidSensor1ThrowsInvalidFieldsValuesException() {
     Map<String, Integer> fieldsToEdit = new HashMap<>();
     fieldsToEdit.put("sensor1", 6);
 
@@ -507,7 +504,7 @@ public class ViewGraphServiceTest {
       ViewGraph viewGraph = viewGraphService.editViewGraph(user1, viewGraph1.getId(), fieldsToEdit);
 
       assertTrue(false);
-    } catch (InvalidFieldsException e) {
+    } catch (InvalidFieldsValuesException e) {
       assertEquals("The sensor1 with provided id is not found or not authorized", e.getMessage());
       assertTrue(true);
     } catch (Exception e) {
@@ -516,7 +513,7 @@ public class ViewGraphServiceTest {
   }
 
   @Test
-  public void editViewGraphWithInvalidSensor2ThrowsInvalidFieldsException() {
+  public void editViewGraphWithInvalidSensor2ThrowsInvalidFieldsValuesException() {
     Map<String, Integer> newViewGraphFields = new HashMap<>();
     newViewGraphFields.put("correlation", 9);
 
@@ -524,7 +521,7 @@ public class ViewGraphServiceTest {
       ViewGraph viewGraph = viewGraphService.editViewGraph(user1, viewGraph1.getId(), newViewGraphFields);
 
       assertTrue(false);
-    } catch (InvalidFieldsException e) {
+    } catch (InvalidFieldsValuesException e) {
       assertEquals("The correlation with provided id is not found", e.getMessage());
       assertTrue(true);
     } catch (Exception e) {

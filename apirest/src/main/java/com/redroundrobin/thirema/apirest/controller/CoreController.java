@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * le operazioni devono essere implementati tramite metodi appropiati
  * la rappresentazione delle risorse devono essere tramite un formato standard, specificato nel body
  */
-public class CoreController {
+public abstract class CoreController {
 
   protected JwtUtil jwtUtil;
 
@@ -34,7 +34,7 @@ public class CoreController {
     this.userService = userService;
   }
 
-  protected User getUserFromAuthorization(String authorization) {
+  protected final User getUserFromAuthorization(String authorization) {
     String token = authorization.substring(7);
     String username = jwtUtil.extractUsername(token);
 

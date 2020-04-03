@@ -1,7 +1,6 @@
 package com.redroundrobin.thirema.apirest.controller;
 
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
@@ -18,11 +17,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -201,7 +195,7 @@ public class UserControllerTest {
             .collect(Collectors.toList());
         return users;
       } else {
-        throw new EntityNotFoundException("");
+        return Collections.emptyList();
       }
     });
 
@@ -212,14 +206,14 @@ public class UserControllerTest {
       if ((userToDelete = allUsers.stream()
           .filter(user -> user.getId() == userToDeleteId)
           .findFirst().orElse(null)) == null) {
-        throw new ValuesNotAllowedException("The given user_id doesn't correspond to any user");
+        throw new InvalidFieldsValuesException("The given user_id doesn't correspond to any user");
       }
 
       if (deletingUser.getType() == User.Role.USER
           || deletingUser.getType() == User.Role.MOD
           && ((userToDelete.getType() != User.Role.USER)
           || deletingUser.getEntity().getId() != userToDelete.getEntity().getId())) {
-        throw new NotAuthorizedToDeleteUserException("This user cannot delete "
+        throw new NotAuthorizedException("This user cannot delete "
             + "the user with the user_id given");
       }
 
@@ -244,10 +238,10 @@ public class UserControllerTest {
           .count() == 0;
 
       if (!onlyCreatableKeys)
-        throw new ValuesNotAllowedException();
+        throw new InvalidFieldsValuesException("");
 
       if (!(creatable.size() == rawUserToInsert.keySet().size())) {
-        throw new MissingFieldsException();
+        throw new MissingFieldsException("");
       }
 
       Entity userToInsertEntity;
@@ -255,14 +249,14 @@ public class UserControllerTest {
           allEntities.stream().filter(entity ->
               entity.getId() == (rawUserToInsert.get("entityId")).getAsInt())
               .findFirst().orElse(null)) == null) {
-        throw new ValuesNotAllowedException();
+        throw new InvalidFieldsValuesException("");
       }
 
       int userToInsertType;
       if ((userToInsertType =
           rawUserToInsert.get("type").getAsInt()) == 2 ||
           userToInsertType != 1 && userToInsertType != 0) {
-        throw new ValuesNotAllowedException();
+        throw new InvalidFieldsValuesException("");
       }
 
       //qui so che entity_id dato esiste && so il tipo dello user che si vuole inserire
@@ -270,7 +264,7 @@ public class UserControllerTest {
       if (insertingUser.getType() == User.Role.USER
           || (insertingUser.getType() == User.Role.MOD
           && userToInsertEntity.getId() != insertingUser.getEntity().getId())) {
-        throw new NotAuthorizedException();
+        throw new NotAuthorizedException("");
       }
 
       User newUser = new User();
@@ -284,7 +278,7 @@ public class UserControllerTest {
         newUser.setSurname(rawUserToInsert.get("surname").getAsString());
         newUser.setPassword(rawUserToInsert.get("password").getAsString());
       } else {
-        throw new ValuesNotAllowedException();
+        throw new InvalidFieldsValuesException("");
       }
 
       String email = rawUserToInsert.get("email").getAsString();
@@ -294,9 +288,9 @@ public class UserControllerTest {
               .count() == 0) //email gia usata
         newUser.setEmail(email);
       else if(email == null) {
-        throw new ValuesNotAllowedException();
+        throw new InvalidFieldsValuesException("");
       } else {
-        throw new ConflictException();
+        throw new ConflictException("");
       }
       allUsers.add(newUser);
       return allUsers.get(allUsers.size() - 1); //prendo lo user appena inserito
@@ -383,7 +377,7 @@ public class UserControllerTest {
   public void editUser1ByAdmin1EditNotAllowedError403() throws Exception {
 
     when(userService.editByAdministrator(eq(user1), eq(false), any(HashMap.class))).thenThrow(
-        new NotAllowedToEditException("fields furnished not allowed"));
+        new NotAuthorizedException("fields furnished not allowed"));
 
     HashMap<String, Object> request = new HashMap<>();
     request.put("user_id", user1.getId());
@@ -587,7 +581,7 @@ public class UserControllerTest {
     String tfaError = "TFA can't be edited because either telegram_name is "
         + "in the request or telegram chat not present";
     when(userService.editByModerator(eq(mod1), eq(true), any(HashMap.class))).thenThrow(
-        new TfaNotPermittedException(tfaError));
+        new ConflictException(tfaError));
 
     HashMap<String, Object> request = new HashMap<>();
     request.put("telegramName", newTelegramName);
@@ -607,7 +601,7 @@ public class UserControllerTest {
     String newEmail = "newEmail";
 
     when(userService.editByModerator(eq(mod11), eq(false), any(HashMap.class))).thenThrow(
-        new NotAllowedToEditException(""));
+        new NotAuthorizedException(""));
 
     HashMap<String, Object> request = new HashMap<>();
     request.put("email", newEmail);
@@ -644,13 +638,13 @@ public class UserControllerTest {
   }
 
   @Test
-  public void getAllUsersByAdmin1EntityNotFoundError400() {
+  public void getAllUsersByAdmin1NotExistentEntityEmptyList() {
     String authorization = "Bearer "+admin1Token;
 
     ResponseEntity<List<User>> response = userController.getUsers(authorization,3, null, null);
 
-    System.out.println(response.getStatusCode());
-    assertTrue(response.getStatusCode() == HttpStatus.BAD_REQUEST);
+    assertTrue(response.getStatusCode() == HttpStatus.OK);
+    assertTrue(response.getBody().isEmpty());
   }
 
   @Test

@@ -7,10 +7,11 @@ import com.redroundrobin.thirema.apirest.models.postgres.View;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.service.postgres.ViewService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
+import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
-import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedToDeleteUserException;
-import com.redroundrobin.thirema.apirest.utils.exception.ValuesNotAllowedException;
+import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
+
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -72,9 +73,9 @@ public class ViewController {
     try {
       viewService.deleteView(user, viewToDeleteId);
       return ResponseEntity.ok("deleted view succesfully");
-    } catch (NotAuthorizedToDeleteUserException e) {
+    } catch (NotAuthorizedException e) {
       return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-    } catch (ValuesNotAllowedException e) {
+    } catch (InvalidFieldsValuesException e) {
       return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
     }
   }

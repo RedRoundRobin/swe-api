@@ -6,8 +6,6 @@ import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
-import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
-import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.utils.exception.*;
 import org.junit.Before;
 import org.junit.Test;
@@ -699,7 +697,7 @@ public class UserServiceTest {
       User user = userService.editByAdministrator(admin2, false, fieldsToEdit);
 
       assertTrue(false);
-    } catch (NotAllowedToEditException e) {
+    } catch (NotAuthorizedException e) {
       assertTrue(true);
     } catch (Exception e) {
       System.out.println(e);
@@ -782,7 +780,7 @@ public class UserServiceTest {
       User user = userService.editByModerator(mod11, true, fieldsToEdit);
 
       assertTrue(false);
-    } catch (NotAllowedToEditException e) {
+    } catch (NotAuthorizedException e) {
       assertTrue(true);
     } catch (Exception e) {
       System.out.println(e);
@@ -805,7 +803,7 @@ public class UserServiceTest {
       User user = userService.editByUser(user1, fieldsToEdit);
 
       assertTrue(false);
-    } catch (NotAllowedToEditException natde) {
+    } catch (NotAuthorizedException natde) {
       assertTrue(true);
     } catch (Exception e) {
       System.out.println(e);
@@ -828,7 +826,7 @@ public class UserServiceTest {
       User user = userService.editByUser(user1, fieldsToEdit);
 
       assertTrue(false);
-    } catch (TfaNotPermittedException tnpe) {
+    } catch (ConflictException ce) {
       assertTrue(true);
     } catch (Exception e) {
       System.out.println(e);
@@ -864,24 +862,16 @@ public class UserServiceTest {
   // findAllByEntityId method test
   @Test
   public void findAllByEntityIdSuccessfull() {
-    try {
-      List<User> users = userService.findAllByEntityId(1);
+    List<User> users = userService.findAllByEntityId(1);
 
-      assertTrue(!users.isEmpty());
-    } catch (EntityNotFoundException enfe) {
-      assertTrue(false);
-    }
+    assertTrue(!users.isEmpty());
   }
 
   @Test
-  public void findAllByEntityIdEntityNotFoundException() {
-    try {
-      List<User> users = userService.findAllByEntityId(3);
+  public void findAllByNotExistentEntityIdEmptyList() {
+    List<User> users = userService.findAllByEntityId(3);
 
-      assertTrue(false);
-    } catch (EntityNotFoundException enfe) {
-      assertTrue(true);
-    }
+    assertTrue(users.isEmpty());
   }
 
 
@@ -928,9 +918,9 @@ public class UserServiceTest {
       User actual = userService.deleteUser(user2, user1.getId());
       assertEquals(expected, actual);
       assertEquals(actual.isDeleted(), false);
-    } catch (NotAuthorizedToDeleteUserException e) {
+    } catch (NotAuthorizedException e) {
       assertTrue(true);
-    } catch (ValuesNotAllowedException e) {
+    } catch (InvalidFieldsValuesException e) {
       assertTrue(false);
     }
   }
@@ -942,9 +932,9 @@ public class UserServiceTest {
         User actual = userService.deleteUser(mod2, user1.getId());
         assertEquals(expected, actual);
         assertEquals(actual.isDeleted(), false);
-      } catch (NotAuthorizedToDeleteUserException e) {
+      } catch (NotAuthorizedException e) {
         assertTrue(true);
-      } catch (ValuesNotAllowedException e) {
+      } catch (InvalidFieldsValuesException e) {
         assertTrue(false);
       }
   }

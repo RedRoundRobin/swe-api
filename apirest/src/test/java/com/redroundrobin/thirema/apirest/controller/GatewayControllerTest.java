@@ -188,6 +188,14 @@ public class GatewayControllerTest {
           .filter(g -> i.getArgument(0).equals(g.getId()))
           .findFirst().orElse(null);
     });
+    when(gatewayService.findByDeviceId(anyInt())).thenAnswer(i -> {
+      Device device = allDevices.stream().filter(d -> i.getArgument(0).equals(d.getId())).findFirst().orElse(null);
+      if (device != null) {
+        return device.getGateway();
+      } else {
+        return null;
+      }
+    });
 
     when(deviceService.findAllByGatewayId(anyInt())).thenAnswer(i -> {
       Gateway gateway = gatewayService.findById(i.getArgument(0));
@@ -225,15 +233,32 @@ public class GatewayControllerTest {
 
   @Test
   public void getAllGatewaysByAdmin() {
-    ResponseEntity<List<Gateway>> response = gatewayController.getGateways(adminTokenWithBearer);
+    ResponseEntity<List<Gateway>> response = gatewayController.getGateways(adminTokenWithBearer, null);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertEquals(allGateways, response.getBody());
   }
 
   @Test
+  public void getAllGatewaysByDeviceIdByAdmin() {
+    ResponseEntity<List<Gateway>> response = gatewayController.getGateways(adminTokenWithBearer, device1.getId());
+
+    System.out.println(response.getBody().size());
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertTrue(response.getBody().size() == 1);
+  }
+
+  @Test
+  public void getAllGatewaysByNotExistentDeviceIdByAdmin() {
+    ResponseEntity<List<Gateway>> response = gatewayController.getGateways(adminTokenWithBearer, 16);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertTrue(response.getBody().size() == 0);
+  }
+
+  @Test
   public void getAllGatewaysByUserError403() {
-    ResponseEntity<List<Gateway>> response = gatewayController.getGateways(userTokenWithBearer);
+    ResponseEntity<List<Gateway>> response = gatewayController.getGateways(userTokenWithBearer, null);
 
     assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
   }

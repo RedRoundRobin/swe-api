@@ -8,6 +8,4 @@ public class MissingFieldsException extends Exception {
   public MissingFieldsException(String reason) {
     super(reason);
   }
-  public MissingFieldsException() {
-  }
 }

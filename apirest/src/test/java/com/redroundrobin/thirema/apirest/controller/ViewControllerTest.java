@@ -155,12 +155,12 @@ public class ViewControllerTest {
           .findFirst().orElse(null);
 
       if(viewToDelete == null) {
-        throw new ValuesNotAllowedException("The given view_id" +
+        throw new InvalidFieldsValuesException("The given view_id" +
             " doesn't correspond to any view");
       }
 
       else if(viewToDelete.getUser().getId() != deletingUser.getId()) {
-        throw new NotAuthorizedToDeleteUserException("This user cannot delete the view with" +
+        throw new NotAuthorizedException("This user cannot delete the view with" +
             "the view_id given");
       }
       else {

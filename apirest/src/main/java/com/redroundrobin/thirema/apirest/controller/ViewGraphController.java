@@ -4,7 +4,7 @@ import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.postgres.ViewGraph;
 import com.redroundrobin.thirema.apirest.service.postgres.ViewGraphService;
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
-import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsException;
+import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import java.util.Collections;
 import java.util.List;
@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -83,12 +84,12 @@ public class ViewGraphController extends CoreController {
     User user = this.getUserFromAuthorization(authorization);
     try {
       return ResponseEntity.ok(viewGraphService.createViewGraph(user, newViewGraphFields));
-    } catch (MissingFieldsException | InvalidFieldsException fe) {
+    } catch (MissingFieldsException | InvalidFieldsValuesException fe) {
       return new ResponseEntity(HttpStatus.BAD_REQUEST);
     }
   }
 
-  @PostMapping(value = {"/{viewGraphId:.+}"})
+  @PutMapping(value = {"/{viewGraphId:.+}"})
   public ResponseEntity<ViewGraph> editViewGraph(
       @RequestHeader("authorization") String authorization,
       @PathVariable("viewGraphId") int viewGraphId,
@@ -102,7 +103,7 @@ public class ViewGraphController extends CoreController {
       } else {
         return new ResponseEntity(HttpStatus.FORBIDDEN);
       }
-    } catch (ElementNotFoundException | MissingFieldsException | InvalidFieldsException fe) {
+    } catch (ElementNotFoundException | MissingFieldsException | InvalidFieldsValuesException fe) {
       return new ResponseEntity(HttpStatus.BAD_REQUEST);
     }
   }

@@ -7,19 +7,12 @@ import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 import com.redroundrobin.thirema.apirest.utils.exception.ConflictException;
-import com.redroundrobin.thirema.apirest.utils.exception.EntityNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
-import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
-import com.redroundrobin.thirema.apirest.utils.exception.NotAllowedToEditException;
-import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedToDeleteUserException;
-import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedToInsertUserException;
 import com.redroundrobin.thirema.apirest.utils.exception.TelegramChatNotFoundException;
-import com.redroundrobin.thirema.apirest.utils.exception.TfaNotPermittedException;
 import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
-import com.redroundrobin.thirema.apirest.utils.exception.UserRoleNotFoundException;
-import com.redroundrobin.thirema.apirest.utils.exception.ValuesNotAllowedException;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -46,21 +39,21 @@ public class UserService implements UserDetailsService {
   private EntityService entityService;
 
   private boolean checkCreatableFields(Set<String> keys)
-      throws ValuesNotAllowedException {
+      throws InvalidFieldsValuesException {
     Set<String> creatable = new HashSet<>();
     creatable.add("name");
     creatable.add("surname");
     creatable.add("email");
     creatable.add("type");
     creatable.add("entityId");
-    creatable.add("password");  //SOLUZIONE TEMPORANEA: NON PREVISTA DA USE CASES
+    creatable.add("password");
 
     boolean onlyCreatableKeys = keys.stream()
         .filter(key -> !creatable.contains(key))
         .count() == 0;
 
     if (!onlyCreatableKeys) {
-      throw new ValuesNotAllowedException();
+      throw new InvalidFieldsValuesException("");
     }
 
     return creatable.size() == keys.size();
@@ -126,12 +119,12 @@ public class UserService implements UserDetailsService {
   }
 
   private User editAndSave(User userToEdit, Map<String, Object> fieldsToEdit)
-      throws TfaNotPermittedException, InvalidFieldsValuesException {
+      throws ConflictException, InvalidFieldsValuesException {
     if (fieldsToEdit.containsKey("twoFactorAuthentication")
         && (boolean)fieldsToEdit.get("twoFactorAuthentication")
         && (fieldsToEdit.containsKey("telegramName")
         || userToEdit.getTelegramChat().isEmpty())) {
-      throw new TfaNotPermittedException("TFA can't be edited because either telegramName is "
+      throw new ConflictException("TFA can't be edited because either telegramName is "
           + "in the request or telegram chat not present");
     }
 
@@ -201,12 +194,12 @@ public class UserService implements UserDetailsService {
     return (List<User>) repo.findAll();
   }
 
-  public List<User> findAllByEntityId(int entityId) throws EntityNotFoundException {
+  public List<User> findAllByEntityId(int entityId) {
     Entity entity = entityService.findById(entityId);
     if (entity != null) {
       return (List<User>) repo.findAllByEntity(entity);
     } else {
-      throw new EntityNotFoundException("Entity with id furnished not found");
+      return Collections.emptyList();
     }
   }
 
@@ -330,11 +323,11 @@ public class UserService implements UserDetailsService {
 
 
   public User editByUser(User userToEdit, Map<String, Object> fieldsToEdit)
-      throws InvalidFieldsValuesException, MissingFieldsException, NotAllowedToEditException,
-      TfaNotPermittedException  {
+      throws InvalidFieldsValuesException, MissingFieldsException, NotAuthorizedException,
+      ConflictException  {
 
     if (!checkFieldsEditable(User.Role.USER, true, fieldsToEdit.keySet())) {
-      throw new NotAllowedToEditException(
+      throw new NotAuthorizedException(
           "You are not allowed to edit some of the specified fields");
     } else {
       return this.editAndSave(userToEdit, fieldsToEdit);
@@ -342,11 +335,12 @@ public class UserService implements UserDetailsService {
   }
 
   public User editByModerator(User userToEdit, boolean itself, Map<String, Object> fieldsToEdit)
-      throws InvalidFieldsValuesException, MissingFieldsException, NotAllowedToEditException,
-      TfaNotPermittedException {
+      throws InvalidFieldsValuesException, MissingFieldsException, NotAuthorizedException,
+      ConflictException {
 
-    if (!checkFieldsEditable(User.Role.MOD, itself, fieldsToEdit.keySet())) {
-      throw new NotAllowedToEditException(
+    if ((fieldsToEdit.containsKey("type") && (int)fieldsToEdit.get("type") > 0)
+        || !checkFieldsEditable(User.Role.MOD, itself, fieldsToEdit.keySet())) {
+      throw new NotAuthorizedException(
           "You are not allowed to edit some of the specified fields");
     } else {
       return this.editAndSave(userToEdit, fieldsToEdit);
@@ -355,13 +349,13 @@ public class UserService implements UserDetailsService {
 
   public User editByAdministrator(User userToEdit, boolean itself,
                                   Map<String, Object> fieldsToEdit)
-      throws InvalidFieldsValuesException, MissingFieldsException, NotAllowedToEditException,
-      TfaNotPermittedException {
+      throws InvalidFieldsValuesException, MissingFieldsException, NotAuthorizedException,
+      ConflictException {
 
     if ((!itself && userToEdit.getType() == User.Role.ADMIN)
         || (fieldsToEdit.containsKey("type") && (int)fieldsToEdit.get("type") == 2)
         || !checkFieldsEditable(User.Role.ADMIN, itself, fieldsToEdit.keySet())) {
-      throw new NotAllowedToEditException(
+      throw new NotAuthorizedException(
           "You are not allowed to edit some of the specified fields");
     } else {
       return this.editAndSave(userToEdit, fieldsToEdit);
@@ -369,31 +363,30 @@ public class UserService implements UserDetailsService {
   }
 
   public User serializeUser(JsonObject rawUserToInsert, User insertingUser)
-      throws MissingFieldsException, ValuesNotAllowedException,
+      throws MissingFieldsException, InvalidFieldsValuesException,
       ConflictException, NotAuthorizedException {
     if (!checkCreatableFields(rawUserToInsert.keySet())) {
-      throw new MissingFieldsException();
+      throw new MissingFieldsException("");
     }
 
     Entity userToInsertEntity;
     if ((userToInsertEntity = entityService.findById(
         (rawUserToInsert.get("entityId")).getAsInt())) == null) {
-      throw new ValuesNotAllowedException();
+      throw new InvalidFieldsValuesException("");
     }
 
     int userToInsertType;
     if ((userToInsertType =
         rawUserToInsert.get("type").getAsInt()) == 2 ||
         userToInsertType != 1 && userToInsertType != 0) {
-        throw new ValuesNotAllowedException();
+        throw new InvalidFieldsValuesException("");
     }
 
     //qui so che entity_id dato esiste && so il tipo dello user che si vuole inserire
-    //NB: IL MODERATORE PUO INSERIRE SOLO MEMBRI!! VA BENE??
     if (insertingUser.getType() == User.Role.USER
         || (insertingUser.getType() == User.Role.MOD
         && userToInsertEntity.getId() != insertingUser.getEntity().getId())) {
-      throw new NotAuthorizedException();
+      throw new NotAuthorizedException("");
     }
 
     User newUser = new User();
@@ -407,33 +400,33 @@ public class UserService implements UserDetailsService {
       newUser.setSurname(rawUserToInsert.get("surname").getAsString());
       newUser.setPassword(rawUserToInsert.get("password").getAsString());
     } else {
-      throw new ValuesNotAllowedException();
+      throw new InvalidFieldsValuesException("");
     }
 
     String email = rawUserToInsert.get("email").getAsString();
     if(email != null && repo.findByEmail(email) == null) {
       newUser.setEmail(email);
     } else if (email == null) {
-      throw new ValuesNotAllowedException();
+      throw new InvalidFieldsValuesException("");
     } else {
-      throw new ConflictException();
+      throw new ConflictException("");
     }
 
     return save(newUser);
   }
 
   public User deleteUser(User deletingUser, int userToDeleteId)
-      throws NotAuthorizedToDeleteUserException, ValuesNotAllowedException {
+      throws NotAuthorizedException, InvalidFieldsValuesException {
     User userToDelete;
     if ((userToDelete = findById(userToDeleteId)) == null) {
-      throw new ValuesNotAllowedException();
+      throw new InvalidFieldsValuesException("");
     }
 
     if (deletingUser.getType() == User.Role.USER
         || deletingUser.getType() == User.Role.MOD
         && ((userToDelete.getType() != User.Role.USER)
         || deletingUser.getEntity().getId() != userToDelete.getEntity().getId())) {
-      throw new NotAuthorizedToDeleteUserException("");
+      throw new NotAuthorizedException("");
     }
 
     userToDelete.setDeleted(true);

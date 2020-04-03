@@ -6,29 +6,21 @@ import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.postgres.View;
 import com.redroundrobin.thirema.apirest.models.postgres.ViewGraph;
 import com.redroundrobin.thirema.apirest.service.postgres.ViewGraphService;
-import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
-import com.redroundrobin.thirema.apirest.utils.exception.EntityNotFoundException;
-import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsException;
-import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
-import com.redroundrobin.thirema.apirest.utils.exception.NotAllowedToEditException;
-import com.redroundrobin.thirema.apirest.utils.exception.TfaNotPermittedException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +33,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
@@ -93,7 +84,7 @@ public class ViewGraphControllerTest {
 
 
   @Before
-  public void setUp() throws ElementNotFoundException, MissingFieldsException, InvalidFieldsException {
+  public void setUp() throws ElementNotFoundException, MissingFieldsException, InvalidFieldsValuesException {
     viewGraphController = new ViewGraphController(viewGraphService);
     viewGraphController.setJwtUtil(jwtUtil);
     viewGraphController.setUserService(userService);

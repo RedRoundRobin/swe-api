@@ -3,28 +3,17 @@ package com.redroundrobin.thirema.apirest.controller;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
-import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
-import com.redroundrobin.thirema.apirest.service.postgres.UserService;
-import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import com.redroundrobin.thirema.apirest.utils.exception.ConflictException;
-import com.redroundrobin.thirema.apirest.utils.exception.EntityNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
-import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
-import com.redroundrobin.thirema.apirest.utils.exception.NotAllowedToEditException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
-import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedToDeleteUserException;
-import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedToInsertUserException;
-import com.redroundrobin.thirema.apirest.utils.exception.TfaNotPermittedException;
 import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
-import com.redroundrobin.thirema.apirest.utils.exception.UserRoleNotFoundException;
-import com.redroundrobin.thirema.apirest.utils.exception.ValuesNotAllowedException;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -50,11 +39,6 @@ public class UserController extends CoreController {
         && editingUser.getEntity().equals(userToEdit.getEntity()));
   }
 
-  @Autowired
-  public UserController() {
-
-  }
-
   // Get all users
   @GetMapping(value = {""})
   public ResponseEntity<List<User>> getUsers(
@@ -66,11 +50,7 @@ public class UserController extends CoreController {
     User user = userService.findByEmail(jwtUtil.extractUsername(token));
     if (user.getType() == User.Role.ADMIN) {
       if (entity != null) {
-        try {
-          return ResponseEntity.ok(userService.findAllByEntityId(entity));
-        } catch (EntityNotFoundException enfe) {
-          // go to return BAD_REQUEST
-        }
+        return ResponseEntity.ok(userService.findAllByEntityId(entity));
       } else if (disabledAlert != null) {
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
       } else if (view != null) {
@@ -78,15 +58,10 @@ public class UserController extends CoreController {
       } else {
         return ResponseEntity.ok(userService.findAll());
       }
-      return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     } else if (user.getType() == User.Role.MOD
         && (entity == null && disabledAlert == null && view == null)
         || (entity != null && user.getEntity().getId() == entity)) {
-      try {
-        return ResponseEntity.ok(userService.findAllByEntityId(user.getEntity().getId()));
-      } catch (EntityNotFoundException enfe) {
-        // go to return FORBIDDEN
-      }
+      return ResponseEntity.ok(userService.findAllByEntityId(user.getEntity().getId()));
     }
     return new ResponseEntity(HttpStatus.FORBIDDEN);
   }
@@ -104,10 +79,10 @@ public class UserController extends CoreController {
       logService.createLog(user.getId(), ip, "user.created",
           Integer.toString(createdUser.getId()));
       return ResponseEntity.ok(createdUser);
-    } catch (MissingFieldsException | ValuesNotAllowedException e) {
+    } catch (MissingFieldsException | InvalidFieldsValuesException e) {
       return new ResponseEntity(HttpStatus.BAD_REQUEST);
     } catch(ConflictException e) {
-      return new ResponseEntity(e.getMessage(), HttpStatus.CONFLICT);
+      return new ResponseEntity(HttpStatus.CONFLICT);
     } catch (NotAuthorizedException e) {
       return new ResponseEntity(HttpStatus.FORBIDDEN);
     }
@@ -124,9 +99,9 @@ public class UserController extends CoreController {
       logService.createLog(user.getId(), ip, "user.deleted",
           Integer.toString(deletedUser.getId()));
       return ResponseEntity.ok(deletedUser);
-    } catch (NotAuthorizedToDeleteUserException e) {
+    } catch (NotAuthorizedException e) {
       return new ResponseEntity(e.getMessage(), HttpStatus.FORBIDDEN);
-    } catch (ValuesNotAllowedException e) {
+    } catch (InvalidFieldsValuesException e) {
       return new ResponseEntity(e.getMessage(), HttpStatus.BAD_REQUEST);
     }
   }
@@ -203,10 +178,10 @@ public class UserController extends CoreController {
 
       } catch (UsernameNotFoundException unfe) {
         return new ResponseEntity(HttpStatus.UNAUTHORIZED);
-      } catch (NotAllowedToEditException | UserDisabledException natef) {
+      } catch (NotAuthorizedException | UserDisabledException natef) {
         return new ResponseEntity(HttpStatus.FORBIDDEN);
-      } catch (TfaNotPermittedException tnpe) {
-        return new ResponseEntity(tnpe.getMessage(),HttpStatus.CONFLICT);
+      } catch (ConflictException ce) {
+        return new ResponseEntity(ce.getMessage(),HttpStatus.CONFLICT);
       } catch (DataIntegrityViolationException dive) {
         if (dive.getMostSpecificCause().getMessage()
             .startsWith("ERROR: duplicate key value violates unique constraint")) {

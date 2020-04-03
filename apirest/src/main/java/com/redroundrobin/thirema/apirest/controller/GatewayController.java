@@ -7,6 +7,7 @@ import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.DeviceService;
 import com.redroundrobin.thirema.apirest.service.postgres.GatewayService;
 import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
+import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -38,9 +40,17 @@ public class GatewayController extends CoreController {
   // Get all gateways
   @GetMapping(value = {""})
   public ResponseEntity<List<Gateway>> getGateways(
-      @RequestHeader(value = "Authorization") String authorization) {
+      @RequestHeader(value = "Authorization") String authorization,
+      @RequestParam(name = "deviceId", required = false) Integer deviceId) {
     User user = this.getUserFromAuthorization(authorization);
-    if (user.getType() == User.Role.ADMIN) {
+    if (user.getType() == User.Role.ADMIN && deviceId != null) {
+      List<Gateway> gateways = new ArrayList<>();
+      Gateway gateway = gatewayService.findByDeviceId(deviceId);
+      if (gateway != null) {
+        gateways.add(gateway);
+      }
+      return ResponseEntity.ok(gateways);
+    } else if (user.getType() == User.Role.ADMIN) {
       return ResponseEntity.ok(gatewayService.findAll());
     } else {
       return new ResponseEntity(HttpStatus.FORBIDDEN);
