@@ -35,7 +35,12 @@ public class ViewGraph {
   }
 
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @GeneratedValue(generator = "view_graphs_graph_id_seq", strategy = GenerationType.SEQUENCE)
+  @SequenceGenerator(
+      name = "view_graphs_graph_id_seq",
+      sequenceName = "view_graphs_graph_id_seq",
+      allocationSize = 50
+  )
   @Column(name = "graph_id")
   private int graphId;
   private Correlation correlation;
