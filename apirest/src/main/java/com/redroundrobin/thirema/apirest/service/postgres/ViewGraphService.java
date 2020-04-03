@@ -64,8 +64,13 @@ public class ViewGraphService {
           }
           break;
         case "sensor1":
-          Sensor sensor1 = sensorService.findByIdAndEntityId(entry.getValue(),
-              user.getEntity().getId());
+          Sensor sensor1;
+          if (user.getType() == User.Role.ADMIN) {
+            sensor1 = sensorService.findById(entry.getValue());
+          } else {
+            sensor1 = sensorService.findByIdAndEntityId(entry.getValue(),
+                user.getEntity().getId());
+          }
           if (sensor1 != null) {
             viewGraph.setSensor1(sensor1);
           } else {
@@ -74,8 +79,13 @@ public class ViewGraphService {
           }
           break;
         case "sensor2":
-          Sensor sensor2 = sensorService.findByIdAndEntityId(entry.getValue(),
-              user.getEntity().getId());
+          Sensor sensor2;
+          if (user.getType() == User.Role.ADMIN) {
+            sensor2 = sensorService.findById(entry.getValue());
+          } else {
+            sensor2 = sensorService.findByIdAndEntityId(entry.getValue(),
+                user.getEntity().getId());
+          }
           if (sensor2 != null) {
             viewGraph.setSensor2(sensor2);
           } else {
