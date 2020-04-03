@@ -91,7 +91,7 @@ public class AuthControllerTest {
     adminTfa1.setPassword("password");
     adminTfa1.setType(User.Role.ADMIN);
     adminTfa1.setTelegramName("telegramName");
-    adminTfa1.setTelegramChat("telegramChat");
+    adminTfa1.setTelegramChat("51916");
     adminTfa1.setTfa(true);
 
     adminTfa2 = new User();
@@ -405,7 +405,7 @@ public class AuthControllerTest {
 
     Map<String, Object> request = new HashMap<>();
     request.put("telegramName", adminTfa2.getTelegramName());
-    request.put("telegramChat", "chatId");
+    request.put("telegramChat", 46516);
 
     when(userService.findByTelegramName(anyString())).thenReturn(adminTfa2);
     when(userService.findByTelegramNameAndTelegramChat(anyString(),anyString())).thenReturn(null);
@@ -430,7 +430,7 @@ public class AuthControllerTest {
 
     Map<String, Object> request = new HashMap<>();
     request.put("telegramName", adminTfa1.getTelegramName());
-    request.put("telegramChat", adminTfa1.getTelegramChat());
+    request.put("telegramChat", Integer.parseInt(adminTfa1.getTelegramChat()));
 
     when(userService.findByTelegramName(anyString())).thenReturn(adminTfa1);
     when(userService.findByTelegramNameAndTelegramChat(anyString(),anyString()))
@@ -467,7 +467,7 @@ public class AuthControllerTest {
 
     Map<String, Object> request = new HashMap<>();
     request.put("telegramName", adminTfa2.getTelegramName());
-    request.put("telegramChat", "chatId");
+    request.put("telegramChat", 456162);
 
     when(userService.findByTelegramName(anyString())).thenReturn(null);
 

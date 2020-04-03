@@ -105,7 +105,7 @@ public class AuthController extends CoreController {
   public ResponseEntity<Map<String, Object>> tfaAuthentication(
       @RequestBody Map<String, Object> request,
       @RequestHeader("Authorization") String authorization,
-      @RequestHeader("X-Forwarded-For") String ip) {
+      @RequestHeader(value = "x-forwarded-for", required = false) String ip) {
 
     if (!request.containsKey("authCode") || ((String) request.get("authCode")).equals("")) {
       return new ResponseEntity(HttpStatus.BAD_REQUEST);
@@ -155,15 +155,17 @@ public class AuthController extends CoreController {
   @PostMapping(value = {"/auth/telegram"})
   public ResponseEntity<Map<String, Object>> telegramAuthentication(
       @RequestBody Map<String, Object> authenticationRequest,
-      @RequestHeader("X-Forwarded-For") String ip) {
+      @RequestHeader(value = "x-forwarded-for", required = false) String ip) {
     String telegramName = (String) authenticationRequest.get("telegramName");
-    String chatId = (String) Integer.toString((int) authenticationRequest.get("telegramChat"));
+    Integer intChatId = (Integer) authenticationRequest.get("telegramChat");
 
     User user = userService.findByTelegramName(telegramName);
 
-    if (telegramName == null || chatId == null)  {
+    if (telegramName == null || intChatId == null)  {
       return new ResponseEntity(HttpStatus.BAD_REQUEST);
     }
+
+    String chatId = intChatId.toString();
 
     int code = 2;
     String token = "";
