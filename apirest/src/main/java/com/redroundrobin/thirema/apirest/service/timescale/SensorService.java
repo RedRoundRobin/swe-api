@@ -15,7 +15,7 @@ public class SensorService {
 
   private SensorRepository repo;
 
-  private com.redroundrobin.thirema.apirest.service.postgres.SensorService timescaleSensorService;
+  private com.redroundrobin.thirema.apirest.service.postgres.SensorService postgreSensorService;
 
   private Map<Integer, List<Sensor>> findTopNBySensorIdListAndOptionalEntityId(
       Integer resultsNumber, List<Integer> sensorIds, Integer entityId) {
@@ -24,24 +24,24 @@ public class SensorService {
     for (Integer id : sensorIds) {
       com.redroundrobin.thirema.apirest.models.postgres.Sensor sensor;
       if (entityId != null) {
-        sensor = timescaleSensorService.findByIdAndEntityId(id, entityId);
+        sensor = postgreSensorService.findByIdAndEntityId(id, entityId);
       } else {
-        sensor = timescaleSensorService.findById(id);
+        sensor = postgreSensorService.findById(id);
       }
 
       if (sensor != null) {
-        int gatewayId = sensor.getDevice().getGateway().getId();
+        String gatewayName = sensor.getDevice().getGateway().getName();
         int realDeviceId = sensor.getDevice().getId();
         int realSensorId = sensor.getRealSensorId();
 
         if (resultsNumber != null) {
           sensorsData.put(id,
-              (List<Sensor>) repo.findTopNByGatewayIdAndDeviceIdAndSensorId(
-                  resultsNumber, gatewayId, realDeviceId, realSensorId));
+              (List<Sensor>) repo.findTopNByGatewayNameAndRealDeviceIdAndRealSensorId(
+                  resultsNumber, gatewayName, realDeviceId, realSensorId));
         } else {
           sensorsData.put(id,
-              (List<Sensor>) repo.findAllByGatewayIdAndDeviceIdAndSensorIdOrderByTimeDesc(gatewayId,
-                  realDeviceId, realSensorId));
+              (List<Sensor>) repo.findAllByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(
+                  gatewayName, realDeviceId, realSensorId));
         }
       } else {
         sensorsData.put(id, Collections.emptyList());
@@ -57,23 +57,23 @@ public class SensorService {
 
     List<com.redroundrobin.thirema.apirest.models.postgres.Sensor> postgreSensors;
     if (entityId != null) {
-      postgreSensors = timescaleSensorService.findAllByEntityId(entityId);
+      postgreSensors = postgreSensorService.findAllByEntityId(entityId);
     } else {
-      postgreSensors = timescaleSensorService.findAll();
+      postgreSensors = postgreSensorService.findAll();
     }
 
     for (com.redroundrobin.thirema.apirest.models.postgres.Sensor s : postgreSensors) {
-      int gatewayId = s.getDevice().getGateway().getId();
+      String gatewayName = s.getDevice().getGateway().getName();
       int realDeviceId = s.getDevice().getRealDeviceId();
       int realSensorId = s.getRealSensorId();
       if (limit != null) {
         sensorsMap.put(s.getId(),
-            (List<Sensor>) repo.findTopNByGatewayIdAndDeviceIdAndSensorId(limit,
-                gatewayId, realDeviceId, realSensorId));
+            (List<Sensor>) repo.findTopNByGatewayNameAndRealDeviceIdAndRealSensorId(limit,
+                gatewayName, realDeviceId, realSensorId));
       } else {
         sensorsMap.put(s.getId(),
-            (List<Sensor>) repo.findAllByGatewayIdAndDeviceIdAndSensorIdOrderByTimeDesc(gatewayId,
-                realDeviceId, realSensorId));
+            (List<Sensor>) repo.findAllByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(
+                gatewayName, realDeviceId, realSensorId));
       }
     }
 
@@ -86,9 +86,9 @@ public class SensorService {
   }
 
   @Autowired
-  public void setTimescaleSensorService(
-      com.redroundrobin.thirema.apirest.service.postgres.SensorService timescaleSensorService) {
-    this.timescaleSensorService = timescaleSensorService;
+  public void setPostgreSensorService(
+      com.redroundrobin.thirema.apirest.service.postgres.SensorService postgreSensorService) {
+    this.postgreSensorService = postgreSensorService;
   }
 
   public Map<Integer, List<Sensor>> findAllForEachSensor() {
@@ -125,5 +125,33 @@ public class SensorService {
                                                                       List<Integer> sensorIds,
                                                                       int entityId) {
     return findTopNBySensorIdListAndOptionalEntityId(resultsNumber, sensorIds, entityId);
+  }
+
+  public Sensor findLastValueBySensorId(int sensorId) {
+    com.redroundrobin.thirema.apirest.models.postgres.Sensor sensor =
+        postgreSensorService.findById(sensorId);
+    if (sensor != null) {
+      String gatewayName = sensor.getDevice().getGateway().getName();
+      int realDeviceId = sensor.getDevice().getRealDeviceId();
+      int realSensorId = sensor.getRealSensorId();
+      return repo.findTopByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(gatewayName,
+          realDeviceId, realSensorId);
+    } else {
+      return null;
+    }
+  }
+
+  public Sensor findLastValueBySensorIdAndEntityId(int sensorId, int entityId) {
+    com.redroundrobin.thirema.apirest.models.postgres.Sensor sensor =
+        postgreSensorService.findById(sensorId);
+    if (sensor != null && sensor.getEntities().stream().anyMatch(e -> e.getId() == entityId)) {
+      String gatewayName = sensor.getDevice().getGateway().getName();
+      int realDeviceId = sensor.getDevice().getRealDeviceId();
+      int realSensorId = sensor.getRealSensorId();
+      return repo.findTopByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(gatewayName,
+          realDeviceId, realSensorId);
+    } else {
+      return null;
+    }
   }
 }

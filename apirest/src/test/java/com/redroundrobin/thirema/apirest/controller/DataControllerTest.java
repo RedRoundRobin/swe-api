@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -103,78 +104,78 @@ public class DataControllerTest {
     // ------------------------------------ Set Timescale Sensors ---------------------------------
     sensor1111 = new Sensor();
     sensor1111.setTime(new Timestamp(100));
-    sensor1111.setGatewayId(1);
-    sensor1111.setDeviceId(1);
-    sensor1111.setSensorId(1);
+    sensor1111.setGatewayName("gateway1");
+    sensor1111.setRealDeviceId(1);
+    sensor1111.setRealSensorId(1);
     sensor1111.setValue(1);
     sensor1112 = new Sensor();
     sensor1112.setTime(new Timestamp(200));
-    sensor1112.setGatewayId(1);
-    sensor1112.setDeviceId(1);
-    sensor1112.setSensorId(1);
+    sensor1112.setGatewayName("gateway1");
+    sensor1112.setRealDeviceId(1);
+    sensor1112.setRealSensorId(1);
     sensor1112.setValue(2);
     sensor1113 = new Sensor();
     sensor1113.setTime(new Timestamp(300));
-    sensor1113.setGatewayId(1);
-    sensor1113.setDeviceId(1);
-    sensor1113.setSensorId(1);
+    sensor1113.setGatewayName("gateway1");
+    sensor1113.setRealDeviceId(1);
+    sensor1113.setRealSensorId(1);
     sensor1113.setValue(3);
 
     sensor1121 = new Sensor();
     sensor1121.setTime(new Timestamp(100));
-    sensor1121.setGatewayId(1);
-    sensor1121.setDeviceId(1);
-    sensor1121.setSensorId(2);
+    sensor1121.setGatewayName("gateway1");
+    sensor1121.setRealDeviceId(1);
+    sensor1121.setRealSensorId(2);
     sensor1121.setValue(1);
     sensor1122 = new Sensor();
     sensor1122.setTime(new Timestamp(200));
-    sensor1122.setGatewayId(1);
-    sensor1122.setDeviceId(1);
-    sensor1122.setSensorId(2);
+    sensor1122.setGatewayName("gateway1");
+    sensor1122.setRealDeviceId(1);
+    sensor1122.setRealSensorId(2);
     sensor1122.setValue(2);
     sensor1123 = new Sensor();
     sensor1123.setTime(new Timestamp(300));
-    sensor1123.setGatewayId(1);
-    sensor1123.setDeviceId(1);
-    sensor1123.setSensorId(2);
+    sensor1123.setGatewayName("gateway1");
+    sensor1123.setRealDeviceId(1);
+    sensor1123.setRealSensorId(2);
     sensor1123.setValue(3);
 
     sensor1211 = new Sensor();
     sensor1211.setTime(new Timestamp(100));
-    sensor1211.setGatewayId(1);
-    sensor1211.setDeviceId(2);
-    sensor1211.setSensorId(1);
+    sensor1211.setGatewayName("gateway1");
+    sensor1211.setRealDeviceId(2);
+    sensor1211.setRealSensorId(1);
     sensor1211.setValue(1);
     sensor1212 = new Sensor();
     sensor1212.setTime(new Timestamp(200));
-    sensor1212.setGatewayId(1);
-    sensor1212.setDeviceId(2);
-    sensor1212.setSensorId(1);
+    sensor1212.setGatewayName("gateway1");
+    sensor1212.setRealDeviceId(2);
+    sensor1212.setRealSensorId(1);
     sensor1212.setValue(2);
     sensor1213 = new Sensor();
     sensor1213.setTime(new Timestamp(300));
-    sensor1213.setGatewayId(1);
-    sensor1213.setDeviceId(2);
-    sensor1213.setSensorId(1);
+    sensor1213.setGatewayName("gateway1");
+    sensor1213.setRealDeviceId(2);
+    sensor1213.setRealSensorId(1);
     sensor1213.setValue(3);
 
     sensor1221 = new Sensor();
     sensor1221.setTime(new Timestamp(100));
-    sensor1221.setGatewayId(1);
-    sensor1221.setDeviceId(2);
-    sensor1221.setSensorId(2);
+    sensor1221.setGatewayName("gateway1");
+    sensor1221.setRealDeviceId(2);
+    sensor1221.setRealSensorId(2);
     sensor1221.setValue(1);
     sensor1222 = new Sensor();
     sensor1222.setTime(new Timestamp(200));
-    sensor1222.setGatewayId(1);
-    sensor1222.setDeviceId(2);
-    sensor1222.setSensorId(2);
+    sensor1222.setGatewayName("gateway1");
+    sensor1222.setRealDeviceId(2);
+    sensor1222.setRealSensorId(2);
     sensor1222.setValue(2);
     sensor1223 = new Sensor();
     sensor1223.setTime(new Timestamp(300));
-    sensor1223.setGatewayId(1);
-    sensor1223.setDeviceId(2);
-    sensor1223.setSensorId(2);
+    sensor1223.setGatewayName("gateway1");
+    sensor1223.setRealDeviceId(2);
+    sensor1223.setRealSensorId(2);
     sensor1223.setValue(3);
 
     allSensors = new ArrayList<>();
@@ -207,6 +208,7 @@ public class DataControllerTest {
     id4Sensors.add(sensor1221);
     id4Sensors.add(sensor1222);
     id4Sensors.add(sensor1223);
+
 
     allSensorsMap = new HashMap<>();
     allSensorsMap.put(1, id1Sensors);
@@ -307,6 +309,23 @@ public class DataControllerTest {
           }
           return responseMap;
         });
+    when(sensorService.findLastValueBySensorId(anyInt())).thenAnswer(i -> {
+      return allSensorsMap.get(i.getArgument(0)).stream()
+          .sorted((v1, v2) -> Long.compare(v2.getTime().getTime(), v1.getTime().getTime()))
+          .findFirst().orElse(null);
+    });
+    when(sensorService.findLastValueBySensorIdAndEntityId(anyInt(), anyInt())).thenAnswer(i -> {
+      int id = i.getArgument(0);
+      int entityId = i.getArgument(1);
+      if ((entityId == 1 && (id == 1 || id == 3))
+          || (entityId == 2 && (id == 2 || id == 4))) {
+        return allSensorsMap.get(id).stream()
+            .sorted((v1, v2) -> Long.compare(v2.getTime().getTime(), v1.getTime().getTime()))
+            .findFirst().orElse(null);
+      } else {
+        return null;
+      }
+    });
   }
 
   @Test
@@ -441,4 +460,22 @@ public class DataControllerTest {
   }
 
 
+
+  @Test
+  public void getLastSensorValueByAdminSuccesfull() {
+    ResponseEntity<Sensor> response = dataController.getLastSensorValue(
+        adminTokenWithBearer, 1);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertNotNull(response.getBody());
+  }
+
+  @Test
+  public void getLastSensorValueByUserSuccesfull() {
+    ResponseEntity<Sensor> response = dataController.getLastSensorValue(
+        userTokenWithBearer, 1);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertNotNull(response.getBody());
+  }
 }

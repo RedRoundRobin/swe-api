@@ -9,16 +9,19 @@ import org.springframework.stereotype.Repository;
 @Repository(value = "timescaleSensorRepository")
 public interface SensorRepository extends CrudRepository<Sensor, Timestamp> {
 
-  Iterable<Sensor> findAllByGatewayIdAndDeviceIdAndSensorIdOrderByTimeDesc(int gatewayId,
-                                                                           int deviceId,
-                                                                           int sensorId);
+  Iterable<Sensor> findAllByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(
+      String gatewayId, int realDeviceId, int realSensorId);
 
-  @Query(value = "SELECT * FROM sensors WHERE gateway_id = :gatewayId AND device_id = :deviceId "
-      + "AND sensor_id = :sensorId ORDER BY time DESC LIMIT :resultsNumber",
+  @Query(value = "SELECT * FROM sensors WHERE gateway_name = :gatewayName "
+      + "AND real_device_id = :realDeviceId AND real_sensor_id = :realSensorId "
+      + "ORDER BY time DESC LIMIT :resultsNumber",
       nativeQuery = true)
-  Iterable<Sensor> findTopNByGatewayIdAndDeviceIdAndSensorId(int resultsNumber, int gatewayId,
-                                                              int deviceId, int sensorId);
+  Iterable<Sensor> findTopNByGatewayNameAndRealDeviceIdAndRealSensorId(int resultsNumber,
+                                                                       String gatewayName,
+                                                                       int realDeviceId,
+                                                                       int realSensorId);
 
-  Sensor findTopByGatewayIdAndDeviceIdAndSensorIdOrderByTimeDesc(int gatewayId, int deviceId,
-                                                                int sensorId);
+  Sensor findTopByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(String gatewayName,
+                                                                           int realDeviceId,
+                                                                           int realSensorId);
 }
