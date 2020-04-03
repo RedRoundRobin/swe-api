@@ -9,7 +9,7 @@ import com.redroundrobin.thirema.apirest.service.postgres.ViewGraphService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
-import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsException;
+import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import org.junit.Before;
 import org.junit.Test;
@@ -86,7 +86,7 @@ public class ViewGraphControllerTest {
 
 
   @Before
-  public void setUp() throws ElementNotFoundException, MissingFieldsException, InvalidFieldsException {
+  public void setUp() throws ElementNotFoundException, MissingFieldsException, InvalidFieldsValuesException {
     viewGraphController = new ViewGraphController(viewGraphService);
     viewGraphController.setJwtUtil(jwtUtil);
     viewGraphController.setUserService(userService);
