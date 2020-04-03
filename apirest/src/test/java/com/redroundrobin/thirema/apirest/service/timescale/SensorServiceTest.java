@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
@@ -73,78 +74,78 @@ public class SensorServiceTest {
     // ------------------------------------ Set Timescale Sensors ---------------------------------
     sensor1111 = new Sensor();
     sensor1111.setTime(new Timestamp(100));
-    sensor1111.setGatewayId(1);
-    sensor1111.setDeviceId(1);
-    sensor1111.setSensorId(1);
+    sensor1111.setGatewayName("gateway1");
+    sensor1111.setRealDeviceId(1);
+    sensor1111.setRealSensorId(1);
     sensor1111.setValue(1);
     sensor1112 = new Sensor();
     sensor1112.setTime(new Timestamp(200));
-    sensor1112.setGatewayId(1);
-    sensor1112.setDeviceId(1);
-    sensor1112.setSensorId(1);
+    sensor1112.setGatewayName("gateway1");
+    sensor1112.setRealDeviceId(1);
+    sensor1112.setRealSensorId(1);
     sensor1112.setValue(2);
     sensor1113 = new Sensor();
     sensor1113.setTime(new Timestamp(300));
-    sensor1113.setGatewayId(1);
-    sensor1113.setDeviceId(1);
-    sensor1113.setSensorId(1);
+    sensor1113.setGatewayName("gateway1");
+    sensor1113.setRealDeviceId(1);
+    sensor1113.setRealSensorId(1);
     sensor1113.setValue(3);
 
     sensor1121 = new Sensor();
     sensor1121.setTime(new Timestamp(100));
-    sensor1121.setGatewayId(1);
-    sensor1121.setDeviceId(1);
-    sensor1121.setSensorId(2);
+    sensor1121.setGatewayName("gateway1");
+    sensor1121.setRealDeviceId(1);
+    sensor1121.setRealSensorId(2);
     sensor1121.setValue(1);
     sensor1122 = new Sensor();
     sensor1122.setTime(new Timestamp(200));
-    sensor1122.setGatewayId(1);
-    sensor1122.setDeviceId(1);
-    sensor1122.setSensorId(2);
+    sensor1122.setGatewayName("gateway1");
+    sensor1122.setRealDeviceId(1);
+    sensor1122.setRealSensorId(2);
     sensor1122.setValue(2);
     sensor1123 = new Sensor();
     sensor1123.setTime(new Timestamp(300));
-    sensor1123.setGatewayId(1);
-    sensor1123.setDeviceId(1);
-    sensor1123.setSensorId(2);
+    sensor1123.setGatewayName("gateway1");
+    sensor1123.setRealDeviceId(1);
+    sensor1123.setRealSensorId(2);
     sensor1123.setValue(3);
 
     sensor1211 = new Sensor();
     sensor1211.setTime(new Timestamp(100));
-    sensor1211.setGatewayId(1);
-    sensor1211.setDeviceId(2);
-    sensor1211.setSensorId(1);
+    sensor1211.setGatewayName("gateway1");
+    sensor1211.setRealDeviceId(2);
+    sensor1211.setRealSensorId(1);
     sensor1211.setValue(1);
     sensor1212 = new Sensor();
     sensor1212.setTime(new Timestamp(200));
-    sensor1212.setGatewayId(1);
-    sensor1212.setDeviceId(2);
-    sensor1212.setSensorId(1);
+    sensor1212.setGatewayName("gateway1");
+    sensor1212.setRealDeviceId(2);
+    sensor1212.setRealSensorId(1);
     sensor1212.setValue(2);
     sensor1213 = new Sensor();
     sensor1213.setTime(new Timestamp(300));
-    sensor1213.setGatewayId(1);
-    sensor1213.setDeviceId(2);
-    sensor1213.setSensorId(1);
+    sensor1213.setGatewayName("gateway1");
+    sensor1213.setRealDeviceId(2);
+    sensor1213.setRealSensorId(1);
     sensor1213.setValue(3);
 
     sensor1221 = new Sensor();
     sensor1221.setTime(new Timestamp(100));
-    sensor1221.setGatewayId(1);
-    sensor1221.setDeviceId(2);
-    sensor1221.setSensorId(2);
+    sensor1221.setGatewayName("gateway1");
+    sensor1221.setRealDeviceId(2);
+    sensor1221.setRealSensorId(2);
     sensor1221.setValue(1);
     sensor1222 = new Sensor();
     sensor1222.setTime(new Timestamp(200));
-    sensor1222.setGatewayId(1);
-    sensor1222.setDeviceId(2);
-    sensor1222.setSensorId(2);
+    sensor1222.setGatewayName("gateway1");
+    sensor1222.setRealDeviceId(2);
+    sensor1222.setRealSensorId(2);
     sensor1222.setValue(2);
     sensor1223 = new Sensor();
     sensor1223.setTime(new Timestamp(300));
-    sensor1223.setGatewayId(1);
-    sensor1223.setDeviceId(2);
-    sensor1223.setSensorId(2);
+    sensor1223.setGatewayName("gateway1");
+    sensor1223.setRealDeviceId(2);
+    sensor1223.setRealSensorId(2);
     sensor1223.setValue(3);
 
     allSensors = new ArrayList<>();
@@ -189,6 +190,7 @@ public class SensorServiceTest {
     // -------------------------------------- Set Gateway ----------------------------------------
     Gateway gateway1 = new Gateway();
     gateway1.setId(1);
+    gateway1.setName("gateway1");
 
 
     // -------------------------------------- Set Devices ----------------------------------------
@@ -249,34 +251,34 @@ public class SensorServiceTest {
     // sensor 1 & 3 are entity 1 sensors, 2 & 4 are entity 2 sensor
 
 
-    when(repo.findAllByGatewayIdAndDeviceIdAndSensorIdOrderByTimeDesc(anyInt(), anyInt(),
+    when(repo.findAllByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(anyString(), anyInt(),
         anyInt())).thenAnswer(i -> {
-          int gatewayId = i.getArgument(0);
+          String gatewayName = i.getArgument(0);
           int deviceId = i.getArgument(1);
           int sensorId = i.getArgument(2);
-          return allSensors.stream().filter(s -> s.getGatewayId() == gatewayId
-              && s.getDeviceId() == deviceId && s.getSensorId() == sensorId)
+          return allSensors.stream().filter(s -> s.getGatewayName().equals(gatewayName)
+              && s.getRealDeviceId() == deviceId && s.getRealSensorId() == sensorId)
               .sorted((t1,t2) -> Long.compare(t2.getTime().getTime(),t1.getTime().getTime()))
               .collect(Collectors.toList());
     });
-    when(repo.findTopNByGatewayIdAndDeviceIdAndSensorId(anyInt(), anyInt(), anyInt(), anyInt()))
+    when(repo.findTopNByGatewayNameAndRealDeviceIdAndRealSensorId(anyInt(), anyString(), anyInt(), anyInt()))
         .thenAnswer(i -> {
       int limit = i.getArgument(0);
-      int gatewayId = i.getArgument(1);
+      String gatewayName = i.getArgument(1);
       int deviceId = i.getArgument(2);
       int sensorId = i.getArgument(3);
-      return allSensors.stream().filter(s -> s.getGatewayId() == gatewayId
-          && s.getDeviceId() == deviceId && s.getSensorId() == sensorId)
+      return allSensors.stream().filter(s -> s.getGatewayName().equals(gatewayName)
+          && s.getRealDeviceId() == deviceId && s.getRealSensorId() == sensorId)
           .sorted((t1,t2) -> Long.compare(t2.getTime().getTime(),t1.getTime().getTime()))
           .limit(limit).collect(Collectors.toList());
     });
-    when(repo.findTopByGatewayIdAndDeviceIdAndSensorIdOrderByTimeDesc(anyInt(), anyInt(),
+    when(repo.findTopByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(anyString(), anyInt(),
         anyInt())).thenAnswer(i -> {
-      int gatewayId = i.getArgument(0);
+      String gatewayName = i.getArgument(0);
       int deviceId = i.getArgument(1);
       int sensorId = i.getArgument(2);
-      return allSensors.stream().filter(s -> s.getGatewayId() == gatewayId
-          && s.getDeviceId() == deviceId && s.getSensorId() == sensorId)
+      return allSensors.stream().filter(s -> s.getGatewayName().equals(gatewayName)
+          && s.getRealDeviceId() == deviceId && s.getRealSensorId() == sensorId)
           .sorted((t1,t2) -> Long.compare(t2.getTime().getTime(),t1.getTime().getTime()))
           .findFirst().orElse(null);
     });

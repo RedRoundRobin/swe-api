@@ -30,18 +30,18 @@ public class SensorService {
       }
 
       if (sensor != null) {
-        int gatewayId = sensor.getDevice().getGateway().getId();
+        String gatewayName = sensor.getDevice().getGateway().getName();
         int realDeviceId = sensor.getDevice().getId();
         int realSensorId = sensor.getRealSensorId();
 
         if (resultsNumber != null) {
           sensorsData.put(id,
-              (List<Sensor>) repo.findTopNByGatewayIdAndDeviceIdAndSensorId(
-                  resultsNumber, gatewayId, realDeviceId, realSensorId));
+              (List<Sensor>) repo.findTopNByGatewayNameAndRealDeviceIdAndRealSensorId(
+                  resultsNumber, gatewayName, realDeviceId, realSensorId));
         } else {
           sensorsData.put(id,
-              (List<Sensor>) repo.findAllByGatewayIdAndDeviceIdAndSensorIdOrderByTimeDesc(gatewayId,
-                  realDeviceId, realSensorId));
+              (List<Sensor>) repo.findAllByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(
+                  gatewayName, realDeviceId, realSensorId));
         }
       } else {
         sensorsData.put(id, Collections.emptyList());
@@ -63,17 +63,17 @@ public class SensorService {
     }
 
     for (com.redroundrobin.thirema.apirest.models.postgres.Sensor s : postgreSensors) {
-      int gatewayId = s.getDevice().getGateway().getId();
+      String gatewayName = s.getDevice().getGateway().getName();
       int realDeviceId = s.getDevice().getRealDeviceId();
       int realSensorId = s.getRealSensorId();
       if (limit != null) {
         sensorsMap.put(s.getId(),
-            (List<Sensor>) repo.findTopNByGatewayIdAndDeviceIdAndSensorId(limit,
-                gatewayId, realDeviceId, realSensorId));
+            (List<Sensor>) repo.findTopNByGatewayNameAndRealDeviceIdAndRealSensorId(limit,
+                gatewayName, realDeviceId, realSensorId));
       } else {
         sensorsMap.put(s.getId(),
-            (List<Sensor>) repo.findAllByGatewayIdAndDeviceIdAndSensorIdOrderByTimeDesc(gatewayId,
-                realDeviceId, realSensorId));
+            (List<Sensor>) repo.findAllByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(
+                gatewayName, realDeviceId, realSensorId));
       }
     }
 
@@ -131,11 +131,11 @@ public class SensorService {
     com.redroundrobin.thirema.apirest.models.postgres.Sensor sensor =
         postgreSensorService.findById(sensorId);
     if (sensor != null) {
-      int gatewayId = sensor.getDevice().getGateway().getId();
+      String gatewayName = sensor.getDevice().getGateway().getName();
       int realDeviceId = sensor.getDevice().getRealDeviceId();
       int realSensorId = sensor.getRealSensorId();
-      return repo.findTopByGatewayIdAndDeviceIdAndSensorIdOrderByTimeDesc(gatewayId, realDeviceId,
-          realSensorId);
+      return repo.findTopByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(gatewayName,
+          realDeviceId, realSensorId);
     } else {
       return null;
     }
@@ -145,11 +145,11 @@ public class SensorService {
     com.redroundrobin.thirema.apirest.models.postgres.Sensor sensor =
         postgreSensorService.findById(sensorId);
     if (sensor != null && sensor.getEntities().stream().anyMatch(e -> e.getId() == entityId)) {
-      int gatewayId = sensor.getDevice().getGateway().getId();
+      String gatewayName = sensor.getDevice().getGateway().getName();
       int realDeviceId = sensor.getDevice().getRealDeviceId();
       int realSensorId = sensor.getRealSensorId();
-      return repo.findTopByGatewayIdAndDeviceIdAndSensorIdOrderByTimeDesc(gatewayId, realDeviceId,
-          realSensorId);
+      return repo.findTopByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(gatewayName,
+          realDeviceId, realSensorId);
     } else {
       return null;
     }
