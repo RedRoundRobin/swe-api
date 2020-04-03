@@ -1,8 +1,13 @@
 package com.redroundrobin.thirema.apirest.models.postgres;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIdentityReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+
 import java.util.List;
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
@@ -30,17 +35,19 @@ public class Alert {
   private int type;
   private boolean deleted;
 
-  @JsonBackReference
   @ManyToOne
   @JoinColumn(name = "entity_id")
+  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "entityId")
+  @JsonIdentityReference(alwaysAsId = true)
   private Entity entity;
 
-  @JsonManagedReference
   @ManyToOne
   @JoinColumn(name = "sensor_id")
+  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "sensorId")
+  @JsonIdentityReference(alwaysAsId = true)
   private Sensor sensor;
 
-  @JsonBackReference
+  @JsonIgnore
   @ManyToMany(mappedBy = "disabledAlerts")
   private List<User> users;
 

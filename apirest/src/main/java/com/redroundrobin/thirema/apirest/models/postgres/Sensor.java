@@ -1,7 +1,12 @@
 package com.redroundrobin.thirema.apirest.models.postgres;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIdentityReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+
 import java.util.List;
 import java.util.Objects;
 import javax.persistence.Column;
@@ -33,24 +38,25 @@ public class Sensor {
   @Column(name = "real_sensor_id")
   private int realSensorId;
 
-  @JsonBackReference
+  @JsonIgnore
   @OneToMany(mappedBy = "sensor")
   private List<Alert> alerts;
 
-  @JsonBackReference
   @ManyToOne
   @JoinColumn(name = "device_id")
+  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "deviceId")
+  @JsonIdentityReference(alwaysAsId = true)
   private Device device;
 
-  @JsonBackReference
+  @JsonIgnore
   @ManyToMany(mappedBy = "sensors")
   private List<Entity> entities;
 
-  @JsonBackReference
+  @JsonIgnore
   @OneToMany(mappedBy = "sensor1")
   private List<ViewGraph> viewGraphs1;
 
-  @JsonBackReference
+  @JsonIgnore
   @OneToMany(mappedBy = "sensor2")
   private List<ViewGraph> viewGraphs2;
 
