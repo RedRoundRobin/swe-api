@@ -6,7 +6,7 @@ import com.redroundrobin.thirema.apirest.models.postgres.View;
 import com.redroundrobin.thirema.apirest.models.postgres.ViewGraph;
 import com.redroundrobin.thirema.apirest.repository.postgres.ViewGraphRepository;
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
-import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsException;
+import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,7 +40,7 @@ public class ViewGraphService {
   }
 
   private ViewGraph addEditViewGraph(User user, ViewGraph viewGraph, Map<String, Integer> fields)
-      throws InvalidFieldsException {
+      throws InvalidFieldsValuesException {
     if (viewGraph == null) {
       viewGraph = new ViewGraph();
     }
@@ -51,7 +51,7 @@ public class ViewGraphService {
           if (ViewGraph.Correlation.isValid(entry.getValue())) {
             viewGraph.setCorrelation(ViewGraph.Correlation.values()[entry.getValue()]);
           } else {
-            throw new InvalidFieldsException("The correlation with provided id is not found");
+            throw new InvalidFieldsValuesException("The correlation with provided id is not found");
           }
           break;
         case "view":
@@ -59,7 +59,7 @@ public class ViewGraphService {
           if (view != null) {
             viewGraph.setView(view);
           } else {
-            throw new InvalidFieldsException("The view with provided id is not found or "
+            throw new InvalidFieldsValuesException("The view with provided id is not found or "
                 + "not authorized");
           }
           break;
@@ -74,7 +74,7 @@ public class ViewGraphService {
           if (sensor1 != null) {
             viewGraph.setSensor1(sensor1);
           } else {
-            throw new InvalidFieldsException("The sensor1 with provided id is not found or "
+            throw new InvalidFieldsValuesException("The sensor1 with provided id is not found or "
                 + "not authorized");
           }
           break;
@@ -89,7 +89,7 @@ public class ViewGraphService {
           if (sensor2 != null) {
             viewGraph.setSensor2(sensor2);
           } else {
-            throw new InvalidFieldsException("The sensor2 with provided id is not found or "
+            throw new InvalidFieldsValuesException("The sensor2 with provided id is not found or "
                 + "not authorized");
           }
           break;
@@ -158,7 +158,7 @@ public class ViewGraphService {
   }
 
   public ViewGraph createViewGraph(User user, Map<String, Integer> newViewGraphFields)
-      throws InvalidFieldsException, MissingFieldsException {
+      throws InvalidFieldsValuesException, MissingFieldsException {
     if (this.checkFields(false, newViewGraphFields)) {
       return this.addEditViewGraph(user, null, newViewGraphFields);
     } else {
@@ -167,10 +167,10 @@ public class ViewGraphService {
   }
 
   public ViewGraph editViewGraph(User user, int viewGraphId, Map<String, Integer> fieldsToEdit)
-      throws InvalidFieldsException, MissingFieldsException {
+      throws InvalidFieldsValuesException, MissingFieldsException {
     ViewGraph viewGraph = findById(viewGraphId);
     if (viewGraph == null) {
-      throw new InvalidFieldsException("The viewGraph with provided id is not found");
+      throw new InvalidFieldsValuesException("The viewGraph with provided id is not found");
     } else if (this.checkFields(true, fieldsToEdit)) {
       return this.addEditViewGraph(user, viewGraph, fieldsToEdit);
     } else {

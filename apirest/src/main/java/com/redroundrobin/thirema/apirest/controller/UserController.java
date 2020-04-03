@@ -6,7 +6,6 @@ import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.utils.exception.ConflictException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
-import com.redroundrobin.thirema.apirest.utils.exception.NotAllowedToEditException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedToDeleteUserException;
 import com.redroundrobin.thirema.apirest.utils.exception.TfaNotPermittedException;
@@ -187,7 +186,7 @@ public class UserController extends CoreController {
 
       } catch (UsernameNotFoundException unfe) {
         return new ResponseEntity(HttpStatus.UNAUTHORIZED);
-      } catch (NotAllowedToEditException | UserDisabledException natef) {
+      } catch (NotAuthorizedException | UserDisabledException natef) {
         return new ResponseEntity(HttpStatus.FORBIDDEN);
       } catch (TfaNotPermittedException tnpe) {
         return new ResponseEntity(tnpe.getMessage(),HttpStatus.CONFLICT);

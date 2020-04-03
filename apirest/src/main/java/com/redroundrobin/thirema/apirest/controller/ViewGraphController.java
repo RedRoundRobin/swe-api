@@ -4,7 +4,7 @@ import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.postgres.ViewGraph;
 import com.redroundrobin.thirema.apirest.service.postgres.ViewGraphService;
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
-import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsException;
+import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import java.util.Collections;
 import java.util.List;
@@ -84,7 +84,7 @@ public class ViewGraphController extends CoreController {
     User user = this.getUserFromAuthorization(authorization);
     try {
       return ResponseEntity.ok(viewGraphService.createViewGraph(user, newViewGraphFields));
-    } catch (MissingFieldsException | InvalidFieldsException fe) {
+    } catch (MissingFieldsException | InvalidFieldsValuesException fe) {
       return new ResponseEntity(HttpStatus.BAD_REQUEST);
     }
   }
@@ -103,7 +103,7 @@ public class ViewGraphController extends CoreController {
       } else {
         return new ResponseEntity(HttpStatus.FORBIDDEN);
       }
-    } catch (ElementNotFoundException | MissingFieldsException | InvalidFieldsException fe) {
+    } catch (ElementNotFoundException | MissingFieldsException | InvalidFieldsValuesException fe) {
       return new ResponseEntity(HttpStatus.BAD_REQUEST);
     }
   }

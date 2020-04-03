@@ -10,7 +10,6 @@ import com.redroundrobin.thirema.apirest.utils.exception.ConflictException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
-import com.redroundrobin.thirema.apirest.utils.exception.NotAllowedToEditException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedToDeleteUserException;
 import com.redroundrobin.thirema.apirest.utils.exception.TelegramChatNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.TfaNotPermittedException;
@@ -49,7 +48,7 @@ public class UserService implements UserDetailsService {
     creatable.add("email");
     creatable.add("type");
     creatable.add("entityId");
-    creatable.add("password");  //SOLUZIONE TEMPORANEA: NON PREVISTA DA USE CASES
+    creatable.add("password");
 
     boolean onlyCreatableKeys = keys.stream()
         .filter(key -> !creatable.contains(key))
@@ -326,11 +325,11 @@ public class UserService implements UserDetailsService {
 
 
   public User editByUser(User userToEdit, Map<String, Object> fieldsToEdit)
-      throws InvalidFieldsValuesException, MissingFieldsException, NotAllowedToEditException,
+      throws InvalidFieldsValuesException, MissingFieldsException, NotAuthorizedException,
       TfaNotPermittedException  {
 
     if (!checkFieldsEditable(User.Role.USER, true, fieldsToEdit.keySet())) {
-      throw new NotAllowedToEditException(
+      throw new NotAuthorizedException(
           "You are not allowed to edit some of the specified fields");
     } else {
       return this.editAndSave(userToEdit, fieldsToEdit);
@@ -338,11 +337,12 @@ public class UserService implements UserDetailsService {
   }
 
   public User editByModerator(User userToEdit, boolean itself, Map<String, Object> fieldsToEdit)
-      throws InvalidFieldsValuesException, MissingFieldsException, NotAllowedToEditException,
+      throws InvalidFieldsValuesException, MissingFieldsException, NotAuthorizedException,
       TfaNotPermittedException {
 
-    if (!checkFieldsEditable(User.Role.MOD, itself, fieldsToEdit.keySet())) {
-      throw new NotAllowedToEditException(
+    if ((fieldsToEdit.containsKey("type") && (int)fieldsToEdit.get("type") > 0)
+        || !checkFieldsEditable(User.Role.MOD, itself, fieldsToEdit.keySet())) {
+      throw new NotAuthorizedException(
           "You are not allowed to edit some of the specified fields");
     } else {
       return this.editAndSave(userToEdit, fieldsToEdit);
@@ -351,13 +351,13 @@ public class UserService implements UserDetailsService {
 
   public User editByAdministrator(User userToEdit, boolean itself,
                                   Map<String, Object> fieldsToEdit)
-      throws InvalidFieldsValuesException, MissingFieldsException, NotAllowedToEditException,
+      throws InvalidFieldsValuesException, MissingFieldsException, NotAuthorizedException,
       TfaNotPermittedException {
 
     if ((!itself && userToEdit.getType() == User.Role.ADMIN)
-        || (fieldsToEdit.containsKey("type") && (int)fieldsToEdit.get("type") == 2)
+        || (fieldsToEdit.containsKey("type") && (int)fieldsToEdit.get("type") > 1)
         || !checkFieldsEditable(User.Role.ADMIN, itself, fieldsToEdit.keySet())) {
-      throw new NotAllowedToEditException(
+      throw new NotAuthorizedException(
           "You are not allowed to edit some of the specified fields");
     } else {
       return this.editAndSave(userToEdit, fieldsToEdit);
@@ -385,11 +385,10 @@ public class UserService implements UserDetailsService {
     }
 
     //qui so che entity_id dato esiste && so il tipo dello user che si vuole inserire
-    //NB: IL MODERATORE PUO INSERIRE SOLO MEMBRI!! VA BENE??
     if (insertingUser.getType() == User.Role.USER
         || (insertingUser.getType() == User.Role.MOD
         && userToInsertEntity.getId() != insertingUser.getEntity().getId())) {
-      throw new NotAuthorizedException();
+      throw new NotAuthorizedException("");
     }
 
     User newUser = new User();

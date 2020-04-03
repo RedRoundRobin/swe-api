@@ -270,7 +270,7 @@ public class UserControllerTest {
       if (insertingUser.getType() == User.Role.USER
           || (insertingUser.getType() == User.Role.MOD
           && userToInsertEntity.getId() != insertingUser.getEntity().getId())) {
-        throw new NotAuthorizedException();
+        throw new NotAuthorizedException("");
       }
 
       User newUser = new User();
@@ -383,7 +383,7 @@ public class UserControllerTest {
   public void editUser1ByAdmin1EditNotAllowedError403() throws Exception {
 
     when(userService.editByAdministrator(eq(user1), eq(false), any(HashMap.class))).thenThrow(
-        new NotAllowedToEditException("fields furnished not allowed"));
+        new NotAuthorizedException("fields furnished not allowed"));
 
     HashMap<String, Object> request = new HashMap<>();
     request.put("user_id", user1.getId());
@@ -607,7 +607,7 @@ public class UserControllerTest {
     String newEmail = "newEmail";
 
     when(userService.editByModerator(eq(mod11), eq(false), any(HashMap.class))).thenThrow(
-        new NotAllowedToEditException(""));
+        new NotAuthorizedException(""));
 
     HashMap<String, Object> request = new HashMap<>();
     request.put("email", newEmail);
