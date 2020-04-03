@@ -1,7 +1,7 @@
 package com.redroundrobin.thirema.apirest.config;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.redroundrobin.thirema.apirest.models.AlertMessage;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,20 +48,20 @@ public class KafkaConsumerConfig {
   }
   */
 
-  public ConsumerFactory<String, List<AlertMessage>> alertMessagesConsumerFactory() {
+  public ConsumerFactory<String, Object[]> objectListConsumerFactory() {
     Map<String, Object> props = new HashMap<>();
     props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
     props.put(ConsumerConfig.GROUP_ID_CONFIG, "alerts");
     return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(),
-        new JsonDeserializer<>(new TypeReference<List<AlertMessage>>() {}));
+        new JsonDeserializer<>(new TypeReference<Object[]>() {}));
   }
 
   @Bean
-  public ConcurrentKafkaListenerContainerFactory<String, List<AlertMessage>>
-      alertMessagesKafkaListenerContainerFactory() {
-    ConcurrentKafkaListenerContainerFactory<String, List<AlertMessage>> factory =
+  public ConcurrentKafkaListenerContainerFactory<String, Object[]>
+      objectListKafkaListenerContainerFactory() {
+    ConcurrentKafkaListenerContainerFactory<String, Object[]> factory =
         new ConcurrentKafkaListenerContainerFactory<>();
-    factory.setConsumerFactory(alertMessagesConsumerFactory());
+    factory.setConsumerFactory(objectListConsumerFactory());
     return factory;
   }
 }

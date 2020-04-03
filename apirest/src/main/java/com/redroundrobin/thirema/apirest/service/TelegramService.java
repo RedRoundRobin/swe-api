@@ -1,6 +1,5 @@
 package com.redroundrobin.thirema.apirest.service;
 
-import com.redroundrobin.thirema.apirest.models.AlertMessage;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -41,11 +40,11 @@ public class TelegramService {
   private CountDownLatch latch = new CountDownLatch(3);
 
   @KafkaListener(topics = "alerts", groupId = "alerts",
-      containerFactory = "alertMessagesKafkaListenerContainerFactory")
-  public void sendAlerts(List<AlertMessage> messages) {
-    for (AlertMessage message : messages) {
-      restTemplate.postForEntity(telegramUrl, message, String.class);
-      System.out.println("Received Messasge in group 'alerts': \n\t" + message);
+      containerFactory = "objectListKafkaListenerContainerFactory")
+  public void sendAlerts(Object[] objectList) {
+    for (Object obj : objectList) {
+      System.out.println("Received Messasge in group 'alerts': \n\t" + obj);
+      restTemplate.postForEntity(telegramUrl, obj, String.class);
     }
     latch.countDown();
   }
