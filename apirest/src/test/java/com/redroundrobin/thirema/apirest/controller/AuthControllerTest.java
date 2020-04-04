@@ -409,7 +409,11 @@ public class AuthControllerTest {
 
     when(userService.findByTelegramName(anyString())).thenReturn(adminTfa2);
     when(userService.findByTelegramNameAndTelegramChat(anyString(),anyString())).thenReturn(null);
-    when(userService.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
+    when(userService.editUserTelegramChat(any(User.class),anyString())).thenAnswer(i -> {
+      User user = i.getArgument(0);
+      user.setTelegramChat(i.getArgument(1));
+      return user;
+    });
 
     ResponseEntity response = authController.telegramAuthentication(request, "localhost");
 
@@ -435,7 +439,6 @@ public class AuthControllerTest {
     when(userService.findByTelegramName(anyString())).thenReturn(adminTfa1);
     when(userService.findByTelegramNameAndTelegramChat(anyString(),anyString()))
         .thenReturn(adminTfa1);
-    when(userService.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
     ResponseEntity response = authController.telegramAuthentication(request, "localhost");
 

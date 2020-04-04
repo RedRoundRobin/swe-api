@@ -30,7 +30,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
-public class UserService {
+public class UserService implements UserDetailsService {
 
   private UserRepository repo;
 
@@ -247,6 +247,21 @@ public class UserService {
   public User editUserTelegramChat(User user, String telegramChat) {
     user.setTelegramChat(telegramChat);
     return repo.save(user);
+  }
+
+  @Override
+  public UserDetails loadUserByUsername(String s) {
+    User user = this.findByEmail(s);
+    if (user == null || (user.isDeleted() || (user.getType() != User.Role.ADMIN
+        && (user.getEntity() == null || user.getEntity().isDeleted())))) {
+      throw new UsernameNotFoundException("");
+    }
+
+    List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
+    grantedAuthorities.add(new SimpleGrantedAuthority(String.valueOf(user.getType())));
+
+    return new org.springframework.security.core.userdetails.User(
+        user.getEmail(), user.getPassword(), grantedAuthorities);
   }
 
   /**

@@ -230,6 +230,60 @@ public class UserServiceTest {
 
 
 
+  // loadByUsername method tests
+  @Test
+  public void loadUser1ByNameSuccessfull() throws Exception {
+
+    when(userRepo.findByEmail(user1.getEmail())).thenReturn(user1);
+
+    try {
+      UserDetails userDetails = userService.loadUserByUsername(user1.getEmail());
+
+      assertNotNull(userDetails);
+      assertTrue(userDetails.getUsername() == user1.getEmail());
+      assertTrue(userDetails.getPassword() == user1.getPassword());
+      assertTrue(userDetails.getAuthorities().stream().findFirst().isPresent());
+      assertTrue(((SimpleGrantedAuthority) userDetails.getAuthorities().stream().findFirst().get())
+          .toString().equals(String.valueOf(user1.getType())));
+    } catch (UsernameNotFoundException unfe) {
+      assertTrue(false);
+    }
+  }
+
+  @Test
+  public void loadAdmin1ByNameSuccessfull() {
+
+    when(userRepo.findByEmail(admin1.getEmail())).thenReturn(admin1);
+
+    try {
+      UserDetails userDetails = userService.loadUserByUsername(admin1.getEmail());
+
+      assertNotNull(userDetails);
+      assertTrue(userDetails.getUsername() == admin1.getEmail());
+      assertTrue(userDetails.getPassword() == admin1.getPassword());
+      assertTrue(userDetails.getAuthorities().stream().findFirst().isPresent());
+      assertTrue(((SimpleGrantedAuthority) userDetails.getAuthorities().stream().findFirst().get())
+          .toString().equals(String.valueOf(admin1.getType())));
+    } catch (UsernameNotFoundException unfe) {
+      assertTrue(false);
+    }
+  }
+
+  @Test
+  public void loadUser1ByNameThrowUsernameNotFoundException() {
+
+    when(userRepo.findByEmail(user1.getEmail())).thenReturn(null);
+
+    try {
+      UserDetails userDetails = userService.loadUserByUsername(user1.getEmail());
+      assertTrue(false);
+    } catch (UsernameNotFoundException unfe) {
+      assertTrue(true);
+    }
+  }
+
+
+
   // loadByUserEmail method tests
   @Test
   public void loadUser2ByEmailSuccessfull() {
