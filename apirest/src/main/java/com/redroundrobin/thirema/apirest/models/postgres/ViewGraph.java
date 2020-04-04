@@ -37,10 +37,10 @@ public class ViewGraph {
   }
 
   @Id
-  @GeneratedValue(generator = "view_graphs_graph_id_seq", strategy = GenerationType.SEQUENCE)
+  @GeneratedValue(generator = "views_graphs_graph_id_seq", strategy = GenerationType.SEQUENCE)
   @SequenceGenerator(
-      name = "view_graphs_graph_id_seq",
-      sequenceName = "view_graphs_graph_id_seq",
+      name = "views_graphs_graph_id_seq",
+      sequenceName = "views_graphs_graph_id_seq",
       allocationSize = 50
   )
   @Column(name = "graph_id")
