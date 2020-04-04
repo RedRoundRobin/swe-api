@@ -376,7 +376,7 @@ public class UserControllerTest {
   @Test
   public void editUser1ByAdmin1EditNotAllowedError403() throws Exception {
 
-    when(userService.editByAdministrator(eq(user1), eq(false), any(HashMap.class))).thenThrow(
+    when(userService.editByAdministrator(eq(user1), any(HashMap.class), eq(false))).thenThrow(
         new NotAuthorizedException("fields furnished not allowed"));
 
     HashMap<String, Object> request = new HashMap<>();
@@ -398,7 +398,7 @@ public class UserControllerTest {
     User editedUser1 = cloneUser(user1);
     editedUser1.setEmail(newEmail);
 
-    when(userService.editByAdministrator(eq(user1), eq(false), any(HashMap.class))).thenReturn(editedUser1);
+    when(userService.editByAdministrator(eq(user1), any(HashMap.class), eq(false))).thenReturn(editedUser1);
 
     HashMap<String, Object> request = new HashMap<>();
     request.put("email", newEmail);
@@ -430,8 +430,9 @@ public class UserControllerTest {
     when(userService.loadUserByEmail(editedUser1.getEmail())).thenReturn(
         new org.springframework.security.core.userdetails.User(
             "asdf","asfdrg",Collections.emptyList()));
-    when(jwtTokenUtil.generateTokenWithExpiration(anyString(), any(Date.class),
-        any(org.springframework.security.core.userdetails.User.class))).thenReturn("newToken");
+    when(jwtTokenUtil.generateTokenWithExpiration(anyString(),
+        any(org.springframework.security.core.userdetails.User.class), any(Date.class)))
+        .thenReturn("newToken");
 
     HashMap<String, Object> request = new HashMap<>();
     request.put("email", newEmail);
@@ -470,7 +471,7 @@ public class UserControllerTest {
     User editedUser1 = cloneUser(user1);
     editedUser1.setEmail(newEmail);
 
-    when(userService.editByModerator(eq(user1), eq(false), any(HashMap.class))).thenReturn(editedUser1);
+    when(userService.editByModerator(eq(user1), any(HashMap.class), eq(false))).thenReturn(editedUser1);
 
     HashMap<String, Object> request = new HashMap<>();
     request.put("email", newEmail);
@@ -580,7 +581,7 @@ public class UserControllerTest {
 
     String tfaError = "TFA can't be edited because either telegram_name is "
         + "in the request or telegram chat not present";
-    when(userService.editByModerator(eq(mod1), eq(true), any(HashMap.class))).thenThrow(
+    when(userService.editByModerator(eq(mod1), any(HashMap.class), eq(true))).thenThrow(
         new ConflictException(tfaError));
 
     HashMap<String, Object> request = new HashMap<>();
@@ -600,7 +601,7 @@ public class UserControllerTest {
 
     String newEmail = "newEmail";
 
-    when(userService.editByModerator(eq(mod11), eq(false), any(HashMap.class))).thenThrow(
+    when(userService.editByModerator(eq(mod11), any(HashMap.class), eq(false))).thenThrow(
         new NotAuthorizedException(""));
 
     HashMap<String, Object> request = new HashMap<>();

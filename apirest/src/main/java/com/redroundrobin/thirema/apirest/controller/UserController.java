@@ -130,12 +130,12 @@ public class UserController extends CoreController {
       try {
         if (editingUser.getType() == User.Role.ADMIN && (userToEdit.getType() != User.Role.ADMIN
             || editingUser.getId() == userToEdit.getId())) {
-          user = userService.editByAdministrator(userToEdit,
-                editingUser.getId() == userToEdit.getId(), fieldsToEdit);
+          user = userService.editByAdministrator(userToEdit, fieldsToEdit,
+              editingUser.getId() == userToEdit.getId());
 
         } else if (editingUser.getType() == User.Role.MOD && canEditMod(editingUser, userToEdit)) {
-          user = userService.editByModerator(userToEdit,
-              editingUser.getId() == userToEdit.getId(), fieldsToEdit);
+          user = userService.editByModerator(userToEdit, fieldsToEdit,
+              editingUser.getId() == userToEdit.getId());
 
         } else if (editingUser.getType() == User.Role.USER
             && editingUser.getId() == userToEdit.getId()) {
@@ -169,8 +169,8 @@ public class UserController extends CoreController {
         if (editingUser.getId() == userToEdit.getId()
             && !user.getEmail().equals(editingUserEmail)) {
           String newToken = jwtUtil.generateTokenWithExpiration("webapp",
-              jwtUtil.extractExpiration(token),
-              userService.loadUserByEmail(user.getEmail()));
+              userService.loadUserByEmail(user.getEmail()),
+              jwtUtil.extractExpiration(token));
           response.put("token", newToken);
         }
 
@@ -203,22 +203,5 @@ public class UserController extends CoreController {
     // when db error is not for duplicate unique or when userToEdit with id furnished is not found
     // or there are missing edit fields or invalid values
     return new ResponseEntity(HttpStatus.BAD_REQUEST);
-  }
-
-  // Get all devices by userId
-  @GetMapping(value = {"/{userid:.+}/devices"})
-  public ResponseEntity<Object> getUserDevices(@RequestHeader("Authorization") String authorization,
-                                          @PathVariable("userid") int requiredUserId) {
-    String token = authorization.substring(7);
-    User user = userService.findByEmail(jwtUtil.extractUsername(token));
-    User requiredUser = userService.findById(requiredUserId);
-    if (requiredUser != null && (user.getId() == requiredUserId
-        || user.getType() == User.Role.ADMIN  || user.getType() == User.Role.MOD
-        && requiredUser.getType() != User.Role.ADMIN
-            && user.getEntity().getId() == requiredUser.getEntity().getId())) {
-      return ResponseEntity.ok(userService.userDevices(requiredUserId));
-    } else {
-      return new ResponseEntity(HttpStatus.FORBIDDEN);
-    }
   }
 }

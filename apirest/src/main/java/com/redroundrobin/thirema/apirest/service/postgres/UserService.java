@@ -30,7 +30,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
-public class UserService implements UserDetailsService {
+public class UserService {
 
   private UserRepository repo;
 
@@ -59,7 +59,7 @@ public class UserService implements UserDetailsService {
     return creatable.size() == keys.size();
   }
 
-  private boolean checkFieldsEditable(User.Role role, boolean itself, Set<String> keys)
+  private boolean checkEditableFields(User.Role role, boolean itself, Set<String> keys)
       throws MissingFieldsException {
     Map<String, Boolean> userFields = new HashMap<>();
     userFields.put("name", true);
@@ -172,7 +172,7 @@ public class UserService implements UserDetailsService {
       }
     }
 
-    return save(userToEdit);
+    return repo.save(userToEdit);
   }
 
   @Autowired
@@ -244,41 +244,23 @@ public class UserService implements UserDetailsService {
     return repo.findByEmail(email);
   }
 
-  public User save(User user) {
+  public User editUserTelegramChat(User user, String telegramChat) {
+    user.setTelegramChat(telegramChat);
     return repo.save(user);
-  }
-
-  public List<Device> userDevices(int userId) {
-    return repo.userDevices(userId);
-  }
-
-  @Override
-  public UserDetails loadUserByUsername(String s) {
-    User user = this.findByEmail(s);
-    if (user == null || (user.isDeleted() || (user.getType() != User.Role.ADMIN
-        && (user.getEntity() == null || user.getEntity().isDeleted())))) {
-      throw new UsernameNotFoundException("");
-    }
-
-    List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
-    grantedAuthorities.add(new SimpleGrantedAuthority(String.valueOf(user.getType())));
-
-    return new org.springframework.security.core.userdetails.User(
-        user.getEmail(), user.getPassword(), grantedAuthorities);
   }
 
   /**
    * Method that return the UserDetails created with the email furnished as @s and the
    * password taken from the database.
    *
-   * @param s the email to create the UserDetails
+   * @param email the email to create the UserDetails
    * @return the UserDetails generated from the email and the password.
    * @throws UsernameNotFoundException thrown if no user with furnished email found.
    * @throws UserDisabledException thrown if user with furnished email found but the user is
   disabled.
    */
-  public UserDetails loadUserByEmail(String s) throws UserDisabledException {
-    User user = this.findByEmail(s);
+  public UserDetails loadUserByEmail(String email) throws UserDisabledException {
+    User user = this.findByEmail(email);
     if (user == null) {
       throw new UsernameNotFoundException("");
     } else if (user.isDeleted() || (user.getType() != User.Role.ADMIN
@@ -297,14 +279,14 @@ public class UserService implements UserDetailsService {
    * Method that return the UserDetails created with the telegram name given as @s and the
    * chat id taken from the database.
    *
-   * @param s the telegram name to create the UserDetails
+   * @param telegramName the telegram name to create the UserDetails
    * @return the UserDetails generated from the telegram name and the chat id.
    * @throws UsernameNotFoundException thrown if no telegram name found.
    * @throws UserDisabledException thrown if telegram name found but the user is disabled.
    */
-  public UserDetails loadUserByTelegramName(String s)
+  public UserDetails loadUserByTelegramName(String telegramName)
       throws UserDisabledException, TelegramChatNotFoundException {
-    User user = this.findByTelegramName(s);
+    User user = this.findByTelegramName(telegramName);
     if (user == null) {
       throw new UsernameNotFoundException("");
     } else if (user.isDeleted() || (user.getType() != User.Role.ADMIN
@@ -326,7 +308,7 @@ public class UserService implements UserDetailsService {
       throws InvalidFieldsValuesException, MissingFieldsException, NotAuthorizedException,
       ConflictException  {
 
-    if (!checkFieldsEditable(User.Role.USER, true, fieldsToEdit.keySet())) {
+    if (!checkEditableFields(User.Role.USER, true, fieldsToEdit.keySet())) {
       throw new NotAuthorizedException(
           "You are not allowed to edit some of the specified fields");
     } else {
@@ -334,12 +316,12 @@ public class UserService implements UserDetailsService {
     }
   }
 
-  public User editByModerator(User userToEdit, boolean itself, Map<String, Object> fieldsToEdit)
+  public User editByModerator(User userToEdit, Map<String, Object> fieldsToEdit, boolean itself)
       throws InvalidFieldsValuesException, MissingFieldsException, NotAuthorizedException,
       ConflictException {
 
     if ((fieldsToEdit.containsKey("type") && (int)fieldsToEdit.get("type") > 0)
-        || !checkFieldsEditable(User.Role.MOD, itself, fieldsToEdit.keySet())) {
+        || !checkEditableFields(User.Role.MOD, itself, fieldsToEdit.keySet())) {
       throw new NotAuthorizedException(
           "You are not allowed to edit some of the specified fields");
     } else {
@@ -347,14 +329,13 @@ public class UserService implements UserDetailsService {
     }
   }
 
-  public User editByAdministrator(User userToEdit, boolean itself,
-                                  Map<String, Object> fieldsToEdit)
+  public User editByAdministrator(User userToEdit, Map<String, Object> fieldsToEdit, boolean itself)
       throws InvalidFieldsValuesException, MissingFieldsException, NotAuthorizedException,
       ConflictException {
 
     if ((!itself && userToEdit.getType() == User.Role.ADMIN)
         || (fieldsToEdit.containsKey("type") && (int)fieldsToEdit.get("type") == 2)
-        || !checkFieldsEditable(User.Role.ADMIN, itself, fieldsToEdit.keySet())) {
+        || !checkEditableFields(User.Role.ADMIN, itself, fieldsToEdit.keySet())) {
       throw new NotAuthorizedException(
           "You are not allowed to edit some of the specified fields");
     } else {
@@ -412,7 +393,7 @@ public class UserService implements UserDetailsService {
       throw new ConflictException("");
     }
 
-    return save(newUser);
+    return repo.save(newUser);
   }
 
   public User deleteUser(User deletingUser, int userToDeleteId)
@@ -430,6 +411,6 @@ public class UserService implements UserDetailsService {
     }
 
     userToDelete.setDeleted(true);
-    return save(userToDelete);
+    return repo.save(userToDelete);
   }
 }

@@ -221,74 +221,11 @@ public class UserServiceTest {
 
 
 
-  // findById method tests
-  @Test
-  public void userDevicesEmpty() {
-    List<Device> devices = userService.userDevices(6);
-    assertTrue(devices.isEmpty());
-  }
-
-
-
   // findByTelegramNameAndTelegramChat method tests
   @Test
   public void findByTelegramNameAndTelegramChatNull() {
     User user = userService.findByTelegramNameAndTelegramChat("name", "chat");
     assertNull(user);
-  }
-
-
-
-  // loadByUsername method tests
-  @Test
-  public void loadUser1ByNameSuccessfull() throws Exception {
-
-    when(userRepo.findByEmail(user1.getEmail())).thenReturn(user1);
-
-    try {
-      UserDetails userDetails = userService.loadUserByUsername(user1.getEmail());
-
-      assertNotNull(userDetails);
-      assertTrue(userDetails.getUsername() == user1.getEmail());
-      assertTrue(userDetails.getPassword() == user1.getPassword());
-      assertTrue(userDetails.getAuthorities().stream().findFirst().isPresent());
-      assertTrue(((SimpleGrantedAuthority) userDetails.getAuthorities().stream().findFirst().get())
-          .toString().equals(String.valueOf(user1.getType())));
-    } catch (UsernameNotFoundException unfe) {
-      assertTrue(false);
-    }
-  }
-
-  @Test
-  public void loadAdmin1ByNameSuccessfull() {
-
-    when(userRepo.findByEmail(admin1.getEmail())).thenReturn(admin1);
-
-    try {
-      UserDetails userDetails = userService.loadUserByUsername(admin1.getEmail());
-
-      assertNotNull(userDetails);
-      assertTrue(userDetails.getUsername() == admin1.getEmail());
-      assertTrue(userDetails.getPassword() == admin1.getPassword());
-      assertTrue(userDetails.getAuthorities().stream().findFirst().isPresent());
-      assertTrue(((SimpleGrantedAuthority) userDetails.getAuthorities().stream().findFirst().get())
-          .toString().equals(String.valueOf(admin1.getType())));
-    } catch (UsernameNotFoundException unfe) {
-      assertTrue(false);
-    }
-  }
-
-  @Test
-  public void loadUser1ByNameThrowUsernameNotFoundException() {
-
-    when(userRepo.findByEmail(user1.getEmail())).thenReturn(null);
-
-    try {
-      UserDetails userDetails = userService.loadUserByUsername(user1.getEmail());
-      assertTrue(false);
-    } catch (UsernameNotFoundException unfe) {
-      assertTrue(true);
-    }
   }
 
 
@@ -584,7 +521,7 @@ public class UserServiceTest {
     editedUser.setTelegramChat(null);
 
     try {
-      User user = userService.editByAdministrator(admin1, true, fieldsToEdit);
+      User user = userService.editByAdministrator(admin1, fieldsToEdit, true);
 
       assertNotNull(user);
       assertEquals(editedUser.getTelegramName(), user.getTelegramName());
@@ -630,7 +567,7 @@ public class UserServiceTest {
     when(entityService.findById(newEntityId)).thenReturn(entity2);
 
     try {
-      User user = userService.editByAdministrator(user1, false, fieldsToEdit);
+      User user = userService.editByAdministrator(user1, fieldsToEdit, false);
 
       assertNotNull(user);
       assertEquals(editedUser.getName(), user.getName());
@@ -654,7 +591,7 @@ public class UserServiceTest {
     fieldsToEdit.put("type",3);
 
     try {
-      User user = userService.editByAdministrator(user1, false, fieldsToEdit);
+      User user = userService.editByAdministrator(user1, fieldsToEdit, false);
       assertTrue(false);
     } catch (InvalidFieldsValuesException urnfe) {
       assertTrue(urnfe.getMessage().contains("role"));
@@ -675,7 +612,7 @@ public class UserServiceTest {
     when(entityService.findById(3)).thenReturn(null);
 
     try {
-      User user = userService.editByAdministrator(mod1, false, fieldsToEdit);
+      User user = userService.editByAdministrator(mod1, fieldsToEdit, false);
       assertTrue(false);
     } catch (InvalidFieldsValuesException urnfe) {
       assertTrue(urnfe.getMessage().contains("entity"));
@@ -694,7 +631,7 @@ public class UserServiceTest {
     fieldsToEdit.put("type",1);
 
     try {
-      User user = userService.editByAdministrator(admin2, false, fieldsToEdit);
+      User user = userService.editByAdministrator(admin2, fieldsToEdit, false);
 
       assertTrue(false);
     } catch (NotAuthorizedException e) {
@@ -728,7 +665,7 @@ public class UserServiceTest {
     editedUser.setEmail(newEmail);
 
     try {
-      User user = userService.editByModerator(user2, false, fieldsToEdit);
+      User user = userService.editByModerator(user2, fieldsToEdit, false);
 
       assertNotNull(user);
       assertEquals(editedUser.getName(), user.getName());
@@ -758,7 +695,7 @@ public class UserServiceTest {
     editedUser.setTfa(tfa);
 
     try {
-      User user = userService.editByModerator(mod11, true, fieldsToEdit);
+      User user = userService.editByModerator(mod11, fieldsToEdit, true);
 
       assertNotNull(user);
       assertEquals(editedUser.getName(), user.getName());
@@ -777,7 +714,7 @@ public class UserServiceTest {
     fieldsToEdit.put("entityId",2);
 
     try {
-      User user = userService.editByModerator(mod11, true, fieldsToEdit);
+      User user = userService.editByModerator(mod11, fieldsToEdit, true);
 
       assertTrue(false);
     } catch (NotAuthorizedException e) {

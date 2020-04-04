@@ -3,6 +3,7 @@ package com.redroundrobin.thirema.apirest.service;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +19,15 @@ public class TelegramService {
   @Value("${telegram.url}")
   private String telegramUrl;
 
-  private RestTemplate restTemplate = new RestTemplate();
+  private RestTemplate restTemplate;
+
+  public TelegramService() {
+    this.restTemplate = new RestTemplate();
+  }
+
+  public TelegramService(RestTemplate restTemplate) {
+    this.restTemplate = restTemplate;
+  }
 
   public boolean sendTfa(Map<String, Object> data) {
     data.put("reqType", "authentication");
@@ -37,8 +46,6 @@ public class TelegramService {
     return true;
   }
 
-  private CountDownLatch latch = new CountDownLatch(3);
-
   @KafkaListener(topics = "alerts", groupId = "alerts",
       containerFactory = "objectListKafkaListenerContainerFactory")
   public void sendAlerts(Object[] objectList) {
@@ -46,6 +53,6 @@ public class TelegramService {
       System.out.println("Received Messasge in group 'alerts': \n\t" + obj);
       restTemplate.postForEntity(telegramUrl, obj, String.class);
     }
-    latch.countDown();
+    new CountDownLatch(3).countDown();
   }
 }

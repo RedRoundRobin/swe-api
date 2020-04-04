@@ -133,12 +133,12 @@ public class AuthControllerTest {
 
     doNothing().when(logService).createLog(anyInt(), anyString(), anyString(), anyString());
 
-    when(jwtTokenUtil.generateTokenWithExpiration(anyString(),any(Date.class),
-        any(UserDetails.class))).thenReturn("tokenWithTypeDateAndUserDetailsFurnished");
+    when(jwtTokenUtil.generateTokenWithExpiration(anyString(),any(UserDetails.class),
+        any(Date.class))).thenReturn("tokenWithTypeDateAndUserDetailsFurnished");
     when(jwtTokenUtil.generateToken(anyString(),
         any(UserDetails.class))).thenReturn("tokenWithTypeAndUserDetailsFurnished");
-    when(jwtTokenUtil.generateTfaToken(anyString(), anyString(),
-        any(UserDetails.class))).thenReturn("tfaTokenWithTypeAuthCodeAndUserDetailsFurnished");
+    when(jwtTokenUtil.generateTfaToken(anyString(), any(UserDetails.class), anyString()))
+        .thenReturn("tfaTokenWithTypeAuthCodeAndUserDetailsFurnished");
 
     when(userService.findByEmail(anyString())).thenAnswer(i -> {
       String email = i.getArgument(0);
