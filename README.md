@@ -2,7 +2,7 @@
 
 # API Restful - ThiReMa
 
-:fire: Versione componente: `v0.0.3-dev` 
+:fire: Versione componente: `v0.1.0-dev` 
 
 :pushpin: Main repo: [swe-thirema](https://github.com/RedRoundRobin/swe-thirema)
 
