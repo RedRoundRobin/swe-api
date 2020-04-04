@@ -1,4 +1,4 @@
-package com.redroundrobin.thirema.apirest.config;
+package com.redroundrobin.thirema.apirest.utils;
 
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;

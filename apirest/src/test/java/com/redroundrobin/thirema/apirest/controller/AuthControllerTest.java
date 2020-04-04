@@ -1,6 +1,6 @@
 package com.redroundrobin.thirema.apirest.controller;
 
-import com.redroundrobin.thirema.apirest.config.CustomAuthenticationManager;
+import com.redroundrobin.thirema.apirest.utils.CustomAuthenticationManager;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.TelegramService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;

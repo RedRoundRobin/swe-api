@@ -1,6 +1,7 @@
 package com.redroundrobin.thirema.apirest.config;
 
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
+import com.redroundrobin.thirema.apirest.utils.CustomAuthenticationManager;
 import com.redroundrobin.thirema.apirest.utils.JwtRequestFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
