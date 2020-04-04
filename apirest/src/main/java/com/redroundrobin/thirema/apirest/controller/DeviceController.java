@@ -34,16 +34,24 @@ public class DeviceController extends CoreController {
   @GetMapping(value = {""})
   public ResponseEntity<List<Device>> getDevices(
       @RequestHeader("Authorization") String authorization,
-      @RequestParam(value = "entity", required = false) Integer entityId) {
+      @RequestParam(value = "entity", required = false) Integer entityId,
+      @RequestParam(value = "gatewayId", required = false) Integer gatewayId) {
     User user = this.getUserFromAuthorization(authorization);
     if (user.getType() == User.Role.ADMIN) {
-      if (entityId != null) {
+      if (entityId != null && gatewayId != null) {
+        return ResponseEntity.ok(deviceService.findAllByEntityIdAndGatewayId(entityId, gatewayId));
+      } else if (gatewayId != null) {
+        return ResponseEntity.ok(deviceService.findAllByGatewayId(gatewayId));
+      } else if (entityId != null) {
         return ResponseEntity.ok(deviceService.findAllByEntityId(entityId));
       } else {
         return ResponseEntity.ok(deviceService.findAll());
       }
     } else {
-      if (entityId == null || user.getEntity().getId() == entityId) {
+      if (gatewayId != null && (entityId == null || user.getEntity().getId() == entityId)) {
+        return ResponseEntity.ok(deviceService.findAllByEntityIdAndGatewayId(
+            user.getEntity().getId(), gatewayId));
+      } else if (entityId == null || user.getEntity().getId() == entityId) {
         return ResponseEntity.ok(deviceService.findAllByEntityId(user.getEntity().getId()));
       } else {
         return ResponseEntity.ok(Collections.emptyList());

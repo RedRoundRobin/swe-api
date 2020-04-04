@@ -45,19 +45,23 @@ public class DeviceService {
     return (List<Device>) repo.findAll();
   }
 
-  public List<Device> findAllByGatewayId(int gatewayId) {
+  public List<Device> findAllByEntityId(int entityId) {
+    return (List<Device>) repo.findAllByEntityId(entityId);
+  }
+
+  public List<Device> findAllByEntityIdAndGatewayId(int entityId, int gatewayId) {
     Gateway gateway = gatewayService.findById(gatewayId);
     if (gateway != null) {
-      return (List<Device>) repo.findAllByGateway(gateway);
+      return (List<Device>) repo.findAllByEntityIdAndGateway(entityId, gateway);
     } else {
       return Collections.emptyList();
     }
   }
 
-  public List<Device> findAllByEntityId(int entityId) {
-    Entity entity = entityService.findById(entityId);
-    if (entity != null) {
-      return (List<Device>) repo.findAllByEntityId(entityId);
+  public List<Device> findAllByGatewayId(int gatewayId) {
+    Gateway gateway = gatewayService.findById(gatewayId);
+    if (gateway != null) {
+      return (List<Device>) repo.findAllByGateway(gateway);
     } else {
       return Collections.emptyList();
     }
