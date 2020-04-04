@@ -8,7 +8,6 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 
 public class CustomAuthenticationManager implements AuthenticationManager {
 
@@ -16,17 +15,17 @@ public class CustomAuthenticationManager implements AuthenticationManager {
   UserService userService;
 
   @Override
-  public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+  public Authentication authenticate(Authentication authentication) {
     String email = authentication.getPrincipal() + "";
     String password = authentication.getCredentials() + "";
 
     User user = userService.findByEmail(email);
 
     if (user == null || !password.equals(user.getPassword())) {
-      throw new BadCredentialsException("401");
+      throw new BadCredentialsException("User not found or password not match");
     } else if (user.isDeleted() || (user.getType() != User.Role.ADMIN
         && (user.getEntity() == null || user.getEntity().isDeleted()))) {
-      throw new DisabledException("403");
+      throw new DisabledException("User is deleted or not have an entity");
     }
 
     return new UsernamePasswordAuthenticationToken(email, password);

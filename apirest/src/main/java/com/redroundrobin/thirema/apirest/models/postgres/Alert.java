@@ -1,41 +1,59 @@
 package com.redroundrobin.thirema.apirest.models.postgres;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIdentityReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import java.util.List;
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 @javax.persistence.Entity
 @Table(name = "alerts")
 public class Alert {
   @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
+  @GeneratedValue(generator = "alerts_alert_id_seq", strategy = GenerationType.SEQUENCE)
+  @SequenceGenerator(
+      name = "alerts_alert_id_seq",
+      sequenceName = "alerts_alert_id_seq",
+      allocationSize = 50
+  )
   @Column(name = "alert_id")
   private int alertId;
   private double threshold;
   private int type;
   private boolean deleted;
 
-  @JsonBackReference
   @ManyToOne
   @JoinColumn(name = "entity_id")
+  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "entityId")
+  @JsonIdentityReference(alwaysAsId = true)
   private Entity entity;
 
-  @JsonManagedReference
   @ManyToOne
   @JoinColumn(name = "sensor_id")
+  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "sensorId")
+  @JsonIdentityReference(alwaysAsId = true)
   private Sensor sensor;
+
+  @JsonIgnore
+  @ManyToMany(mappedBy = "disabledAlerts")
+  private List<User> users;
 
 
   public void setAlertId(int alertId) {
     this.alertId = alertId;
   }
 
+  @JsonProperty(value = "alertId")
   public int getAlertId() {
     return alertId;
   }
@@ -78,5 +96,13 @@ public class Alert {
 
   public Entity getEntity() {
     return entity;
+  }
+
+  public List<User> getUsers() {
+    return users;
+  }
+
+  public void setUsers(List<User> users) {
+    this.users = users;
   }
 }

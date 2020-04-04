@@ -36,8 +36,7 @@ public class TimescaleConfig {
     LocalContainerEntityManagerFactoryBean em
         = new LocalContainerEntityManagerFactoryBean();
     em.setDataSource(timescaleDataSource());
-    em.setPackagesToScan(
-        new String[]{"com.redroundrobin.thirema.apirest.models.timescale"});
+    em.setPackagesToScan("com.redroundrobin.thirema.apirest.models.timescale");
 
     HibernateJpaVendorAdapter vendorAdapter
         = new HibernateJpaVendorAdapter();
@@ -68,7 +67,6 @@ public class TimescaleConfig {
     dataSource.setUrl(env.getProperty("spring.timescale.url"));
     dataSource.setUsername(env.getProperty("spring.timescale.username"));
     dataSource.setPassword(env.getProperty("spring.timescale.password"));
-    //dataSource.setConnectionProperties(new Properties().);
 
     return dataSource;
   }

@@ -1,8 +1,8 @@
 package com.redroundrobin.thirema.apirest.utils;
 
-import com.redroundrobin.thirema.apirest.models.UserDisabledException;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.utils.exception.TelegramChatNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
 import io.jsonwebtoken.ExpiredJwtException;
 import java.io.IOException;
 import javax.servlet.FilterChain;
@@ -21,16 +21,25 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
 
-  @Autowired
   private UserService userService;
 
-  @Autowired
   private JwtUtil jwtUtil;
+
+  @Autowired
+  public JwtRequestFilter(UserService userService, JwtUtil jwtUtil) {
+    this.userService = userService;
+    this.jwtUtil = jwtUtil;
+  }
 
   @Override
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                   FilterChain chain)
       throws ServletException, IOException {
+
+    CustomHttpServletRequestWrapper customRequest = new CustomHttpServletRequestWrapper(request);
+    if (customRequest.getHeader("X-Forwarded-For") == null) {
+      customRequest.putHeader("X-Forwarded-For", customRequest.getRemoteAddr());
+    }
 
     final String authorizationHeader = request.getHeader("Authorization");
 
@@ -40,6 +49,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
     if (!request.getRequestURI().equals("/auth")
         && !request.getRequestURI().equals("/auth/telegram")
+        && !request.getRequestURI().equals("/v3/api-docs.yaml")
         && authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
       try {
         jwt = authorizationHeader.substring(7);
@@ -86,6 +96,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
       }
     }
-    chain.doFilter(request, response);
+    chain.doFilter(customRequest, response);
   }
 }

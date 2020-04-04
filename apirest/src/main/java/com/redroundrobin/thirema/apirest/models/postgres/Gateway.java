@@ -1,6 +1,7 @@
 package com.redroundrobin.thirema.apirest.models.postgres;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.Objects;
 import javax.persistence.CascadeType;
@@ -9,18 +10,24 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 @javax.persistence.Entity
 @Table(name = "gateways")
 public class Gateway {
   @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
+  @GeneratedValue(generator = "gateways_gateway_id_seq", strategy = GenerationType.SEQUENCE)
+  @SequenceGenerator(
+      name = "gateways_gateway_id_seq",
+      sequenceName = "gateways_gateway_id_seq",
+      allocationSize = 50
+  )
   @Column(name = "gateway_id")
   private int gatewayId;
   private String name;
 
-  @JsonManagedReference
+  @JsonIgnore
   @OneToMany(mappedBy = "gateway", cascade = CascadeType.ALL)
   private List<Device> devices;
 
@@ -32,6 +39,7 @@ public class Gateway {
     this.name = name;
   }
 
+  @JsonProperty(value = "gatewayId")
   public int getId() {
     return gatewayId;
   }

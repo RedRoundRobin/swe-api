@@ -1,13 +1,16 @@
 package com.redroundrobin.thirema.apirest.utils;
 
+import com.redroundrobin.thirema.apirest.models.postgres.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -34,9 +37,10 @@ public class JwtUtil {
     return extractAllClaims(token).get("type", java.lang.String.class);
   }
 
-  public int extractRole(String token) {
+  public User.Role extractRole(String bearerToken) {
+    String token = bearerToken.substring(7);
     if (extractAllClaims(token).containsKey("role")) {
-      return extractAllClaims(token).get("role", Integer.class);
+      return User.Role.values()[extractAllClaims(token).get("role", Integer.class)];
     } else {
       throw new IllegalArgumentException();
     }
@@ -88,8 +92,13 @@ public class JwtUtil {
   public String generateToken(String type, UserDetails userDetails) {
     Map<String, Object> claims = new HashMap<>();
     claims.put("type", type);
-    claims.put("role",
-        String.valueOf(userDetails.getAuthorities().stream().findFirst().toString()));
+    User.Role role = User.Role.USER;
+    Optional<? extends GrantedAuthority> grantedAuthority = userDetails.getAuthorities().stream()
+        .findFirst();
+    if (grantedAuthority.isPresent()) {
+      role = User.Role.valueOf(User.Role.class, grantedAuthority.get().toString());
+    }
+    claims.put("role", role);
     return createToken(claims, userDetails.getUsername());
   }
 
@@ -104,8 +113,13 @@ public class JwtUtil {
   public String generateTokenWithExpiration(String type, Date expiration,UserDetails userDetails) {
     Map<String, Object> claims = new HashMap<>();
     claims.put("type", type);
-    claims.put("role",
-        String.valueOf(userDetails.getAuthorities().stream().findFirst().toString()));
+    User.Role role = User.Role.USER;
+    Optional<? extends GrantedAuthority> grantedAuthority = userDetails.getAuthorities().stream()
+        .findFirst();
+    if (grantedAuthority.isPresent()) {
+      role = User.Role.valueOf(User.Role.class, grantedAuthority.get().toString());
+    }
+    claims.put("role", role);
     return createTokenWithExpiration(claims, expiration, userDetails.getUsername());
   }
 
@@ -122,6 +136,13 @@ public class JwtUtil {
     Map<String, Object> claims = new HashMap<>();
     claims.put("type", type);
     claims.put("tfa", true);
+    User.Role role = User.Role.USER;
+    Optional<? extends GrantedAuthority> grantedAuthority = userDetails.getAuthorities().stream()
+        .findFirst();
+    if (grantedAuthority.isPresent()) {
+      role = User.Role.valueOf(User.Role.class, grantedAuthority.get().toString());
+    }
+    claims.put("role", role);
     claims.put("auth_code", authCode);
     return createToken(claims, userDetails.getUsername());
   }

@@ -1,7 +1,10 @@
 package com.redroundrobin.thirema.apirest.models.postgres;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIdentityReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import java.util.List;
 import java.util.Objects;
 import javax.persistence.CascadeType;
@@ -12,6 +15,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 @javax.persistence.Entity
@@ -19,7 +23,12 @@ import javax.persistence.Table;
 public class Device {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
+  @GeneratedValue(generator = "devices_device_id_seq", strategy = GenerationType.SEQUENCE)
+  @SequenceGenerator(
+      name = "devices_device_id_seq",
+      sequenceName = "devices_device_id_seq",
+      allocationSize = 50
+  )
   @Column(name = "device_id")
   private int deviceId;
 
@@ -29,13 +38,14 @@ public class Device {
   @Column(name = "real_device_id")
   private int realDeviceId;
 
-  @JsonManagedReference
-  @OneToMany(mappedBy = "device", cascade = CascadeType.ALL)
+  @JsonIgnore
+  @OneToMany(mappedBy = "device", cascade = CascadeType.MERGE)
   private List<Sensor> sensors;
 
-  @JsonBackReference
   @ManyToOne
   @JoinColumn(name = "gateway_id")
+  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "gatewayId")
+  @JsonIdentityReference(alwaysAsId = true)
   private Gateway gateway;
 
   public Device() {
@@ -56,11 +66,12 @@ public class Device {
     this.realDeviceId = realDeviceId;
   }
 
-  public int getDeviceId() {
+  @JsonProperty(value = "deviceId")
+  public int getId() {
     return deviceId;
   }
 
-  public void setDeviceId(int deviceId) {
+  public void setId(int deviceId) {
     this.deviceId = deviceId;
   }
 
