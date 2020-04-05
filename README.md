@@ -20,7 +20,7 @@
 
 ### Live API
 
-Dal branch `develop`
+API buildate in automatico dal branch `develop`
 
 - [core.host.redroundrobin.site:9999](http://core.host.redroundrobin.site:9999)
 
