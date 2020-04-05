@@ -17,8 +17,13 @@ public class SensorService {
 
   private com.redroundrobin.thirema.apirest.service.postgres.SensorService postgreSensorService;
 
+  @Autowired
+  public SensorService(@Qualifier("timescaleSensorRepository") SensorRepository sensorRepository) {
+    this.repo = sensorRepository;
+  }
+
   private Map<Integer, List<Sensor>> findTopNBySensorIdListAndOptionalEntityId(
-      Integer resultsNumber, List<Integer> sensorIds, Integer entityId) {
+      Integer limit, List<Integer> sensorIds, Integer entityId) {
     Map<Integer, List<Sensor>> sensorsData = new HashMap<>();
 
     for (Integer id : sensorIds) {
@@ -34,10 +39,10 @@ public class SensorService {
         int realDeviceId = sensor.getDevice().getId();
         int realSensorId = sensor.getRealSensorId();
 
-        if (resultsNumber != null) {
+        if (limit != null) {
           sensorsData.put(id,
               (List<Sensor>) repo.findTopNByGatewayNameAndRealDeviceIdAndRealSensorId(
-                  resultsNumber, gatewayName, realDeviceId, realSensorId));
+                  limit, gatewayName, realDeviceId, realSensorId));
         } else {
           sensorsData.put(id,
               (List<Sensor>) repo.findAllByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(
@@ -52,7 +57,7 @@ public class SensorService {
   }
 
   private Map<Integer, List<Sensor>> findTopNForEachSensorByOptionalEntity(Integer limit,
-                                                                          Integer entityId) {
+                                                                           Integer entityId) {
     Map<Integer, List<Sensor>> sensorsMap = new HashMap<>();
 
     List<com.redroundrobin.thirema.apirest.models.postgres.Sensor> postgreSensors;
@@ -80,33 +85,6 @@ public class SensorService {
     return sensorsMap;
   }
 
-  @Autowired
-  public SensorService(@Qualifier("timescaleSensorRepository") SensorRepository repo) {
-    this.repo = repo;
-  }
-
-  @Autowired
-  public void setPostgreSensorService(
-      com.redroundrobin.thirema.apirest.service.postgres.SensorService postgreSensorService) {
-    this.postgreSensorService = postgreSensorService;
-  }
-
-  public Map<Integer, List<Sensor>> findAllForEachSensor() {
-    return findTopNForEachSensorByOptionalEntity(null, null);
-  }
-
-  public Map<Integer, List<Sensor>> findAllForEachSensorByEntityId(Integer entityId) {
-    return findTopNForEachSensorByOptionalEntity(null, entityId);
-  }
-
-  public Map<Integer, List<Sensor>> findTopNForEachSensor(Integer limit) {
-    return findTopNForEachSensorByOptionalEntity(limit, null);
-  }
-
-  public Map<Integer, List<Sensor>> findTopNForEachSensorByEntityId(Integer limit, int entityId) {
-    return findTopNForEachSensorByOptionalEntity(limit, entityId);
-  }
-
   public Map<Integer, List<Sensor>> findAllBySensorIdList(List<Integer> sensorIds) {
     return findTopNBySensorIdListAndOptionalEntityId(null, sensorIds, null);
   }
@@ -116,15 +94,12 @@ public class SensorService {
     return findTopNBySensorIdListAndOptionalEntityId(null, sensorIds, entityId);
   }
 
-  public Map<Integer, List<Sensor>> findTopNBySensorIdList(int resultsNumber,
-                                                           List<Integer> sensorIds) {
-    return findTopNBySensorIdListAndOptionalEntityId(resultsNumber, sensorIds, null);
+  public Map<Integer, List<Sensor>> findAllForEachSensor() {
+    return findTopNForEachSensorByOptionalEntity(null, null);
   }
 
-  public Map<Integer, List<Sensor>> findTopNBySensorIdListAndEntityId(int resultsNumber,
-                                                                      List<Integer> sensorIds,
-                                                                      int entityId) {
-    return findTopNBySensorIdListAndOptionalEntityId(resultsNumber, sensorIds, entityId);
+  public Map<Integer, List<Sensor>> findAllForEachSensorByEntityId(int entityId) {
+    return findTopNForEachSensorByOptionalEntity(null, entityId);
   }
 
   public Sensor findLastValueBySensorId(int sensorId) {
@@ -154,4 +129,30 @@ public class SensorService {
       return null;
     }
   }
+
+  public Map<Integer, List<Sensor>> findTopNBySensorIdList(int limit,
+                                                           List<Integer> sensorIds) {
+    return findTopNBySensorIdListAndOptionalEntityId(limit, sensorIds, null);
+  }
+
+  public Map<Integer, List<Sensor>> findTopNBySensorIdListAndEntityId(int limit,
+                                                                      List<Integer> sensorIds,
+                                                                      int entityId) {
+    return findTopNBySensorIdListAndOptionalEntityId(limit, sensorIds, entityId);
+  }
+
+  public Map<Integer, List<Sensor>> findTopNForEachSensor(int limit) {
+    return findTopNForEachSensorByOptionalEntity(limit, null);
+  }
+
+  public Map<Integer, List<Sensor>> findTopNForEachSensorByEntityId(int limit, int entityId) {
+    return findTopNForEachSensorByOptionalEntity(limit, entityId);
+  }
+
+  @Autowired
+  public void setPostgreSensorService(
+      com.redroundrobin.thirema.apirest.service.postgres.SensorService postgreSensorService) {
+    this.postgreSensorService = postgreSensorService;
+  }
+
 }
