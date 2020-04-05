@@ -19,17 +19,8 @@ public class GatewayService {
     this.repo = gatewayRepository;
   }
 
-  @Autowired
-  public void setDeviceService(DeviceService deviceService) {
-    this.deviceService = deviceService;
-  }
-
   public List<Gateway> findAll() {
     return (List<Gateway>) repo.findAll();
-  }
-
-  public Gateway findById(int gatewayId) {
-    return repo.findById(gatewayId).orElse(null);
   }
 
   public Gateway findByDeviceId(int deviceId) {
@@ -40,4 +31,14 @@ public class GatewayService {
       return null;
     }
   }
+
+  public Gateway findById(int id) {
+    return repo.findById(id).orElse(null);
+  }
+
+  @Autowired
+  public void setDeviceService(DeviceService deviceService) {
+    this.deviceService = deviceService;
+  }
+
 }
