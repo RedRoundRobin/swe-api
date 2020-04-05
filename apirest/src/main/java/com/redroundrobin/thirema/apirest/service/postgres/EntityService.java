@@ -23,16 +23,6 @@ public class EntityService {
     this.repo = entityRepository;
   }
 
-  @Autowired
-  public void setSensorService(SensorService sensorService) {
-    this.sensorService = sensorService;
-  }
-
-  @Autowired
-  public void setUserService(UserService userService) {
-    this.userService = userService;
-  }
-
   public List<Entity> findAll() {
     return (List<Entity>) repo.findAll();
   }
@@ -41,15 +31,6 @@ public class EntityService {
     Sensor sensor = sensorService.findById(sensorId);
     if (sensor != null) {
       return (List<Entity>) repo.findAllBySensors(sensor);
-    } else {
-      return Collections.emptyList();
-    }
-  }
-
-  public List<Entity> findAllByUserId(int userId) {
-    User user = userService.findById(userId);
-    if (user != null) {
-      return (List<Entity>) repo.findAllByUsers(user);
     } else {
       return Collections.emptyList();
     }
@@ -65,7 +46,27 @@ public class EntityService {
     }
   }
 
+  public List<Entity> findAllByUserId(int userId) {
+    User user = userService.findById(userId);
+    if (user != null) {
+      return (List<Entity>) repo.findAllByUsers(user);
+    } else {
+      return Collections.emptyList();
+    }
+  }
+
   public Entity findById(int id) {
     return repo.findById(id).orElse(null);
   }
+
+  @Autowired
+  public void setSensorService(SensorService sensorService) {
+    this.sensorService = sensorService;
+  }
+
+  @Autowired
+  public void setUserService(UserService userService) {
+    this.userService = userService;
+  }
+
 }
