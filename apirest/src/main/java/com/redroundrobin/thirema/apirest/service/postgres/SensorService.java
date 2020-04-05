@@ -25,28 +25,8 @@ public class SensorService {
   private ViewGraphService viewGraphService;
 
   @Autowired
-  public SensorService(SensorRepository repo) {
-    this.repo = repo;
-  }
-
-  @Autowired
-  public void setAlertService(AlertService alertService) {
-    this.alertService = alertService;
-  }
-
-  @Autowired
-  public void setDeviceService(DeviceService deviceService) {
-    this.deviceService = deviceService;
-  }
-
-  @Autowired
-  public void setEntityService(EntityService entityService) {
-    this.entityService = entityService;
-  }
-
-  @Autowired
-  public void setViewGraphService(ViewGraphService viewGraphService) {
-    this.viewGraphService = viewGraphService;
+  public SensorService(SensorRepository sensorRepository) {
+    this.repo = sensorRepository;
   }
 
   public List<Sensor> findAll() {
@@ -81,29 +61,16 @@ public class SensorService {
     }
   }
 
+  public List<Sensor> findAllByGatewayIdAndRealDeviceId(int gatewayId, int realDeviceId) {
+    return (List<Sensor>) repo.findAllByGatewayIdAndRealDeviceId(gatewayId, realDeviceId);
+  }
+
   public List<Sensor> findAllByViewGraphId(int viewGraphId) {
     ViewGraph viewGraph = viewGraphService.findById(viewGraphId);
     if (viewGraph != null) {
       return (List<Sensor>) repo.findAllByViewGraphs1OrViewGraphs2(viewGraph, viewGraph);
     } else {
       return Collections.emptyList();
-    }
-  }
-
-  public List<Sensor> findAllByGatewayIdAndRealDeviceId(int gatewayId, int realDeviceId) {
-    return (List<Sensor>) repo.findAllByGatewayIdAndRealDeviceId(gatewayId, realDeviceId);
-  }
-
-  public Sensor findById(int sensorId) {
-    return repo.findById(sensorId).orElse(null);
-  }
-
-  public Sensor findByIdAndEntityId(int sensorId, int entityId) {
-    Entity entity = entityService.findById(entityId);
-    if (entity != null) {
-      return repo.findBySensorIdAndEntities(sensorId, entity);
-    } else {
-      return null;
     }
   }
 
@@ -140,4 +107,38 @@ public class SensorService {
                                                               int realSensorId) {
     return repo.findByGatewayIdAndRealDeviceIdAndRealSensorId(gatewayId,realDeviceId,realSensorId);
   }
+
+  public Sensor findById(int id) {
+    return repo.findById(id).orElse(null);
+  }
+
+  public Sensor findByIdAndEntityId(int id, int entityId) {
+    Entity entity = entityService.findById(entityId);
+    if (entity != null) {
+      return repo.findBySensorIdAndEntities(id, entity);
+    } else {
+      return null;
+    }
+  }
+
+  @Autowired
+  public void setAlertService(AlertService alertService) {
+    this.alertService = alertService;
+  }
+
+  @Autowired
+  public void setDeviceService(DeviceService deviceService) {
+    this.deviceService = deviceService;
+  }
+
+  @Autowired
+  public void setEntityService(EntityService entityService) {
+    this.entityService = entityService;
+  }
+
+  @Autowired
+  public void setViewGraphService(ViewGraphService viewGraphService) {
+    this.viewGraphService = viewGraphService;
+  }
+
 }
