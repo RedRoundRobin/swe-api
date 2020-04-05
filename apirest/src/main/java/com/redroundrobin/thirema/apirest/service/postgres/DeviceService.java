@@ -26,38 +26,23 @@ public class DeviceService {
     this.repo = deviceRepository;
   }
 
-  @Autowired
-  public void setEntityService(EntityService entityService) {
-    this.entityService = entityService;
-  }
-
-  @Autowired
-  public void setGatewayService(GatewayService gatewayService) {
-    this.gatewayService = gatewayService;
-  }
-
-  @Autowired
-  public void setSensorService(SensorService sensorService) {
-    this.sensorService = sensorService;
-  }
-
   public List<Device> findAll() {
     return (List<Device>) repo.findAll();
-  }
-
-  public List<Device> findAllByGatewayId(int gatewayId) {
-    Gateway gateway = gatewayService.findById(gatewayId);
-    if (gateway != null) {
-      return (List<Device>) repo.findAllByGateway(gateway);
-    } else {
-      return Collections.emptyList();
-    }
   }
 
   public List<Device> findAllByEntityId(int entityId) {
     Entity entity = entityService.findById(entityId);
     if (entity != null) {
       return (List<Device>) repo.findAllByEntityId(entityId);
+    } else {
+      return Collections.emptyList();
+    }
+  }
+
+  public List<Device> findAllByGatewayId(int gatewayId) {
+    Gateway gateway = gatewayService.findById(gatewayId);
+    if (gateway != null) {
+      return (List<Device>) repo.findAllByGateway(gateway);
     } else {
       return Collections.emptyList();
     }
@@ -88,4 +73,20 @@ public class DeviceService {
       return null;
     }
   }
+
+  @Autowired
+  public void setEntityService(EntityService entityService) {
+    this.entityService = entityService;
+  }
+
+  @Autowired
+  public void setGatewayService(GatewayService gatewayService) {
+    this.gatewayService = gatewayService;
+  }
+
+  @Autowired
+  public void setSensorService(SensorService sensorService) {
+    this.sensorService = sensorService;
+  }
+
 }
