@@ -16,6 +16,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -169,17 +170,24 @@ public class DeviceServiceTest {
 
 
     when(repo.findAll()).thenReturn(allDevices);
-    when(repo.findAllByGateway(any(Gateway.class))).thenAnswer(i -> {
-      Gateway gateway = i.getArgument(0);
-      return allDevices.stream().filter(d -> gateway.equals(d.getGateway()))
-          .collect(Collectors.toList());
-    });
     when(repo.findAllByEntityId(anyInt())).thenAnswer(i -> {
       if (i.getArgument(0).equals(entity1.getId())) {
         return entity1Devices;
       } else {
-        return null;
+        return Collections.emptyList();
       }
+    });
+    when(repo.findAllByEntityIdAndGateway(anyInt(), any(Gateway.class))).thenAnswer(i -> {
+      if (i.getArgument(0).equals(entity1.getId()) && i.getArgument(1).equals(device1.getGateway())) {
+        return entity1Devices;
+      } else {
+        return Collections.emptyList();
+      }
+    });
+    when(repo.findAllByGateway(any(Gateway.class))).thenAnswer(i -> {
+      Gateway gateway = i.getArgument(0);
+      return allDevices.stream().filter(d -> gateway.equals(d.getGateway()))
+          .collect(Collectors.toList());
     });
     when(repo.findById(anyInt())).thenAnswer(i -> {
       return allDevices.stream().filter(d -> i.getArgument(0).equals(d.getId()))
@@ -227,6 +235,25 @@ public class DeviceServiceTest {
     assertTrue(!devices.isEmpty());
     assertTrue(devices.stream().count() == 3);
   }
+
+
+
+  @Test
+  public void findAllDevicesByEntityIdAndGatewayId() {
+    List<Device> devices = deviceService.findAllByEntityIdAndGatewayId(entity1.getId(), gateway1.getId());
+
+    assertTrue(!devices.isEmpty());
+    assertTrue(devices.stream().count() == 2);
+  }
+
+  @Test
+  public void findAllDevicesByEntityIdAndNotExistentGatewayId() {
+    List<Device> devices = deviceService.findAllByEntityIdAndGatewayId(entity1.getId(), 6);
+
+    assertTrue(devices.isEmpty());
+  }
+
+
 
   @Test
   public void findAllDevicesByGatewayId() {
