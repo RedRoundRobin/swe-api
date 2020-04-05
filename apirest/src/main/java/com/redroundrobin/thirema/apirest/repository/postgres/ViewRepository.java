@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ViewRepository extends CrudRepository<View, Integer> {
-  List<View> findAllByUser(User user);
+  Iterable<View> findAllByUser(User user);
 
   View findByViewIdAndUser(int viewId, User user);
 }

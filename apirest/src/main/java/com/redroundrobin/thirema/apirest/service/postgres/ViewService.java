@@ -60,7 +60,7 @@ public class ViewService {
   }
 
   public List<View> findAllByUser(User user) {
-    return repo.findAllByUser(user);
+    return (List<View>) repo.findAllByUser(user);
   }
 
   public View findById(int id) {
