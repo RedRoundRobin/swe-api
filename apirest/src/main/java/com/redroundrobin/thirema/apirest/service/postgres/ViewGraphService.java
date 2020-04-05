@@ -24,19 +24,8 @@ public class ViewGraphService {
 
   private ViewService viewService;
 
-  private boolean checkFields(boolean edit, Map<String, Integer> fields) {
-    List<String> allowedFields = new ArrayList<>();
-    allowedFields.add("correlation");
-    allowedFields.add("view");
-    allowedFields.add("sensor1");
-    allowedFields.add("sensor2");
-
-    if (edit) {
-      return fields.keySet().stream().anyMatch(key -> allowedFields.contains(key));
-    } else {
-      return fields.containsKey("correlation") && fields.containsKey("view")
-          && (fields.containsKey("sensor1") || fields.containsKey("sensor2"));
-    }
+  public ViewGraphService(ViewGraphRepository repo) {
+    this.repo = repo;
   }
 
   private ViewGraph addEditViewGraph(User user, ViewGraph viewGraph, Map<String, Integer> fields)
@@ -100,18 +89,49 @@ public class ViewGraphService {
     return repo.save(viewGraph);
   }
 
-  public ViewGraphService(ViewGraphRepository repo) {
-    this.repo = repo;
+  private boolean checkFields(boolean edit, Map<String, Integer> fields) {
+    List<String> allowedFields = new ArrayList<>();
+    allowedFields.add("correlation");
+    allowedFields.add("view");
+    allowedFields.add("sensor1");
+    allowedFields.add("sensor2");
+
+    if (edit) {
+      return fields.keySet().stream().anyMatch(key -> allowedFields.contains(key));
+    } else {
+      return fields.containsKey("correlation") && fields.containsKey("view")
+          && (fields.containsKey("sensor1") || fields.containsKey("sensor2"));
+    }
   }
 
-  @Autowired
-  public void setSensorService(SensorService sensorService) {
-    this.sensorService = sensorService;
+  public ViewGraph createViewGraph(User user, Map<String, Integer> newViewGraphFields)
+      throws InvalidFieldsValuesException, MissingFieldsException {
+    if (this.checkFields(false, newViewGraphFields)) {
+      return this.addEditViewGraph(user, null, newViewGraphFields);
+    } else {
+      throw new MissingFieldsException("One or more needed fields are missing");
+    }
   }
 
-  @Autowired
-  public void setViewService(ViewService viewService) {
-    this.viewService = viewService;
+  public boolean deleteViewGraph(int viewGraphId) throws ElementNotFoundException {
+    if (repo.existsById(viewGraphId)) {
+      repo.deleteById(viewGraphId);
+      return !repo.existsById(viewGraphId);
+    } else {
+      throw ElementNotFoundException.defaultMessage("ViewGraph");
+    }
+  }
+
+  public ViewGraph editViewGraph(User user, int viewGraphId, Map<String, Integer> fieldsToEdit)
+      throws InvalidFieldsValuesException, MissingFieldsException {
+    ViewGraph viewGraph = findById(viewGraphId);
+    if (viewGraph == null) {
+      throw new InvalidFieldsValuesException("The viewGraph with provided id is not found");
+    } else if (this.checkFields(true, fieldsToEdit)) {
+      return this.addEditViewGraph(user, viewGraph, fieldsToEdit);
+    } else {
+      throw new MissingFieldsException("One or more needed fields are missing");
+    }
   }
 
   public List<ViewGraph> findAll() {
@@ -157,33 +177,14 @@ public class ViewGraphService {
     }
   }
 
-  public ViewGraph createViewGraph(User user, Map<String, Integer> newViewGraphFields)
-      throws InvalidFieldsValuesException, MissingFieldsException {
-    if (this.checkFields(false, newViewGraphFields)) {
-      return this.addEditViewGraph(user, null, newViewGraphFields);
-    } else {
-      throw new MissingFieldsException("One or more needed fields are missing");
-    }
+  @Autowired
+  public void setSensorService(SensorService sensorService) {
+    this.sensorService = sensorService;
   }
 
-  public ViewGraph editViewGraph(User user, int viewGraphId, Map<String, Integer> fieldsToEdit)
-      throws InvalidFieldsValuesException, MissingFieldsException {
-    ViewGraph viewGraph = findById(viewGraphId);
-    if (viewGraph == null) {
-      throw new InvalidFieldsValuesException("The viewGraph with provided id is not found");
-    } else if (this.checkFields(true, fieldsToEdit)) {
-      return this.addEditViewGraph(user, viewGraph, fieldsToEdit);
-    } else {
-      throw new MissingFieldsException("One or more needed fields are missing");
-    }
+  @Autowired
+  public void setViewService(ViewService viewService) {
+    this.viewService = viewService;
   }
 
-  public boolean deleteViewGraph(int viewGraphId) throws ElementNotFoundException {
-    if (repo.existsById(viewGraphId)) {
-      repo.deleteById(viewGraphId);
-      return !repo.existsById(viewGraphId);
-    } else {
-      throw ElementNotFoundException.defaultMessage("ViewGraph");
-    }
-  }
 }
