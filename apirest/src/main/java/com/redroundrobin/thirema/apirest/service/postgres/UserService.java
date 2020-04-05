@@ -38,6 +38,11 @@ public class UserService implements UserDetailsService {
 
   private EntityService entityService;
 
+  @Autowired
+  public UserService(UserRepository userRepository) {
+    this.repo = userRepository;
+  }
+
   private boolean checkCreatableFields(Set<String> keys)
       throws InvalidFieldsValuesException {
     Set<String> creatable = new HashSet<>();
@@ -175,29 +180,76 @@ public class UserService implements UserDetailsService {
     return repo.save(userToEdit);
   }
 
-  @Autowired
-  public UserService(UserRepository userRepository) {
-    this.repo = userRepository;
+  public User deleteUser(User deletingUser, int userToDeleteId)
+      throws NotAuthorizedException, InvalidFieldsValuesException {
+    User userToDelete;
+    if ((userToDelete = findById(userToDeleteId)) == null) {
+      throw new InvalidFieldsValuesException("");
+    }
+
+    if (deletingUser.getType() == User.Role.USER
+        || deletingUser.getType() == User.Role.MOD
+        && ((userToDelete.getType() != User.Role.USER)
+        || deletingUser.getEntity().getId() != userToDelete.getEntity().getId())) {
+      throw new NotAuthorizedException("");
+    }
+
+    userToDelete.setDeleted(true);
+    return repo.save(userToDelete);
   }
 
-  @Autowired
-  public void setAlertService(AlertService alertService) {
-    this.alertService = alertService;
+  public User editByAdministrator(User userToEdit, Map<String, Object> fieldsToEdit, boolean itself)
+      throws InvalidFieldsValuesException, MissingFieldsException, NotAuthorizedException,
+      ConflictException {
+
+    if ((!itself && userToEdit.getType() == User.Role.ADMIN)
+        || (fieldsToEdit.containsKey("type") && (int)fieldsToEdit.get("type") == 2)
+        || !checkEditableFields(User.Role.ADMIN, itself, fieldsToEdit.keySet())) {
+      throw new NotAuthorizedException(
+          "You are not allowed to edit some of the specified fields");
+    } else {
+      return this.editAndSave(userToEdit, fieldsToEdit);
+    }
   }
 
-  @Autowired
-  public void setEntityService(EntityService entityService) {
-    this.entityService = entityService;
+  public User editByModerator(User userToEdit, Map<String, Object> fieldsToEdit, boolean itself)
+      throws InvalidFieldsValuesException, MissingFieldsException, NotAuthorizedException,
+      ConflictException {
+
+    if ((fieldsToEdit.containsKey("type") && (int)fieldsToEdit.get("type") > 0)
+        || !checkEditableFields(User.Role.MOD, itself, fieldsToEdit.keySet())) {
+      throw new NotAuthorizedException(
+          "You are not allowed to edit some of the specified fields");
+    } else {
+      return this.editAndSave(userToEdit, fieldsToEdit);
+    }
+  }
+
+  public User editByUser(User userToEdit, Map<String, Object> fieldsToEdit)
+      throws InvalidFieldsValuesException, MissingFieldsException, NotAuthorizedException,
+      ConflictException  {
+
+    if (!checkEditableFields(User.Role.USER, true, fieldsToEdit.keySet())) {
+      throw new NotAuthorizedException(
+          "You are not allowed to edit some of the specified fields");
+    } else {
+      return this.editAndSave(userToEdit, fieldsToEdit);
+    }
+  }
+
+  public User editUserTelegramChat(User user, String telegramChat) {
+    user.setTelegramChat(telegramChat);
+    return repo.save(user);
   }
 
   public List<User> findAll() {
     return (List<User>) repo.findAll();
   }
 
-  public List<User> findAllByEntityId(int entityId) {
-    Entity entity = entityService.findById(entityId);
-    if (entity != null) {
-      return (List<User>) repo.findAllByEntity(entity);
+  public List<User> findAllByDisabledAlert(int alertId) {
+    Alert alert = alertService.findById(alertId);
+    if (alert != null) {
+      return (List<User>) repo.findAllByDisabledAlerts(alert);
     } else {
       return Collections.emptyList();
     }
@@ -218,13 +270,17 @@ public class UserService implements UserDetailsService {
     }
   }
 
-  public List<User> findAllByDisabledAlert(int alertId) {
-    Alert alert = alertService.findById(alertId);
-    if (alert != null) {
-      return (List<User>) repo.findAllByDisabledAlerts(alert);
+  public List<User> findAllByEntityId(int entityId) {
+    Entity entity = entityService.findById(entityId);
+    if (entity != null) {
+      return (List<User>) repo.findAllByEntity(entity);
     } else {
       return Collections.emptyList();
     }
+  }
+
+  public User findByEmail(String email) {
+    return repo.findByEmail(email);
   }
 
   public User findById(int id) {
@@ -238,30 +294,6 @@ public class UserService implements UserDetailsService {
 
   public User findByTelegramNameAndTelegramChat(String telegramName, String telegramChat) {
     return repo.findByTelegramNameAndTelegramChat(telegramName, telegramChat);
-  }
-
-  public User findByEmail(String email) {
-    return repo.findByEmail(email);
-  }
-
-  public User editUserTelegramChat(User user, String telegramChat) {
-    user.setTelegramChat(telegramChat);
-    return repo.save(user);
-  }
-
-  @Override
-  public UserDetails loadUserByUsername(String s) {
-    User user = this.findByEmail(s);
-    if (user == null || (user.isDeleted() || (user.getType() != User.Role.ADMIN
-        && (user.getEntity() == null || user.getEntity().isDeleted())))) {
-      throw new UsernameNotFoundException("");
-    }
-
-    List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
-    grantedAuthorities.add(new SimpleGrantedAuthority(String.valueOf(user.getType())));
-
-    return new org.springframework.security.core.userdetails.User(
-        user.getEmail(), user.getPassword(), grantedAuthorities);
   }
 
   /**
@@ -318,44 +350,19 @@ public class UserService implements UserDetailsService {
         user.getTelegramName(), user.getTelegramChat(), grantedAuthorities);
   }
 
-
-  public User editByUser(User userToEdit, Map<String, Object> fieldsToEdit)
-      throws InvalidFieldsValuesException, MissingFieldsException, NotAuthorizedException,
-      ConflictException  {
-
-    if (!checkEditableFields(User.Role.USER, true, fieldsToEdit.keySet())) {
-      throw new NotAuthorizedException(
-          "You are not allowed to edit some of the specified fields");
-    } else {
-      return this.editAndSave(userToEdit, fieldsToEdit);
+  @Override
+  public UserDetails loadUserByUsername(String username) {
+    User user = this.findByEmail(username);
+    if (user == null || (user.isDeleted() || (user.getType() != User.Role.ADMIN
+        && (user.getEntity() == null || user.getEntity().isDeleted())))) {
+      throw new UsernameNotFoundException("");
     }
-  }
 
-  public User editByModerator(User userToEdit, Map<String, Object> fieldsToEdit, boolean itself)
-      throws InvalidFieldsValuesException, MissingFieldsException, NotAuthorizedException,
-      ConflictException {
+    List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
+    grantedAuthorities.add(new SimpleGrantedAuthority(String.valueOf(user.getType())));
 
-    if ((fieldsToEdit.containsKey("type") && (int)fieldsToEdit.get("type") > 0)
-        || !checkEditableFields(User.Role.MOD, itself, fieldsToEdit.keySet())) {
-      throw new NotAuthorizedException(
-          "You are not allowed to edit some of the specified fields");
-    } else {
-      return this.editAndSave(userToEdit, fieldsToEdit);
-    }
-  }
-
-  public User editByAdministrator(User userToEdit, Map<String, Object> fieldsToEdit, boolean itself)
-      throws InvalidFieldsValuesException, MissingFieldsException, NotAuthorizedException,
-      ConflictException {
-
-    if ((!itself && userToEdit.getType() == User.Role.ADMIN)
-        || (fieldsToEdit.containsKey("type") && (int)fieldsToEdit.get("type") == 2)
-        || !checkEditableFields(User.Role.ADMIN, itself, fieldsToEdit.keySet())) {
-      throw new NotAuthorizedException(
-          "You are not allowed to edit some of the specified fields");
-    } else {
-      return this.editAndSave(userToEdit, fieldsToEdit);
-    }
+    return new org.springframework.security.core.userdetails.User(
+        user.getEmail(), user.getPassword(), grantedAuthorities);
   }
 
   public User serializeUser(JsonObject rawUserToInsert, User insertingUser)
@@ -411,21 +418,14 @@ public class UserService implements UserDetailsService {
     return repo.save(newUser);
   }
 
-  public User deleteUser(User deletingUser, int userToDeleteId)
-      throws NotAuthorizedException, InvalidFieldsValuesException {
-    User userToDelete;
-    if ((userToDelete = findById(userToDeleteId)) == null) {
-      throw new InvalidFieldsValuesException("");
-    }
-
-    if (deletingUser.getType() == User.Role.USER
-        || deletingUser.getType() == User.Role.MOD
-        && ((userToDelete.getType() != User.Role.USER)
-        || deletingUser.getEntity().getId() != userToDelete.getEntity().getId())) {
-      throw new NotAuthorizedException("");
-    }
-
-    userToDelete.setDeleted(true);
-    return repo.save(userToDelete);
+  @Autowired
+  public void setAlertService(AlertService alertService) {
+    this.alertService = alertService;
   }
+
+  @Autowired
+  public void setEntityService(EntityService entityService) {
+    this.entityService = entityService;
+  }
+
 }
