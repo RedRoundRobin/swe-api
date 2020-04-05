@@ -26,21 +26,6 @@ public class AlertService {
     this.repo = alertRepository;
   }
 
-  @Autowired
-  public void setEntityService(EntityService entityService) {
-    this.entityService = entityService;
-  }
-
-  @Autowired
-  public void setSensorService(SensorService sensorService) {
-    this.sensorService = sensorService;
-  }
-
-  @Autowired
-  public void setUserService(UserService userService) {
-    this.userService = userService;
-  }
-
   public List<Alert> findAll() {
     return (List<Alert>) repo.findAll();
   }
@@ -75,4 +60,20 @@ public class AlertService {
   public Alert findById(int id) {
     return repo.findById(id).orElse(null);
   }
+
+  @Autowired
+  public void setEntityService(EntityService entityService) {
+    this.entityService = entityService;
+  }
+
+  @Autowired
+  public void setSensorService(SensorService sensorService) {
+    this.sensorService = sensorService;
+  }
+
+  @Autowired
+  public void setUserService(UserService userService) {
+    this.userService = userService;
+  }
+
 }
