@@ -18,9 +18,14 @@ import org.springframework.stereotype.Service;
 @Service
 public class ViewService {
 
-  private ViewRepository viewRepo;
+  private ViewRepository repo;
 
   private UserService userService;
+
+  @Autowired
+  public ViewService(ViewRepository viewRepository) {
+    this.repo = viewRepository;
+  }
 
   private boolean checkCreatableFields(Set<String> keys)
       throws KeysNotFoundException {
@@ -39,28 +44,33 @@ public class ViewService {
     return creatable.size() == keys.size();
   }
 
-  @Autowired
-  public ViewService(ViewRepository viewRepo) {
-    this.viewRepo = viewRepo;
-  }
+  public void deleteView(User deletingUser, int viewToDeleteId)
+      throws NotAuthorizedException, InvalidFieldsValuesException {
+    View viewToDelete;
+    if ((viewToDelete = repo.findById(viewToDeleteId).orElse(null)) == null) {
+      throw new InvalidFieldsValuesException("The given view_id doesn't correspond to any view");
+    }
 
-  @Autowired
-  public void setUserService(UserService userService) {
-    this.userService = userService;
+    if (viewToDelete.getUser().getId() != deletingUser.getId()) {
+      throw new NotAuthorizedException("This user cannot delete the view with"
+          + "the view_id given");
+    }
+
+    repo.delete(viewToDelete);
   }
 
   public List<View> findAllByUser(User user) {
-    return viewRepo.findAllByUser(user);
+    return repo.findAllByUser(user);
   }
 
-  public View findById(int viewId) {
-    return viewRepo.findById(viewId).orElse(null);
+  public View findById(int id) {
+    return repo.findById(id).orElse(null);
   }
 
-  public View findByIdAndUserId(int viewId, int userId) {
+  public View findByIdAndUserId(int id, int userId) {
     User user = userService.findById(userId);
     if (user != null) {
-      return viewRepo.findByViewIdAndUser(viewId, user);
+      return repo.findByViewIdAndUser(id, user);
     } else {
       return null;
     }
@@ -75,21 +85,12 @@ public class ViewService {
     View newView = new View();
     newView.setName(rawViewToInsert.get("name").getAsString());
     newView.setUser(insertingUser);
-    return viewRepo.save(newView);
+    return repo.save(newView);
   }
 
-  public void deleteView(User deletingUser, int viewToDeleteId)
-      throws NotAuthorizedException, InvalidFieldsValuesException {
-    View viewToDelete;
-    if ((viewToDelete = viewRepo.findById(viewToDeleteId).orElse(null)) == null) {
-      throw new InvalidFieldsValuesException("The given view_id doesn't correspond to any view");
-    }
-
-    if (viewToDelete.getUser().getId() != deletingUser.getId()) {
-      throw new NotAuthorizedException("This user cannot delete the view with"
-          + "the view_id given");
-    }
-
-    viewRepo.delete(viewToDelete);
+  @Autowired
+  public void setUserService(UserService userService) {
+    this.userService = userService;
   }
+
 }
