@@ -1,6 +1,7 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
 import com.google.gson.JsonObject;
+import com.redroundrobin.thirema.apirest.repository.postgres.AlertRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
 import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
@@ -31,10 +32,13 @@ public class UserServiceTest {
   private UserService userService;
 
   @MockBean
-  private UserRepository userRepo;
+  private AlertRepository alertRepo;
 
   @MockBean
   private EntityRepository entityRepo;
+
+  @MockBean
+  private UserRepository userRepo;
 
   private User admin1;
   private User admin2;
@@ -50,8 +54,7 @@ public class UserServiceTest {
   @Before
   public void setUp() {
 
-    userService = new UserService(userRepo);
-    userService.setEntityRepository(entityRepo);
+    userService = new UserService(userRepo, alertRepo, entityRepo);
 
     admin1 = new User();
     admin1.setId(1);

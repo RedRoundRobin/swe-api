@@ -25,9 +25,12 @@ public class DeviceService {
 
   private EntityRepository entityRepo;
 
-  @Autowired
-  public DeviceService(DeviceRepository deviceRepository) {
+  public DeviceService(DeviceRepository deviceRepository, EntityRepository entityRepository,
+                       GatewayRepository gatewayRepository, SensorRepository sensorRepository) {
     this.deviceRepo = deviceRepository;
+    this.entityRepo = entityRepository;
+    this.gatewayRepo = gatewayRepository;
+    this.sensorRepo = sensorRepository;
   }
 
   public List<Device> findAll() {
@@ -76,21 +79,6 @@ public class DeviceService {
     } else {
       return null;
     }
-  }
-
-  @Autowired
-  public void setEntityRepository(EntityRepository entityRepository) {
-    this.entityRepo = entityRepository;
-  }
-
-  @Autowired
-  public void setGatewayRepository(GatewayRepository gatewayRepository) {
-    this.gatewayRepo = gatewayRepository;
-  }
-
-  @Autowired
-  public void setSensorRepository(SensorRepository sensorRepository) {
-    this.sensorRepo = sensorRepository;
   }
 
 }

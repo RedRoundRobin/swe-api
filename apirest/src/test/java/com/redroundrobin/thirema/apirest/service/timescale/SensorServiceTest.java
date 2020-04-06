@@ -78,9 +78,7 @@ public class SensorServiceTest {
 
   @Before
   public void setUp() {
-    sensorService = new SensorService(sensorRepo);
-    sensorService.setPostgreSensorRepository(postgreSensorRepo);
-    sensorService.setEntityRepository(entityRepo);
+    sensorService = new SensorService(sensorRepo, postgreSensorRepo, entityRepo);
 
 
     // ------------------------------------ Set Timescale Sensors ---------------------------------

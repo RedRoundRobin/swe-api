@@ -26,8 +26,12 @@ public class ViewGraphService {
 
   private ViewRepository viewRepo;
 
-  public ViewGraphService(ViewGraphRepository viewGraphRepository) {
+  @Autowired
+  public ViewGraphService(ViewGraphRepository viewGraphRepository, SensorRepository sensorRepository,
+                          ViewRepository viewRepository) {
     this.viewGraphRepo = viewGraphRepository;
+    this.sensorRepo = sensorRepository;
+    this.viewRepo = viewRepository;
   }
 
   private ViewGraph addEditViewGraph(User user, ViewGraph viewGraph, Map<String, Integer> fields)
@@ -177,16 +181,6 @@ public class ViewGraphService {
     } else {
       return viewGraph.getView().getId() == userId;
     }
-  }
-
-  @Autowired
-  public void setSensorRepository(SensorRepository sensorRepository) {
-    this.sensorRepo = sensorRepository;
-  }
-
-  @Autowired
-  public void setViewRepository(ViewRepository viewRepository) {
-    this.viewRepo = viewRepository;
   }
 
 }

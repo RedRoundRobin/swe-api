@@ -64,10 +64,7 @@ public class AlertServiceTest {
 
   @Before
   public void setUp() {
-    alertService = new AlertService(alertRepo);
-    alertService.setEntityRepository(entityRepo);
-    alertService.setSensorRepository(sensorRepo);
-    alertService.setUserRepository(userRepo);
+    alertService = new AlertService(alertRepo,entityRepo,sensorRepo,userRepo);
 
     // ----------------------------------------- Set Alerts --------------------------------------
     alert1 = new Alert();

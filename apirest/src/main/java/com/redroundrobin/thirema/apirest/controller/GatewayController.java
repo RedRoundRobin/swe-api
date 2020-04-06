@@ -9,6 +9,10 @@ import com.redroundrobin.thirema.apirest.service.postgres.GatewayService;
 import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.redroundrobin.thirema.apirest.service.postgres.UserService;
+import com.redroundrobin.thirema.apirest.service.timescale.LogService;
+import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,7 +35,9 @@ public class GatewayController extends CoreController {
 
   @Autowired
   public GatewayController(GatewayService gatewayService, DeviceService deviceService,
-                           SensorService sensorService) {
+                           SensorService sensorService, JwtUtil jwtUtil, LogService logService,
+                           UserService userService) {
+    super(jwtUtil, logService, userService);
     this.gatewayService = gatewayService;
     this.deviceService = deviceService;
     this.sensorService = sensorService;

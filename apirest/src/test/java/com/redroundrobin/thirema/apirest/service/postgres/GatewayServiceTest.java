@@ -44,8 +44,7 @@ public class GatewayServiceTest {
 
   @Before
   public void setUp() {
-    gatewayService = new GatewayService(gatewayRepo);
-    gatewayService.setDeviceRepository(deviceRepo);
+    gatewayService = new GatewayService(gatewayRepo, deviceRepo);
 
     // ----------------------------------------- Set Devices --------------------------------------
     device1 = new Device();

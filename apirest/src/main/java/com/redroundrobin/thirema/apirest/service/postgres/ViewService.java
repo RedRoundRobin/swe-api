@@ -24,8 +24,9 @@ public class ViewService {
   private UserRepository userRepo;
 
   @Autowired
-  public ViewService(ViewRepository viewRepository) {
+  public ViewService(ViewRepository viewRepository, UserRepository userRepository) {
     this.viewRepo = viewRepository;
+    this.userRepo = userRepository;
   }
 
   private boolean checkCreatableFields(Set<String> keys)

@@ -64,10 +64,7 @@ public class DeviceServiceTest {
 
   @Before
   public void setUp() {
-    deviceService = new DeviceService(deviceRepo);
-    deviceService.setEntityRepository(entityRepo);
-    deviceService.setGatewayRepository(gatewayRepo);
-    deviceService.setSensorRepository(sensorRepo);
+    deviceService = new DeviceService(deviceRepo, entityRepo, gatewayRepo, sensorRepo);
 
     // ----------------------------------------- Set Devices --------------------------------------
     device1 = new Device();

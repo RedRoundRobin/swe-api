@@ -3,6 +3,9 @@ package com.redroundrobin.thirema.apirest.controller;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
+import com.redroundrobin.thirema.apirest.service.postgres.UserService;
+import com.redroundrobin.thirema.apirest.service.timescale.LogService;
+import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import com.redroundrobin.thirema.apirest.utils.exception.ConflictException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
@@ -32,6 +35,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping(value = "/users")
 public class UserController extends CoreController {
+
+  public UserController(JwtUtil jwtUtil, LogService logService, UserService userService) {
+    super(jwtUtil, logService, userService);
+  }
 
   private boolean canEditMod(User editingUser, User userToEdit) {
     return editingUser.getId() == userToEdit.getId()

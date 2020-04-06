@@ -22,8 +22,11 @@ public class EntityService {
   private UserRepository userRepo;
 
   @Autowired
-  public EntityService(EntityRepository entityRepository) {
+  public EntityService(EntityRepository entityRepository, SensorRepository sensorRepository,
+                       UserRepository userRepository) {
     this.entityRepo = entityRepository;
+    this.sensorRepo = sensorRepository;
+    this.userRepo = userRepository;
   }
 
   public List<Entity> findAll() {
@@ -61,15 +64,4 @@ public class EntityService {
   public Entity findById(int id) {
     return entityRepo.findById(id).orElse(null);
   }
-
-  @Autowired
-  public void setSensorRepository(SensorRepository sensorRepository) {
-    this.sensorRepo = sensorRepository;
-  }
-
-  @Autowired
-  public void setUserRepository(UserRepository userRepository) {
-    this.userRepo = userRepository;
-  }
-
 }

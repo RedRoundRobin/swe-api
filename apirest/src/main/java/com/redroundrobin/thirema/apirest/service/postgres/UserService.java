@@ -40,8 +40,11 @@ public class UserService implements UserDetailsService {
   private EntityRepository entityRepo;
 
   @Autowired
-  public UserService(UserRepository userRepository) {
-    this.repo = userRepository;
+  public UserService(UserRepository repo, AlertRepository alertRepository,
+                     EntityRepository entityRepository) {
+    this.repo = repo;
+    this.alertRepo = alertRepository;
+    this.entityRepo = entityRepository;
   }
 
   private boolean checkCreatableFields(Set<String> keys)
@@ -417,16 +420,6 @@ public class UserService implements UserDetailsService {
     }
 
     return repo.save(newUser);
-  }
-
-  @Autowired
-  public void setAlertRepository(AlertRepository  alertRepository) {
-    this.alertRepo = alertRepository;
-  }
-
-  @Autowired
-  public void setEntityRepository(EntityRepository  entityRepository) {
-    this.entityRepo = entityRepository;
   }
 
 }

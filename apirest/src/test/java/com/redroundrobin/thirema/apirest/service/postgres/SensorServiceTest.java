@@ -76,11 +76,7 @@ public class SensorServiceTest {
 
   @Before
   public void setUp() {
-    sensorService = new SensorService(sensorRepo);
-    sensorService.setAlertRepository(alertRepo);
-    sensorService.setDeviceRepository(deviceRepo);
-    sensorService.setEntityRepository(entityRepo);
-    sensorService.setViewGraphRepository(viewGraphRepo);
+    sensorService = new SensorService(sensorRepo, alertRepo, deviceRepo, entityRepo, viewGraphRepo);
 
 
     // ----------------------------------------- Set Entities --------------------------------------

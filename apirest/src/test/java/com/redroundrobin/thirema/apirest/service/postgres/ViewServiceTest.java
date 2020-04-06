@@ -41,8 +41,7 @@ public class ViewServiceTest {
   @Before
   public void setUp() {
 
-    viewService = new ViewService(viewRepo);
-    viewService.setUserRepository(userRepo);
+    viewService = new ViewService(viewRepo, userRepo);
 
     admin1 = new User(); //utente a cui non ho dato alcuna vista
     admin1.setId(1);

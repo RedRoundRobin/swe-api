@@ -26,8 +26,12 @@ public class AlertService {
   private UserRepository userRepo;
 
   @Autowired
-  public AlertService(AlertRepository alertRepository) {
+  public AlertService(AlertRepository alertRepository, EntityRepository entityRepository,
+                      SensorRepository sensorRepository, UserRepository userRepository) {
     this.alertRepo = alertRepository;
+    this.entityRepo = entityRepository;
+    this.sensorRepo = sensorRepository;
+    this.userRepo = userRepository;
   }
 
   public List<Alert> findAll() {
@@ -63,21 +67,6 @@ public class AlertService {
 
   public Alert findById(int id) {
     return alertRepo.findById(id).orElse(null);
-  }
-
-  @Autowired
-  public void setEntityRepository(EntityRepository entityRepository) {
-    this.entityRepo = entityRepository;
-  }
-
-  @Autowired
-  public void setSensorRepository(SensorRepository sensorRepository) {
-    this.sensorRepo = sensorRepository;
-  }
-
-  @Autowired
-  public void setUserRepository(UserRepository userRepository) {
-    this.userRepo = userRepository;
   }
 
 }

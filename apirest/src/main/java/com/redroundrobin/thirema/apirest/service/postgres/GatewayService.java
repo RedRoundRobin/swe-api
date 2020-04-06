@@ -16,8 +16,9 @@ public class GatewayService {
   private DeviceRepository deviceRepo;
 
   @Autowired
-  public GatewayService(GatewayRepository gatewayRepository) {
+  public GatewayService(GatewayRepository gatewayRepository, DeviceRepository deviceRepository) {
     this.gatewayRepo = gatewayRepository;
+    this.deviceRepo = deviceRepository;
   }
 
   public List<Gateway> findAll() {
@@ -35,11 +36,6 @@ public class GatewayService {
 
   public Gateway findById(int id) {
     return gatewayRepo.findById(id).orElse(null);
-  }
-
-  @Autowired
-  public void setDeviceRepository(DeviceRepository deviceRepository) {
-    this.deviceRepo = deviceRepository;
   }
 
 }

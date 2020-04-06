@@ -30,8 +30,14 @@ public class SensorService {
   private ViewGraphRepository viewGraphRepo;
 
   @Autowired
-  public SensorService(SensorRepository sensorRepository) {
+  public SensorService(SensorRepository sensorRepository, AlertRepository alertRepository,
+                       DeviceRepository deviceRepository, EntityRepository entityRepository,
+                       ViewGraphRepository viewGraphRepository) {
     this.sensorRepo = sensorRepository;
+    this.alertRepo = alertRepository;
+    this.deviceRepo = deviceRepository;
+    this.entityRepo = entityRepository;
+    this.viewGraphRepo = viewGraphRepository;
   }
 
   public List<Sensor> findAll() {
@@ -125,25 +131,4 @@ public class SensorService {
       return null;
     }
   }
-
-  @Autowired
-  public void setAlertRepository(AlertRepository alertRepo) {
-    this.alertRepo = alertRepo;
-  }
-
-  @Autowired
-  public void setDeviceRepository(DeviceRepository deviceRepo) {
-    this.deviceRepo = deviceRepo;
-  }
-
-  @Autowired
-  public void setEntityRepository(EntityRepository entityRepo) {
-    this.entityRepo = entityRepo;
-  }
-
-  @Autowired
-  public void setViewGraphRepository(ViewGraphRepository viewGraphRepo) {
-    this.viewGraphRepo = viewGraphRepo;
-  }
-
 }

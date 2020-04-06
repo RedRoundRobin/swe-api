@@ -8,22 +8,24 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+
 import org.springframework.stereotype.Service;
 
 @Service(value = "timescaleSensorService")
 public class SensorService {
 
-  private SensorRepository repo;
+  private SensorRepository sensorRepo;
 
   private com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository postgreSensorRepo;
 
   private EntityRepository entityRepo;
 
-  @Autowired
-  public SensorService(@Qualifier("timescaleSensorRepository") SensorRepository sensorRepository) {
-    this.repo = sensorRepository;
+  public SensorService(SensorRepository sensorRepository,
+                       com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository
+                           postgreSensorRepository, EntityRepository entityRepository) {
+    this.sensorRepo = sensorRepository;
+    this.postgreSensorRepo = postgreSensorRepository;
+    this.entityRepo = entityRepository;
   }
 
   private Map<Integer, List<Sensor>> findTopNBySensorIdListAndOptionalEntityId(
@@ -50,11 +52,11 @@ public class SensorService {
 
         if (limit != null) {
           sensorsData.put(id,
-              (List<Sensor>) repo.findTopNByGatewayNameAndRealDeviceIdAndRealSensorId(
+              (List<Sensor>) sensorRepo.findTopNByGatewayNameAndRealDeviceIdAndRealSensorId(
                   limit, gatewayName, realDeviceId, realSensorId));
         } else {
           sensorsData.put(id,
-              (List<Sensor>) repo.findAllByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(
+              (List<Sensor>) sensorRepo.findAllByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(
                   gatewayName, realDeviceId, realSensorId));
         }
       } else {
@@ -89,11 +91,11 @@ public class SensorService {
       int realSensorId = s.getRealSensorId();
       if (limit != null) {
         sensorsMap.put(s.getId(),
-            (List<Sensor>) repo.findTopNByGatewayNameAndRealDeviceIdAndRealSensorId(limit,
+            (List<Sensor>) sensorRepo.findTopNByGatewayNameAndRealDeviceIdAndRealSensorId(limit,
                 gatewayName, realDeviceId, realSensorId));
       } else {
         sensorsMap.put(s.getId(),
-            (List<Sensor>) repo.findAllByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(
+            (List<Sensor>) sensorRepo.findAllByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(
                 gatewayName, realDeviceId, realSensorId));
       }
     }
@@ -125,7 +127,7 @@ public class SensorService {
       String gatewayName = sensor.getDevice().getGateway().getName();
       int realDeviceId = sensor.getDevice().getRealDeviceId();
       int realSensorId = sensor.getRealSensorId();
-      return repo.findTopByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(gatewayName,
+      return sensorRepo.findTopByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(gatewayName,
           realDeviceId, realSensorId);
     } else {
       return null;
@@ -139,7 +141,7 @@ public class SensorService {
       String gatewayName = sensor.getDevice().getGateway().getName();
       int realDeviceId = sensor.getDevice().getRealDeviceId();
       int realSensorId = sensor.getRealSensorId();
-      return repo.findTopByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(gatewayName,
+      return sensorRepo.findTopByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(gatewayName,
           realDeviceId, realSensorId);
     } else {
       return null;
@@ -163,17 +165,5 @@ public class SensorService {
 
   public Map<Integer, List<Sensor>> findTopNForEachSensorByEntityId(int limit, int entityId) {
     return findTopNForEachSensorByOptionalEntity(limit, entityId);
-  }
-
-  @Autowired
-  public void setEntityRepository(EntityRepository entityRepository) {
-    this.entityRepo = entityRepository;
-  }
-
-  @Autowired
-  public void setPostgreSensorRepository(
-      com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository
-          postgreSensorRepository) {
-    this.postgreSensorRepo = postgreSensorRepository;
   }
 }

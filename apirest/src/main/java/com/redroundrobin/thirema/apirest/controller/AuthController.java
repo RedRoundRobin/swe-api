@@ -1,8 +1,11 @@
 package com.redroundrobin.thirema.apirest.controller;
 
+import com.redroundrobin.thirema.apirest.service.postgres.UserService;
+import com.redroundrobin.thirema.apirest.service.timescale.LogService;
 import com.redroundrobin.thirema.apirest.utils.CustomAuthenticationManager;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.TelegramService;
+import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import com.redroundrobin.thirema.apirest.utils.exception.TelegramChatNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
 import java.util.HashMap;
@@ -30,7 +33,9 @@ public class AuthController extends CoreController {
 
   @Autowired
   public AuthController(CustomAuthenticationManager authenticationManager,
-                        TelegramService telegramService) {
+                        TelegramService telegramService, JwtUtil jwtUtil, LogService logService,
+                        UserService userService) {
+    super(jwtUtil, logService, userService);
     this.authenticationManager = authenticationManager;
     this.telegramService = telegramService;
   }

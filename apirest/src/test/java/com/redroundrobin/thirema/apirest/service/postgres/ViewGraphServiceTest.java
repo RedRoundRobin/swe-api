@@ -74,9 +74,7 @@ public class ViewGraphServiceTest {
 
   @Before
   public void setUp() {
-    this.viewGraphService = new ViewGraphService(viewGraphRepo);
-    this.viewGraphService.setSensorRepository(sensorRepo);
-    this.viewGraphService.setViewRepository(viewRepo);
+    this.viewGraphService = new ViewGraphService(viewGraphRepo, sensorRepo, viewRepo);
 
 
     // ----------------------------------------- Set Entities --------------------------------------

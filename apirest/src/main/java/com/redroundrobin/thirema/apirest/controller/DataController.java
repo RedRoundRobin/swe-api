@@ -2,11 +2,15 @@ package com.redroundrobin.thirema.apirest.controller;
 
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.timescale.Sensor;
+import com.redroundrobin.thirema.apirest.service.postgres.UserService;
+import com.redroundrobin.thirema.apirest.service.timescale.LogService;
 import com.redroundrobin.thirema.apirest.service.timescale.SensorService;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
@@ -70,7 +74,9 @@ public class DataController extends CoreController {
   }
 
   @Autowired
-  public DataController(@Qualifier("timescaleSensorService") SensorService timescaleSensorService) {
+  public DataController(@Qualifier("timescaleSensorService") SensorService timescaleSensorService,
+                        JwtUtil jwtUtil, LogService logService, UserService userService) {
+    super(jwtUtil, logService, userService);
     this.timescaleSensorService = timescaleSensorService;
   }
 
