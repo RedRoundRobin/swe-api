@@ -7,6 +7,7 @@ import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.DeviceService;
 import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
+import com.redroundrobin.thirema.apirest.service.timescale.LogService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,6 +32,9 @@ public class DeviceControllerTest {
 
   @MockBean
   private JwtUtil jwtUtil;
+
+  @MockBean
+  private LogService logService;
 
   @MockBean
   private UserService userService;
@@ -69,9 +73,7 @@ public class DeviceControllerTest {
 
   @Before
   public void setUp() {
-    deviceController = new DeviceController(deviceService, sensorService);
-    deviceController.setJwtUtil(jwtUtil);
-    deviceController.setUserService(userService);
+    deviceController = new DeviceController(deviceService, sensorService, jwtUtil, logService, userService);
 
     admin = new User();
     admin.setId(1);

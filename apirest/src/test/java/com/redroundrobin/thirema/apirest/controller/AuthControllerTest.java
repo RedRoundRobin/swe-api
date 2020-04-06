@@ -64,10 +64,8 @@ public class AuthControllerTest {
 
   @Before
   public void setUp() throws Exception {
-    authController = new AuthController(authenticationManager, telegramService);
-    authController.setJwtUtil(jwtTokenUtil);
-    authController.setLogService(logService);
-    authController.setUserService(userService);
+    authController = new AuthController(authenticationManager, telegramService, jwtTokenUtil,
+        logService, userService);
 
     admin = new User();
     admin.setName("admin");

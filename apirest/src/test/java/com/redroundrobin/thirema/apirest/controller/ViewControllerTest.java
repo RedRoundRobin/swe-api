@@ -6,6 +6,7 @@ import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.postgres.View;
 import com.redroundrobin.thirema.apirest.service.postgres.ViewService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
+import com.redroundrobin.thirema.apirest.service.timescale.LogService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import com.redroundrobin.thirema.apirest.utils.exception.*;
 import org.junit.Before;
@@ -32,6 +33,9 @@ public class ViewControllerTest {
   JwtUtil jwtTokenUtil;
 
   @MockBean
+  private LogService logService;
+
+  @MockBean
   private UserService userService;
 
   @MockBean
@@ -50,7 +54,7 @@ public class ViewControllerTest {
   @Before
   public void setUp() throws Exception {
 
-    viewController = new ViewController(jwtTokenUtil, userService, viewService);
+    viewController = new ViewController(viewService, jwtTokenUtil, logService, userService);
     Entity entity1 = new Entity();
     entity1.setId(1);
 

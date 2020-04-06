@@ -62,10 +62,7 @@ public class UserControllerTest {
 
   @Before
   public void setUp() throws Exception {
-    userController = new UserController();
-    userController.setJwtUtil(jwtTokenUtil);
-    userController.setLogService(logService);
-    userController.setUserService(userService);
+    userController = new UserController(jwtTokenUtil, logService, userService);
 
     admin1 = new User();
     admin1.setId(1);
