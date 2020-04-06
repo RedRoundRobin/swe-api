@@ -21,6 +21,7 @@ public class KafkaConsumerConfig {
   @Value(value = "${kafka.bootstrapAddress}")
   private String bootstrapAddress;
 
+  /*
   public ConsumerFactory<String, String> consumerFactory(String groupId) {
     Map<String, Object> props = new HashMap<>();
     props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
@@ -38,7 +39,6 @@ public class KafkaConsumerConfig {
     return factory;
   }
 
-  /*
   @Bean
   public ConcurrentKafkaListenerContainerFactory<String, String>
   alertsKafkaListenerContainerFactory() {
@@ -50,8 +50,10 @@ public class KafkaConsumerConfig {
     Map<String, Object> props = new HashMap<>();
     props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
     props.put(ConsumerConfig.GROUP_ID_CONFIG, "alerts");
-    return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(),
-        new JsonDeserializer<>(new TypeReference<Object[]>() {}));
+    props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, new JsonDeserializer<>(new TypeReference<Object[]>() {
+    }));
+    return new DefaultKafkaConsumerFactory<>(props);
   }
 
   @Bean
