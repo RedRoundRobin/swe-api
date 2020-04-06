@@ -2,9 +2,10 @@ package com.redroundrobin.thirema.apirest.service.postgres;
 
 import com.google.gson.JsonObject;
 import com.redroundrobin.thirema.apirest.models.postgres.Alert;
-import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
+import com.redroundrobin.thirema.apirest.repository.postgres.AlertRepository;
+import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 import com.redroundrobin.thirema.apirest.utils.exception.ConflictException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
@@ -34,9 +35,9 @@ public class UserService implements UserDetailsService {
 
   private UserRepository repo;
 
-  private AlertService alertService;
+  private AlertRepository alertRepo;
 
-  private EntityService entityService;
+  private EntityRepository entityRepo;
 
   @Autowired
   public UserService(UserRepository userRepository) {
@@ -134,7 +135,7 @@ public class UserService implements UserDetailsService {
     }
 
     if (fieldsToEdit.containsKey("entityId")
-        && entityService.findById((int)fieldsToEdit.get("entityId")) == null) {
+        && entityRepo.findById((int)fieldsToEdit.get("entityId")).isEmpty()) {
       throw new InvalidFieldsValuesException(
           "The entity with the entityId furnished doesn't exist");
     }
@@ -171,7 +172,7 @@ public class UserService implements UserDetailsService {
           userToEdit.setTfa((boolean) value);
           break;
         case "entityId":
-          userToEdit.setEntity(entityService.findById((int) value));
+          userToEdit.setEntity(entityRepo.findById((int)fieldsToEdit.get("entityId")).orElse(null));
           break;
         default:
       }
@@ -247,7 +248,7 @@ public class UserService implements UserDetailsService {
   }
 
   public List<User> findAllByDisabledAlert(int alertId) {
-    Alert alert = alertService.findById(alertId);
+    Alert alert = alertRepo.findById(alertId).orElse(null);
     if (alert != null) {
       return (List<User>) repo.findAllByDisabledAlerts(alert);
     } else {
@@ -258,7 +259,7 @@ public class UserService implements UserDetailsService {
   public List<User> findAllByDisabledAlerts(List<Integer> alertsIds) {
     List<Alert> alerts = new ArrayList<>();
     alertsIds.forEach(aid -> {
-      Alert alert = alertService.findById(aid);
+      Alert alert = alertRepo.findById(aid).orElse(null);
       if (alert != null) {
         alerts.add(alert);
       }
@@ -271,7 +272,7 @@ public class UserService implements UserDetailsService {
   }
 
   public List<User> findAllByEntityId(int entityId) {
-    Entity entity = entityService.findById(entityId);
+    Entity entity = entityRepo.findById(entityId).orElse(null);
     if (entity != null) {
       return (List<User>) repo.findAllByEntity(entity);
     } else {
@@ -373,8 +374,8 @@ public class UserService implements UserDetailsService {
     }
 
     Entity userToInsertEntity;
-    if ((userToInsertEntity = entityService.findById(
-        (rawUserToInsert.get("entityId")).getAsInt())) == null) {
+    if ((userToInsertEntity = entityRepo.findById(
+        (rawUserToInsert.get("entityId")).getAsInt()).orElse(null)) == null) {
       throw new InvalidFieldsValuesException("");
     }
 
@@ -419,13 +420,13 @@ public class UserService implements UserDetailsService {
   }
 
   @Autowired
-  public void setAlertService(AlertService alertService) {
-    this.alertService = alertService;
+  public void setAlertRepository(AlertRepository  alertRepository) {
+    this.alertRepo = alertRepository;
   }
 
   @Autowired
-  public void setEntityService(EntityService entityService) {
-    this.entityService = entityService;
+  public void setEntityRepository(EntityRepository  entityRepository) {
+    this.entityRepo = entityRepository;
   }
 
 }

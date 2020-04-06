@@ -1,8 +1,8 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
 import com.google.gson.JsonObject;
+import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
 import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
-import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
@@ -28,13 +28,13 @@ import static org.mockito.Mockito.when;
 @RunWith(SpringRunner.class)
 public class UserServiceTest {
 
+  private UserService userService;
+
   @MockBean
   private UserRepository userRepo;
 
   @MockBean
-  private EntityService entityService;
-
-  private UserService userService;
+  private EntityRepository entityRepo;
 
   private User admin1;
   private User admin2;
@@ -51,7 +51,7 @@ public class UserServiceTest {
   public void setUp() {
 
     userService = new UserService(userRepo);
-    userService.setEntityService(entityService);
+    userService.setEntityRepository(entityRepo);
 
     admin1 = new User();
     admin1.setId(1);
@@ -143,7 +143,6 @@ public class UserServiceTest {
           .findFirst();
       return userFound;
     });
-
     when(userRepo.findByTelegramNameAndTelegramChat(anyString(), anyString())).thenAnswer(i -> {
       String tn = i.getArgument(0);
       String tc = i.getArgument(1);
@@ -152,32 +151,29 @@ public class UserServiceTest {
           .findFirst();
       return userFound.isPresent() ? userFound.get() : null;
     });
-
     when(userRepo.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
-
     when(userRepo.findByEmail(anyString())).thenAnswer(i -> {
       String emailNewUser = i.getArgument(0);
       return allUsers.stream()
           .filter(user -> user.getEmail() == emailNewUser)
           .findFirst().orElse(null);
     });
-
-    when(entityService.findById(anyInt())).thenAnswer(i -> {
-      int id = i.getArgument(0);
-      if (id == 1) {
-        return entity1;
-      } else if (id == 2) {
-        return entity2;
-      } else {
-        return null;
-      }
-    });
-
     when(userRepo.findAllByEntity(any(Entity.class))).thenAnswer(i -> {
       Entity ent = i.getArgument(0);
       List<User> users = allUsers.stream()
           .filter(user -> user.getEntity() == ent).collect(Collectors.toList());
       return users;
+    });
+
+    when(entityRepo.findById(anyInt())).thenAnswer(i -> {
+      int id = i.getArgument(0);
+      if (id == 1) {
+        return Optional.of(entity1);
+      } else if (id == 2) {
+        return Optional.of(entity2);
+      } else {
+        return Optional.empty();
+      }
     });
   }
 
@@ -615,7 +611,7 @@ public class UserServiceTest {
     editedUser.setTelegramName(newTelegramName);
     editedUser.setEntity(entity2);
 
-    when(entityService.findById(newEntityId)).thenReturn(entity2);
+    when(entityRepo.findById(newEntityId)).thenReturn(Optional.of(entity2));
 
     try {
       User user = userService.editByAdministrator(user1, fieldsToEdit, false);
@@ -660,7 +656,7 @@ public class UserServiceTest {
     HashMap<String, Object> fieldsToEdit = new HashMap<>();
     fieldsToEdit.put("entityId",3);
 
-    when(entityService.findById(3)).thenReturn(null);
+    when(entityRepo.findById(3)).thenReturn(Optional.empty());
 
     try {
       User user = userService.editByAdministrator(mod1, fieldsToEdit, false);
@@ -668,7 +664,7 @@ public class UserServiceTest {
     } catch (InvalidFieldsValuesException urnfe) {
       assertTrue(urnfe.getMessage().contains("entity"));
       assertTrue(true);
-    } catch (Exception e) {
+    } catch (MissingFieldsException | NotAuthorizedException | ConflictException e) {
       System.out.println(e);
       assertTrue(false);
     }
