@@ -32,6 +32,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
+
 @RestController
 @RequestMapping(value = "/users")
 public class UserController extends CoreController {
@@ -76,10 +78,11 @@ public class UserController extends CoreController {
   // Create new user
   @PostMapping(value = {""})
   public ResponseEntity<User> createUser(@RequestHeader("Authorization") String authorization,
-                                         @RequestHeader(value = "x-forwarded-for") String ip,
-                                         @RequestBody String jsonStringUser) {
-    String token = authorization.substring(7);
-    User user = userService.findByEmail(jwtUtil.extractUsername(token));
+                                         @RequestBody String jsonStringUser,
+                                         HttpServletRequest httpRequest) {
+    String ip = getIpAddress(httpRequest);
+    User user = getUserFromAuthorization(authorization);
+
     JsonObject jsonUser = JsonParser.parseString(jsonStringUser).getAsJsonObject();
     try {
       User createdUser = userService.serializeUser(jsonUser, user);
@@ -97,10 +100,11 @@ public class UserController extends CoreController {
 
   @DeleteMapping(value = {"/{userid:.+}"})
   public ResponseEntity<User> deleteUser(@RequestHeader("Authorization") String authorization,
-                                      @RequestHeader(value = "x-forwarded-for") String ip,
-                                      @PathVariable("userid") int userToDeleteId) {
-    String token = authorization.substring(7);
-    User user = userService.findByEmail(jwtUtil.extractUsername(token));
+                                         @PathVariable("userid") int userToDeleteId,
+                                         HttpServletRequest httpRequest) {
+    String ip = getIpAddress(httpRequest);
+    User user = getUserFromAuthorization(authorization);
+
     try {
       User deletedUser = userService.deleteUser(user, userToDeleteId);
       logService.createLog(user.getId(), ip, "user.deleted",
@@ -123,12 +127,14 @@ public class UserController extends CoreController {
   @PutMapping(value = {"/{userid:.+}"})
   public ResponseEntity<Map<String, Object>> editUser(
       @RequestHeader("Authorization") String authorization,
-      @RequestHeader(value = "x-forwarded-for") String ip,
       @RequestBody Map<String, Object> fieldsToEdit,
-      @PathVariable("userid") int userId) {
+      @PathVariable("userid") int userId,
+      HttpServletRequest httpRequest) {
+    String ip = getIpAddress(httpRequest);
+    User editingUser = getUserFromAuthorization(authorization);
     String token = authorization.substring(7);
-    String editingUserEmail = jwtUtil.extractUsername(token);
-    User editingUser = userService.findByEmail(editingUserEmail);
+
+    String editingUserEmail = editingUser.getEmail();
     User userToEdit = userService.findById(userId);
 
     if (userToEdit != null) {

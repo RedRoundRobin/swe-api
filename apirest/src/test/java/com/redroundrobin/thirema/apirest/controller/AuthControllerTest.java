@@ -13,6 +13,7 @@ import org.junit.runner.RunWith;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,6 +24,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequestWrapper;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -57,6 +60,8 @@ public class AuthControllerTest {
   private AuthController authController;
 
 
+  MockHttpServletRequest httpRequest;
+
   private User admin;
   private User adminTfa1;
   private User adminTfa2;
@@ -66,6 +71,9 @@ public class AuthControllerTest {
   public void setUp() throws Exception {
     authController = new AuthController(authenticationManager, telegramService, jwtTokenUtil,
         logService, userService);
+
+    httpRequest = new MockHttpServletRequest();
+    httpRequest.setRemoteAddr("localhost");
 
     admin = new User();
     admin.setName("admin");
@@ -188,7 +196,7 @@ public class AuthControllerTest {
     request.put("username",admin.getEmail());
     request.put("password",admin.getPassword());
 
-    ResponseEntity response = authController.authentication(request, "localhost");
+    ResponseEntity response = authController.authentication(request, httpRequest);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
 
@@ -207,7 +215,7 @@ public class AuthControllerTest {
 
     Map<String, Object> request = new HashMap<>();
 
-    ResponseEntity response = authController.authentication(request, "localhost");
+    ResponseEntity response = authController.authentication(request, httpRequest);
 
     assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
   }
@@ -219,7 +227,7 @@ public class AuthControllerTest {
     request.put("username",admin.getEmail());
     request.put("password","wrong");
 
-    ResponseEntity response = authController.authentication(request, "localhost");
+    ResponseEntity response = authController.authentication(request, httpRequest);
 
     assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
   }
@@ -231,7 +239,7 @@ public class AuthControllerTest {
     request.put("username",disabledAdmin.getEmail());
     request.put("password",disabledAdmin.getPassword());
 
-    ResponseEntity response = authController.authentication(request, "localhost");
+    ResponseEntity response = authController.authentication(request, httpRequest);
 
     assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
   }
@@ -245,7 +253,7 @@ public class AuthControllerTest {
 
     when(telegramService.sendTfa(any(Map.class))).thenReturn(true);
 
-    ResponseEntity response = authController.authentication(request, "localhost");
+    ResponseEntity response = authController.authentication(request, httpRequest);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
 
@@ -269,7 +277,7 @@ public class AuthControllerTest {
 
     when(telegramService.sendTfa(any(Map.class))).thenReturn(false);
 
-    ResponseEntity response = authController.authentication(request, "localhost");
+    ResponseEntity response = authController.authentication(request, httpRequest);
 
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
   }
@@ -281,7 +289,7 @@ public class AuthControllerTest {
     request.put("username",adminTfa2.getEmail());
     request.put("password",adminTfa2.getPassword());
 
-    ResponseEntity response = authController.authentication(request, "localhost");
+    ResponseEntity response = authController.authentication(request, httpRequest);
 
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
   }
@@ -301,7 +309,7 @@ public class AuthControllerTest {
     when(jwtTokenUtil.extractAuthCode(anyString())).thenReturn(authCode);
     when(jwtTokenUtil.extractUsername(anyString())).thenReturn(adminTfa1.getEmail());
 
-    ResponseEntity response = authController.tfaAuthentication(request, "tokennnnnn", "localhost");
+    ResponseEntity response = authController.tfaAuthentication(request, "tokennnnnn", httpRequest);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
 
@@ -325,7 +333,7 @@ public class AuthControllerTest {
     when(jwtTokenUtil.extractAuthCode(anyString())).thenReturn(authCode);
     when(jwtTokenUtil.extractUsername(anyString())).thenReturn(adminTfa1.getEmail());
 
-    ResponseEntity response = authController.tfaAuthentication(request, "tokennnnnn", "localhost");
+    ResponseEntity response = authController.tfaAuthentication(request, "tokennnnnn", httpRequest);
 
     assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
   }
@@ -341,7 +349,7 @@ public class AuthControllerTest {
     when(jwtTokenUtil.extractAuthCode(anyString())).thenReturn(authCode);
     when(jwtTokenUtil.extractUsername(anyString())).thenReturn(adminTfa1.getEmail());
 
-    ResponseEntity response = authController.tfaAuthentication(request, "tokennnnnn", "localhost");
+    ResponseEntity response = authController.tfaAuthentication(request, "tokennnnnn", httpRequest);
 
     assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
   }
@@ -357,7 +365,7 @@ public class AuthControllerTest {
     when(jwtTokenUtil.extractAuthCode(anyString())).thenReturn(authCode);
     when(jwtTokenUtil.extractUsername(anyString())).thenReturn("noUser");
 
-    ResponseEntity response = authController.tfaAuthentication(request, "tokennnnnn", "localhost");
+    ResponseEntity response = authController.tfaAuthentication(request, "tokennnnnn", httpRequest);
 
     assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
   }
@@ -373,7 +381,7 @@ public class AuthControllerTest {
     when(jwtTokenUtil.extractAuthCode(anyString())).thenReturn(authCode);
     when(jwtTokenUtil.extractUsername(anyString())).thenReturn(disabledAdmin.getEmail());
 
-    ResponseEntity response = authController.tfaAuthentication(request, "tokennnnnn", "localhost");
+    ResponseEntity response = authController.tfaAuthentication(request, "tokennnnnn", httpRequest);
 
     assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
   }
@@ -389,7 +397,7 @@ public class AuthControllerTest {
     when(jwtTokenUtil.extractAuthCode(anyString())).thenReturn("differentAuthCode");
     when(jwtTokenUtil.extractUsername(anyString())).thenReturn(adminTfa1.getEmail());
 
-    ResponseEntity response = authController.tfaAuthentication(request, "tokennnnnn", "localhost");
+    ResponseEntity response = authController.tfaAuthentication(request, "tokennnnnn", httpRequest);
 
     assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
   }
@@ -413,7 +421,7 @@ public class AuthControllerTest {
       return user;
     });
 
-    ResponseEntity response = authController.telegramAuthentication(request, "localhost");
+    ResponseEntity response = authController.telegramAuthentication(request, httpRequest);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
 
@@ -438,7 +446,7 @@ public class AuthControllerTest {
     when(userService.findByTelegramNameAndTelegramChat(anyString(),anyString()))
         .thenReturn(adminTfa1);
 
-    ResponseEntity response = authController.telegramAuthentication(request, "localhost");
+    ResponseEntity response = authController.telegramAuthentication(request, httpRequest);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
 
@@ -458,7 +466,7 @@ public class AuthControllerTest {
     Map<String, Object> request = new HashMap<>();
     request.put("telegramName", adminTfa2.getTelegramName());
 
-    ResponseEntity response = authController.telegramAuthentication(request, "localhost");
+    ResponseEntity response = authController.telegramAuthentication(request, httpRequest);
 
     assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
   }
@@ -472,7 +480,7 @@ public class AuthControllerTest {
 
     when(userService.findByTelegramName(anyString())).thenReturn(null);
 
-    ResponseEntity response = authController.telegramAuthentication(request, "localhost");
+    ResponseEntity response = authController.telegramAuthentication(request, httpRequest);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
 

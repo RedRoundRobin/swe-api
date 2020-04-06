@@ -24,6 +24,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
+
 @RestController
 public class AuthController extends CoreController {
 
@@ -43,7 +45,9 @@ public class AuthController extends CoreController {
   @PostMapping(value = "/auth")
   public ResponseEntity<Map<String, Object>> authentication(
       @RequestBody Map<String, Object> request,
-      @RequestHeader(value = "X-Forwarded-For") String ip) {
+      HttpServletRequest httpRequest) {
+    String ip = getIpAddress(httpRequest);
+
     String email = (String) request.get("username");
     String password = (String) request.get("password");
 
@@ -108,8 +112,8 @@ public class AuthController extends CoreController {
   public ResponseEntity<Map<String, Object>> tfaAuthentication(
       @RequestBody Map<String, Object> request,
       @RequestHeader("Authorization") String authorization,
-      @RequestHeader(value = "X-Forwarded-For") String ip) {
-
+      HttpServletRequest httpRequest) {
+    String ip = getIpAddress(httpRequest);
     if (!request.containsKey("authCode") || ((String) request.get("authCode")).equals("")) {
       return new ResponseEntity(HttpStatus.BAD_REQUEST);
     }
@@ -158,7 +162,9 @@ public class AuthController extends CoreController {
   @PostMapping(value = {"/auth/telegram"})
   public ResponseEntity<Map<String, Object>> telegramAuthentication(
       @RequestBody Map<String, Object> request,
-      @RequestHeader(value = "X-Forwarded-For") String ip) {
+      HttpServletRequest httpRequest) {
+    String ip = getIpAddress(httpRequest);
+
     String telegramName = (String) request.get("telegramName");
     Integer intChatId = (Integer) request.get("telegramChat");
 
