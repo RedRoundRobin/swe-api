@@ -50,10 +50,8 @@ public class KafkaConsumerConfig {
     Map<String, Object> props = new HashMap<>();
     props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
     props.put(ConsumerConfig.GROUP_ID_CONFIG, "alerts");
-    props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-    props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, new JsonDeserializer<>(new TypeReference<Object[]>() {
-    }));
-    return new DefaultKafkaConsumerFactory<>(props);
+    return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(),
+        new JsonDeserializer<>(new TypeReference<Object[]>() {}));
   }
 
   @Bean
