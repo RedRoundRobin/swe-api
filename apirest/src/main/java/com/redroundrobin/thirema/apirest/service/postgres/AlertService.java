@@ -7,73 +7,77 @@ import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.repository.postgres.AlertRepository;
 import java.util.Collections;
 import java.util.List;
+
+import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
+import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
+import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AlertService {
 
-  private AlertRepository repo;
+  private AlertRepository alertRepo;
 
-  private EntityService entityService;
+  private EntityRepository entityRepo;
 
-  private SensorService sensorService;
+  private SensorRepository sensorRepo;
 
-  private UserService userService;
+  private UserRepository userRepo;
 
   @Autowired
   public AlertService(AlertRepository alertRepository) {
-    this.repo = alertRepository;
+    this.alertRepo = alertRepository;
   }
 
   public List<Alert> findAll() {
-    return (List<Alert>) repo.findAll();
+    return (List<Alert>) alertRepo.findAll();
   }
 
   public List<Alert> findAllByEntityId(int entityId) {
-    Entity entity = entityService.findById(entityId);
+    Entity entity = entityRepo.findById(entityId).orElse(null);
     if (entity != null) {
-      return (List<Alert>) repo.findAllByEntity(entity);
+      return (List<Alert>) alertRepo.findAllByEntity(entity);
     } else {
       return Collections.emptyList();
     }
   }
 
   public List<Alert> findAllBySensorId(int sensorId) {
-    Sensor sensor = sensorService.findById(sensorId);
+    Sensor sensor = sensorRepo.findById(sensorId).orElse(null);
     if (sensor != null) {
-      return (List<Alert>) repo.findAllBySensor(sensor);
+      return (List<Alert>) alertRepo.findAllBySensor(sensor);
     } else {
       return Collections.emptyList();
     }
   }
 
   public List<Alert> findAllByUserId(int userId) {
-    User user = userService.findById(userId);
+    User user = userRepo.findById(userId).orElse(null);
     if (user != null) {
-      return (List<Alert>) repo.findAllByUsers(user);
+      return (List<Alert>) alertRepo.findAllByUsers(user);
     } else {
       return Collections.emptyList();
     }
   }
 
   public Alert findById(int id) {
-    return repo.findById(id).orElse(null);
+    return alertRepo.findById(id).orElse(null);
   }
 
   @Autowired
-  public void setEntityService(EntityService entityService) {
-    this.entityService = entityService;
+  public void setEntityRepository(EntityRepository entityRepository) {
+    this.entityRepo = entityRepository;
   }
 
   @Autowired
-  public void setSensorService(SensorService sensorService) {
-    this.sensorService = sensorService;
+  public void setSensorRepository(SensorRepository sensorRepository) {
+    this.sensorRepo = sensorRepository;
   }
 
   @Autowired
-  public void setUserService(UserService userService) {
-    this.userService = userService;
+  public void setUserRepository(UserRepository userRepository) {
+    this.userRepo = userRepository;
   }
 
 }
