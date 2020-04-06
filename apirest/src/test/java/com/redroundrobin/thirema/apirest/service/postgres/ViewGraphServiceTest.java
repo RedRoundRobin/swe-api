@@ -5,7 +5,9 @@ import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.postgres.View;
 import com.redroundrobin.thirema.apirest.models.postgres.ViewGraph;
+import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.ViewGraphRepository;
+import com.redroundrobin.thirema.apirest.repository.postgres.ViewRepository;
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
@@ -42,10 +44,11 @@ public class ViewGraphServiceTest {
   private ViewGraphRepository viewGraphRepo;
 
   @MockBean
-  private SensorService sensorService;
+  private SensorRepository sensorRepo;
 
   @MockBean
-  private ViewService viewService;
+  private ViewRepository viewRepo;
+
 
   private Entity entity1;
   private Entity entity2;
@@ -72,8 +75,8 @@ public class ViewGraphServiceTest {
   @Before
   public void setUp() {
     this.viewGraphService = new ViewGraphService(viewGraphRepo);
-    this.viewGraphService.setSensorService(sensorService);
-    this.viewGraphService.setViewService(viewService);
+    this.viewGraphService.setSensorRepository(sensorRepo);
+    this.viewGraphService.setViewRepository(viewRepo);
 
 
     // ----------------------------------------- Set Entities --------------------------------------
@@ -261,10 +264,10 @@ public class ViewGraphServiceTest {
     });
     when(viewGraphRepo.save(any(ViewGraph.class))).thenAnswer(i -> i.getArgument(0));
 
-    when(sensorService.findById(anyInt())).thenAnswer(i -> allSensors.stream()
-        .filter(s -> i.getArgument(0).equals(s.getId())).findFirst().orElse(null));
-    when(sensorService.findByIdAndEntityId(anyInt(),anyInt())).thenAnswer(i -> {
-      Entity entity = allEntities.stream().filter(e -> i.getArgument(1).equals(e.getId())).findFirst().orElse(null);
+    when(sensorRepo.findById(anyInt())).thenAnswer(i -> allSensors.stream()
+        .filter(s -> i.getArgument(0).equals(s.getId())).findFirst());
+    when(sensorRepo.findBySensorIdAndEntities(anyInt(),any(Entity.class))).thenAnswer(i -> {
+      Entity entity = i.getArgument(1);
       Sensor sensor = allSensors.stream().filter(s -> i.getArgument(0).equals(s.getId())).findFirst().orElse(null);
       if (sensor != null && sensor.getEntities().contains(entity)) {
         return sensor;
@@ -273,11 +276,11 @@ public class ViewGraphServiceTest {
       }
     });
 
-    when(viewService.findById(anyInt())).thenAnswer(i -> allView.stream()
-        .filter(s -> i.getArgument(0).equals(s.getId())).findFirst().orElse(null));
-    when(viewService.findByIdAndUserId(anyInt(), anyInt())).thenAnswer(i -> {
+    when(viewRepo.findById(anyInt())).thenAnswer(i -> allView.stream()
+        .filter(s -> i.getArgument(0).equals(s.getId())).findFirst());
+    when(viewRepo.findByViewIdAndUser(anyInt(), any(User.class))).thenAnswer(i -> {
       View view = allView.stream().filter(v -> i.getArgument(0).equals(v.getId())).findFirst().orElse(null);
-      if (view != null && i.getArgument(1).equals(view.getUser().getId())) {
+      if (view != null && i.getArgument(1).equals(view.getUser())) {
         return view;
       } else {
         return null;
