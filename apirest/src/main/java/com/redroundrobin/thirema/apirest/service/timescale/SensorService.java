@@ -1,6 +1,8 @@
 package com.redroundrobin.thirema.apirest.service.timescale;
 
+import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.timescale.Sensor;
+import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
 import com.redroundrobin.thirema.apirest.repository.timescale.SensorRepository;
 import java.util.Collections;
 import java.util.HashMap;
@@ -15,7 +17,9 @@ public class SensorService {
 
   private SensorRepository repo;
 
-  private com.redroundrobin.thirema.apirest.service.postgres.SensorService postgreSensorService;
+  private com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository postgreSensorRepo;
+
+  private EntityRepository entityRepo;
 
   @Autowired
   public SensorService(@Qualifier("timescaleSensorRepository") SensorRepository sensorRepository) {
@@ -26,12 +30,17 @@ public class SensorService {
       Integer limit, List<Integer> sensorIds, Integer entityId) {
     Map<Integer, List<Sensor>> sensorsData = new HashMap<>();
 
+    Entity entity = null;
+    if (entityId != null) {
+      entity = entityRepo.findById(entityId).orElse(null);
+    }
+
     for (Integer id : sensorIds) {
       com.redroundrobin.thirema.apirest.models.postgres.Sensor sensor;
       if (entityId != null) {
-        sensor = postgreSensorService.findByIdAndEntityId(id, entityId);
+        sensor = postgreSensorRepo.findBySensorIdAndEntities(id, entity);
       } else {
-        sensor = postgreSensorService.findById(id);
+        sensor = postgreSensorRepo.findById(id).orElse(null);
       }
 
       if (sensor != null) {
@@ -60,11 +69,18 @@ public class SensorService {
                                                                            Integer entityId) {
     Map<Integer, List<Sensor>> sensorsMap = new HashMap<>();
 
+    Entity entity = null;
+    if (entityId != null) {
+      entity = entityRepo.findById(entityId).orElse(null);
+    }
+
     List<com.redroundrobin.thirema.apirest.models.postgres.Sensor> postgreSensors;
     if (entityId != null) {
-      postgreSensors = postgreSensorService.findAllByEntityId(entityId);
+      postgreSensors = (List<com.redroundrobin.thirema.apirest.models.postgres.Sensor>)
+          postgreSensorRepo.findAllByEntities(entity);
     } else {
-      postgreSensors = postgreSensorService.findAll();
+      postgreSensors = (List<com.redroundrobin.thirema.apirest.models.postgres.Sensor>)
+          postgreSensorRepo.findAll();
     }
 
     for (com.redroundrobin.thirema.apirest.models.postgres.Sensor s : postgreSensors) {
@@ -104,7 +120,7 @@ public class SensorService {
 
   public Sensor findLastValueBySensorId(int sensorId) {
     com.redroundrobin.thirema.apirest.models.postgres.Sensor sensor =
-        postgreSensorService.findById(sensorId);
+        postgreSensorRepo.findById(sensorId).orElse(null);
     if (sensor != null) {
       String gatewayName = sensor.getDevice().getGateway().getName();
       int realDeviceId = sensor.getDevice().getRealDeviceId();
@@ -118,7 +134,7 @@ public class SensorService {
 
   public Sensor findLastValueBySensorIdAndEntityId(int sensorId, int entityId) {
     com.redroundrobin.thirema.apirest.models.postgres.Sensor sensor =
-        postgreSensorService.findById(sensorId);
+        postgreSensorRepo.findById(sensorId).orElse(null);
     if (sensor != null && sensor.getEntities().stream().anyMatch(e -> e.getId() == entityId)) {
       String gatewayName = sensor.getDevice().getGateway().getName();
       int realDeviceId = sensor.getDevice().getRealDeviceId();
@@ -150,9 +166,14 @@ public class SensorService {
   }
 
   @Autowired
-  public void setPostgreSensorService(
-      com.redroundrobin.thirema.apirest.service.postgres.SensorService postgreSensorService) {
-    this.postgreSensorService = postgreSensorService;
+  public void setEntityRepository(EntityRepository entityRepository) {
+    this.entityRepo = entityRepository;
   }
 
+  @Autowired
+  public void setPostgreSensorRepository(
+      com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository
+          postgreSensorRepository) {
+    this.postgreSensorRepo = postgreSensorRepository;
+  }
 }
