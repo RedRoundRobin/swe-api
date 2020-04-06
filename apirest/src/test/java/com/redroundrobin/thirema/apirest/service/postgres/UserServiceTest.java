@@ -153,9 +153,6 @@ public class UserServiceTest {
       return userFound.isPresent() ? userFound.get() : null;
     });
 
-    List<Device> devices = new ArrayList<>();
-    when(userRepo.userDevices(anyInt())).thenReturn(devices);
-
     when(userRepo.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
     when(userRepo.findByEmail(anyString())).thenAnswer(i -> {
