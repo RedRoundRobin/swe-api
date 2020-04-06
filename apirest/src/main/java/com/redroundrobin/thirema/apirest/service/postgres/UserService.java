@@ -33,16 +33,16 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserService implements UserDetailsService {
 
-  private UserRepository repo;
+  private UserRepository userRepo;
 
   private AlertRepository alertRepo;
 
   private EntityRepository entityRepo;
 
   @Autowired
-  public UserService(UserRepository repo, AlertRepository alertRepository,
+  public UserService(UserRepository userRepository, AlertRepository alertRepository,
                      EntityRepository entityRepository) {
-    this.repo = repo;
+    this.userRepo = userRepository;
     this.alertRepo = alertRepository;
     this.entityRepo = entityRepository;
   }
@@ -181,7 +181,7 @@ public class UserService implements UserDetailsService {
       }
     }
 
-    return repo.save(userToEdit);
+    return userRepo.save(userToEdit);
   }
 
   public User deleteUser(User deletingUser, int userToDeleteId)
@@ -199,7 +199,7 @@ public class UserService implements UserDetailsService {
     }
 
     userToDelete.setDeleted(true);
-    return repo.save(userToDelete);
+    return userRepo.save(userToDelete);
   }
 
   public User editByAdministrator(User userToEdit, Map<String, Object> fieldsToEdit, boolean itself)
@@ -243,17 +243,17 @@ public class UserService implements UserDetailsService {
 
   public User editUserTelegramChat(User user, String telegramChat) {
     user.setTelegramChat(telegramChat);
-    return repo.save(user);
+    return userRepo.save(user);
   }
 
   public List<User> findAll() {
-    return (List<User>) repo.findAll();
+    return (List<User>) userRepo.findAll();
   }
 
   public List<User> findAllByDisabledAlert(int alertId) {
     Alert alert = alertRepo.findById(alertId).orElse(null);
     if (alert != null) {
-      return (List<User>) repo.findAllByDisabledAlerts(alert);
+      return (List<User>) userRepo.findAllByDisabledAlerts(alert);
     } else {
       return Collections.emptyList();
     }
@@ -268,7 +268,7 @@ public class UserService implements UserDetailsService {
       }
     });
     if (!alerts.isEmpty()) {
-      return (List<User>) repo.findAllByDisabledAlertsIn(alerts);
+      return (List<User>) userRepo.findAllByDisabledAlertsIn(alerts);
     } else {
       return Collections.emptyList();
     }
@@ -277,27 +277,27 @@ public class UserService implements UserDetailsService {
   public List<User> findAllByEntityId(int entityId) {
     Entity entity = entityRepo.findById(entityId).orElse(null);
     if (entity != null) {
-      return (List<User>) repo.findAllByEntity(entity);
+      return (List<User>) userRepo.findAllByEntity(entity);
     } else {
       return Collections.emptyList();
     }
   }
 
   public User findByEmail(String email) {
-    return repo.findByEmail(email);
+    return userRepo.findByEmail(email);
   }
 
   public User findById(int id) {
-    Optional<User> optUser = repo.findById(id);
+    Optional<User> optUser = userRepo.findById(id);
     return optUser.orElse(null);
   }
 
   public User findByTelegramName(String telegramName) {
-    return repo.findByTelegramName(telegramName);
+    return userRepo.findByTelegramName(telegramName);
   }
 
   public User findByTelegramNameAndTelegramChat(String telegramName, String telegramChat) {
-    return repo.findByTelegramNameAndTelegramChat(telegramName, telegramChat);
+    return userRepo.findByTelegramNameAndTelegramChat(telegramName, telegramChat);
   }
 
   /**
@@ -411,7 +411,7 @@ public class UserService implements UserDetailsService {
     }
 
     String email = rawUserToInsert.get("email").getAsString();
-    if(email != null && repo.findByEmail(email) == null) {
+    if(email != null && userRepo.findByEmail(email) == null) {
       newUser.setEmail(email);
     } else if (email == null) {
       throw new InvalidFieldsValuesException("");
@@ -419,7 +419,7 @@ public class UserService implements UserDetailsService {
       throw new ConflictException("");
     }
 
-    return repo.save(newUser);
+    return userRepo.save(newUser);
   }
 
 }
