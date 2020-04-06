@@ -11,8 +11,11 @@ import org.springframework.security.core.Authentication;
 
 public class CustomAuthenticationManager implements AuthenticationManager {
 
-  @Autowired
   UserService userService;
+
+  public CustomAuthenticationManager(UserService userService) {
+    this.userService = userService;
+  }
 
   @Override
   public Authentication authenticate(Authentication authentication) {
