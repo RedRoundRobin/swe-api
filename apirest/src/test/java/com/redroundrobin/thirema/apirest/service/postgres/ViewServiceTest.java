@@ -2,6 +2,7 @@ package com.redroundrobin.thirema.apirest.service.postgres;
 import com.google.gson.JsonObject;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.postgres.View;
+import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.ViewRepository;
 import com.redroundrobin.thirema.apirest.utils.exception.*;
 import org.junit.Before;
@@ -21,13 +22,13 @@ import static org.mockito.Mockito.when;
 @RunWith(SpringRunner.class)
 public class ViewServiceTest {
 
+  private ViewService viewService;
+
   @MockBean
   private ViewRepository viewRepo;
 
   @MockBean
-  private UserService userService;
-
-  private ViewService viewService;
+  private UserRepository userRepo;
 
   private User admin1;
   private User mod1;
@@ -41,7 +42,7 @@ public class ViewServiceTest {
   public void setUp() {
 
     viewService = new ViewService(viewRepo);
-    viewService.setUserService(userService);
+    viewService.setUserRepository(userRepo);
 
     admin1 = new User(); //utente a cui non ho dato alcuna vista
     admin1.setId(1);
@@ -111,23 +112,21 @@ public class ViewServiceTest {
           .findFirst();
       return viewFound;
     });
-
     when(viewRepo.findAllByUser(any(User.class))).thenAnswer(i -> {
       User user = i.getArgument(0);
       List<View> views = allViews.stream()
           .filter(view -> view.getUser() == user).collect(Collectors.toList());
       return views;
     });
-
     when(viewRepo.findByViewIdAndUser(anyInt(), any(User.class))).thenAnswer(i -> {
       return allViews.stream()
           .filter(v -> i.getArgument(0).equals(v.getId())
               && i.getArgument(1).equals(v.getUser())).findFirst().orElse(null);
     });
 
-    when(userService.findById(anyInt())).thenAnswer(i -> {
+    when(userRepo.findById(anyInt())).thenAnswer(i -> {
       return allUsers.stream()
-        .filter(u -> i.getArgument(0).equals(u.getId())).findFirst().orElse(null);
+        .filter(u -> i.getArgument(0).equals(u.getId())).findFirst();
     });
   }
 

@@ -3,6 +3,7 @@ package com.redroundrobin.thirema.apirest.service.postgres;
 import com.google.gson.JsonObject;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.postgres.View;
+import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.ViewRepository;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
@@ -18,13 +19,13 @@ import org.springframework.stereotype.Service;
 @Service
 public class ViewService {
 
-  private ViewRepository repo;
+  private ViewRepository viewRepo;
 
-  private UserService userService;
+  private UserRepository userRepo;
 
   @Autowired
   public ViewService(ViewRepository viewRepository) {
-    this.repo = viewRepository;
+    this.viewRepo = viewRepository;
   }
 
   private boolean checkCreatableFields(Set<String> keys)
@@ -32,9 +33,7 @@ public class ViewService {
     Set<String> creatable = new HashSet<>();
     creatable.add("name");
 
-    boolean onlyCreatableKeys = keys.stream()
-        .filter(key -> !creatable.contains(key))
-        .count() == 0;
+    boolean onlyCreatableKeys = creatable.containsAll(keys);
 
     if (!onlyCreatableKeys) {
       throw new KeysNotFoundException("There are some keys that either"
@@ -47,7 +46,7 @@ public class ViewService {
   public void deleteView(User deletingUser, int viewToDeleteId)
       throws NotAuthorizedException, InvalidFieldsValuesException {
     View viewToDelete;
-    if ((viewToDelete = repo.findById(viewToDeleteId).orElse(null)) == null) {
+    if ((viewToDelete = viewRepo.findById(viewToDeleteId).orElse(null)) == null) {
       throw new InvalidFieldsValuesException("The given view_id doesn't correspond to any view");
     }
 
@@ -56,21 +55,21 @@ public class ViewService {
           + "the view_id given");
     }
 
-    repo.delete(viewToDelete);
+    viewRepo.delete(viewToDelete);
   }
 
   public List<View> findAllByUser(User user) {
-    return (List<View>) repo.findAllByUser(user);
+    return (List<View>) viewRepo.findAllByUser(user);
   }
 
   public View findById(int id) {
-    return repo.findById(id).orElse(null);
+    return viewRepo.findById(id).orElse(null);
   }
 
   public View findByIdAndUserId(int id, int userId) {
-    User user = userService.findById(userId);
+    User user = userRepo.findById(userId).orElse(null);
     if (user != null) {
-      return repo.findByViewIdAndUser(id, user);
+      return viewRepo.findByViewIdAndUser(id, user);
     } else {
       return null;
     }
@@ -85,12 +84,12 @@ public class ViewService {
     View newView = new View();
     newView.setName(rawViewToInsert.get("name").getAsString());
     newView.setUser(insertingUser);
-    return repo.save(newView);
+    return viewRepo.save(newView);
   }
 
   @Autowired
-  public void setUserService(UserService userService) {
-    this.userService = userService;
+  public void setUserRepository(UserRepository userRepository) {
+    this.userRepo = userRepository;
   }
 
 }
