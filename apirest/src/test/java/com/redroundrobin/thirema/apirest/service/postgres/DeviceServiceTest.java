@@ -5,10 +5,9 @@ import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.repository.postgres.DeviceRepository;
-import com.redroundrobin.thirema.apirest.service.postgres.DeviceService;
-import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
-import com.redroundrobin.thirema.apirest.service.postgres.GatewayService;
-import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
+import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
+import com.redroundrobin.thirema.apirest.repository.postgres.GatewayRepository;
+import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -17,6 +16,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -32,16 +32,16 @@ import static org.mockito.Mockito.when;
 public class DeviceServiceTest {
 
   @MockBean
-  private DeviceRepository repo;
+  private DeviceRepository deviceRepo;
 
   @MockBean
-  private EntityService entityService;
+  private EntityRepository entityRepo;
 
   @MockBean
-  private GatewayService gatewayService;
+  private GatewayRepository gatewayRepo;
 
   @MockBean
-  private SensorService sensorService;
+  private SensorRepository sensorRepo;
 
   private DeviceService deviceService;
 
@@ -64,10 +64,10 @@ public class DeviceServiceTest {
 
   @Before
   public void setUp() {
-    deviceService = new DeviceService(repo);
-    deviceService.setEntityService(entityService);
-    deviceService.setGatewayService(gatewayService);
-    deviceService.setSensorService(sensorService);
+    deviceService = new DeviceService(deviceRepo);
+    deviceService.setEntityRepository(entityRepo);
+    deviceService.setGatewayRepository(gatewayRepo);
+    deviceService.setSensorRepository(sensorRepo);
 
     // ----------------------------------------- Set Devices --------------------------------------
     device1 = new Device();
@@ -168,54 +168,54 @@ public class DeviceServiceTest {
 
 
 
-    when(repo.findAll()).thenReturn(allDevices);
-    when(repo.findAllByGateway(any(Gateway.class))).thenAnswer(i -> {
+    when(deviceRepo.findAll()).thenReturn(allDevices);
+    when(deviceRepo.findAllByGateway(any(Gateway.class))).thenAnswer(i -> {
       Gateway gateway = i.getArgument(0);
       return allDevices.stream().filter(d -> gateway.equals(d.getGateway()))
           .collect(Collectors.toList());
     });
-    when(repo.findAllByEntityId(anyInt())).thenAnswer(i -> {
+    when(deviceRepo.findAllByEntityId(anyInt())).thenAnswer(i -> {
       if (i.getArgument(0).equals(entity1.getId())) {
         return entity1Devices;
       } else {
         return null;
       }
     });
-    when(repo.findById(anyInt())).thenAnswer(i -> {
+    when(deviceRepo.findById(anyInt())).thenAnswer(i -> {
       return allDevices.stream().filter(d -> i.getArgument(0).equals(d.getId()))
           .findFirst();
     });
-    when(repo.findByIdAndEntityId(anyInt(), eq(entity1.getId()))).thenAnswer(i -> {
+    when(deviceRepo.findByIdAndEntityId(anyInt(), eq(entity1.getId()))).thenAnswer(i -> {
       return entity1Devices.stream().filter(d -> i.getArgument(0).equals(d.getId()))
           .findFirst().orElse(null);
     });
-    when(repo.findBySensors(any(Sensor.class))).thenAnswer(i -> {
+    when(deviceRepo.findBySensors(any(Sensor.class))).thenAnswer(i -> {
       Sensor sensor = i.getArgument(0);
       return allDevices.stream().filter(d -> d.getSensors().contains(sensor))
           .findFirst().orElse(null);
     });
-    when(repo.findByGatewayAndRealDeviceId(any(Gateway.class), anyInt())).thenAnswer(i -> {
+    when(deviceRepo.findByGatewayAndRealDeviceId(any(Gateway.class), anyInt())).thenAnswer(i -> {
       return allDevices.stream().filter(d -> d.getGateway().equals(i.getArgument(0))
           && i.getArgument(1).equals(d.getRealDeviceId()))
           .findFirst().orElse(null);
     });
 
-    when(entityService.findById(anyInt())).thenAnswer(i -> {
+    when(entityRepo.findById(anyInt())).thenAnswer(i -> {
       if (i.getArgument(0).equals(entity1.getId())) {
-        return entity1;
+        return Optional.of(entity1);
       } else {
-        return null;
+        return Optional.empty();
       }
     });
 
-    when(gatewayService.findById(anyInt())).thenAnswer(i -> {
+    when(gatewayRepo.findById(anyInt())).thenAnswer(i -> {
       return allGateways.stream().filter(g -> i.getArgument(0).equals(g.getId()))
-          .findFirst().orElse(null);
+          .findFirst();
     });
 
-    when(sensorService.findById(anyInt())).thenAnswer(i -> {
+    when(sensorRepo.findById(anyInt())).thenAnswer(i -> {
       return allSensors.stream().filter(s -> i.getArgument(0).equals(s.getId()))
-          .findFirst().orElse(null);
+          .findFirst();
     });
 
   }
