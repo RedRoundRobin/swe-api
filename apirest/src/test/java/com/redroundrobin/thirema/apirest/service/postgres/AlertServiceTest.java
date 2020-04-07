@@ -4,11 +4,14 @@ import com.redroundrobin.thirema.apirest.models.postgres.Alert;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
+import com.redroundrobin.thirema.apirest.models.postgres.ViewGraph;
 import com.redroundrobin.thirema.apirest.repository.postgres.AlertRepository;
 import com.redroundrobin.thirema.apirest.service.postgres.AlertService;
 import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
 import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
+import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
+import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -17,9 +20,12 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -58,6 +64,7 @@ public class AlertServiceTest {
   private Alert alert2;
   private Alert alert3;
 
+  private User admin1;
   private User user1;
   private User user2;
   private User user3;
@@ -122,6 +129,9 @@ public class AlertServiceTest {
     user2.setId(2);
     user3 = new User();
     user3.setId(3);
+    admin1 = new User();
+    admin1.setId(4);
+    admin1.setType(User.Role.ADMIN);
 
     List<User> allUsers = new ArrayList<>();
     allUsers.add(user1);
@@ -180,6 +190,39 @@ public class AlertServiceTest {
     alert2.setUsers(Collections.emptyList());
 
 
+    // --------------------------- Set Entities to Users and viceversa ---------------------------
+    List<User> entity1Users = new ArrayList<>();
+    entity1Users.add(user1);
+    entity1.setUsers(entity1Users);
+    user1.setEntity(entity1);
+
+
+    // --------------------------- Set Sensors to Entites and viceversa ---------------------------
+    List<Sensor> entity1Sensors = new ArrayList<>();
+    entity1Sensors.add(sensor1);
+    List<Entity> sensor1Entities = new ArrayList<>();
+    sensor1Entities.add(entity1);
+    entity1.setSensors(entity1Sensors);
+    sensor1.setEntities(sensor1Entities);
+
+    List<Sensor> entity2Sensors = new ArrayList<>();
+    List<Sensor> entity3Sensors = new ArrayList<>();
+    entity2Sensors.add(sensor2);
+    entity3Sensors.add(sensor2);
+    List<Entity> sensor2Entities = new ArrayList<>();
+    sensor2Entities.add(entity2);
+    sensor2Entities.add(entity3);
+    entity2.setSensors(entity2Sensors);
+    sensor2.setEntities(sensor2Entities);
+
+    entity3Sensors.add(sensor3);
+    List<Entity> sensor3Entities = new ArrayList<>();
+    sensor3Entities.add(entity3);
+    entity3.setSensors(entity3Sensors);
+    sensor3.setEntities(sensor3Entities);
+    // entity1 has sensor1, entity2 has sensor2, entity3 has sensor2 and sensor3
+
+
 
     when(repo.findAll()).thenReturn(allAlerts);
     when(repo.findAllByEntity(any(Entity.class))).thenAnswer(i -> {
@@ -211,6 +254,7 @@ public class AlertServiceTest {
       return allAlerts.stream().filter(a -> i.getArgument(0).equals(a.getAlertId()))
           .findFirst();
     });
+    when(repo.save(any(Alert.class))).thenAnswer(i -> i.getArgument(0));
 
     when(entityService.findById(anyInt())).thenAnswer(i -> {
       return allEntities.stream().filter(e -> i.getArgument(0).equals(e.getId()))
@@ -221,6 +265,16 @@ public class AlertServiceTest {
       return allSensors.stream().filter(s -> i.getArgument(0).equals(s.getId()))
           .findFirst().orElse(null);
     });
+    when(sensorService.findByIdAndEntityId(anyInt(),anyInt())).thenAnswer(i -> {
+      Sensor sensor = allSensors.stream().filter(s -> i.getArgument(0).equals(s.getId())).findFirst().orElse(null);
+      Entity entity = allEntities.stream().filter(e -> i.getArgument(1).equals(e.getId())).findFirst().orElse(null);
+      if (sensor != null && sensor.getEntities().contains(entity)) {
+        return sensor;
+      } else {
+        return null;
+      }
+    });
+
 
     when(userService.findById(anyInt())).thenAnswer(i -> {
       return allUsers.stream().filter(u -> i.getArgument(0).equals(u.getId()))
@@ -307,5 +361,107 @@ public class AlertServiceTest {
     Alert alert = alertService.findById(alert1.getAlertId());
 
     assertNotNull(alert);
+  }
+
+
+
+  @Test
+  public void createAlertSuccessfull() {
+    Map<String, Object> newAlertFields = new HashMap<>();
+    newAlertFields.put("threshold", 10.0);
+    newAlertFields.put("type", Alert.Type.GREATER.toValue());
+    newAlertFields.put("sensor", sensor1.getId());
+    newAlertFields.put("entity", entity1.getId());
+
+    try {
+      Alert alert = alertService.createAlert(user1, newAlertFields);
+
+      assertNotNull(alert);
+    } catch (Exception e) {
+      System.out.println(e);
+      assertTrue(false);
+    }
+  }
+
+  @Test
+  public void createAlertWithNotExistentTypeByAdmin() {
+    Map<String, Object> newAlertFields = new HashMap<>();
+    newAlertFields.put("threshold", 10.0);
+    newAlertFields.put("type", 10);
+    newAlertFields.put("sensor", sensor1.getId());
+    newAlertFields.put("entity", entity1.getId());
+
+    try {
+      Alert alert = alertService.createAlert(admin1, newAlertFields);
+
+      assertTrue(false);
+    } catch (InvalidFieldsValuesException e) {
+      assertEquals("The type with provided id is not found", e.getMessage());
+      assertTrue(true);
+    } catch (Exception e) {
+      System.out.println(e);
+      assertTrue(false);
+    }
+  }
+
+  @Test
+  public void createAlertWithoutEntityThrowsMissingFieldsException() {
+    Map<String, Object> newAlertFields = new HashMap<>();
+    newAlertFields.put("threshold", 10.0);
+    newAlertFields.put("type", Alert.Type.GREATER.toValue());
+    newAlertFields.put("sensor", sensor1.getId());
+
+    try {
+      Alert alert = alertService.createAlert(user1, newAlertFields);
+
+      assertTrue(false);
+    } catch (MissingFieldsException e) {
+      assertEquals("One or more needed fields are missing", e.getMessage());
+      assertTrue(true);
+    } catch (Exception e) {
+      assertTrue(false);
+    }
+  }
+
+  @Test
+  public void createAlertWithInvalidEntityThrowsInvalidFieldsValuesException() {
+    Map<String, Object> newAlertFields = new HashMap<>();
+    newAlertFields.put("threshold", 10.0);
+    newAlertFields.put("type", Alert.Type.GREATER.toValue());
+    newAlertFields.put("sensor", sensor1.getId());
+    newAlertFields.put("entity", entity2.getId());
+
+    try {
+      Alert alert = alertService.createAlert(user1, newAlertFields);
+
+      assertTrue(false);
+    } catch (InvalidFieldsValuesException e) {
+      assertEquals("The entity with provided id is not found or not authorized", e.getMessage());
+      assertTrue(true);
+    } catch (Exception e) {
+      System.out.println(e);
+      assertTrue(false);
+    }
+  }
+
+  @Test
+  public void createAlertWithInvalidSensorThrowsInvalidFieldsValuesException() {
+    Map<String, Object> newAlertFields = new HashMap<>();
+    newAlertFields.put("threshold", 10.0);
+    newAlertFields.put("type", Alert.Type.GREATER.toValue());
+    newAlertFields.put("sensor", sensor3.getId());
+    newAlertFields.put("entity", entity1.getId());
+
+    try {
+      Alert alert = alertService.createAlert(user1, newAlertFields);
+
+      assertTrue(false);
+    } catch (InvalidFieldsValuesException e) {
+      assertEquals("The sensor with provided id is not found or not authorized", e.getMessage());
+      assertTrue(true);
+    } catch (MissingFieldsException e) {
+      System.out.println(e);
+      assertTrue(false);
+    }
   }
 }

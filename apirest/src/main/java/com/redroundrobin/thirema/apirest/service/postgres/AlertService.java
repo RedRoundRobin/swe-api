@@ -29,7 +29,7 @@ public class AlertService {
 
   private UserService userService;
 
-  private boolean checkFields(boolean edit, Map<String, Object> fields) {
+  private boolean checkFields(Map<String, Object> fields) {
     List<String> allowedFields = new ArrayList<>();
     allowedFields.add("threshold");
     allowedFields.add("type");
@@ -37,7 +37,7 @@ public class AlertService {
     allowedFields.add("entity");
 
     return fields.containsKey("threshold") && fields.containsKey("type")
-        && (fields.containsKey("sensor") || fields.containsKey("entity"));
+        && (fields.containsKey("sensor") && fields.containsKey("entity"));
   }
 
   private Alert addEditAlert(User user, Alert alert, Map<String, Object> fields)
@@ -162,7 +162,7 @@ public class AlertService {
 
   public Alert createAlert(User user, Map<String, Object> newAlertFields)
       throws InvalidFieldsValuesException, MissingFieldsException {
-    if (this.checkFields(false, newAlertFields)) {
+    if (this.checkFields(newAlertFields)) {
       return this.addEditAlert(user, null, newAlertFields);
     } else {
       throw new MissingFieldsException("One or more needed fields are missing");

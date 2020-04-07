@@ -4,10 +4,13 @@ import com.redroundrobin.thirema.apirest.models.postgres.Alert;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
+import com.redroundrobin.thirema.apirest.models.postgres.ViewGraph;
 import com.redroundrobin.thirema.apirest.service.postgres.AlertService;
 import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
+import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
+import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -19,11 +22,14 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -82,7 +88,7 @@ public class AlertControllerTest {
 
 
   @Before
-  public void setUp() {
+  public void setUp() throws MissingFieldsException, InvalidFieldsValuesException {
     alertController = new AlertController(alertService);
     alertController.setJwtUtil(jwtUtil);
     alertController.setUserService(userService);
@@ -218,6 +224,19 @@ public class AlertControllerTest {
           && i.getArgument(1).equals(a.getSensor().getId()))
           .collect(Collectors.toList());
     });
+    when(alertService.createAlert(any(User.class), any(HashMap.class))).thenAnswer(i -> {
+      Map<String, Object> fields = i.getArgument(1);
+      if (fields.keySet().contains("sensor") && fields.get("sensor").equals(sensor1.getId())) {
+        Alert alert = new Alert();
+        alert.setEntity(entity1);
+        alert.setThreshold(10.0);
+        alert.setType(Alert.Type.GREATER);
+        alert.setSensor(sensor1);
+        return alert;
+      } else {
+        throw new MissingFieldsException("");
+      }
+    });
   }
 
   @Test
@@ -274,5 +293,58 @@ public class AlertControllerTest {
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertTrue(response.getBody().isEmpty());
+  }
+
+
+
+  @Test
+  public void createAlertByAdminSuccessfull() {
+    Map<String, Object> newAlertFields = new HashMap<>();
+    newAlertFields.put("threshold", 10.0);
+    newAlertFields.put("type", Alert.Type.GREATER.toValue());
+    newAlertFields.put("sensor", sensor1.getId());
+    newAlertFields.put("entity", entity1.getId());
+
+    Alert alert = new Alert();
+    alert.setThreshold(10.0);
+    alert.setType(Alert.Type.GREATER);
+    alert.setSensor(sensor1);
+    alert.setEntity(entity1);
+
+    ResponseEntity<Alert> response = alertController.createAlert(
+        adminTokenWithBearer, newAlertFields);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(alert.getThreshold(), response.getBody().getThreshold());
+    assertEquals(alert.getType(), response.getBody().getType());
+    assertEquals(alert.getEntity(), response.getBody().getEntity());
+    assertEquals(alert.getSensor(), response.getBody().getSensor());
+  }
+
+  @Test
+  public void createAlertByAdminMissingNecessaryFields() {
+    Map<String, Object> newAlertFields = new HashMap<>();
+    newAlertFields.put("threshold", 10.0);
+    newAlertFields.put("type", Alert.Type.GREATER.toValue());
+    newAlertFields.put("entity", entity1.getId());
+
+    ResponseEntity<Alert> response = alertController.createAlert(
+        adminTokenWithBearer, newAlertFields);
+
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+  }
+
+  @Test
+  public void createAlertByUserNotAllowedError403Forbidden() {
+    Map<String, Object> newAlertFields = new HashMap<>();
+    newAlertFields.put("threshold", 10.0);
+    newAlertFields.put("type", Alert.Type.GREATER.toValue());
+    newAlertFields.put("entity", entity1.getId());
+    newAlertFields.put("sensor", sensor1.getId());
+
+    ResponseEntity<Alert> response = alertController.createAlert(
+        userTokenWithBearer, newAlertFields);
+
+    assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
   }
 }
