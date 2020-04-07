@@ -11,6 +11,8 @@ import org.springframework.stereotype.Repository;
 public interface AlertRepository extends CrudRepository<Alert, Integer> {
   Iterable<Alert> findAllByEntity(Entity entity);
 
+  Iterable<Alert> findAllByEntityAndSensor(Entity entity, Sensor sensor);
+
   Iterable<Alert> findAllBySensor(Sensor sensor);
 
   Iterable<Alert> findAllByUsers(User user);

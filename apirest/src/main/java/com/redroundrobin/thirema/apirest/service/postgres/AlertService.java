@@ -54,6 +54,16 @@ public class AlertService {
     }
   }
 
+  public List<Alert> findAllByEntityIdAndSensorId(int entityId, int sensorId) {
+    Entity entity = entityService.findById(entityId);
+    Sensor sensor = sensorService.findById(sensorId);
+    if (entity != null && sensor != null) {
+      return (List<Alert>) repo.findAllByEntityAndSensor(entity, sensor);
+    } else {
+      return Collections.emptyList();
+    }
+  }
+
   public List<Alert> findAllBySensorId(int sensorId) {
     Sensor sensor = sensorService.findById(sensorId);
     if (sensor != null) {
