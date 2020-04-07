@@ -187,6 +187,16 @@ public class AlertServiceTest {
       return allAlerts.stream().filter(a -> entity.equals(a.getEntity()))
           .collect(Collectors.toList());
     });
+    when(repo.findAllByEntityAndSensor(any(Entity.class),any(Sensor.class))).thenAnswer(i -> {
+      Entity entity = i.getArgument(0);
+      Sensor sensor = i.getArgument(1);
+      if (entity != null && sensor != null) {
+        return allAlerts.stream().filter(a -> entity.equals(a.getEntity()) && sensor.equals(a.getSensor()))
+            .collect(Collectors.toList());
+      } else {
+        return Collections.emptyList();
+      }
+    });
     when(repo.findAllBySensor(any(Sensor.class))).thenAnswer(i -> {
       Sensor sensor = i.getArgument(0);
       return allAlerts.stream().filter(a -> sensor.equals(a.getSensor()))
@@ -226,6 +236,8 @@ public class AlertServiceTest {
     assertTrue(!alerts.isEmpty());
   }
 
+
+
   @Test
   public void findAllAlertsByEntityId() {
     List<Alert> alerts = alertService.findAllByEntityId(entity1.getId());
@@ -239,6 +251,24 @@ public class AlertServiceTest {
 
     assertTrue(alerts.isEmpty());
   }
+
+
+
+  @Test
+  public void findAllAlertsByEntityIdAndSensorId() {
+    List<Alert> alerts = alertService.findAllByEntityIdAndSensorId(entity1.getId(), sensor1.getId());
+
+    assertTrue(!alerts.isEmpty());
+  }
+
+  @Test
+  public void findAllAlertsByEntityIdAndNotExistentSensorId() {
+    List<Alert> alerts = alertService.findAllByEntityIdAndSensorId(entity1.getId(), 9);
+
+    assertTrue(alerts.isEmpty());
+  }
+
+
 
   @Test
   public void findAllAlertsBySensorId() {
@@ -254,6 +284,8 @@ public class AlertServiceTest {
     assertTrue(alerts.isEmpty());
   }
 
+
+
   @Test
   public void findAllAlertsByUserId() {
     List<Alert> alerts = alertService.findAllByUserId(user1.getId());
@@ -267,6 +299,8 @@ public class AlertServiceTest {
 
     assertTrue(alerts.isEmpty());
   }
+
+
 
   @Test
   public void findAlertById() {
