@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIdentityReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import java.util.List;
 import javax.persistence.Column;
@@ -19,6 +20,25 @@ import javax.persistence.Table;
 @javax.persistence.Entity
 @Table(name = "alerts")
 public class Alert {
+
+  public enum Type {
+    LOWER, GREATER, EQUAL;
+
+    @JsonValue
+    public int toValue() {
+      return ordinal();
+    }
+
+    public static boolean isValid(int type) {
+      for (int i = 0; i < ViewGraph.Correlation.values().length; ++i) {
+        if (type == i) {
+          return true;
+        }
+      }
+      return false;
+    }
+  }
+
   @Id
   @GeneratedValue(generator = "alerts_alert_id_seq", strategy = GenerationType.SEQUENCE)
   @SequenceGenerator(
@@ -29,7 +49,7 @@ public class Alert {
   @Column(name = "alert_id")
   private int alertId;
   private double threshold;
-  private int type;
+  private Type type;
   private boolean deleted;
 
   @ManyToOne
@@ -66,11 +86,11 @@ public class Alert {
     return threshold;
   }
 
-  public void setType(int type) {
+  public void setType(Type type) {
     this.type = type;
   }
 
-  public int getType() {
+  public Type getType() {
     return type;
   }
 

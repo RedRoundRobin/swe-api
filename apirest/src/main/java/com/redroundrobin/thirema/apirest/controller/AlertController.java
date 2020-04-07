@@ -2,11 +2,17 @@ package com.redroundrobin.thirema.apirest.controller;
 
 import com.redroundrobin.thirema.apirest.models.postgres.Alert;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
+import com.redroundrobin.thirema.apirest.models.postgres.ViewGraph;
 import com.redroundrobin.thirema.apirest.service.postgres.AlertService;
+import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
+import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -14,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/alerts")
@@ -51,4 +58,21 @@ public class AlertController extends CoreController {
       return ResponseEntity.ok(Collections.emptyList());
     }
   }
+
+  @PostMapping(value = {""})
+  public ResponseEntity<Alert> createAlert(
+      @RequestHeader("authorization") String authorization,
+      @RequestBody Map<String, Object> newAlertFields) {
+    User user = this.getUserFromAuthorization(authorization);
+    if (user.getType() == User.Role.ADMIN || user.getType() == User.Role.MOD) {
+      try {
+        return ResponseEntity.ok(alertService.createAlert(user, newAlertFields));
+      } catch (MissingFieldsException | InvalidFieldsValuesException fe) {
+        return new ResponseEntity(HttpStatus.BAD_REQUEST);
+      }
+    } else {
+      return new ResponseEntity(HttpStatus.FORBIDDEN);
+    }
+  }
+
 }
