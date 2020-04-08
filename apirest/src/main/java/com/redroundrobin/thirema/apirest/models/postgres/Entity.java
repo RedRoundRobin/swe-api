@@ -32,10 +32,6 @@ public class Entity {
   private boolean deleted;
 
   @JsonIgnore
-  @OneToMany(mappedBy = "entity")
-  private List<Alert> alerts;
-
-  @JsonIgnore
   @ManyToMany
   @JoinTable(
       name = "entity_sensors",
@@ -66,14 +62,6 @@ public class Entity {
 
   public void setLocation(String location) {
     this.location = location;
-  }
-
-  public List<Alert> getAlerts() {
-    return alerts;
-  }
-
-  public void setAlerts(List<Alert> alerts) {
-    this.alerts = alerts;
   }
 
   public boolean isDeleted() {
