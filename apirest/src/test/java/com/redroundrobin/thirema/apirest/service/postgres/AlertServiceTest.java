@@ -169,36 +169,23 @@ public class AlertServiceTest {
     user3.setDisabledAlerts(Collections.emptySet());
 
 
-    // --------------------------- Set Entities to Users and viceversa ---------------------------
-    List<User> entity1Users = new ArrayList<>();
-    entity1Users.add(user1);
-    entity1.setUsers(entity1Users);
+    // ---------------------------------- Set Entities to Users ----------------------------------
     user1.setEntity(entity1);
 
 
-    // --------------------------- Set Sensors to Entites and viceversa ---------------------------
-    List<Sensor> entity1Sensors = new ArrayList<>();
+    // ------------------------------- Set Sensors to Entites ------------------------------------
+    Set<Sensor> entity1Sensors = new HashSet<>();
     entity1Sensors.add(sensor1);
-    List<Entity> sensor1Entities = new ArrayList<>();
-    sensor1Entities.add(entity1);
     entity1.setSensors(entity1Sensors);
-    sensor1.setEntities(sensor1Entities);
 
-    List<Sensor> entity2Sensors = new ArrayList<>();
-    List<Sensor> entity3Sensors = new ArrayList<>();
+    Set<Sensor> entity2Sensors = new HashSet<>();
     entity2Sensors.add(sensor2);
-    entity3Sensors.add(sensor2);
-    List<Entity> sensor2Entities = new ArrayList<>();
-    sensor2Entities.add(entity2);
-    sensor2Entities.add(entity3);
     entity2.setSensors(entity2Sensors);
-    sensor2.setEntities(sensor2Entities);
 
+    Set<Sensor> entity3Sensors = new HashSet<>();
+    entity3Sensors.add(sensor2);
     entity3Sensors.add(sensor3);
-    List<Entity> sensor3Entities = new ArrayList<>();
-    sensor3Entities.add(entity3);
     entity3.setSensors(entity3Sensors);
-    sensor3.setEntities(sensor3Entities);
     // entity1 has sensor1, entity2 has sensor2, entity3 has sensor2 and sensor3
 
 
@@ -247,7 +234,7 @@ public class AlertServiceTest {
     when(sensorRepo.findBySensorIdAndEntities(anyInt(),any(Entity.class))).thenAnswer(i -> {
       Sensor sensor = allSensors.stream().filter(s -> i.getArgument(0).equals(s.getId())).findFirst().orElse(null);
       Entity entity = i.getArgument(1);
-      if (sensor != null && sensor.getEntities().contains(entity)) {
+      if (sensor != null && entity.getSensors().contains(sensor)) {
         return sensor;
       } else {
         return null;

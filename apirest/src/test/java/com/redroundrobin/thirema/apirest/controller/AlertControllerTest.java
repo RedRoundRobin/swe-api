@@ -79,17 +79,6 @@ public class AlertControllerTest {
 
   List<Sensor> allSensors;
 
-  List<Alert> entity1Alerts;
-  List<Alert> entity2Alerts;
-  List<Alert> entity3Alerts;
-
-  List<Sensor> entity1And2Sensors;
-  List<Sensor> entity3Sensors;
-
-  List<Alert> sensor1Alerts;
-  List<Alert> sensor2Alerts;
-  List<Alert> sensor3Alerts;
-
 
   @Before
   public void setUp() throws MissingFieldsException, InvalidFieldsValuesException {
@@ -165,41 +154,21 @@ public class AlertControllerTest {
     allSensors.add(sensor3);
 
 
-    // -------------------------- Set alerts to entities and viceversa --------------------------
-    entity1Alerts = new ArrayList<>();
-    entity1Alerts.add(alert1);
-    entity1Alerts.add(alert2);
-    entity1.setAlerts(entity1Alerts);
+    // --------------------------------- Set entities to alerts ---------------------------------
     alert1.setEntity(entity1);
     alert2.setEntity(entity1);
 
-    entity2Alerts = new ArrayList<>();
-    entity2Alerts.add(alert3);
-    entity2.setAlerts(entity2Alerts);
     alert3.setEntity(entity2);
 
-    entity3Alerts = new ArrayList<>();
-    entity3Alerts.add(alert4);
-    entity3.setAlerts(entity3Alerts);
     alert4.setEntity(entity3);
 
 
-    // -------------------------- Set alerts to sensors and viceversa --------------------------
-    sensor1Alerts = new ArrayList<>();
-    sensor1Alerts.add(alert1);
-    sensor1Alerts.add(alert2);
-    sensor1.setAlerts(sensor1Alerts);
+    // --------------------------------- Set sensors to alerts ----------------------------------
     alert1.setSensor(sensor1);
     alert2.setSensor(sensor1);
 
-    sensor2Alerts = new ArrayList<>();
-    sensor2Alerts.add(alert3);
-    sensor2.setAlerts(sensor2Alerts);
     alert3.setSensor(sensor2);
 
-    sensor3Alerts = new ArrayList<>();
-    sensor3Alerts.add(alert4);
-    sensor3.setAlerts(sensor3Alerts);
     alert4.setSensor(sensor3);
 
 
@@ -254,7 +223,7 @@ public class AlertControllerTest {
     ResponseEntity<Map<String,List<Alert>>> response = alertController.getAlerts(adminTokenWithBearer, entity2.getId(), null);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertEquals(entity2Alerts, response.getBody().get("enabled"));
+    assertTrue(!response.getBody().get("enabled").isEmpty());
   }
 
   @Test
@@ -262,7 +231,7 @@ public class AlertControllerTest {
     ResponseEntity<Map<String,List<Alert>>> response = alertController.getAlerts(adminTokenWithBearer, null, sensor3.getId());
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertEquals(sensor3Alerts, response.getBody().get("enabled"));
+    assertTrue(!response.getBody().get("enabled").isEmpty());
   }
 
   @Test
@@ -270,7 +239,7 @@ public class AlertControllerTest {
     ResponseEntity<Map<String,List<Alert>>> response = alertController.getAlerts(adminTokenWithBearer, entity3.getId(), sensor3.getId());
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertEquals(entity3Alerts, response.getBody().get("enabled"));
+    assertTrue(!response.getBody().get("enabled").isEmpty());
   }
 
   @Test
@@ -278,7 +247,7 @@ public class AlertControllerTest {
     ResponseEntity<Map<String,List<Alert>>> response = alertController.getAlerts(userTokenWithBearer, null, null);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertEquals(entity1Alerts, response.getBody().get("enabled"));
+    assertTrue(!response.getBody().get("enabled").isEmpty());
   }
 
   @Test

@@ -14,6 +14,7 @@ import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 import java.util.Map;
+import java.util.Set;
 
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
@@ -168,7 +169,7 @@ public class AlertService {
     Alert alert = findById(alertId);
     if (alert != null) {
       if (alert.getEntity().equals(user.getEntity())) {
-        List<Alert> userDisabledAlerts = user.getDisabledAlerts();
+        Set<Alert> userDisabledAlerts = user.getDisabledAlerts();
         if (enable && userDisabledAlerts.contains(alert)) {
           userDisabledAlerts.remove(alert);
         } else if (!enable && !userDisabledAlerts.contains(alert)) {
