@@ -2,7 +2,10 @@ package com.redroundrobin.thirema.apirest.controller;
 
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.postgres.ViewGraph;
+import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.service.postgres.ViewGraphService;
+import com.redroundrobin.thirema.apirest.service.timescale.LogService;
+import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
@@ -30,7 +33,9 @@ public class ViewGraphController extends CoreController {
   private ViewGraphService viewGraphService;
 
   @Autowired
-  public ViewGraphController(ViewGraphService viewGraphService) {
+  public ViewGraphController(ViewGraphService viewGraphService, JwtUtil jwtUtil,
+                             LogService logService, UserService userService) {
+    super(jwtUtil, logService, userService);
     this.viewGraphService = viewGraphService;
   }
 

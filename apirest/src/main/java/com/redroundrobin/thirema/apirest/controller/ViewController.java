@@ -6,6 +6,7 @@ import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.postgres.View;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.service.postgres.ViewService;
+import com.redroundrobin.thirema.apirest.service.timescale.LogService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
@@ -27,19 +28,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping(value = "/views")
-public class ViewController {
-
-  private JwtUtil jwtTokenUtil;
-
-  private UserService userService;
+public class ViewController extends CoreController {
 
   private ViewService viewService;
 
   @Autowired
-  public ViewController(JwtUtil jwtTokenUtil, UserService userService,
-                        ViewService viewService) {
-    this.jwtTokenUtil = jwtTokenUtil;
-    this.userService = userService;
+  public ViewController(ViewService viewService, JwtUtil jwtUtil, LogService logService,
+                        UserService userService) {
+    super(jwtUtil, logService, userService);
     this.viewService = viewService;
   }
 
@@ -47,7 +43,7 @@ public class ViewController {
   @GetMapping(value = {""})
   public ResponseEntity<List<View>> views(@RequestHeader("Authorization") String authorization) {
     String token = authorization.substring(7);
-    User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
+    User user = userService.findByEmail(jwtUtil.extractUsername(token));
     return ResponseEntity.ok(viewService.findAllByUser(user));
   }
   
@@ -55,7 +51,7 @@ public class ViewController {
   public ResponseEntity<View> createView(
       @RequestHeader("Authorization") String authorization,  @RequestBody String rawNewView) {
     String token = authorization.substring(7);
-    User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
+    User user = userService.findByEmail(jwtUtil.extractUsername(token));
     JsonObject jsonNewView = JsonParser.parseString(rawNewView).getAsJsonObject();
     try {
       return ResponseEntity.ok(viewService.serializeView(jsonNewView, user));
@@ -69,7 +65,7 @@ public class ViewController {
       @RequestHeader("Authorization") String authorization,
       @PathVariable("viewId") int viewToDeleteId) {
     String token = authorization.substring(7);
-    User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
+    User user = userService.findByEmail(jwtUtil.extractUsername(token));
     try {
       viewService.deleteView(user, viewToDeleteId);
       return ResponseEntity.ok("deleted view succesfully");
@@ -84,7 +80,7 @@ public class ViewController {
   public ResponseEntity<View> selectOneView(
       @RequestHeader("Authorization") String authorization,  @PathVariable("viewId") int viewId) {
     String token = authorization.substring(7);
-    User user = userService.findByEmail(jwtTokenUtil.extractUsername(token));
+    User user = userService.findByEmail(jwtUtil.extractUsername(token));
     View view = viewService.findByIdAndUserId(viewId, user.getId());
     if (view != null) {
       return ResponseEntity.ok(view);

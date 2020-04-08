@@ -4,7 +4,9 @@ import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.postgres.View;
 import com.redroundrobin.thirema.apirest.models.postgres.ViewGraph;
+import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.ViewGraphRepository;
+import com.redroundrobin.thirema.apirest.repository.postgres.ViewRepository;
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
@@ -18,25 +20,18 @@ import org.springframework.stereotype.Service;
 @Service
 public class ViewGraphService {
 
-  private ViewGraphRepository repo;
+  private ViewGraphRepository viewGraphRepo;
 
-  private SensorService sensorService;
+  private SensorRepository sensorRepo;
 
-  private ViewService viewService;
+  private ViewRepository viewRepo;
 
-  private boolean checkFields(boolean edit, Map<String, Integer> fields) {
-    List<String> allowedFields = new ArrayList<>();
-    allowedFields.add("correlation");
-    allowedFields.add("view");
-    allowedFields.add("sensor1");
-    allowedFields.add("sensor2");
-
-    if (edit) {
-      return fields.keySet().stream().anyMatch(key -> allowedFields.contains(key));
-    } else {
-      return fields.containsKey("correlation") && fields.containsKey("view")
-          && (fields.containsKey("sensor1") || fields.containsKey("sensor2"));
-    }
+  @Autowired
+  public ViewGraphService(ViewGraphRepository viewGraphRepository, SensorRepository sensorRepository,
+                          ViewRepository viewRepository) {
+    this.viewGraphRepo = viewGraphRepository;
+    this.sensorRepo = sensorRepository;
+    this.viewRepo = viewRepository;
   }
 
   private ViewGraph addEditViewGraph(User user, ViewGraph viewGraph, Map<String, Integer> fields)
@@ -55,7 +50,7 @@ public class ViewGraphService {
           }
           break;
         case "view":
-          View view = viewService.findByIdAndUserId(entry.getValue(), user.getId());
+          View view = viewRepo.findByViewIdAndUser(entry.getValue(), user);
           if (view != null) {
             viewGraph.setView(view);
           } else {
@@ -66,10 +61,10 @@ public class ViewGraphService {
         case "sensor1":
           Sensor sensor1;
           if (user.getType() == User.Role.ADMIN) {
-            sensor1 = sensorService.findById(entry.getValue());
+            sensor1 = sensorRepo.findById(entry.getValue()).orElse(null);
           } else {
-            sensor1 = sensorService.findByIdAndEntityId(entry.getValue(),
-                user.getEntity().getId());
+            sensor1 = sensorRepo.findBySensorIdAndEntities(entry.getValue(),
+                user.getEntity());
           }
           if (sensor1 != null) {
             viewGraph.setSensor1(sensor1);
@@ -81,10 +76,10 @@ public class ViewGraphService {
         case "sensor2":
           Sensor sensor2;
           if (user.getType() == User.Role.ADMIN) {
-            sensor2 = sensorService.findById(entry.getValue());
+            sensor2 = sensorRepo.findById(entry.getValue()).orElse(null);
           } else {
-            sensor2 = sensorService.findByIdAndEntityId(entry.getValue(),
-                user.getEntity().getId());
+            sensor2 = sensorRepo.findBySensorIdAndEntities(entry.getValue(),
+                user.getEntity());
           }
           if (sensor2 != null) {
             viewGraph.setSensor2(sensor2);
@@ -97,63 +92,21 @@ public class ViewGraphService {
       }
     }
 
-    return repo.save(viewGraph);
+    return viewGraphRepo.save(viewGraph);
   }
 
-  public ViewGraphService(ViewGraphRepository repo) {
-    this.repo = repo;
-  }
+  private boolean checkFields(boolean edit, Map<String, Integer> fields) {
+    List<String> allowedFields = new ArrayList<>();
+    allowedFields.add("correlation");
+    allowedFields.add("view");
+    allowedFields.add("sensor1");
+    allowedFields.add("sensor2");
 
-  @Autowired
-  public void setSensorService(SensorService sensorService) {
-    this.sensorService = sensorService;
-  }
-
-  @Autowired
-  public void setViewService(ViewService viewService) {
-    this.viewService = viewService;
-  }
-
-  public List<ViewGraph> findAll() {
-    return (List<ViewGraph>) repo.findAll();
-  }
-
-  public List<ViewGraph> findAllBySensorId(int sensorId) {
-    Sensor sensor = sensorService.findById(sensorId);
-    if (sensor != null) {
-      return (List<ViewGraph>) repo.findAllBySensor1OrSensor2(sensor, sensor);
+    if (edit) {
+      return fields.keySet().stream().anyMatch(key -> allowedFields.contains(key));
     } else {
-      return Collections.emptyList();
-    }
-  }
-
-  public List<ViewGraph> findAllByUserId(int userId) {
-    return (List<ViewGraph>) repo.findAllByUserId(userId);
-  }
-
-  public List<ViewGraph> findAllByUserIdAndViewId(int userId, int viewId) {
-    return (List<ViewGraph>) repo.findAllByUserIdAndViewId(userId, viewId);
-  }
-
-  public List<ViewGraph> findAllByViewId(int viewId) {
-    View view = viewService.findById(viewId);
-    if (view != null) {
-      return (List<ViewGraph>) repo.findAllByView(view);
-    } else {
-      return Collections.emptyList();
-    }
-  }
-
-  public ViewGraph findById(int id) {
-    return repo.findById(id).orElse(null);
-  }
-
-  public boolean getPermissionByIdAndUserId(int id, int userId) throws ElementNotFoundException {
-    ViewGraph viewGraph = findById(id);
-    if (viewGraph == null) {
-      throw ElementNotFoundException.defaultMessage("ViewGraph");
-    } else {
-      return viewGraph.getView().getId() == userId;
+      return fields.containsKey("correlation") && fields.containsKey("view")
+          && (fields.containsKey("sensor1") || fields.containsKey("sensor2"));
     }
   }
 
@@ -163,6 +116,15 @@ public class ViewGraphService {
       return this.addEditViewGraph(user, null, newViewGraphFields);
     } else {
       throw new MissingFieldsException("One or more needed fields are missing");
+    }
+  }
+
+  public boolean deleteViewGraph(int viewGraphId) throws ElementNotFoundException {
+    if (viewGraphRepo.existsById(viewGraphId)) {
+      viewGraphRepo.deleteById(viewGraphId);
+      return !viewGraphRepo.existsById(viewGraphId);
+    } else {
+      throw ElementNotFoundException.defaultMessage("ViewGraph");
     }
   }
 
@@ -178,12 +140,47 @@ public class ViewGraphService {
     }
   }
 
-  public boolean deleteViewGraph(int viewGraphId) throws ElementNotFoundException {
-    if (repo.existsById(viewGraphId)) {
-      repo.deleteById(viewGraphId);
-      return !repo.existsById(viewGraphId);
+  public List<ViewGraph> findAll() {
+    return (List<ViewGraph>) viewGraphRepo.findAll();
+  }
+
+  public List<ViewGraph> findAllBySensorId(int sensorId) {
+    Sensor sensor = sensorRepo.findById(sensorId).orElse(null);
+    if (sensor != null) {
+      return (List<ViewGraph>) viewGraphRepo.findAllBySensor1OrSensor2(sensor, sensor);
     } else {
-      throw ElementNotFoundException.defaultMessage("ViewGraph");
+      return Collections.emptyList();
     }
   }
+
+  public List<ViewGraph> findAllByUserId(int userId) {
+    return (List<ViewGraph>) viewGraphRepo.findAllByUserId(userId);
+  }
+
+  public List<ViewGraph> findAllByUserIdAndViewId(int userId, int viewId) {
+    return (List<ViewGraph>) viewGraphRepo.findAllByUserIdAndViewId(userId, viewId);
+  }
+
+  public List<ViewGraph> findAllByViewId(int viewId) {
+    View view = viewRepo.findById(viewId).orElse(null);
+    if (view != null) {
+      return (List<ViewGraph>) viewGraphRepo.findAllByView(view);
+    } else {
+      return Collections.emptyList();
+    }
+  }
+
+  public ViewGraph findById(int id) {
+    return viewGraphRepo.findById(id).orElse(null);
+  }
+
+  public boolean getPermissionByIdAndUserId(int id, int userId) throws ElementNotFoundException {
+    ViewGraph viewGraph = findById(id);
+    if (viewGraph == null) {
+      throw ElementNotFoundException.defaultMessage("ViewGraph");
+    } else {
+      return viewGraph.getView().getId() == userId;
+    }
+  }
+
 }

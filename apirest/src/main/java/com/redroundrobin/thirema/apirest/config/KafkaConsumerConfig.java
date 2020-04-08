@@ -21,6 +21,7 @@ public class KafkaConsumerConfig {
   @Value(value = "${kafka.bootstrapAddress}")
   private String bootstrapAddress;
 
+  /*
   public ConsumerFactory<String, String> consumerFactory(String groupId) {
     Map<String, Object> props = new HashMap<>();
     props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
@@ -38,7 +39,6 @@ public class KafkaConsumerConfig {
     return factory;
   }
 
-  /*
   @Bean
   public ConcurrentKafkaListenerContainerFactory<String, String>
   alertsKafkaListenerContainerFactory() {

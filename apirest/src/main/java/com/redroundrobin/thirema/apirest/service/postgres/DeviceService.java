@@ -1,93 +1,85 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
 import com.redroundrobin.thirema.apirest.models.postgres.Device;
-import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.repository.postgres.DeviceRepository;
 import java.util.Collections;
 import java.util.List;
+
+import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
+import com.redroundrobin.thirema.apirest.repository.postgres.GatewayRepository;
+import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class DeviceService {
 
-  private DeviceRepository repo;
+  private DeviceRepository deviceRepo;
 
-  private GatewayService gatewayService;
+  private GatewayRepository gatewayRepo;
 
-  private SensorService sensorService;
+  private SensorRepository sensorRepo;
 
-  private EntityService entityService;
-
-  @Autowired
-  public DeviceService(DeviceRepository deviceRepository) {
-    this.repo = deviceRepository;
-  }
+  private EntityRepository entityRepo;
 
   @Autowired
-  public void setEntityService(EntityService entityService) {
-    this.entityService = entityService;
-  }
-
-  @Autowired
-  public void setGatewayService(GatewayService gatewayService) {
-    this.gatewayService = gatewayService;
-  }
-
-  @Autowired
-  public void setSensorService(SensorService sensorService) {
-    this.sensorService = sensorService;
+  public DeviceService(DeviceRepository deviceRepository, EntityRepository entityRepository,
+                       GatewayRepository gatewayRepository, SensorRepository sensorRepository) {
+    this.deviceRepo = deviceRepository;
+    this.entityRepo = entityRepository;
+    this.gatewayRepo = gatewayRepository;
+    this.sensorRepo = sensorRepository;
   }
 
   public List<Device> findAll() {
-    return (List<Device>) repo.findAll();
+    return (List<Device>) deviceRepo.findAll();
   }
 
   public List<Device> findAllByEntityId(int entityId) {
-    return (List<Device>) repo.findAllByEntityId(entityId);
+    return (List<Device>) deviceRepo.findAllByEntityId(entityId);
   }
 
   public List<Device> findAllByEntityIdAndGatewayId(int entityId, int gatewayId) {
-    Gateway gateway = gatewayService.findById(gatewayId);
+    Gateway gateway = gatewayRepo.findById(gatewayId).orElse(null);
     if (gateway != null) {
-      return (List<Device>) repo.findAllByEntityIdAndGateway(entityId, gateway);
+      return (List<Device>) deviceRepo.findAllByEntityIdAndGateway(entityId, gateway);
     } else {
       return Collections.emptyList();
     }
   }
 
   public List<Device> findAllByGatewayId(int gatewayId) {
-    Gateway gateway = gatewayService.findById(gatewayId);
+    Gateway gateway = gatewayRepo.findById(gatewayId).orElse(null);
     if (gateway != null) {
-      return (List<Device>) repo.findAllByGateway(gateway);
+      return (List<Device>) deviceRepo.findAllByGateway(gateway);
     } else {
       return Collections.emptyList();
     }
   }
 
   public Device findById(int id) {
-    return repo.findById(id).orElse(null);
+    return deviceRepo.findById(id).orElse(null);
   }
 
   public Device findBySensorId(int sensorId) {
-    Sensor sensor = sensorService.findById(sensorId);
+    Sensor sensor = sensorRepo.findById(sensorId).orElse(null);
     if (sensor != null) {
-      return repo.findBySensors(sensor);
+      return deviceRepo.findBySensors(sensor);
     } else {
       return null;
     }
   }
 
   public Device findByIdAndEntityId(int id, int entityId) {
-    return repo.findByIdAndEntityId(id, entityId);
+    return deviceRepo.findByIdAndEntityId(id, entityId);
   }
 
   public Device findByGatewayIdAndRealDeviceId(int gatewayId, int realDeviceId) {
-    Gateway gateway = gatewayService.findById(gatewayId);
+    Gateway gateway = gatewayRepo.findById(gatewayId).orElse(null);
     if (gateway != null) {
-      return repo.findByGatewayAndRealDeviceId(gateway, realDeviceId);
+      return deviceRepo.findByGatewayAndRealDeviceId(gateway, realDeviceId);
     } else {
       return null;
     }

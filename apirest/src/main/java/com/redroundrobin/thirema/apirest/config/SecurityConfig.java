@@ -1,8 +1,10 @@
 package com.redroundrobin.thirema.apirest.config;
 
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
+import com.redroundrobin.thirema.apirest.utils.CustomAuthenticationManager;
 import com.redroundrobin.thirema.apirest.utils.JwtRequestFilter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -16,11 +18,15 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-  @Autowired
   private UserService userService;
 
-  @Autowired
   private JwtRequestFilter jwtRequestFilter;
+
+  @Autowired
+  public SecurityConfig(JwtRequestFilter jwtRequestFilter, UserService userService) {
+    this.userService = userService;
+    this.jwtRequestFilter = jwtRequestFilter;
+  }
 
   @Override
   protected void configure(AuthenticationManagerBuilder auth) throws Exception {
@@ -44,7 +50,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
   @Override
   @Bean
-  public CustomAuthenticationManager authenticationManagerBean() throws Exception {
-    return new CustomAuthenticationManager();
+  public CustomAuthenticationManager authenticationManagerBean() {
+    return new CustomAuthenticationManager(userService);
   }
 }

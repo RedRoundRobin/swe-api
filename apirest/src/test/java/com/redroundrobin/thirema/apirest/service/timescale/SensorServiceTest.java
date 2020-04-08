@@ -4,6 +4,7 @@ import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
 import com.redroundrobin.thirema.apirest.models.timescale.Sensor;
+import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
 import com.redroundrobin.thirema.apirest.repository.timescale.SensorRepository;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,12 +17,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -29,13 +32,18 @@ import static org.mockito.Mockito.when;
 @RunWith(SpringRunner.class)
 public class SensorServiceTest {
 
-  @MockBean
-  private SensorRepository repo;
-
-  @MockBean
-  private com.redroundrobin.thirema.apirest.service.postgres.SensorService postgreSensorService;
-
   private SensorService sensorService;
+
+
+  @MockBean
+  private EntityRepository entityRepo;
+
+  @MockBean
+  private SensorRepository sensorRepo;
+
+  @MockBean
+  private com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository postgreSensorRepo;
+
 
   Sensor sensor1111;
   Sensor sensor1112;
@@ -53,6 +61,9 @@ public class SensorServiceTest {
 
   List<Sensor> allSensors;
 
+  Entity entity1;
+  Entity entity2;
+
   com.redroundrobin.thirema.apirest.models.postgres.Sensor sensor1;
   com.redroundrobin.thirema.apirest.models.postgres.Sensor sensor2;
   com.redroundrobin.thirema.apirest.models.postgres.Sensor sensor3;
@@ -67,8 +78,7 @@ public class SensorServiceTest {
 
   @Before
   public void setUp() {
-    sensorService = new SensorService(repo);
-    sensorService.setPostgreSensorService(postgreSensorService);
+    sensorService = new SensorService(sensorRepo, postgreSensorRepo, entityRepo);
 
 
     // ------------------------------------ Set Timescale Sensors ---------------------------------
@@ -187,6 +197,14 @@ public class SensorServiceTest {
     allG1D2S2Sensors.add(sensor1223);
 
 
+    // -------------------------------------- Set Entities ----------------------------------------
+    Entity entity1 = new Entity();
+    entity1.setId(1);
+
+    Entity entity2 = new Entity();
+    entity2.setId(2);
+
+
     // -------------------------------------- Set Gateway ----------------------------------------
     Gateway gateway1 = new Gateway();
     gateway1.setId(1);
@@ -210,9 +228,6 @@ public class SensorServiceTest {
 
 
     // -------------------------------------- Set Devices ----------------------------------------
-    Entity entity1 = new Entity();
-    entity1.setId(1);
-
     List<Entity> sensor1Entities = new ArrayList<>();
     sensor1Entities.add(entity1);
 
@@ -251,7 +266,7 @@ public class SensorServiceTest {
     // sensor 1 & 3 are entity 1 sensors, 2 & 4 are entity 2 sensor
 
 
-    when(repo.findAllByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(anyString(), anyInt(),
+    when(sensorRepo.findAllByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(anyString(), anyInt(),
         anyInt())).thenAnswer(i -> {
           String gatewayName = i.getArgument(0);
           int deviceId = i.getArgument(1);
@@ -261,7 +276,7 @@ public class SensorServiceTest {
               .sorted((t1,t2) -> Long.compare(t2.getTime().getTime(),t1.getTime().getTime()))
               .collect(Collectors.toList());
     });
-    when(repo.findTopNByGatewayNameAndRealDeviceIdAndRealSensorId(anyInt(), anyString(), anyInt(), anyInt()))
+    when(sensorRepo.findTopNByGatewayNameAndRealDeviceIdAndRealSensorId(anyInt(), anyString(), anyInt(), anyInt()))
         .thenAnswer(i -> {
       int limit = i.getArgument(0);
       String gatewayName = i.getArgument(1);
@@ -272,7 +287,7 @@ public class SensorServiceTest {
           .sorted((t1,t2) -> Long.compare(t2.getTime().getTime(),t1.getTime().getTime()))
           .limit(limit).collect(Collectors.toList());
     });
-    when(repo.findTopByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(anyString(), anyInt(),
+    when(sensorRepo.findTopByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(anyString(), anyInt(),
         anyInt())).thenAnswer(i -> {
       String gatewayName = i.getArgument(0);
       int deviceId = i.getArgument(1);
@@ -283,34 +298,46 @@ public class SensorServiceTest {
           .findFirst().orElse(null);
     });
 
-    when(postgreSensorService.findAll()).thenReturn(allPostgreSensors);
-    when(postgreSensorService.findAllByEntityId(anyInt())).thenAnswer(i -> {
-      if (i.getArgument(0).equals(1)) {
+    when(postgreSensorRepo.findAll()).thenReturn(allPostgreSensors);
+    when(postgreSensorRepo.findAllByEntities(any(Entity.class))).thenAnswer(i -> {
+      Entity entity = i.getArgument(0);
+      if (entity.getId() == 1) {
         return allPostgreSensors.stream().filter(s -> s.getId() == 1 || s.getId() == 3)
             .collect(Collectors.toList());
-      } else if (i.getArgument(0).equals(2)) {
+      } else if (entity.getId() == 2) {
         return allPostgreSensors.stream().filter(s -> s.getId() == 2 || s.getId() == 4)
             .collect(Collectors.toList());
       } else {
         return Collections.emptyList();
       }
     });
-    when(postgreSensorService.findByIdAndEntityId(anyInt(), anyInt())).thenAnswer(i -> {
-      if (i.getArgument(1).equals(1)) {
+    when(postgreSensorRepo.findBySensorIdAndEntities(anyInt(), any(Entity.class))).thenAnswer(i -> {
+      Entity entity = i.getArgument(1);
+      if (entity.getId() == 1) {
         return allPostgreSensors.stream().filter(s -> i.getArgument(0).equals(s.getId())
             && (s.getId() == 1 || s.getId() == 3))
             .findFirst().orElse(null);
-      } else if (i.getArgument(1).equals(2)) {
+      } else if (entity.getId() == 2) {
         return allPostgreSensors.stream().filter(s -> i.getArgument(0).equals(s.getId())
             && (s.getId() == 2 || s.getId() == 4))
             .findFirst().orElse(null);
       } else {
-        return Collections.emptyList();
+        return Optional.empty();
       }
     });
-    when(postgreSensorService.findById(anyInt())).thenAnswer(i -> {
+    when(postgreSensorRepo.findById(anyInt())).thenAnswer(i -> {
       return allPostgreSensors.stream().filter(s -> i.getArgument(0).equals(s.getId()))
-          .findFirst().orElse(null);
+          .findFirst();
+    });
+
+    when(entityRepo.findById(anyInt())).thenAnswer(i -> {
+      if (i.getArgument(0).equals(1)) {
+        return Optional.of(entity1);
+      } else if (i.getArgument(0).equals(2)) {
+        return Optional.of(entity2);
+      } else {
+        return Optional.empty();
+      }
     });
   }
 

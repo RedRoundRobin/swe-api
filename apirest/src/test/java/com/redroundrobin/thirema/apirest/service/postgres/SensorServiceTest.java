@@ -6,12 +6,11 @@ import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.ViewGraph;
+import com.redroundrobin.thirema.apirest.repository.postgres.AlertRepository;
+import com.redroundrobin.thirema.apirest.repository.postgres.DeviceRepository;
+import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
-import com.redroundrobin.thirema.apirest.service.postgres.AlertService;
-import com.redroundrobin.thirema.apirest.service.postgres.DeviceService;
-import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
-import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
-import com.redroundrobin.thirema.apirest.service.postgres.ViewGraphService;
+import com.redroundrobin.thirema.apirest.repository.postgres.ViewGraphRepository;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,19 +34,19 @@ import static org.mockito.Mockito.when;
 public class SensorServiceTest {
 
   @MockBean
-  private SensorRepository repo;
+  private SensorRepository sensorRepo;
 
   @MockBean
-  private AlertService alertService;
+  private AlertRepository alertRepo;
 
   @MockBean
-  private DeviceService deviceService;
+  private DeviceRepository deviceRepo;
 
   @MockBean
-  private EntityService entityService;
+  private EntityRepository entityRepo;
 
   @MockBean
-  private ViewGraphService viewGraphService;
+  private ViewGraphRepository viewGraphRepo;
 
 
   private SensorService sensorService;
@@ -77,11 +76,7 @@ public class SensorServiceTest {
 
   @Before
   public void setUp() {
-    sensorService = new SensorService(repo);
-    sensorService.setAlertService(alertService);
-    sensorService.setDeviceService(deviceService);
-    sensorService.setEntityService(entityService);
-    sensorService.setViewGraphService(viewGraphService);
+    sensorService = new SensorService(sensorRepo, alertRepo, deviceRepo, entityRepo, viewGraphRepo);
 
 
     // ----------------------------------------- Set Entities --------------------------------------
@@ -250,56 +245,56 @@ public class SensorServiceTest {
     gateway2.setDevices(gateway2Devices);
 
 
-    when(repo.findAll()).thenReturn(allSensors);
-    when(repo.findAllByDevice(any(Device.class))).thenAnswer(i -> {
+    when(sensorRepo.findAll()).thenReturn(allSensors);
+    when(sensorRepo.findAllByDevice(any(Device.class))).thenAnswer(i -> {
       Device device = allDevices.stream().filter(d -> i.getArgument(0).equals(d))
           .findFirst().orElse(null);
       return allSensors.stream().filter(s -> s.getDevice().equals(device))
           .collect(Collectors.toList());
     });
-    when(repo.findAllByEntities(any(Entity.class))).thenAnswer(i -> {
+    when(sensorRepo.findAllByEntities(any(Entity.class))).thenAnswer(i -> {
       Entity entity = i.getArgument(0);
       return allSensors.stream().filter(s -> s.getEntities().contains(entity))
           .collect(Collectors.toList());
     });
-    when(repo.findAllByDeviceAndEntities(any(Device.class), any(Entity.class))).thenAnswer(i -> {
+    when(sensorRepo.findAllByDeviceAndEntities(any(Device.class), any(Entity.class))).thenAnswer(i -> {
       Device device = i.getArgument(0);
       Entity entity = i.getArgument(1);
       return allSensors.stream().filter(s -> s.getEntities().contains(entity) && device.equals(s.getDevice()))
           .collect(Collectors.toList());
     });
-    when(repo.findAllByViewGraphs1OrViewGraphs2(any(ViewGraph.class),any(ViewGraph.class))).thenAnswer(i -> {
+    when(sensorRepo.findAllByViewGraphs1OrViewGraphs2(any(ViewGraph.class),any(ViewGraph.class))).thenAnswer(i -> {
       return allSensors.stream().filter(s -> s.getViewGraphs1().contains(
           i.getArgument(0)) || s.getViewGraphs2().contains(i.getArgument(1)))
           .collect(Collectors.toList());
     });
-    when(repo.findAllByGatewayIdAndRealDeviceId(anyInt(),anyInt())).thenAnswer(i -> {
+    when(sensorRepo.findAllByGatewayIdAndRealDeviceId(anyInt(),anyInt())).thenAnswer(i -> {
       return allSensors.stream()
           .filter(s -> i.getArgument(0).equals(s.getDevice().getGateway().getId())
               && i.getArgument(1).equals(s.getDevice().getRealDeviceId()))
           .collect(Collectors.toList());
     });
-    when(repo.findById(anyInt())).thenAnswer(i -> {
+    when(sensorRepo.findById(anyInt())).thenAnswer(i -> {
       return allSensors.stream().filter(s -> i.getArgument(0).equals(s.getId()))
           .findFirst();
     });
-    when(repo.findBySensorIdAndEntities(anyInt(), any(Entity.class))).thenAnswer(i -> {
+    when(sensorRepo.findBySensorIdAndEntities(anyInt(), any(Entity.class))).thenAnswer(i -> {
       return allSensors.stream().filter(s -> i.getArgument(0).equals(s.getId()) && s.getEntities().contains(i.getArgument(1)))
           .findFirst().orElse(null);
     });
-    when(repo.findByAlerts(any(Alert.class))).thenAnswer(i -> {
+    when(sensorRepo.findByAlerts(any(Alert.class))).thenAnswer(i -> {
       Alert alert = i.getArgument(0);
       return allSensors.stream().filter(s -> s.getAlerts().contains(alert))
           .findFirst().orElse(null);
     });
-    when(repo.findByDeviceAndRealSensorId(any(Device.class), anyInt())).thenAnswer(i -> {
+    when(sensorRepo.findByDeviceAndRealSensorId(any(Device.class), anyInt())).thenAnswer(i -> {
       Device device = i.getArgument(0);
       int realSensorId = i.getArgument(1);
       return allSensors.stream()
           .filter(s -> device.equals(s.getDevice()) && realSensorId == s.getRealSensorId())
           .findFirst().orElse(null);
     });
-    when(repo.findByDeviceAndRealSensorIdAndEntities(any(Device.class), anyInt(), any(Entity.class))).thenAnswer(i -> {
+    when(sensorRepo.findByDeviceAndRealSensorIdAndEntities(any(Device.class), anyInt(), any(Entity.class))).thenAnswer(i -> {
       Device device = i.getArgument(0);
       int realSensorId = i.getArgument(1);
       Entity entity = i.getArgument(2);
@@ -308,7 +303,7 @@ public class SensorServiceTest {
               && s.getEntities().contains(entity))
           .findFirst().orElse(null);
     });
-    when(repo.findByGatewayIdAndRealDeviceIdAndRealSensorId(anyInt(), anyInt(), anyInt())).thenAnswer(i -> {
+    when(sensorRepo.findByGatewayIdAndRealDeviceIdAndRealSensorId(anyInt(), anyInt(), anyInt())).thenAnswer(i -> {
       return allSensors.stream()
           .filter(s -> i.getArgument(0).equals(s.getDevice().getGateway().getId())
               && i.getArgument(1).equals(s.getDevice().getRealDeviceId())
@@ -316,24 +311,24 @@ public class SensorServiceTest {
           .findFirst().orElse(null);
     });
 
-    when(alertService.findById(anyInt())).thenAnswer(i -> {
+    when(alertRepo.findById(anyInt())).thenAnswer(i -> {
       return allAlerts.stream().filter(a -> i.getArgument(0).equals(a.getAlertId()))
-          .findFirst().orElse(null);
+          .findFirst();
     });
 
-    when(deviceService.findById(anyInt())).thenAnswer(i -> {
+    when(deviceRepo.findById(anyInt())).thenAnswer(i -> {
       return allDevices.stream().filter(d -> i.getArgument(0).equals(d.getId()))
-          .findFirst().orElse(null);
+          .findFirst();
     });
 
-    when(entityService.findById(anyInt())).thenAnswer(i -> {
+    when(entityRepo.findById(anyInt())).thenAnswer(i -> {
       return allEntities.stream().filter(e -> i.getArgument(0).equals(e.getId()))
-          .findFirst().orElse(null);
+          .findFirst();
     });
 
-    when(viewGraphService.findById(anyInt())).thenAnswer(i -> {
+    when(viewGraphRepo.findById(anyInt())).thenAnswer(i -> {
       return allViewGraphs.stream().filter(vg -> i.getArgument(0).equals(vg.getId()))
-          .findFirst().orElse(null);
+          .findFirst();
     });
   }
 

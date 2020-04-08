@@ -1,9 +1,10 @@
 package com.redroundrobin.thirema.apirest.controller;
 
-import com.redroundrobin.thirema.apirest.config.CustomAuthenticationManager;
+import com.redroundrobin.thirema.apirest.service.postgres.UserService;
+import com.redroundrobin.thirema.apirest.service.timescale.LogService;
+import com.redroundrobin.thirema.apirest.utils.CustomAuthenticationManager;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.TelegramService;
-import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import com.redroundrobin.thirema.apirest.utils.exception.TelegramChatNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
@@ -23,6 +24,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
+
 @RestController
 public class AuthController extends CoreController {
 
@@ -32,17 +35,21 @@ public class AuthController extends CoreController {
 
   @Autowired
   public AuthController(CustomAuthenticationManager authenticationManager,
-                        TelegramService telegramService) {
+                        TelegramService telegramService, JwtUtil jwtUtil, LogService logService,
+                        UserService userService) {
+    super(jwtUtil, logService, userService);
     this.authenticationManager = authenticationManager;
     this.telegramService = telegramService;
   }
 
   @PostMapping(value = "/auth")
   public ResponseEntity<Map<String, Object>> authentication(
-      @RequestBody Map<String, Object> authenticationRequest,
-      @RequestHeader(value = "X-Forwarded-For") String ip) {
-    String email = (String) authenticationRequest.get("username");
-    String password = (String) authenticationRequest.get("password");
+      @RequestBody Map<String, Object> request,
+      HttpServletRequest httpRequest) {
+    String ip = getIpAddress(httpRequest);
+
+    String email = (String) request.get("username");
+    String password = (String) request.get("password");
 
     if (email == null || password == null) {
       return new ResponseEntity(HttpStatus.BAD_REQUEST);  // Bad Request
@@ -72,17 +79,17 @@ public class AuthController extends CoreController {
         Random rnd = new Random();
         int sixDigitsCode = 100000 + rnd.nextInt(900000);
 
-        Map<String, Object> request = new HashMap<>();
-        request.put("authCode", sixDigitsCode); //codice fittizio
-        request.put("chatId", user.getTelegramChat());
+        Map<String, Object> telegramRequest = new HashMap<>();
+        telegramRequest.put("authCode", sixDigitsCode); //codice fittizio
+        telegramRequest.put("chatId", user.getTelegramChat());
 
-        if (!telegramService.sendTfa(request)) {
+        if (!telegramService.sendTfa(telegramRequest)) {
           return  new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         response.put("tfa", true);
 
-        token = jwtUtil.generateTfaToken("tfa", String.valueOf(sixDigitsCode), userDetails);
+        token = jwtUtil.generateTfaToken("tfa", userDetails, String.valueOf(sixDigitsCode));
 
         logService.createLog(user.getId(), ip, "login", "sent tfa code");
       } else {
@@ -105,8 +112,8 @@ public class AuthController extends CoreController {
   public ResponseEntity<Map<String, Object>> tfaAuthentication(
       @RequestBody Map<String, Object> request,
       @RequestHeader("Authorization") String authorization,
-      @RequestHeader(value = "X-Forwarded-For") String ip) {
-
+      HttpServletRequest httpRequest) {
+    String ip = getIpAddress(httpRequest);
     if (!request.containsKey("authCode") || ((String) request.get("authCode")).equals("")) {
       return new ResponseEntity(HttpStatus.BAD_REQUEST);
     }
@@ -154,10 +161,12 @@ public class AuthController extends CoreController {
   //funzione di controllo username Telegram e salvataggio chatID
   @PostMapping(value = {"/auth/telegram"})
   public ResponseEntity<Map<String, Object>> telegramAuthentication(
-      @RequestBody Map<String, Object> authenticationRequest,
-      @RequestHeader(value = "X-Forwarded-For") String ip) {
-    String telegramName = (String) authenticationRequest.get("telegramName");
-    Integer intChatId = (Integer) authenticationRequest.get("telegramChat");
+      @RequestBody Map<String, Object> request,
+      HttpServletRequest httpRequest) {
+    String ip = getIpAddress(httpRequest);
+
+    String telegramName = (String) request.get("telegramName");
+    Integer intChatId = (Integer) request.get("telegramChat");
 
     User user = userService.findByTelegramName(telegramName);
 
@@ -175,8 +184,7 @@ public class AuthController extends CoreController {
     } else if (userService.findByTelegramNameAndTelegramChat(telegramName, chatId) == null) {
       code = 1;
 
-      user.setTelegramChat(chatId);
-      userService.save(user);
+      userService.editUserTelegramChat(user, chatId);
     }
 
     try {
