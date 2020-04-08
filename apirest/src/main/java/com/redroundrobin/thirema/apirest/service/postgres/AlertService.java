@@ -68,10 +68,10 @@ public class AlertService {
         case "sensor":
           Sensor sensor;
           if (user.getType() == User.Role.ADMIN) {
-            sensor = sensorService.findById((int) entry.getValue());
+            sensor = sensorRepo.findById((int) entry.getValue()).orElse(null);
           } else {
-            sensor = sensorService.findByIdAndEntityId((int) entry.getValue(),
-                user.getEntity().getId());
+            sensor = sensorRepo.findBySensorIdAndEntities((int) entry.getValue(),
+                user.getEntity());
           }
           if (sensor != null) {
             alert.setSensor(sensor);
@@ -84,7 +84,7 @@ public class AlertService {
           Entity entity;
           if (user.getType() == User.Role.ADMIN
               || user.getEntity().getId() == (int) entry.getValue()) {
-            entity = entityService.findById((int) entry.getValue());
+            entity = entityRepo.findById((int) entry.getValue()).orElse(null);
           } else {
             entity = null;
           }
@@ -99,7 +99,7 @@ public class AlertService {
       }
     }
 
-    return repo.save(alert);
+    return alertRepo.save(alert);
   }
 
   @Autowired
@@ -125,10 +125,10 @@ public class AlertService {
   }
 
   public List<Alert> findAllByEntityIdAndSensorId(int entityId, int sensorId) {
-    Entity entity = entityService.findById(entityId);
-    Sensor sensor = sensorService.findById(sensorId);
+    Entity entity = entityRepo.findById(entityId).orElse(null);
+    Sensor sensor = sensorRepo.findById(sensorId).orElse(null);
     if (entity != null && sensor != null) {
-      return (List<Alert>) repo.findAllByEntityAndSensor(entity, sensor);
+      return (List<Alert>) alertRepo.findAllByEntityAndSensor(entity, sensor);
     } else {
       return Collections.emptyList();
     }

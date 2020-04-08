@@ -8,6 +8,7 @@ import com.redroundrobin.thirema.apirest.models.postgres.ViewGraph;
 import com.redroundrobin.thirema.apirest.service.postgres.AlertService;
 import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
+import com.redroundrobin.thirema.apirest.service.timescale.LogService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
@@ -41,6 +42,9 @@ public class AlertControllerTest {
 
   @MockBean
   private JwtUtil jwtUtil;
+
+  @MockBean
+  private LogService logService;
 
   @MockBean
   private UserService userService;
@@ -89,9 +93,7 @@ public class AlertControllerTest {
 
   @Before
   public void setUp() throws MissingFieldsException, InvalidFieldsValuesException {
-    alertController = new AlertController(alertService);
-    alertController.setJwtUtil(jwtUtil);
-    alertController.setUserService(userService);
+    alertController = new AlertController(alertService, jwtUtil, logService, userService);
 
 
     admin = new User();

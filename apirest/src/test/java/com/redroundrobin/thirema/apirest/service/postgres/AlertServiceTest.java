@@ -6,6 +6,8 @@ import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.postgres.ViewGraph;
 import com.redroundrobin.thirema.apirest.repository.postgres.AlertRepository;
+import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
+import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 import com.redroundrobin.thirema.apirest.service.postgres.AlertService;
 import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
@@ -222,13 +224,13 @@ public class AlertServiceTest {
 
 
 
-    when(repo.findAll()).thenReturn(allAlerts);
-    when(repo.findAllByEntity(any(Entity.class))).thenAnswer(i -> {
+    when(alertRepo.findAll()).thenReturn(allAlerts);
+    when(alertRepo.findAllByEntity(any(Entity.class))).thenAnswer(i -> {
       Entity entity = i.getArgument(0);
       return allAlerts.stream().filter(a -> entity.equals(a.getEntity()))
           .collect(Collectors.toList());
     });
-    when(repo.findAllByEntityAndSensor(any(Entity.class),any(Sensor.class))).thenAnswer(i -> {
+    when(alertRepo.findAllByEntityAndSensor(any(Entity.class),any(Sensor.class))).thenAnswer(i -> {
       Entity entity = i.getArgument(0);
       Sensor sensor = i.getArgument(1);
       if (entity != null && sensor != null) {
@@ -238,7 +240,7 @@ public class AlertServiceTest {
         return Collections.emptyList();
       }
     });
-    when(repo.findAllBySensor(any(Sensor.class))).thenAnswer(i -> {
+    when(alertRepo.findAllBySensor(any(Sensor.class))).thenAnswer(i -> {
       Sensor sensor = i.getArgument(0);
       return allAlerts.stream().filter(a -> sensor.equals(a.getSensor()))
           .collect(Collectors.toList());
@@ -252,7 +254,7 @@ public class AlertServiceTest {
       return allAlerts.stream().filter(a -> i.getArgument(0).equals(a.getAlertId()))
           .findFirst();
     });
-    when(repo.save(any(Alert.class))).thenAnswer(i -> i.getArgument(0));
+    when(alertRepo.save(any(Alert.class))).thenAnswer(i -> i.getArgument(0));
 
     when(entityRepo.findById(anyInt())).thenAnswer(i -> {
       return allEntities.stream().filter(e -> i.getArgument(0).equals(e.getId()))
@@ -263,9 +265,9 @@ public class AlertServiceTest {
       return allSensors.stream().filter(s -> i.getArgument(0).equals(s.getId()))
           .findFirst();
     });
-    when(sensorService.findByIdAndEntityId(anyInt(),anyInt())).thenAnswer(i -> {
+    when(sensorRepo.findBySensorIdAndEntities(anyInt(),any(Entity.class))).thenAnswer(i -> {
       Sensor sensor = allSensors.stream().filter(s -> i.getArgument(0).equals(s.getId())).findFirst().orElse(null);
-      Entity entity = allEntities.stream().filter(e -> i.getArgument(1).equals(e.getId())).findFirst().orElse(null);
+      Entity entity = i.getArgument(1);
       if (sensor != null && sensor.getEntities().contains(entity)) {
         return sensor;
       } else {
