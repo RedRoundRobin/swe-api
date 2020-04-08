@@ -21,7 +21,7 @@ public interface SensorRepository extends CrudRepository<Sensor, Integer> {
 
   Iterable<Sensor> findAllByDeviceAndEntities(Device device, Entity entity);
 
-  @Query("SELECT S FROM Gateway G JOIN G.devices D JOIN D.sensors S WHERE G.gatewayId = :gatewayId "
+  @Query("SELECT S FROM Sensor S JOIN S.device D JOIN D.gateway G WHERE G.gatewayId = :gatewayId "
       + "AND D.realDeviceId = :realDeviceId")
   Iterable<Sensor> findAllByGatewayIdAndRealDeviceId(int gatewayId, int realDeviceId);
 
@@ -34,7 +34,7 @@ public interface SensorRepository extends CrudRepository<Sensor, Integer> {
 
   Sensor findBySensorIdAndEntities(int sensorId, Entity entity);
 
-  @Query("SELECT S FROM Gateway G JOIN G.devices D JOIN D.sensors S "
+  @Query("SELECT S FROM Sensor S JOIN S.device D JOIN D.gateway G "
       + "WHERE G.gatewayId = :gatewayId AND D.realDeviceId = :realDeviceId "
       + "AND S.realSensorId = :realSensorId")
   Sensor findByGatewayIdAndRealDeviceIdAndRealSensorId(int gatewayId, int realDeviceId,

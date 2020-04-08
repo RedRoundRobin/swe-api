@@ -38,10 +38,6 @@ public class Device {
   @Column(name = "real_device_id")
   private int realDeviceId;
 
-  @JsonIgnore
-  @OneToMany(mappedBy = "device", cascade = CascadeType.MERGE)
-  private List<Sensor> sensors;
-
   @ManyToOne
   @JoinColumn(name = "gateway_id")
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "gatewayId")
@@ -107,14 +103,6 @@ public class Device {
     this.gateway = gateway;
   }
 
-  public List<Sensor> getSensors() {
-    return sensors;
-  }
-
-  public void setSensors(List<Sensor> sensors) {
-    this.sensors = sensors;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -146,7 +134,6 @@ public class Device {
     sb.append("id=").append(deviceId);
     sb.append(", name='").append(name).append("'");
     sb.append(", frequency=").append(frequency);
-    sb.append(", sensors=").append(sensors);
     sb.append(", real_id=").append(realDeviceId);
     sb.append('}');
     return sb.toString();
