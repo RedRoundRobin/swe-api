@@ -123,19 +123,20 @@ public class AlertController extends CoreController {
   public ResponseEntity deleteAlert(@RequestHeader("authorization") String authorization,
                                       @PathVariable("alertId") int alertId) {
     User user = getUserFromAuthorization(authorization);
-    if (user.getType() == User.Role.ADMIN || user.getType() == User.Role.MOD) {
+    if (user.getType() == User.Role.ADMIN || (user.getType() == User.Role.MOD)) {
       try {
-        if (alertService.deleteAlert(alertId)) {
+        if (alertService.deleteAlert(user, alertId)) {
           return new ResponseEntity(HttpStatus.OK);
         } else {
           return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
         }
       } catch (ElementNotFoundException e) {
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
+      } catch (NotAuthorizedException e) {
+        // go to return FORBIDDEN
       }
-    } else {
-      return new ResponseEntity(HttpStatus.FORBIDDEN);
     }
+    return new ResponseEntity(HttpStatus.FORBIDDEN);
   }
 
 }

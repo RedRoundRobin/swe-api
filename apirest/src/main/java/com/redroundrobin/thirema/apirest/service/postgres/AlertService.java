@@ -186,22 +186,28 @@ public class AlertService {
           return false;
         }
       } else {
-        throw new NotAuthorizedException("The alert with provided id is not authorized");
+        throw NotAuthorizedException.notAuthorizedMessage("alert");
       }
     } else {
       throw ElementNotFoundException.notFoundMessage("alert");
     }
   }
 
-  public boolean deleteAlert(int alertId) throws ElementNotFoundException {
+  public boolean deleteAlert(User deletingUser, int alertId) throws ElementNotFoundException,
+      NotAuthorizedException {
     Alert alert = alertRepo.findById(alertId).orElse(null);
     if (alert != null) {
-      alert.setDeleted(true);
-      Alert newAlert = alertRepo.save(alert);
-      if (newAlert.isDeleted()) {
-        return true;
+      if (deletingUser.getType() == User.Role.ADMIN || (deletingUser.getType() == User.Role.MOD
+          && deletingUser.getEntity().equals(alert.getEntity()))) {
+        alert.setDeleted(true);
+        Alert newAlert = alertRepo.save(alert);
+        if (newAlert.isDeleted()) {
+          return true;
+        } else {
+          return false;
+        }
       } else {
-        return false;
+        throw NotAuthorizedException.notAuthorizedMessage("alert");
       }
     } else {
       throw ElementNotFoundException.notFoundMessage("alert");
