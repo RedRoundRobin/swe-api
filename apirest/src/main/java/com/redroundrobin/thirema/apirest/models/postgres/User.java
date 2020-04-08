@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
-import java.util.List;
+import java.util.Set;
 import javax.persistence.Column;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -17,7 +17,6 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
@@ -73,7 +72,7 @@ public class User {
       name = "disabled_users_alerts",
       joinColumns = @JoinColumn(name = "user_id"),
       inverseJoinColumns = @JoinColumn(name = "alert_id"))
-  private List<Alert> disabledAlerts;
+  private Set<Alert> disabledAlerts;
 
   public void setId(int userId) {
     this.userId = userId;
@@ -164,11 +163,11 @@ public class User {
     return entity;
   }
 
-  public List<Alert> getDisabledAlerts() {
+  public Set<Alert> getDisabledAlerts() {
     return disabledAlerts;
   }
 
-  public void setDisabledAlerts(List<Alert> disabledAlerts) {
+  public void setDisabledAlerts(Set<Alert> disabledAlerts) {
     this.disabledAlerts = disabledAlerts;
   }
 }
