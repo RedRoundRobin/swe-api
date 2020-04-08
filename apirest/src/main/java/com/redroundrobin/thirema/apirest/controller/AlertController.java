@@ -42,6 +42,22 @@ public class AlertController extends CoreController {
     this.alertService = alertService;
   }
 
+  @DeleteMapping(value = {""})
+  public ResponseEntity deleteAlerts(@RequestHeader(value = "Authorization") String authorization,
+                                     @RequestParam(name = "sensorId") Integer sensorId) {
+    User user = getUserFromAuthorization(authorization);
+    if (user.getType() == User.Role.ADMIN) {
+      try {
+        alertService.deleteAlertsBySensorId(sensorId);
+        return new ResponseEntity(HttpStatus.OK);
+      } catch (ElementNotFoundException e) {
+        return new ResponseEntity(HttpStatus.BAD_REQUEST);
+      }
+    } else {
+      return new ResponseEntity(HttpStatus.FORBIDDEN);
+    }
+  }
+
   @GetMapping(value = {""})
   public ResponseEntity<Map<String,List<Alert>>> getAlerts(
       @RequestHeader(value = "Authorization") String authorization,
@@ -99,6 +115,26 @@ public class AlertController extends CoreController {
     }
   }
 
+  @DeleteMapping(value = {"/{alertId:.+}"})
+  public ResponseEntity deleteAlert(@RequestHeader("authorization") String authorization,
+                                    @PathVariable("alertId") int alertId) {
+    User user = getUserFromAuthorization(authorization);
+    if (user.getType() == User.Role.ADMIN || (user.getType() == User.Role.MOD)) {
+      try {
+        if (alertService.deleteAlert(user, alertId)) {
+          return new ResponseEntity(HttpStatus.OK);
+        } else {
+          return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+      } catch (ElementNotFoundException e) {
+        return new ResponseEntity(HttpStatus.BAD_REQUEST);
+      } catch (NotAuthorizedException e) {
+        // go to return FORBIDDEN
+      }
+    }
+    return new ResponseEntity(HttpStatus.FORBIDDEN);
+  }
+
   @PutMapping(value = {"/{alertId:.+}"})
   public ResponseEntity disableUserAlert(
       @RequestHeader("authorization") String authorization,
@@ -117,26 +153,6 @@ public class AlertController extends CoreController {
       }
     }
     return new ResponseEntity(HttpStatus.OK);
-  }
-
-  @DeleteMapping(value = {"/{alertId:.+}"})
-  public ResponseEntity deleteAlert(@RequestHeader("authorization") String authorization,
-                                      @PathVariable("alertId") int alertId) {
-    User user = getUserFromAuthorization(authorization);
-    if (user.getType() == User.Role.ADMIN || (user.getType() == User.Role.MOD)) {
-      try {
-        if (alertService.deleteAlert(user, alertId)) {
-          return new ResponseEntity(HttpStatus.OK);
-        } else {
-          return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-      } catch (ElementNotFoundException e) {
-        return new ResponseEntity(HttpStatus.BAD_REQUEST);
-      } catch (NotAuthorizedException e) {
-        // go to return FORBIDDEN
-      }
-    }
-    return new ResponseEntity(HttpStatus.FORBIDDEN);
   }
 
 }

@@ -213,4 +213,13 @@ public class AlertService {
       throw ElementNotFoundException.notFoundMessage("alert");
     }
   }
+
+  public void deleteAlertsBySensorId(int sensorId) throws ElementNotFoundException {
+    Sensor sensor = sensorRepo.findById(sensorId).orElse(null);
+    if (sensor != null) {
+      alertRepo.setDeletedBySensor(true, sensor);
+    } else {
+      throw ElementNotFoundException.notFoundMessage("sensor");
+    }
+  }
 }
