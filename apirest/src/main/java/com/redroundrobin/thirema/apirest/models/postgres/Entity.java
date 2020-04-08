@@ -33,10 +33,6 @@ public class Entity {
 
   @JsonIgnore
   @OneToMany(mappedBy = "entity")
-  private List<User> users;
-
-  @JsonIgnore
-  @OneToMany(mappedBy = "entity")
   private List<Alert> alerts;
 
   @JsonIgnore
@@ -70,14 +66,6 @@ public class Entity {
 
   public void setLocation(String location) {
     this.location = location;
-  }
-
-  public List<User> getUsers() {
-    return users;
-  }
-
-  public void setUsers(List<User> users) {
-    this.users = users;
   }
 
   public List<Alert> getAlerts() {
