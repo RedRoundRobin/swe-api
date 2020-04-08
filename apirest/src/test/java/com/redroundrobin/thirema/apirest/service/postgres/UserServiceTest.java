@@ -1,8 +1,9 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
 import com.google.gson.JsonObject;
+import com.redroundrobin.thirema.apirest.repository.postgres.AlertRepository;
+import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
 import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
-import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
@@ -28,13 +29,16 @@ import static org.mockito.Mockito.when;
 @RunWith(SpringRunner.class)
 public class UserServiceTest {
 
+  private UserService userService;
+
+  @MockBean
+  private AlertRepository alertRepo;
+
+  @MockBean
+  private EntityRepository entityRepo;
+
   @MockBean
   private UserRepository userRepo;
-
-  @MockBean
-  private EntityService entityService;
-
-  private UserService userService;
 
   private User admin1;
   private User admin2;
@@ -50,8 +54,7 @@ public class UserServiceTest {
   @Before
   public void setUp() {
 
-    userService = new UserService(userRepo);
-    userService.setEntityService(entityService);
+    userService = new UserService(userRepo, alertRepo, entityRepo);
 
     admin1 = new User();
     admin1.setId(1);
@@ -143,7 +146,6 @@ public class UserServiceTest {
           .findFirst();
       return userFound;
     });
-
     when(userRepo.findByTelegramNameAndTelegramChat(anyString(), anyString())).thenAnswer(i -> {
       String tn = i.getArgument(0);
       String tc = i.getArgument(1);
@@ -152,35 +154,29 @@ public class UserServiceTest {
           .findFirst();
       return userFound.isPresent() ? userFound.get() : null;
     });
-
-    List<Device> devices = new ArrayList<>();
-    when(userRepo.userDevices(anyInt())).thenReturn(devices);
-
     when(userRepo.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
-
     when(userRepo.findByEmail(anyString())).thenAnswer(i -> {
       String emailNewUser = i.getArgument(0);
       return allUsers.stream()
           .filter(user -> user.getEmail() == emailNewUser)
           .findFirst().orElse(null);
     });
-
-    when(entityService.findById(anyInt())).thenAnswer(i -> {
-      int id = i.getArgument(0);
-      if (id == 1) {
-        return entity1;
-      } else if (id == 2) {
-        return entity2;
-      } else {
-        return null;
-      }
-    });
-
     when(userRepo.findAllByEntity(any(Entity.class))).thenAnswer(i -> {
       Entity ent = i.getArgument(0);
       List<User> users = allUsers.stream()
           .filter(user -> user.getEntity() == ent).collect(Collectors.toList());
       return users;
+    });
+
+    when(entityRepo.findById(anyInt())).thenAnswer(i -> {
+      int id = i.getArgument(0);
+      if (id == 1) {
+        return Optional.of(entity1);
+      } else if (id == 2) {
+        return Optional.of(entity2);
+      } else {
+        return Optional.empty();
+      }
     });
   }
 
@@ -217,15 +213,6 @@ public class UserServiceTest {
   public void findSuccessfull() {
     User user = userService.findById(6);
     assertEquals(user2, user);
-  }
-
-
-
-  // findById method tests
-  @Test
-  public void userDevicesEmpty() {
-    List<Device> devices = userService.userDevices(6);
-    assertTrue(devices.isEmpty());
   }
 
 
@@ -584,7 +571,7 @@ public class UserServiceTest {
     editedUser.setTelegramChat(null);
 
     try {
-      User user = userService.editByAdministrator(admin1, true, fieldsToEdit);
+      User user = userService.editByAdministrator(admin1, fieldsToEdit, true);
 
       assertNotNull(user);
       assertEquals(editedUser.getTelegramName(), user.getTelegramName());
@@ -627,10 +614,10 @@ public class UserServiceTest {
     editedUser.setTelegramName(newTelegramName);
     editedUser.setEntity(entity2);
 
-    when(entityService.findById(newEntityId)).thenReturn(entity2);
+    when(entityRepo.findById(newEntityId)).thenReturn(Optional.of(entity2));
 
     try {
-      User user = userService.editByAdministrator(user1, false, fieldsToEdit);
+      User user = userService.editByAdministrator(user1, fieldsToEdit, false);
 
       assertNotNull(user);
       assertEquals(editedUser.getName(), user.getName());
@@ -654,7 +641,7 @@ public class UserServiceTest {
     fieldsToEdit.put("type",3);
 
     try {
-      User user = userService.editByAdministrator(user1, false, fieldsToEdit);
+      User user = userService.editByAdministrator(user1, fieldsToEdit, false);
       assertTrue(false);
     } catch (InvalidFieldsValuesException urnfe) {
       assertTrue(urnfe.getMessage().contains("role"));
@@ -672,15 +659,15 @@ public class UserServiceTest {
     HashMap<String, Object> fieldsToEdit = new HashMap<>();
     fieldsToEdit.put("entityId",3);
 
-    when(entityService.findById(3)).thenReturn(null);
+    when(entityRepo.findById(3)).thenReturn(Optional.empty());
 
     try {
-      User user = userService.editByAdministrator(mod1, false, fieldsToEdit);
+      User user = userService.editByAdministrator(mod1, fieldsToEdit, false);
       assertTrue(false);
     } catch (InvalidFieldsValuesException urnfe) {
       assertTrue(urnfe.getMessage().contains("entity"));
       assertTrue(true);
-    } catch (Exception e) {
+    } catch (MissingFieldsException | NotAuthorizedException | ConflictException e) {
       System.out.println(e);
       assertTrue(false);
     }
@@ -694,7 +681,7 @@ public class UserServiceTest {
     fieldsToEdit.put("type",1);
 
     try {
-      User user = userService.editByAdministrator(admin2, false, fieldsToEdit);
+      User user = userService.editByAdministrator(admin2, fieldsToEdit, false);
 
       assertTrue(false);
     } catch (NotAuthorizedException e) {
@@ -728,7 +715,7 @@ public class UserServiceTest {
     editedUser.setEmail(newEmail);
 
     try {
-      User user = userService.editByModerator(user2, false, fieldsToEdit);
+      User user = userService.editByModerator(user2, fieldsToEdit, false);
 
       assertNotNull(user);
       assertEquals(editedUser.getName(), user.getName());
@@ -758,7 +745,7 @@ public class UserServiceTest {
     editedUser.setTfa(tfa);
 
     try {
-      User user = userService.editByModerator(mod11, true, fieldsToEdit);
+      User user = userService.editByModerator(mod11, fieldsToEdit, true);
 
       assertNotNull(user);
       assertEquals(editedUser.getName(), user.getName());
@@ -777,7 +764,7 @@ public class UserServiceTest {
     fieldsToEdit.put("entityId",2);
 
     try {
-      User user = userService.editByModerator(mod11, true, fieldsToEdit);
+      User user = userService.editByModerator(mod11, fieldsToEdit, true);
 
       assertTrue(false);
     } catch (NotAuthorizedException e) {

@@ -11,6 +11,10 @@ import com.redroundrobin.thirema.apirest.repository.postgres.AlertRepository;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
+import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
+import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 import java.util.Map;
 
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
@@ -24,11 +28,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class AlertService {
 
-  private AlertRepository repo;
+  private AlertRepository alertRepo;
 
-  private EntityService entityService;
+  private EntityRepository entityRepo;
 
-  private SensorService sensorService;
+  private SensorRepository sensorRepo;
 
   private UserRepository userRepo;
 
@@ -99,33 +103,22 @@ public class AlertService {
   }
 
   @Autowired
-  public AlertService(AlertRepository alertRepository) {
-    this.repo = alertRepository;
-  }
-
-  @Autowired
-  public void setEntityService(EntityService entityService) {
-    this.entityService = entityService;
-  }
-
-  @Autowired
-  public void setSensorService(SensorService sensorService) {
-    this.sensorService = sensorService;
-  }
-
-  @Autowired
-  public void setUserRepository(UserRepository userRepo) {
-    this.userRepo = userRepo;
+  public AlertService(AlertRepository alertRepository, EntityRepository entityRepository,
+                      SensorRepository sensorRepository, UserRepository userRepository) {
+    this.alertRepo = alertRepository;
+    this.entityRepo = entityRepository;
+    this.sensorRepo = sensorRepository;
+    this.userRepo = userRepository;
   }
 
   public List<Alert> findAll() {
-    return (List<Alert>) repo.findAll();
+    return (List<Alert>) alertRepo.findAll();
   }
 
   public List<Alert> findAllByEntityId(int entityId) {
-    Entity entity = entityService.findById(entityId);
+    Entity entity = entityRepo.findById(entityId).orElse(null);
     if (entity != null) {
-      return (List<Alert>) repo.findAllByEntity(entity);
+      return (List<Alert>) alertRepo.findAllByEntity(entity);
     } else {
       return Collections.emptyList();
     }
@@ -142,9 +135,9 @@ public class AlertService {
   }
 
   public List<Alert> findAllBySensorId(int sensorId) {
-    Sensor sensor = sensorService.findById(sensorId);
+    Sensor sensor = sensorRepo.findById(sensorId).orElse(null);
     if (sensor != null) {
-      return (List<Alert>) repo.findAllBySensor(sensor);
+      return (List<Alert>) alertRepo.findAllBySensor(sensor);
     } else {
       return Collections.emptyList();
     }
@@ -153,15 +146,16 @@ public class AlertService {
   public List<Alert> findAllByUserId(int userId) {
     User user = userRepo.findById(userId).orElse(null);
     if (user != null) {
-      return (List<Alert>) repo.findAllByUsers(user);
+      return (List<Alert>) alertRepo.findAllByUsers(user);
     } else {
       return Collections.emptyList();
     }
   }
 
   public Alert findById(int id) {
-    return repo.findById(id).orElse(null);
+    return alertRepo.findById(id).orElse(null);
   }
+
 
   public Alert createAlert(User user, Map<String, Object> newAlertFields)
       throws InvalidFieldsValuesException, MissingFieldsException {

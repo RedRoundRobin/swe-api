@@ -4,9 +4,8 @@ import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
-import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
-import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
-import com.redroundrobin.thirema.apirest.service.postgres.UserService;
+import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
+import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -14,7 +13,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,16 +29,16 @@ import static org.mockito.Mockito.when;
 @RunWith(SpringRunner.class)
 public class EntityServiceTest {
 
-  @MockBean
-  private EntityRepository repo;
-
-  @MockBean
-  private SensorService sensorService;
-
-  @MockBean
-  private UserService userService;
-
   private EntityService entityService;
+
+  @MockBean
+  private EntityRepository entityRepo;
+
+  @MockBean
+  private SensorRepository sensorRepo;
+
+  @MockBean
+  private UserRepository userRepo;
 
 
   private Entity entity1;
@@ -61,9 +59,7 @@ public class EntityServiceTest {
 
   @Before
   public void setUp() {
-    entityService = new EntityService(repo);
-    entityService.setSensorService(sensorService);
-    entityService.setUserService(userService);
+    entityService = new EntityService(entityRepo, sensorRepo, userRepo);
 
 
     // ----------------------------------------- Set sensors --------------------------------------
@@ -137,32 +133,32 @@ public class EntityServiceTest {
 
 
 
-    when(repo.findAll()).thenReturn(allEntities);
-    when(repo.findAllBySensors(any(Sensor.class))).thenAnswer(i -> {
+    when(entityRepo.findAll()).thenReturn(allEntities);
+    when(entityRepo.findAllBySensors(any(Sensor.class))).thenAnswer(i -> {
       return allEntities.stream().filter(e -> e.getSensors().contains(i.getArgument(0)))
           .collect(Collectors.toList());
     });
-    when(repo.findAllByUsers(any(User.class))).thenAnswer(i -> {
+    when(entityRepo.findAllByUsers(any(User.class))).thenAnswer(i -> {
       return allEntities.stream().filter(e -> e.getUsers().contains(i.getArgument(0)))
           .collect(Collectors.toList());
     });
-    when(repo.findAllBySensorsAndUsers(any(Sensor.class), any(User.class))).thenAnswer(i -> {
+    when(entityRepo.findAllBySensorsAndUsers(any(Sensor.class), any(User.class))).thenAnswer(i -> {
       return allEntities.stream().filter(e -> e.getSensors().contains(i.getArgument(0))
           && e.getUsers().contains(i.getArgument(1)))
           .collect(Collectors.toList());
     });
-    when(repo.findById(anyInt())).thenAnswer(i -> {
+    when(entityRepo.findById(anyInt())).thenAnswer(i -> {
       return allEntities.stream().filter(e -> i.getArgument(0).equals(e.getId()))
           .findFirst();
     });
 
-    when(sensorService.findById(anyInt())).thenAnswer(i -> {
+    when(sensorRepo.findById(anyInt())).thenAnswer(i -> {
       return allSensors.stream().filter(s -> i.getArgument(0).equals(s.getId()))
-          .findFirst().orElse(null);
+          .findFirst();
     });
 
-    when(userService.findById(anyInt())).thenAnswer(i -> {
-      return allUsers.stream().filter(u -> i.getArgument(0).equals(u.getId())).findFirst().orElse(null);
+    when(userRepo.findById(anyInt())).thenAnswer(i -> {
+      return allUsers.stream().filter(u -> i.getArgument(0).equals(u.getId())).findFirst();
     });
   }
 

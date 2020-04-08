@@ -2,12 +2,8 @@ package com.redroundrobin.thirema.apirest.service.postgres;
 
 import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
-import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.repository.postgres.DeviceRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.GatewayRepository;
-import com.redroundrobin.thirema.apirest.service.postgres.DeviceService;
-import com.redroundrobin.thirema.apirest.service.postgres.GatewayService;
-import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -16,7 +12,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -29,14 +24,14 @@ import static org.mockito.Mockito.when;
 @RunWith(SpringRunner.class)
 public class GatewayServiceTest {
 
-  @MockBean
-  private GatewayRepository repo;
-
-  @MockBean
-  private DeviceService deviceService;
-
-
   private GatewayService gatewayService;
+
+
+  @MockBean
+  private GatewayRepository gatewayRepo;
+
+  @MockBean
+  private DeviceRepository deviceRepo;
 
 
   private Device device1;
@@ -49,8 +44,7 @@ public class GatewayServiceTest {
 
   @Before
   public void setUp() {
-    gatewayService = new GatewayService(repo);
-    gatewayService.setDeviceService(deviceService);
+    gatewayService = new GatewayService(gatewayRepo, deviceRepo);
 
     // ----------------------------------------- Set Devices --------------------------------------
     device1 = new Device();
@@ -92,20 +86,20 @@ public class GatewayServiceTest {
 
 
 
-    when(repo.findAll()).thenReturn(allGateways);
-    when(repo.findByDevices(any(Device.class))).thenAnswer(i -> {
+    when(gatewayRepo.findAll()).thenReturn(allGateways);
+    when(gatewayRepo.findByDevices(any(Device.class))).thenAnswer(i -> {
       Device device = i.getArgument(0);
       return allGateways.stream().filter(g -> g.getDevices().contains(device))
           .findFirst().orElse(null);
     });
-    when(repo.findById(anyInt())).thenAnswer(i -> {
+    when(gatewayRepo.findById(anyInt())).thenAnswer(i -> {
       return allGateways.stream().filter(g -> i.getArgument(0).equals(g.getId()))
           .findFirst();
     });
 
-    when(deviceService.findById(anyInt())).thenAnswer(i -> {
+    when(deviceRepo.findById(anyInt())).thenAnswer(i -> {
       return allDevices.stream().filter(d -> i.getArgument(0).equals(d.getId()))
-          .findFirst().orElse(null);
+          .findFirst();
     });
 
   }

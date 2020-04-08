@@ -38,13 +38,13 @@ import static org.mockito.Mockito.when;
 public class AlertServiceTest {
 
   @MockBean
-  private AlertRepository repo;
+  private AlertRepository alertRepo;
 
   @MockBean
-  private EntityService entityService;
+  private EntityRepository entityRepo;
 
   @MockBean
-  private SensorService sensorService;
+  private SensorRepository sensorRepo;
 
   @MockBean
   private UserRepository userRepo;
@@ -73,10 +73,7 @@ public class AlertServiceTest {
 
   @Before
   public void setUp() {
-    alertService = new AlertService(repo);
-    alertService.setEntityService(entityService);
-    alertService.setSensorService(sensorService);
-    alertService.setUserRepository(userRepo);
+    alertService = new AlertService(alertRepo,entityRepo,sensorRepo,userRepo);
 
     // ----------------------------------------- Set Alerts --------------------------------------
     alert1 = new Alert();
@@ -246,25 +243,25 @@ public class AlertServiceTest {
       return allAlerts.stream().filter(a -> sensor.equals(a.getSensor()))
           .collect(Collectors.toList());
     });
-    when(repo.findAllByUsers(any(User.class))).thenAnswer(i -> {
+    when(alertRepo.findAllByUsers(any(User.class))).thenAnswer(i -> {
       User user = i.getArgument(0);
       return allAlerts.stream().filter(a -> a.getUsers().contains(user))
           .collect(Collectors.toList());
     });
-    when(repo.findById(anyInt())).thenAnswer(i -> {
+    when(alertRepo.findById(anyInt())).thenAnswer(i -> {
       return allAlerts.stream().filter(a -> i.getArgument(0).equals(a.getAlertId()))
           .findFirst();
     });
     when(repo.save(any(Alert.class))).thenAnswer(i -> i.getArgument(0));
 
-    when(entityService.findById(anyInt())).thenAnswer(i -> {
+    when(entityRepo.findById(anyInt())).thenAnswer(i -> {
       return allEntities.stream().filter(e -> i.getArgument(0).equals(e.getId()))
-          .findFirst().orElse(null);
+          .findFirst();
     });
 
-    when(sensorService.findById(anyInt())).thenAnswer(i -> {
+    when(sensorRepo.findById(anyInt())).thenAnswer(i -> {
       return allSensors.stream().filter(s -> i.getArgument(0).equals(s.getId()))
-          .findFirst().orElse(null);
+          .findFirst();
     });
     when(sensorService.findByIdAndEntityId(anyInt(),anyInt())).thenAnswer(i -> {
       Sensor sensor = allSensors.stream().filter(s -> i.getArgument(0).equals(s.getId())).findFirst().orElse(null);
@@ -275,7 +272,6 @@ public class AlertServiceTest {
         return null;
       }
     });
-
 
     when(userRepo.findById(anyInt())).thenAnswer(i -> {
       return allUsers.stream().filter(u -> i.getArgument(0).equals(u.getId()))

@@ -6,7 +6,9 @@ import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
 import java.util.Collections;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import com.redroundrobin.thirema.apirest.service.postgres.UserService;
+import com.redroundrobin.thirema.apirest.service.timescale.LogService;
+import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,8 +24,9 @@ public class EntityController extends CoreController {
 
   private EntityService entityService;
 
-  @Autowired
-  public EntityController(EntityService entityService) {
+  public EntityController(EntityService entityService, JwtUtil jwtUtil, LogService logService,
+                          UserService userService) {
+    super(jwtUtil, logService, userService);
     this.entityService = entityService;
   }
 

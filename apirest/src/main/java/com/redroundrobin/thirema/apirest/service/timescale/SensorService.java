@@ -1,32 +1,48 @@
 package com.redroundrobin.thirema.apirest.service.timescale;
 
+import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.timescale.Sensor;
+import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
 import com.redroundrobin.thirema.apirest.repository.timescale.SensorRepository;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+
 import org.springframework.stereotype.Service;
 
 @Service(value = "timescaleSensorService")
 public class SensorService {
 
-  private SensorRepository repo;
+  private SensorRepository sensorRepo;
 
-  private com.redroundrobin.thirema.apirest.service.postgres.SensorService postgreSensorService;
+  private com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository postgreSensorRepo;
+
+  private EntityRepository entityRepo;
+
+  public SensorService(SensorRepository sensorRepository,
+                       com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository
+                           postgreSensorRepository, EntityRepository entityRepository) {
+    this.sensorRepo = sensorRepository;
+    this.postgreSensorRepo = postgreSensorRepository;
+    this.entityRepo = entityRepository;
+  }
 
   private Map<Integer, List<Sensor>> findTopNBySensorIdListAndOptionalEntityId(
-      Integer resultsNumber, List<Integer> sensorIds, Integer entityId) {
+      Integer limit, List<Integer> sensorIds, Integer entityId) {
     Map<Integer, List<Sensor>> sensorsData = new HashMap<>();
+
+    Entity entity = null;
+    if (entityId != null) {
+      entity = entityRepo.findById(entityId).orElse(null);
+    }
 
     for (Integer id : sensorIds) {
       com.redroundrobin.thirema.apirest.models.postgres.Sensor sensor;
       if (entityId != null) {
-        sensor = postgreSensorService.findByIdAndEntityId(id, entityId);
+        sensor = postgreSensorRepo.findBySensorIdAndEntities(id, entity);
       } else {
-        sensor = postgreSensorService.findById(id);
+        sensor = postgreSensorRepo.findById(id).orElse(null);
       }
 
       if (sensor != null) {
@@ -34,13 +50,13 @@ public class SensorService {
         int realDeviceId = sensor.getDevice().getId();
         int realSensorId = sensor.getRealSensorId();
 
-        if (resultsNumber != null) {
+        if (limit != null) {
           sensorsData.put(id,
-              (List<Sensor>) repo.findTopNByGatewayNameAndRealDeviceIdAndRealSensorId(
-                  resultsNumber, gatewayName, realDeviceId, realSensorId));
+              (List<Sensor>) sensorRepo.findTopNByGatewayNameAndRealDeviceIdAndRealSensorId(
+                  limit, gatewayName, realDeviceId, realSensorId));
         } else {
           sensorsData.put(id,
-              (List<Sensor>) repo.findAllByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(
+              (List<Sensor>) sensorRepo.findAllByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(
                   gatewayName, realDeviceId, realSensorId));
         }
       } else {
@@ -52,14 +68,21 @@ public class SensorService {
   }
 
   private Map<Integer, List<Sensor>> findTopNForEachSensorByOptionalEntity(Integer limit,
-                                                                          Integer entityId) {
+                                                                           Integer entityId) {
     Map<Integer, List<Sensor>> sensorsMap = new HashMap<>();
+
+    Entity entity = null;
+    if (entityId != null) {
+      entity = entityRepo.findById(entityId).orElse(null);
+    }
 
     List<com.redroundrobin.thirema.apirest.models.postgres.Sensor> postgreSensors;
     if (entityId != null) {
-      postgreSensors = postgreSensorService.findAllByEntityId(entityId);
+      postgreSensors = (List<com.redroundrobin.thirema.apirest.models.postgres.Sensor>)
+          postgreSensorRepo.findAllByEntities(entity);
     } else {
-      postgreSensors = postgreSensorService.findAll();
+      postgreSensors = (List<com.redroundrobin.thirema.apirest.models.postgres.Sensor>)
+          postgreSensorRepo.findAll();
     }
 
     for (com.redroundrobin.thirema.apirest.models.postgres.Sensor s : postgreSensors) {
@@ -68,43 +91,16 @@ public class SensorService {
       int realSensorId = s.getRealSensorId();
       if (limit != null) {
         sensorsMap.put(s.getId(),
-            (List<Sensor>) repo.findTopNByGatewayNameAndRealDeviceIdAndRealSensorId(limit,
+            (List<Sensor>) sensorRepo.findTopNByGatewayNameAndRealDeviceIdAndRealSensorId(limit,
                 gatewayName, realDeviceId, realSensorId));
       } else {
         sensorsMap.put(s.getId(),
-            (List<Sensor>) repo.findAllByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(
+            (List<Sensor>) sensorRepo.findAllByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(
                 gatewayName, realDeviceId, realSensorId));
       }
     }
 
     return sensorsMap;
-  }
-
-  @Autowired
-  public SensorService(@Qualifier("timescaleSensorRepository") SensorRepository repo) {
-    this.repo = repo;
-  }
-
-  @Autowired
-  public void setPostgreSensorService(
-      com.redroundrobin.thirema.apirest.service.postgres.SensorService postgreSensorService) {
-    this.postgreSensorService = postgreSensorService;
-  }
-
-  public Map<Integer, List<Sensor>> findAllForEachSensor() {
-    return findTopNForEachSensorByOptionalEntity(null, null);
-  }
-
-  public Map<Integer, List<Sensor>> findAllForEachSensorByEntityId(Integer entityId) {
-    return findTopNForEachSensorByOptionalEntity(null, entityId);
-  }
-
-  public Map<Integer, List<Sensor>> findTopNForEachSensor(Integer limit) {
-    return findTopNForEachSensorByOptionalEntity(limit, null);
-  }
-
-  public Map<Integer, List<Sensor>> findTopNForEachSensorByEntityId(Integer limit, int entityId) {
-    return findTopNForEachSensorByOptionalEntity(limit, entityId);
   }
 
   public Map<Integer, List<Sensor>> findAllBySensorIdList(List<Integer> sensorIds) {
@@ -116,25 +112,22 @@ public class SensorService {
     return findTopNBySensorIdListAndOptionalEntityId(null, sensorIds, entityId);
   }
 
-  public Map<Integer, List<Sensor>> findTopNBySensorIdList(int resultsNumber,
-                                                           List<Integer> sensorIds) {
-    return findTopNBySensorIdListAndOptionalEntityId(resultsNumber, sensorIds, null);
+  public Map<Integer, List<Sensor>> findAllForEachSensor() {
+    return findTopNForEachSensorByOptionalEntity(null, null);
   }
 
-  public Map<Integer, List<Sensor>> findTopNBySensorIdListAndEntityId(int resultsNumber,
-                                                                      List<Integer> sensorIds,
-                                                                      int entityId) {
-    return findTopNBySensorIdListAndOptionalEntityId(resultsNumber, sensorIds, entityId);
+  public Map<Integer, List<Sensor>> findAllForEachSensorByEntityId(int entityId) {
+    return findTopNForEachSensorByOptionalEntity(null, entityId);
   }
 
   public Sensor findLastValueBySensorId(int sensorId) {
     com.redroundrobin.thirema.apirest.models.postgres.Sensor sensor =
-        postgreSensorService.findById(sensorId);
+        postgreSensorRepo.findById(sensorId).orElse(null);
     if (sensor != null) {
       String gatewayName = sensor.getDevice().getGateway().getName();
       int realDeviceId = sensor.getDevice().getRealDeviceId();
       int realSensorId = sensor.getRealSensorId();
-      return repo.findTopByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(gatewayName,
+      return sensorRepo.findTopByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(gatewayName,
           realDeviceId, realSensorId);
     } else {
       return null;
@@ -143,15 +136,34 @@ public class SensorService {
 
   public Sensor findLastValueBySensorIdAndEntityId(int sensorId, int entityId) {
     com.redroundrobin.thirema.apirest.models.postgres.Sensor sensor =
-        postgreSensorService.findById(sensorId);
+        postgreSensorRepo.findById(sensorId).orElse(null);
     if (sensor != null && sensor.getEntities().stream().anyMatch(e -> e.getId() == entityId)) {
       String gatewayName = sensor.getDevice().getGateway().getName();
       int realDeviceId = sensor.getDevice().getRealDeviceId();
       int realSensorId = sensor.getRealSensorId();
-      return repo.findTopByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(gatewayName,
+      return sensorRepo.findTopByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(gatewayName,
           realDeviceId, realSensorId);
     } else {
       return null;
     }
+  }
+
+  public Map<Integer, List<Sensor>> findTopNBySensorIdList(int limit,
+                                                           List<Integer> sensorIds) {
+    return findTopNBySensorIdListAndOptionalEntityId(limit, sensorIds, null);
+  }
+
+  public Map<Integer, List<Sensor>> findTopNBySensorIdListAndEntityId(int limit,
+                                                                      List<Integer> sensorIds,
+                                                                      int entityId) {
+    return findTopNBySensorIdListAndOptionalEntityId(limit, sensorIds, entityId);
+  }
+
+  public Map<Integer, List<Sensor>> findTopNForEachSensor(int limit) {
+    return findTopNForEachSensorByOptionalEntity(limit, null);
+  }
+
+  public Map<Integer, List<Sensor>> findTopNForEachSensorByEntityId(int limit, int entityId) {
+    return findTopNForEachSensorByOptionalEntity(limit, entityId);
   }
 }

@@ -3,6 +3,9 @@ package com.redroundrobin.thirema.apirest.controller;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
+import com.redroundrobin.thirema.apirest.service.postgres.UserService;
+import com.redroundrobin.thirema.apirest.service.timescale.LogService;
+import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import com.redroundrobin.thirema.apirest.utils.exception.ConflictException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
@@ -14,6 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,9 +34,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
+
 @RestController
 @RequestMapping(value = "/users")
 public class UserController extends CoreController {
+
+  @Autowired
+  public UserController(JwtUtil jwtUtil, LogService logService, UserService userService) {
+    super(jwtUtil, logService, userService);
+  }
 
   private boolean canEditMod(User editingUser, User userToEdit) {
     return editingUser.getId() == userToEdit.getId()
@@ -69,10 +81,11 @@ public class UserController extends CoreController {
   // Create new user
   @PostMapping(value = {""})
   public ResponseEntity<User> createUser(@RequestHeader("Authorization") String authorization,
-                                         @RequestHeader(value = "x-forwarded-for") String ip,
-                                         @RequestBody String jsonStringUser) {
-    String token = authorization.substring(7);
-    User user = userService.findByEmail(jwtUtil.extractUsername(token));
+                                         @RequestBody String jsonStringUser,
+                                         HttpServletRequest httpRequest) {
+    String ip = getIpAddress(httpRequest);
+    User user = getUserFromAuthorization(authorization);
+
     JsonObject jsonUser = JsonParser.parseString(jsonStringUser).getAsJsonObject();
     try {
       User createdUser = userService.serializeUser(jsonUser, user);
@@ -90,10 +103,11 @@ public class UserController extends CoreController {
 
   @DeleteMapping(value = {"/{userid:.+}"})
   public ResponseEntity<User> deleteUser(@RequestHeader("Authorization") String authorization,
-                                      @RequestHeader(value = "x-forwarded-for") String ip,
-                                      @PathVariable("userid") int userToDeleteId) {
-    String token = authorization.substring(7);
-    User user = userService.findByEmail(jwtUtil.extractUsername(token));
+                                         @PathVariable("userid") int userToDeleteId,
+                                         HttpServletRequest httpRequest) {
+    String ip = getIpAddress(httpRequest);
+    User user = getUserFromAuthorization(authorization);
+
     try {
       User deletedUser = userService.deleteUser(user, userToDeleteId);
       logService.createLog(user.getId(), ip, "user.deleted",
@@ -116,12 +130,14 @@ public class UserController extends CoreController {
   @PutMapping(value = {"/{userid:.+}"})
   public ResponseEntity<Map<String, Object>> editUser(
       @RequestHeader("Authorization") String authorization,
-      @RequestHeader(value = "x-forwarded-for") String ip,
       @RequestBody Map<String, Object> fieldsToEdit,
-      @PathVariable("userid") int userId) {
+      @PathVariable("userid") int userId,
+      HttpServletRequest httpRequest) {
+    String ip = getIpAddress(httpRequest);
+    User editingUser = getUserFromAuthorization(authorization);
     String token = authorization.substring(7);
-    String editingUserEmail = jwtUtil.extractUsername(token);
-    User editingUser = userService.findByEmail(editingUserEmail);
+
+    String editingUserEmail = editingUser.getEmail();
     User userToEdit = userService.findById(userId);
 
     if (userToEdit != null) {
@@ -130,12 +146,12 @@ public class UserController extends CoreController {
       try {
         if (editingUser.getType() == User.Role.ADMIN && (userToEdit.getType() != User.Role.ADMIN
             || editingUser.getId() == userToEdit.getId())) {
-          user = userService.editByAdministrator(userToEdit,
-                editingUser.getId() == userToEdit.getId(), fieldsToEdit);
+          user = userService.editByAdministrator(userToEdit, fieldsToEdit,
+              editingUser.getId() == userToEdit.getId());
 
         } else if (editingUser.getType() == User.Role.MOD && canEditMod(editingUser, userToEdit)) {
-          user = userService.editByModerator(userToEdit,
-              editingUser.getId() == userToEdit.getId(), fieldsToEdit);
+          user = userService.editByModerator(userToEdit, fieldsToEdit,
+              editingUser.getId() == userToEdit.getId());
 
         } else if (editingUser.getType() == User.Role.USER
             && editingUser.getId() == userToEdit.getId()) {
@@ -169,8 +185,8 @@ public class UserController extends CoreController {
         if (editingUser.getId() == userToEdit.getId()
             && !user.getEmail().equals(editingUserEmail)) {
           String newToken = jwtUtil.generateTokenWithExpiration("webapp",
-              jwtUtil.extractExpiration(token),
-              userService.loadUserByEmail(user.getEmail()));
+              userService.loadUserByEmail(user.getEmail()),
+              jwtUtil.extractExpiration(token));
           response.put("token", newToken);
         }
 
@@ -203,22 +219,5 @@ public class UserController extends CoreController {
     // when db error is not for duplicate unique or when userToEdit with id furnished is not found
     // or there are missing edit fields or invalid values
     return new ResponseEntity(HttpStatus.BAD_REQUEST);
-  }
-
-  // Get all devices by userId
-  @GetMapping(value = {"/{userid:.+}/devices"})
-  public ResponseEntity<Object> getUserDevices(@RequestHeader("Authorization") String authorization,
-                                          @PathVariable("userid") int requiredUserId) {
-    String token = authorization.substring(7);
-    User user = userService.findByEmail(jwtUtil.extractUsername(token));
-    User requiredUser = userService.findById(requiredUserId);
-    if (requiredUser != null && (user.getId() == requiredUserId
-        || user.getType() == User.Role.ADMIN  || user.getType() == User.Role.MOD
-        && requiredUser.getType() != User.Role.ADMIN
-            && user.getEntity().getId() == requiredUser.getEntity().getId())) {
-      return ResponseEntity.ok(userService.userDevices(requiredUserId));
-    } else {
-      return new ResponseEntity(HttpStatus.FORBIDDEN);
-    }
   }
 }

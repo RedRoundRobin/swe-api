@@ -9,6 +9,7 @@ package com.redroundrobin.thirema.apirest.controller;
     import com.redroundrobin.thirema.apirest.service.postgres.GatewayService;
     import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
     import com.redroundrobin.thirema.apirest.service.postgres.UserService;
+    import com.redroundrobin.thirema.apirest.service.timescale.LogService;
     import com.redroundrobin.thirema.apirest.utils.JwtUtil;
     import org.junit.Before;
     import org.junit.Test;
@@ -37,6 +38,9 @@ public class GatewayControllerTest {
 
   @MockBean
   private JwtUtil jwtUtil;
+
+  @MockBean
+  private LogService logService;
 
   @MockBean
   private UserService userService;
@@ -83,9 +87,7 @@ public class GatewayControllerTest {
 
   @Before
   public void setUp() {
-    gatewayController = new GatewayController(gatewayService, deviceService, sensorService);
-    gatewayController.setJwtUtil(jwtUtil);
-    gatewayController.setUserService(userService);
+    gatewayController = new GatewayController(gatewayService, deviceService, sensorService, jwtUtil, logService, userService);
 
     // ----------------------------------------- Set Users --------------------------------------
     admin = new User();

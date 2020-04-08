@@ -5,6 +5,10 @@ import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
 import java.util.Collections;
 import java.util.List;
+
+import com.redroundrobin.thirema.apirest.service.postgres.UserService;
+import com.redroundrobin.thirema.apirest.service.timescale.LogService;
+import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,7 +24,9 @@ public class SensorController extends CoreController {
   private SensorService sensorService;
 
   @Autowired
-  public SensorController(SensorService sensorService) {
+  public SensorController(SensorService sensorService, JwtUtil jwtUtil, LogService logService,
+                          UserService userService) {
+    super(jwtUtil, logService, userService);
     this.sensorService = sensorService;
   }
 

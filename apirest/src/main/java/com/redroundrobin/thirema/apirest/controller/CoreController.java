@@ -6,6 +6,8 @@ import com.redroundrobin.thirema.apirest.service.timescale.LogService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.servlet.http.HttpServletRequest;
+
 /*
  * le risorse sono identificabili tramite url
  * le operazioni devono essere implementati tramite metodi appropiati
@@ -19,18 +21,9 @@ public abstract class CoreController {
 
   protected UserService userService;
 
-  @Autowired
-  public void setJwtUtil(JwtUtil jwtUtil) {
+  public CoreController(JwtUtil jwtUtil, LogService logService, UserService userService) {
     this.jwtUtil = jwtUtil;
-  }
-
-  @Autowired
-  public void setLogService(LogService logService) {
     this.logService = logService;
-  }
-
-  @Autowired
-  public void setUserService(UserService userService) {
     this.userService = userService;
   }
 
@@ -46,5 +39,13 @@ public abstract class CoreController {
     }
 
     return user;
+  }
+
+  protected final String getIpAddress(HttpServletRequest http) {
+    if (http.getHeader("X-Forwarded-For") == null) {
+      return http.getHeader("X-Forwarded-For");
+    } else {
+      return  http.getRemoteAddr();
+    }
   }
 }

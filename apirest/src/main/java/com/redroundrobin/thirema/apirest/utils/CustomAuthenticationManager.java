@@ -1,4 +1,4 @@
-package com.redroundrobin.thirema.apirest.config;
+package com.redroundrobin.thirema.apirest.utils;
 
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
@@ -11,8 +11,11 @@ import org.springframework.security.core.Authentication;
 
 public class CustomAuthenticationManager implements AuthenticationManager {
 
-  @Autowired
   UserService userService;
+
+  public CustomAuthenticationManager(UserService userService) {
+    this.userService = userService;
+  }
 
   @Override
   public Authentication authenticate(Authentication authentication) {
