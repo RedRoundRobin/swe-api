@@ -1,21 +1,18 @@
 package com.redroundrobin.thirema.apirest.models.postgres;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.List;
-import java.util.Objects;
-import javax.persistence.CascadeType;
+import java.io.Serializable;
+import java.sql.Timestamp;
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 @javax.persistence.Entity
 @Table(name = "gateways")
-public class Gateway {
+public class Gateway implements Serializable {
   @Id
   @GeneratedValue(generator = "gateways_gateway_id_seq", strategy = GenerationType.SEQUENCE)
   @SequenceGenerator(
@@ -27,7 +24,15 @@ public class Gateway {
   private int gatewayId;
   private String name;
 
+  @Column(name = "last_sent")
+  private Timestamp lastSent;
+
   public Gateway() {
+    // default constructor
+  }
+
+  public Gateway(String name) {
+    this.name = name;
   }
 
   public Gateway(int gatewayId, String name) {
@@ -40,10 +45,6 @@ public class Gateway {
     return gatewayId;
   }
 
-  public void setId(int gatewayId) {
-    this.gatewayId = gatewayId;
-  }
-
   public String getName() {
     return name;
   }
@@ -52,42 +53,11 @@ public class Gateway {
     this.name = name;
   }
 
-  @Override
-  public int hashCode() {
-    int hash = 7;
-    hash = 79 * hash + this.gatewayId;
-    hash = 79 * hash + Objects.hashCode(this.name);
-    return hash;
+  public Timestamp getLastSent() {
+    return lastSent;
   }
 
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (obj == null) {
-      return false;
-    }
-    if (getClass() != obj.getClass()) {
-      return false;
-    }
-    final Gateway other = (Gateway) obj;
-    if (this.gatewayId != other.gatewayId) {
-      return false;
-    }
-    if (!Objects.equals(this.name, other.name)) {
-      return false;
-    }
-    return true;
+  public void setLastSent(Timestamp lastSent) {
+    this.lastSent = lastSent;
   }
-
-  @Override
-  public String toString() {
-    final StringBuilder sb = new StringBuilder("Device{");
-    sb.append("id=").append(gatewayId);
-    sb.append(", name='").append(name).append("'");
-    sb.append('}');
-    return sb.toString();
-  }
-
 }

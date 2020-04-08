@@ -47,6 +47,12 @@ public class Device {
   public Device() {
   }
 
+  public Device(String name, int frequency, int realDeviceId) {
+    this.name = name;
+    this.frequency = frequency;
+    this.realDeviceId = realDeviceId;
+  }
+
   /**
    * Create the device with the @deviceId, @name, @frequency and @realDeviceId.
    *
@@ -101,41 +107,5 @@ public class Device {
 
   public void setGateway(Gateway gateway) {
     this.gateway = gateway;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    Device device = (Device) o;
-    return deviceId == device.deviceId
-        && frequency == device.frequency
-        && realDeviceId == device.realDeviceId
-        && Objects.equals(name, device.name);
-  }
-
-  @Override
-  public int hashCode() {
-    int hash = 7;
-    hash = 79 * hash + this.deviceId;
-    hash = 79 * hash + Objects.hashCode(this.name);
-    hash = 79 * hash + this.frequency;
-    hash = 79 * hash + this.realDeviceId;
-    return hash;
-  }
-
-  @Override
-  public String toString() {
-    final StringBuilder sb = new StringBuilder("Device{");
-    sb.append("id=").append(deviceId);
-    sb.append(", name='").append(name).append("'");
-    sb.append(", frequency=").append(frequency);
-    sb.append(", real_id=").append(realDeviceId);
-    sb.append('}');
-    return sb.toString();
   }
 }
