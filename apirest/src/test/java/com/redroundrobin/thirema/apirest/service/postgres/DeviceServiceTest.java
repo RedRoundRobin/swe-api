@@ -15,6 +15,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -175,7 +176,7 @@ public class DeviceServiceTest {
       if (i.getArgument(0).equals(entity1.getId())) {
         return entity1Devices;
       } else {
-        return null;
+        return Collections.emptyList();
       }
     });
     when(deviceRepo.findById(anyInt())).thenAnswer(i -> {
@@ -224,6 +225,25 @@ public class DeviceServiceTest {
     assertTrue(!devices.isEmpty());
     assertTrue(devices.stream().count() == 3);
   }
+
+
+
+  @Test
+  public void findAllDevicesByEntityIdAndGatewayId() {
+    List<Device> devices = deviceService.findAllByEntityIdAndGatewayId(entity1.getId(), gateway1.getId());
+
+    assertTrue(!devices.isEmpty());
+    assertTrue(devices.stream().count() == 2);
+  }
+
+  @Test
+  public void findAllDevicesByEntityIdAndNotExistentGatewayId() {
+    List<Device> devices = deviceService.findAllByEntityIdAndGatewayId(entity1.getId(), 6);
+
+    assertTrue(devices.isEmpty());
+  }
+
+
 
   @Test
   public void findAllDevicesByGatewayId() {
