@@ -14,7 +14,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -106,30 +108,22 @@ public class EntityServiceTest {
     allUsers.add(user2);
 
 
-    // ----------------------------- Set entities to sensors and viceversa ------------------------
-    List<Sensor> sensors1 = new ArrayList<>();
+    // -------------------------------- Set sensors to entities ----------------------------------
+    Set<Sensor> sensors1 = new HashSet<>();
     sensors1.add(sensor1);
     sensors1.add(sensor2);
     entity1.setSensors(sensors1);
     entity3.setSensors(sensors1);
 
-    List<Sensor> sensors2 = new ArrayList<>();
+    Set<Sensor> sensors2 = new HashSet<>();
     sensors2.add(sensor3);
     entity2.setSensors(sensors2);
 
 
-    // ----------------------------- Set entities to users and viceversa ------------------------
-    List<User> entity1Users = new ArrayList<>();
-    entity1Users.add(user1);
+    // -------------------------------- Set entities to users -----------------------------------
     user1.setEntity(entity1);
-    entity1.setUsers(entity1Users);
 
-    List<User> entity2Users = new ArrayList<>();
-    entity2Users.add(user2);
     user2.setEntity(entity2);
-    entity2.setUsers(entity2Users);
-
-    entity3.setUsers(Collections.emptyList());
 
 
 
@@ -139,12 +133,14 @@ public class EntityServiceTest {
           .collect(Collectors.toList());
     });
     when(entityRepo.findAllByUsers(any(User.class))).thenAnswer(i -> {
-      return allEntities.stream().filter(e -> e.getUsers().contains(i.getArgument(0)))
+      User user = i.getArgument(0);
+      return allEntities.stream().filter(e -> user.getEntity().equals(e))
           .collect(Collectors.toList());
     });
     when(entityRepo.findAllBySensorsAndUsers(any(Sensor.class), any(User.class))).thenAnswer(i -> {
+      User user = i.getArgument(1);
       return allEntities.stream().filter(e -> e.getSensors().contains(i.getArgument(0))
-          && e.getUsers().contains(i.getArgument(1)))
+          && user.getEntity().equals(e))
           .collect(Collectors.toList());
     });
     when(entityRepo.findById(anyInt())).thenAnswer(i -> {

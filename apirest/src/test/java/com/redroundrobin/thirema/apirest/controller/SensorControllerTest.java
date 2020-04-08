@@ -22,10 +22,13 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -66,8 +69,8 @@ public class SensorControllerTest {
 
   List<Sensor> allSensors;
 
-  List<Sensor> entity1And2Sensors;
-  List<Sensor> entity3Sensors;
+  Set<Sensor> entity1And2Sensors;
+  Set<Sensor> entity3Sensors;
 
 
   @Before
@@ -124,21 +127,13 @@ public class SensorControllerTest {
     allSensors.add(sensor3);
 
 
-    // -------------------------- Set sensors to entities and viceversa --------------------------
-    List<Entity> sensor1And2Entities = new ArrayList<>();
-    sensor1And2Entities.add(entity1);
-    sensor1And2Entities.add(entity2);
-    sensor1.setEntities(sensor1And2Entities);
-    sensor2.setEntities(sensor1And2Entities);
-    entity1And2Sensors = new ArrayList<>();
+    // ---------------------------------- Set sensors to entities -------------------------------
+    entity1And2Sensors = new HashSet<>();
     entity1And2Sensors.add(sensor1);
     entity1And2Sensors.add(sensor2);
     entity1.setSensors(entity1And2Sensors);
 
-    List<Entity> sensor3Entities = new ArrayList<>();
-    sensor3Entities.add(entity3);
-    sensor3.setEntities(sensor3Entities);
-    entity3Sensors = new ArrayList<>();
+    entity3Sensors = new HashSet<>();
     entity3Sensors.add(sensor3);
     entity3.setSensors(entity3Sensors);
 
@@ -159,7 +154,8 @@ public class SensorControllerTest {
           .findFirst().orElse(null);
       if (entity != null) {
         return allSensors.stream()
-          .filter(s -> s.getEntities().contains(entity)).collect(Collectors.toList());
+            .filter(s -> entity.getSensors().contains(s))
+            .collect(Collectors.toList());
       } else {
         return Collections.emptyList();
       }
@@ -180,7 +176,7 @@ public class SensorControllerTest {
         entity1.getId());
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertEquals(entity1And2Sensors, response.getBody());
+    assertTrue(!response.getBody().isEmpty());
   }
 
   @Test
@@ -188,7 +184,7 @@ public class SensorControllerTest {
     ResponseEntity<List<Sensor>> response = sensorController.getSensors(userTokenWithBearer, null);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertEquals(entity1And2Sensors, response.getBody());
+    assertTrue(!response.getBody().isEmpty());
   }
 
   @Test

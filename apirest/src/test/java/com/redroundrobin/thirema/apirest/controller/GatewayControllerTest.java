@@ -78,12 +78,6 @@ public class GatewayControllerTest {
 
   private List<Gateway> allGateways;
 
-  private List<Device> gateway1Devices;
-  private List<Device> gateway2Devices;
-  private List<Sensor> device1Sensors;
-  private List<Sensor> device2Sensors;
-  private List<Sensor> device3Sensors;
-
 
   @Before
   public void setUp() {
@@ -142,37 +136,20 @@ public class GatewayControllerTest {
     allSensors.add(sensor4);
 
 
-    // --------------------------- Set Devices to Gateways and viceversa ---------------------------
-    gateway1Devices = new ArrayList<>();
-    gateway1Devices.add(device1);
-    gateway1Devices.add(device2);
-    gateway1.setDevices(gateway1Devices);
+    // ---------------------------------- Set Gateways to Devices -------------------------------
     device1.setGateway(gateway1);
     device2.setGateway(gateway1);
 
-    gateway2Devices = new ArrayList<>();
-    gateway2Devices.add(device3);
-    gateway2.setDevices(gateway2Devices);
     device3.setGateway(gateway2);
 
 
-    // --------------------------- Set Devices to Sensors and viceversa ---------------------------
+    // ---------------------------------- Set Devices to Sensors --------------------------------
     sensor1.setDevice(device1);
     sensor2.setDevice(device1);
-    device1Sensors = new ArrayList<>();
-    device1Sensors.add(sensor1);
-    device1Sensors.add(sensor2);
-    device1.setSensors(device1Sensors);
 
     sensor3.setDevice(device2);
-    device2Sensors = new ArrayList<>();
-    device2Sensors.add(sensor3);
-    device2.setSensors(device2Sensors);
 
     sensor4.setDevice(device3);
-    device3Sensors = new ArrayList<>();
-    device3Sensors.add(sensor4);
-    device3.setSensors(device3Sensors);
 
 
 
@@ -201,13 +178,19 @@ public class GatewayControllerTest {
 
     when(deviceService.findAllByGatewayId(anyInt())).thenAnswer(i -> {
       Gateway gateway = gatewayService.findById(i.getArgument(0));
-        return gateway != null ? gateway.getDevices() : Collections.emptyList();
+      if (gateway != null) {
+        return allDevices.stream()
+            .filter(d -> d.getGateway().equals(gateway))
+            .collect(Collectors.toList());
+      } else {
+        return Collections.emptyList();
+      }
     });
     when(deviceService.findByGatewayIdAndRealDeviceId(anyInt(), anyInt())).thenAnswer(i -> {
       Gateway gateway = gatewayService.findById(i.getArgument(0));
       if (gateway != null) {
-        return gateway.getDevices().stream()
-            .filter(d -> i.getArgument(1).equals(d.getRealDeviceId()))
+        return allDevices.stream()
+            .filter(d -> d.getGateway().equals(gateway) && i.getArgument(0).equals(d.getId()))
             .findFirst().orElse(null);
       } else {
         return null;
@@ -217,14 +200,20 @@ public class GatewayControllerTest {
     when(sensorService.findAllByGatewayIdAndRealDeviceId(anyInt(), anyInt())).thenAnswer(i -> {
       Device device = deviceService.findByGatewayIdAndRealDeviceId(i.getArgument(0),
           i.getArgument(1));
-      return device != null ? device.getSensors() : Collections.emptyList();
+      if (device != null) {
+        return allSensors.stream()
+            .filter(s -> s.getDevice().equals(device))
+            .collect(Collectors.toList());
+      } else {
+        return Collections.emptyList();
+      }
     });
     when(sensorService.findByGatewayIdAndRealDeviceIdAndRealSensorId(anyInt(), anyInt(), anyInt())).thenAnswer(i -> {
       Device device = deviceService.findByGatewayIdAndRealDeviceId(i.getArgument(0),
           i.getArgument(1));
       if (device != null) {
-        return device.getSensors().stream()
-            .filter(s -> i.getArgument(2).equals(s.getRealSensorId()))
+        return allSensors.stream()
+            .filter(s -> s.getDevice().equals(device))
             .findFirst().orElse(null);
       } else {
         return null;
@@ -292,7 +281,7 @@ public class GatewayControllerTest {
         adminTokenWithBearer, gateway1.getId());
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertEquals(gateway1Devices, response.getBody());
+    assertTrue(!response.getBody().isEmpty());
   }
 
   @Test
@@ -330,7 +319,7 @@ public class GatewayControllerTest {
         adminTokenWithBearer, gateway1.getId(), device1.getRealDeviceId());
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertEquals(device1Sensors, response.getBody());
+    assertTrue(!response.getBody().isEmpty());
   }
 
   @Test

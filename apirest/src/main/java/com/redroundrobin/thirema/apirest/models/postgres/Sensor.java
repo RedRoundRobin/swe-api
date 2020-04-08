@@ -36,27 +36,11 @@ public class Sensor {
   @Column(name = "real_sensor_id")
   private int realSensorId;
 
-  @JsonIgnore
-  @OneToMany(mappedBy = "sensor")
-  private List<Alert> alerts;
-
   @ManyToOne
   @JoinColumn(name = "device_id")
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "deviceId")
   @JsonIdentityReference(alwaysAsId = true)
   private Device device;
-
-  @JsonIgnore
-  @ManyToMany(mappedBy = "sensors")
-  private List<Entity> entities;
-
-  @JsonIgnore
-  @OneToMany(mappedBy = "sensor1")
-  private List<ViewGraph> viewGraphs1;
-
-  @JsonIgnore
-  @OneToMany(mappedBy = "sensor2")
-  private List<ViewGraph> viewGraphs2;
 
   public Sensor() {
   }
@@ -105,38 +89,6 @@ public class Sensor {
 
   public void setDevice(Device device) {
     this.device = device;
-  }
-
-  public List<Alert> getAlerts() {
-    return alerts;
-  }
-
-  public void setAlerts(List<Alert> alerts) {
-    this.alerts = alerts;
-  }
-
-  public List<Entity> getEntities() {
-    return entities;
-  }
-
-  public void setEntities(List<Entity> entities) {
-    this.entities = entities;
-  }
-
-  public List<ViewGraph> getViewGraphs1() {
-    return viewGraphs1;
-  }
-
-  public void setViewGraphs1(List<ViewGraph> viewGraphs1) {
-    this.viewGraphs1 = viewGraphs1;
-  }
-
-  public List<ViewGraph> getViewGraphs2() {
-    return viewGraphs2;
-  }
-
-  public void setViewGraphs2(List<ViewGraph> viewGraphs2) {
-    this.viewGraphs2 = viewGraphs2;
   }
 
   @Override

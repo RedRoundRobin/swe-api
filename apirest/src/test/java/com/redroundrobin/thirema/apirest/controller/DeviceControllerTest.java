@@ -145,39 +145,20 @@ public class DeviceControllerTest {
     sensor2.setRealSensorId(2);
 
 
-    // --------------------------- Set devices to sensors and viceversa ---------------------------
-    device1Sensors = new ArrayList<>();
-    device1Sensors.add(sensor1);
-    device1Sensors.add(sensor2);
-    device1.setSensors(device1Sensors);
+    // --------------------------------- Set devices to sensors ----------------------------------
+    sensor1.setDevice(device1);
+    sensor2.setDevice(device1);
 
 
-    // ---------------------------- Set devices to gateways and viceversa -------------------------
-    List<Device> gateway1Devices = new ArrayList<>();
-    gateway1Devices.add(device1);
-    gateway1Devices.add(device3);
-    gateway1Devices.add(device5);
-    gateway1Devices.add(device6);
+    // ---------------------------------- Set gateways to devices -------------------------------
     device1.setGateway(gateway1);
+    device2.setGateway(gateway2);
     device3.setGateway(gateway1);
+    device4.setGateway(gateway2);
     device5.setGateway(gateway1);
     device6.setGateway(gateway1);
-    gateway1.setDevices(gateway1Devices);
-
-    List<Device> gateway2Devices = new ArrayList<>();
-    gateway2Devices.add(device2);
-    gateway2Devices.add(device4);
-    device2.setGateway(gateway2);
-    device4.setGateway(gateway2);
-    gateway2.setDevices(gateway2Devices);
-
-    List<Device> gateway3Devices = new ArrayList<>();
-    gateway3Devices.add(device7);
     device7.setGateway(gateway3);
-    gateway3.setDevices(gateway3Devices);
 
-
-    // --------------------------- Set sensors to entities and viceversa --------------------------
     entity1Devices = new ArrayList<>();
     entity1Devices.add(device1);
     entity1Devices.add(device2);

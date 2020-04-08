@@ -83,7 +83,7 @@ public class GatewayController extends CoreController {
                                                      @PathVariable("gatewayId") int gatewayid) {
     User user = this.getUserFromAuthorization(authorization);
     if (user.getType() == User.Role.ADMIN) {
-      return ResponseEntity.ok(gatewayService.findById(gatewayid).getDevices());
+      return ResponseEntity.ok(deviceService.findAllByGatewayId(gatewayid));
     } else {
       return new ResponseEntity(HttpStatus.FORBIDDEN);
     }
