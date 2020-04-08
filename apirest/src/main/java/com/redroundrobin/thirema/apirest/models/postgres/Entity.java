@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
+import java.util.Set;
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -37,7 +38,7 @@ public class Entity {
       name = "entity_sensors",
       joinColumns = @JoinColumn(name = "entity_id"),
       inverseJoinColumns = @JoinColumn(name = "sensor_id"))
-  private List<Sensor> sensors;
+  private Set<Sensor> sensors;
 
   @JsonProperty(value = "entityId")
   public int getId() {
@@ -72,11 +73,11 @@ public class Entity {
     this.deleted = deleted;
   }
 
-  public List<Sensor> getSensors() {
+  public Set<Sensor> getSensors() {
     return sensors;
   }
 
-  public void setSensors(List<Sensor> sensors) {
+  public void setSensors(Set<Sensor> sensors) {
     this.sensors = sensors;
   }
 }

@@ -127,7 +127,7 @@ public class AlertServiceTest {
     allUsers.add(user3);
 
 
-    // --------------------------- Set Entities to Alerts and viceversa ---------------------------
+    // ------------------------------------ Set Entities to Alerts -------------------------------
     alert1.setEntity(entity1);
 
     alert2.setEntity(entity1);
@@ -135,7 +135,7 @@ public class AlertServiceTest {
     alert3.setEntity(entity2);
 
 
-    // --------------------------- Set Sensors to Alerts and viceversa ---------------------------
+    // ----------------------------------- Set Sensors to Alerts --------------------------------
     alert1.setSensor(sensor1);
 
     alert2.setSensor(sensor1);
@@ -143,7 +143,7 @@ public class AlertServiceTest {
     alert3.setSensor(sensor2);
 
 
-    // --------------------------- Set Alerts to Users and viceversa ---------------------------
+    // ---------------------------------- Set Alerts to Users -----------------------------------
     Set<Alert> user1Alerts = new HashSet<>();
     user1Alerts.add(alert1);
     user1.setDisabledAlerts(user1Alerts);

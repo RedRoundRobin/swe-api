@@ -227,35 +227,26 @@ public class SensorServiceTest {
     allDevices.add(device2);
 
 
-    // -------------------------------------- Set Devices ----------------------------------------
-    List<Entity> sensor1Entities = new ArrayList<>();
-    sensor1Entities.add(entity1);
-
-
     // ----------------------------------- Set Postgre Sensors ------------------------------------
     sensor1 = new com.redroundrobin.thirema.apirest.models.postgres.Sensor();
     sensor1.setId(1);
     sensor1.setRealSensorId(1);
     sensor1.setDevice(device1);
-    sensor1.setEntities(sensor1Entities);
 
     sensor2 = new com.redroundrobin.thirema.apirest.models.postgres.Sensor();
     sensor2.setId(2);
     sensor2.setRealSensorId(2);
     sensor2.setDevice(device1);
-    sensor2.setEntities(Collections.emptyList());
 
     sensor3 = new com.redroundrobin.thirema.apirest.models.postgres.Sensor();
     sensor3.setId(3);
     sensor3.setRealSensorId(1);
     sensor3.setDevice(device2);
-    sensor3.setEntities(Collections.emptyList());
 
     sensor4 = new com.redroundrobin.thirema.apirest.models.postgres.Sensor();
     sensor4.setId(4);
     sensor4.setRealSensorId(2);
     sensor4.setDevice(device2);
-    sensor4.setEntities(Collections.emptyList());
 
     allPostgreSensors = new ArrayList<>();
     allPostgreSensors.add(sensor1);

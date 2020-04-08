@@ -23,8 +23,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -166,31 +168,15 @@ public class ViewGraphControllerTest {
     allViewGraphs.add(viewGraph3);
 
 
-    // -------------------------- Set viewGraphs to sensors and viceversa --------------------------
-    List<ViewGraph> sensor1AsSensor1ViewGraphs1 = new ArrayList<>();
-    sensor1AsSensor1ViewGraphs1.add(viewGraph1);
+    // --------------------------------- Set sensors to viewGraphs ------------------------------
     viewGraph1.setSensor1(sensor1);
-    List<ViewGraph> sensor2AsSensor2ViewGraphs1 = new ArrayList<>();
-    sensor2AsSensor2ViewGraphs1.add(viewGraph1);
     viewGraph1.setSensor2(sensor2);
-    sensor2.setViewGraphs1(Collections.emptyList());
-    sensor2.setViewGraphs2(sensor2AsSensor2ViewGraphs1);
 
-    List<ViewGraph> sensor1AsSensor2ViewGraphs2 = new ArrayList<>();
-    sensor1AsSensor2ViewGraphs2.add(viewGraph2);
-    viewGraph2.setSensor2(sensor1);
-    sensor1.setViewGraphs1(sensor1AsSensor1ViewGraphs1);
-    sensor1.setViewGraphs2(sensor1AsSensor2ViewGraphs2);
-
-
-    List<ViewGraph> sensor3AsSensor1ViewGraphs2 = new ArrayList<>();
-    sensor3AsSensor1ViewGraphs2.add(viewGraph2);
     viewGraph2.setSensor1(sensor3);
-    sensor3.setViewGraphs1(sensor3AsSensor1ViewGraphs2);
-    sensor3.setViewGraphs2(Collections.emptyList());
+    viewGraph2.setSensor2(sensor1);
 
 
-    // -------------------------- Set viewGraphs to view and viceversa --------------------------
+    // ----------------------------------- Set view to viewGraphs -------------------------------
     view1ViewGraphs = new ArrayList<>();
     view1ViewGraphs.add(viewGraph1);
     view1ViewGraphs.add(viewGraph3);
@@ -204,41 +190,25 @@ public class ViewGraphControllerTest {
     viewGraph2.setView(view2);
 
 
-    // -------------------------- Set users to view and viceversa --------------------------
-    user1Views = new ArrayList<>();
-    user1Views.add(view1);
+    // ----------------------------------- Set users to view ------------------------------------
     view1.setUser(admin);
-    admin.setViews(user1Views);
 
-    user2Views = new ArrayList<>();
-    user2Views.add(view2);
     view2.setUser(user);
-    user.setViews(user2Views);
 
 
-    // -------------------------- Set users to entities and viceversa --------------------------
-    List<User> entity1Users = new ArrayList<>();
-    entity1Users.add(user);
-    entity1.setUsers(entity1Users);
+    // ---------------------------------- Set entities to users ---------------------------------
     user.setEntity(entity1);
 
 
-    // -------------------------- Set sensors to entities and viceversa --------------------------
-    List<Sensor> entity1Sensors = new ArrayList<>();
+    // ---------------------------------- Set sensors to entities -------------------------------
+    Set<Sensor> entity1Sensors = new HashSet<>();
     entity1Sensors.add(sensor1);
     entity1Sensors.add(sensor3);
     entity1.setSensors(entity1Sensors);
-    List<Entity> sensor1And3Entities = new ArrayList<>();
-    sensor1And3Entities.add(entity1);
-    sensor1.setEntities(sensor1And3Entities);
-    sensor3.setEntities(sensor1And3Entities);
 
-    List<Sensor> entity2Sensors = new ArrayList<>();
+    Set<Sensor> entity2Sensors = new HashSet<>();
     entity2Sensors.add(sensor2);
     entity2.setSensors(entity2Sensors);
-    List<Entity> sensor2Entities = new ArrayList<>();
-    sensor2Entities.add(entity2);
-    sensor2.setEntities(sensor2Entities);
 
 
 

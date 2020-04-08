@@ -16,8 +16,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -116,50 +118,27 @@ public class DeviceServiceTest {
     allSensors.add(sensor5);
 
 
-    // --------------------------- Set Devices to Gateways and viceversa ---------------------------
-    List<Device> gateway1Devices = new ArrayList<>();
-    gateway1Devices.add(device1);
-    gateway1Devices.add(device2);
-    gateway1.setDevices(gateway1Devices);
+    // --------------------------------- Set Gateways to Devices ---------------------------------
     device1.setGateway(gateway1);
     device2.setGateway(gateway1);
-
-    List<Device> gateway2Devices = new ArrayList<>();
-    gateway2Devices.add(device3);
-    gateway2.setDevices(gateway2Devices);
     device3.setGateway(gateway2);
 
 
-    // --------------------------- Set Devices to Sensors and viceversa ---------------------------
+    // --------------------------------- Set Devices to Sensors ---------------------------------
     sensor1.setDevice(device1);
     sensor2.setDevice(device1);
-    List<Sensor> device1Sensors = new ArrayList<>();
-    device1Sensors.add(sensor1);
-    device1Sensors.add(sensor2);
-    device1.setSensors(device1Sensors);
 
     sensor3.setDevice(device2);
     sensor4.setDevice(device2);
-    List<Sensor> device2Sensors = new ArrayList<>();
-    device2Sensors.add(sensor3);
-    device2Sensors.add(sensor4);
-    device2.setSensors(device2Sensors);
 
     sensor5.setDevice(device3);
-    List<Sensor> device3Sensors = new ArrayList<>();
-    device3Sensors.add(sensor5);
-    device3.setSensors(device3Sensors);
 
 
-    // --------------------------- Set Entities to Sensors and viceversa ---------------------------
-    List<Sensor> entity1Sensor = new ArrayList<>();
+    // --------------------------------- Set Sensors to Entities --------------------------------
+    Set<Sensor> entity1Sensor = new HashSet<>();
     entity1Sensor.add(sensor1);
     entity1Sensor.add(sensor3);
     entity1.setSensors(entity1Sensor);
-    List<Entity> sensor1Entities = new ArrayList<>();
-    sensor1Entities.add(entity1);
-    sensor1.setEntities(sensor1Entities);
-    sensor3.setEntities(sensor1Entities);
     List<Device> entity1Devices = new ArrayList<>();
     entity1Devices.add(device1);
     entity1Devices.add(device2);
@@ -197,7 +176,7 @@ public class DeviceServiceTest {
     });
     when(deviceRepo.findBySensors(any(Sensor.class))).thenAnswer(i -> {
       Sensor sensor = i.getArgument(0);
-      return allDevices.stream().filter(d -> d.getSensors().contains(sensor))
+      return allDevices.stream().filter(d -> sensor.getDevice().equals(d))
           .findFirst().orElse(null);
     });
     when(deviceRepo.findByGatewayAndRealDeviceId(any(Gateway.class), anyInt())).thenAnswer(i -> {

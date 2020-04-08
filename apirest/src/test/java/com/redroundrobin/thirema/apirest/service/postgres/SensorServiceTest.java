@@ -19,7 +19,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -170,79 +172,50 @@ public class SensorServiceTest {
 
 
 
-    // -------------------------- Set sensors to alerts and viceversa --------------------------
-    List<Alert> sensor1Alerts = new ArrayList<>();
-    sensor1Alerts.add(alert1);
-    sensor1Alerts.add(alert2);
-    sensor1.setAlerts(sensor1Alerts);
+    // --------------------------------- Set sensors to alerts ----------------------------------
     alert1.setSensor(sensor1);
+
     alert2.setSensor(sensor1);
 
-    List<Alert> sensor2Alerts = new ArrayList<>();
-    sensor2Alerts.add(alert3);
-    sensor2.setAlerts(sensor2Alerts);
     alert3.setSensor(sensor2);
 
-    sensor3.setAlerts(Collections.emptyList());
+
+    // -------------------------------- Set sensors to entities ---------------------------------
+    Set<Sensor> entity1Sensors = new HashSet<>();
+    entity1Sensors.add(sensor1);
+    entity1Sensors.add(sensor2);
+    entity1.setSensors(entity1Sensors);
+
+    Set<Sensor> entity2Sensors = new HashSet<>();
+    entity2Sensors.add(sensor1);
+    entity2Sensors.add(sensor2);
+    entity2.setSensors(entity2Sensors);
+
+    Set<Sensor> entity3Sensors = new HashSet<>();
+    entity3Sensors.add(sensor3);
 
 
-    // -------------------------- Set sensors to entities and viceversa --------------------------
-    List<Entity> sensor1And2Entities = new ArrayList<>();
-    sensor1And2Entities.add(entity1);
-    sensor1And2Entities.add(entity2);
-    sensor1.setEntities(sensor1And2Entities);
-    sensor2.setEntities(sensor1And2Entities);
-
-    List<Entity> sensor3Entities = new ArrayList<>();
-    sensor3Entities.add(entity3);
-    sensor3.setEntities(sensor3Entities);
-
-
-    // -------------------------- Set sensors to devices and viceversa --------------------------
-    device1.setSensors(allSensors.stream().filter(s -> s.getId() <= 2)
-        .collect(Collectors.toList()));
+    // ---------------------------------- Set devices to sensors --------------------------------
     sensor1.setDevice(device1);
+
     sensor2.setDevice(device1);
 
-    device2.setSensors(allSensors.stream().filter(s -> s.getId() > 2)
-        .collect(Collectors.toList()));
     sensor3.setDevice(device2);
 
 
-    // -------------------------- Set sensors to ViewGraphs and viceversa --------------------------
-    List<ViewGraph> sensor1To1ViewGraphs1 = new ArrayList<>();
-    sensor1To1ViewGraphs1.add(viewGraph1);
+    // ---------------------------------- Set sensors to ViewGraphs -----------------------------
     viewGraph1.setSensor1(sensor1);
-
-    List<ViewGraph> sensor1To2ViewGraphs2 = new ArrayList<>();
-    sensor1To2ViewGraphs2.add(viewGraph2);
-    viewGraph2.setSensor2(sensor1);
-    sensor1.setViewGraphs1(sensor1To1ViewGraphs1);
-    sensor1.setViewGraphs2(sensor1To2ViewGraphs2);
-
-    List<ViewGraph> sensor2To2ViewGraphs1 = new ArrayList<>();
-    sensor2To2ViewGraphs1.add(viewGraph1);
     viewGraph1.setSensor2(sensor2);
-    sensor2.setViewGraphs1(Collections.emptyList());
-    sensor2.setViewGraphs2(sensor2To2ViewGraphs1);
 
-    List<ViewGraph> sensor3To1ViewGraphs2 = new ArrayList<>();
-    sensor3To1ViewGraphs2.add(viewGraph2);
     viewGraph2.setSensor1(sensor3);
-    sensor3.setViewGraphs1(sensor3To1ViewGraphs2);
-    sensor3.setViewGraphs2(Collections.emptyList());
+    viewGraph2.setSensor2(sensor1);
 
 
-    // -------------------------- Set Devices to Gateways and viceversa --------------------------
+    // ---------------------------------- Set Gateways to Devices -------------------------------
     device1.setGateway(gateway1);
-    List<Device> gateway1Devices = new ArrayList<>();
-    gateway1Devices.add(device1);
-    gateway1.setDevices(gateway1Devices);
 
     device2.setGateway(gateway2);
-    List<Device> gateway2Devices = new ArrayList<>();
-    gateway2Devices.add(device2);
-    gateway2.setDevices(gateway2Devices);
+
 
 
     when(sensorRepo.findAll()).thenReturn(allSensors);
@@ -254,18 +227,20 @@ public class SensorServiceTest {
     });
     when(sensorRepo.findAllByEntities(any(Entity.class))).thenAnswer(i -> {
       Entity entity = i.getArgument(0);
-      return allSensors.stream().filter(s -> s.getEntities().contains(entity))
+      return allSensors.stream().filter(s -> entity.getSensors().contains(s))
           .collect(Collectors.toList());
     });
     when(sensorRepo.findAllByDeviceAndEntities(any(Device.class), any(Entity.class))).thenAnswer(i -> {
       Device device = i.getArgument(0);
       Entity entity = i.getArgument(1);
-      return allSensors.stream().filter(s -> s.getEntities().contains(entity) && device.equals(s.getDevice()))
+      return allSensors.stream().filter(s -> entity.getSensors().contains(s) && device.equals(s.getDevice()))
           .collect(Collectors.toList());
     });
     when(sensorRepo.findAllByViewGraphs1OrViewGraphs2(any(ViewGraph.class),any(ViewGraph.class))).thenAnswer(i -> {
-      return allSensors.stream().filter(s -> s.getViewGraphs1().contains(
-          i.getArgument(0)) || s.getViewGraphs2().contains(i.getArgument(1)))
+      ViewGraph viewGraph1 = i.getArgument(0);
+      ViewGraph viewGraph2 = i.getArgument(1);
+      return allSensors.stream()
+          .filter(s -> viewGraph1.getSensor1().equals(s) || viewGraph1.getSensor2().equals(s))
           .collect(Collectors.toList());
     });
     when(sensorRepo.findAllByGatewayIdAndRealDeviceId(anyInt(),anyInt())).thenAnswer(i -> {
@@ -279,12 +254,14 @@ public class SensorServiceTest {
           .findFirst();
     });
     when(sensorRepo.findBySensorIdAndEntities(anyInt(), any(Entity.class))).thenAnswer(i -> {
-      return allSensors.stream().filter(s -> i.getArgument(0).equals(s.getId()) && s.getEntities().contains(i.getArgument(1)))
+      Entity entity = i.getArgument(1);
+      return allSensors.stream()
+          .filter(s -> i.getArgument(0).equals(s.getId()) && entity.getSensors().contains(s))
           .findFirst().orElse(null);
     });
     when(sensorRepo.findByAlerts(any(Alert.class))).thenAnswer(i -> {
       Alert alert = i.getArgument(0);
-      return allSensors.stream().filter(s -> s.getAlerts().contains(alert))
+      return allSensors.stream().filter(s -> alert.getSensor().equals(s))
           .findFirst().orElse(null);
     });
     when(sensorRepo.findByDeviceAndRealSensorId(any(Device.class), anyInt())).thenAnswer(i -> {
@@ -300,7 +277,7 @@ public class SensorServiceTest {
       Entity entity = i.getArgument(2);
       return allSensors.stream()
           .filter(s -> device.equals(s.getDevice()) && realSensorId == s.getRealSensorId()
-              && s.getEntities().contains(entity))
+              && entity.getSensors().contains(s))
           .findFirst().orElse(null);
     });
     when(sensorRepo.findByGatewayIdAndRealDeviceIdAndRealSensorId(anyInt(), anyInt(), anyInt())).thenAnswer(i -> {

@@ -79,9 +79,6 @@ public class ViewServiceTest {
     view1.setUser(user1);
     view1.setId(1);
     view1.setName("view1");
-    List<View> user1Views = new ArrayList<>();
-    user1Views.add(view1);
-    user1.setViews(user1Views);
 
     view2= new View();
     view2.setUser(user1);

@@ -46,7 +46,7 @@ public class GatewayServiceTest {
   public void setUp() {
     gatewayService = new GatewayService(gatewayRepo, deviceRepo);
 
-    // ----------------------------------------- Set Devices --------------------------------------
+    // -------------------------------------- Set Devices ----------------------------------------
     device1 = new Device();
     device1.setId(1);
     device2 = new Device();
@@ -60,7 +60,7 @@ public class GatewayServiceTest {
     allDevices.add(device3);
 
 
-    // ----------------------------------------- Set Gateways --------------------------------------
+    // -------------------------------------- Set Gateways ----------------------------------------
     gateway1 = new Gateway();
     gateway1.setId(1);
     gateway2 = new Gateway();
@@ -71,17 +71,10 @@ public class GatewayServiceTest {
     allGateways.add(gateway2);
 
 
-    // --------------------------- Set Devices to Gateways and viceversa ---------------------------
-    List<Device> gateway1Devices = new ArrayList<>();
-    gateway1Devices.add(device1);
-    gateway1Devices.add(device2);
-    gateway1.setDevices(gateway1Devices);
+    // -------------------------------- Set Gateways to Devices --------------------------------
     device1.setGateway(gateway1);
     device2.setGateway(gateway1);
 
-    List<Device> gateway2Devices = new ArrayList<>();
-    gateway2Devices.add(device3);
-    gateway2.setDevices(gateway2Devices);
     device3.setGateway(gateway2);
 
 
@@ -89,7 +82,7 @@ public class GatewayServiceTest {
     when(gatewayRepo.findAll()).thenReturn(allGateways);
     when(gatewayRepo.findByDevices(any(Device.class))).thenAnswer(i -> {
       Device device = i.getArgument(0);
-      return allGateways.stream().filter(g -> g.getDevices().contains(device))
+      return allGateways.stream().filter(g -> device.getGateway().equals(g))
           .findFirst().orElse(null);
     });
     when(gatewayRepo.findById(anyInt())).thenAnswer(i -> {
