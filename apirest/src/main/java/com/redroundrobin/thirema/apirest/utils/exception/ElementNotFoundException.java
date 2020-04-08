@@ -5,12 +5,7 @@ public class ElementNotFoundException extends Exception {
     super(message);
   }
 
-  public static ElementNotFoundException notFoundMessage(String element) {
+  public static ElementNotFoundException defaultMessage(String element) {
     return new ElementNotFoundException(element + " with provided id is not found");
-  }
-
-  public static ElementNotFoundException notFoundOrNotAuthorizedMessage(String element) {
-    return new ElementNotFoundException(element + " with provided id is not found or not "
-        + "authorized");
   }
 }

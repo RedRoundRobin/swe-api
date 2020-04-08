@@ -56,79 +56,27 @@ public class UserServiceTest {
 
     userService = new UserService(userRepo, alertRepo, entityRepo);
 
-    admin1 = new User();
-    admin1.setId(1);
-    admin1.setName("admin1");
-    admin1.setSurname("admin1");
-    admin1.setEmail("admin1");
+    // ----------------------------------------- Set Users ---------------------------------------
+    admin1 = new User(1, "admin1", "admin1", "admin1", "pass", User.Role.ADMIN);
     admin1.setTelegramName("TNAdmin1");
-    admin1.setPassword("password");
-    admin1.setType(User.Role.ADMIN);
 
-    admin2 = new User();
-    admin2.setId(2);
-    admin2.setName("admin2");
-    admin2.setSurname("admin2");
-    admin2.setEmail("admin2");
+    admin2 = new User(2, "admin2", "admin2", "admin2", "pass", User.Role.ADMIN);
     admin2.setTelegramName("TNAdmin2");
-    admin2.setPassword("password");
-    admin2.setType(User.Role.ADMIN);
 
-    entity1 = new Entity();
-    entity1.setId(1);
-
-    mod1 = new User();
-    mod1.setId(3);
-    mod1.setName("mod1");
-    mod1.setSurname("mod1");
-    mod1.setEmail("mod1");
+    mod1 = new User(3, "mod1", "mod1", "mod1", "pass", User.Role.MOD);
     mod1.setTelegramName("TNmod1");
-    mod1.setPassword("password");
-    mod1.setType(User.Role.MOD);
-    mod1.setEntity(entity1);
 
-    mod11 = new User();
-    mod11.setId(4);
-    mod11.setName("mod11");
-    mod11.setSurname("mod11");
-    mod11.setEmail("mod11");
+    mod11 = new User(4, "mod11", "mod11", "mod11", "pass", User.Role.MOD);
     mod11.setTelegramName("TNmod11");
-    mod11.setPassword("password");
-    mod11.setType(User.Role.MOD);
-    mod11.setEntity(entity1);
 
-    entity2 = new Entity();
-    entity2.setId(2);
-
-    mod2 = new User();
-    mod2.setId(7);
-    mod2.setName("mod2");
-    mod2.setSurname("mod2");
-    mod2.setEmail("mod2");
+    mod2 = new User(7, "mod2", "mod2", "mod2", "pass", User.Role.MOD);
     mod2.setTelegramName("TNmod2");
-    mod2.setPassword("password");
-    mod2.setType(User.Role.MOD);
-    mod2.setEntity(entity2);
 
-    user1 = new User();
-    user1.setId(5);
-    user1.setName("user1");
-    user1.setSurname("user1");
-    user1.setEmail("user1");
+    user1 = new User(5, "user1", "user1", "user1", "pass", User.Role.USER);
     user1.setTelegramName("TNuser1");
-    user1.setPassword("password");
-    user1.setType(User.Role.USER);
-    user1.setEntity(entity1);
 
-    user2 = new User();
-    user2.setId(6);
-    user2.setName("user2");
-    user2.setSurname("user2");
-    user2.setEmail("user2");
+    user2 = new User(6, "user2", "user2", "user2", "pass", User.Role.USER);
     user2.setTelegramName("TNuser2");
-    user2.setPassword("password");
-    user2.setType(User.Role.USER);
-    user2.setEntity(entity2);
 
     List<User> allUsers = new ArrayList<>();
     allUsers.add(admin1);
@@ -137,6 +85,23 @@ public class UserServiceTest {
     allUsers.add(mod11);
     allUsers.add(user1);
     allUsers.add(user2);
+
+
+    // --------------------------------------- Set Entities ---------------------------------------
+    entity1 = new Entity(1, "entity1", "loc1");
+    entity2 = new Entity(2, "entity2", "loc2");
+
+
+    // --------------------------------- Set Entities To Users ------------------------------------
+    mod1.setEntity(entity1);
+    mod11.setEntity(entity1);
+
+    mod2.setEntity(entity2);
+
+    user1.setEntity(entity1);
+    user2.setEntity(entity2);
+
+
 
     when(userRepo.findAll()).thenReturn(allUsers);
     when(userRepo.findById(anyInt())).thenAnswer(i -> {
@@ -181,18 +146,13 @@ public class UserServiceTest {
   }
 
   private User cloneUser(User user) {
-    User clone = new User();
-    clone.setEmail(user.getEmail());
+    User clone = new User(user.getId(), user.getName(), user.getSurname(), user.getEmail(),
+        user.getPassword(), user.getType());
     clone.setTelegramName(user.getTelegramName());
-    clone.setId(user.getId());
     clone.setEntity(user.getEntity());
     clone.setDeleted(user.isDeleted());
     clone.setTelegramChat(user.getTelegramChat());
-    clone.setName(user.getName());
-    clone.setSurname(user.getSurname());
-    clone.setType(user.getType());
     clone.setTfa(user.getTfa());
-    clone.setPassword(user.getPassword());
 
     return clone;
   }

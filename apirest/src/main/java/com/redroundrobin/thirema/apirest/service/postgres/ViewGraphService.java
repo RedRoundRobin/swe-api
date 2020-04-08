@@ -124,7 +124,7 @@ public class ViewGraphService {
       viewGraphRepo.deleteById(viewGraphId);
       return !viewGraphRepo.existsById(viewGraphId);
     } else {
-      throw ElementNotFoundException.notFoundMessage("ViewGraph");
+      throw ElementNotFoundException.defaultMessage("ViewGraph");
     }
   }
 
@@ -177,7 +177,7 @@ public class ViewGraphService {
   public boolean getPermissionByIdAndUserId(int id, int userId) throws ElementNotFoundException {
     ViewGraph viewGraph = findById(id);
     if (viewGraph == null) {
-      throw ElementNotFoundException.notFoundMessage("ViewGraph");
+      throw ElementNotFoundException.defaultMessage("ViewGraph");
     } else {
       return viewGraph.getView().getId() == userId;
     }

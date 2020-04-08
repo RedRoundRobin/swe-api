@@ -73,10 +73,6 @@ public class Device {
     return deviceId;
   }
 
-  public void setId(int deviceId) {
-    this.deviceId = deviceId;
-  }
-
   public String getName() {
     return this.name;
   }
