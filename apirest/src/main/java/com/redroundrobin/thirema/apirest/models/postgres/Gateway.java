@@ -27,10 +27,6 @@ public class Gateway {
   private int gatewayId;
   private String name;
 
-  @JsonIgnore
-  @OneToMany(mappedBy = "gateway", cascade = CascadeType.ALL)
-  private List<Device> devices;
-
   public Gateway() {
   }
 
@@ -54,14 +50,6 @@ public class Gateway {
 
   public void setName(String name) {
     this.name = name;
-  }
-
-  public List<Device> getDevices() {
-    return devices;
-  }
-
-  public void setDevices(List<Device> devices) {
-    this.devices = devices;
   }
 
   @Override
@@ -98,7 +86,6 @@ public class Gateway {
     final StringBuilder sb = new StringBuilder("Device{");
     sb.append("id=").append(gatewayId);
     sb.append(", name='").append(name).append("'");
-    sb.append(", devices=").append(devices);
     sb.append('}');
     return sb.toString();
   }
