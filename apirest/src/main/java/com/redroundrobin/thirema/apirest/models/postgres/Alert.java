@@ -98,7 +98,7 @@ public class Alert {
     this.deleted = deleted;
   }
 
-  public boolean getDeleted() {
+  public boolean isDeleted() {
     return this.deleted;
   }
 

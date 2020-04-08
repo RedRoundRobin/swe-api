@@ -4,8 +4,6 @@ import com.redroundrobin.thirema.apirest.models.postgres.Alert;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
-import com.redroundrobin.thirema.apirest.models.postgres.View;
-import com.redroundrobin.thirema.apirest.models.postgres.ViewGraph;
 import com.redroundrobin.thirema.apirest.repository.postgres.AlertRepository;
 
 import java.util.ArrayList;
@@ -17,7 +15,6 @@ import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 import java.util.Map;
 
-import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
@@ -112,13 +109,13 @@ public class AlertService {
   }
 
   public List<Alert> findAll() {
-    return (List<Alert>) alertRepo.findAll();
+    return (List<Alert>) alertRepo.findAllByDeletedFalse();
   }
 
   public List<Alert> findAllByEntityId(int entityId) {
     Entity entity = entityRepo.findById(entityId).orElse(null);
     if (entity != null) {
-      return (List<Alert>) alertRepo.findAllByEntity(entity);
+      return (List<Alert>) alertRepo.findAllByEntityAndDeletedFalse(entity);
     } else {
       return Collections.emptyList();
     }
@@ -128,7 +125,7 @@ public class AlertService {
     Entity entity = entityRepo.findById(entityId).orElse(null);
     Sensor sensor = sensorRepo.findById(sensorId).orElse(null);
     if (entity != null && sensor != null) {
-      return (List<Alert>) alertRepo.findAllByEntityAndSensor(entity, sensor);
+      return (List<Alert>) alertRepo.findAllByEntityAndSensorAndDeletedFalse(entity, sensor);
     } else {
       return Collections.emptyList();
     }
@@ -137,16 +134,16 @@ public class AlertService {
   public List<Alert> findAllBySensorId(int sensorId) {
     Sensor sensor = sensorRepo.findById(sensorId).orElse(null);
     if (sensor != null) {
-      return (List<Alert>) alertRepo.findAllBySensor(sensor);
+      return (List<Alert>) alertRepo.findAllBySensorAndDeletedFalse(sensor);
     } else {
       return Collections.emptyList();
     }
   }
 
-  public List<Alert> findAllByUserId(int userId) {
+  public List<Alert> findAllDisabledByUserId(int userId) {
     User user = userRepo.findById(userId).orElse(null);
     if (user != null) {
-      return (List<Alert>) alertRepo.findAllByUsers(user);
+      return (List<Alert>) alertRepo.findAllByUsersAndDeletedFalse(user);
     } else {
       return Collections.emptyList();
     }
@@ -192,7 +189,22 @@ public class AlertService {
         throw new NotAuthorizedException("The alert with provided id is not authorized");
       }
     } else {
-      throw new ElementNotFoundException("The alert with provided id is not found");
+      throw ElementNotFoundException.notFoundMessage("alert");
+    }
+  }
+
+  public boolean deleteAlert(int alertId) throws ElementNotFoundException {
+    Alert alert = alertRepo.findById(alertId).orElse(null);
+    if (alert != null) {
+      alert.setDeleted(true);
+      Alert newAlert = alertRepo.save(alert);
+      if (newAlert.isDeleted()) {
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      throw ElementNotFoundException.notFoundMessage("alert");
     }
   }
 }

@@ -243,58 +243,58 @@ public class AlertControllerTest {
 
   @Test
   public void getAllAlertsByAdmin() {
-    ResponseEntity<List<Alert>> response = alertController.getAlerts(adminTokenWithBearer, null, null);
+    ResponseEntity<Map<String,List<Alert>>> response = alertController.getAlerts(adminTokenWithBearer, null, null);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertEquals(allAlerts, response.getBody());
+    assertEquals(allAlerts, response.getBody().get("enabled"));
   }
 
   @Test
   public void getAllAlertsByEntityIdByAdmin() {
-    ResponseEntity<List<Alert>> response = alertController.getAlerts(adminTokenWithBearer, entity2.getId(), null);
+    ResponseEntity<Map<String,List<Alert>>> response = alertController.getAlerts(adminTokenWithBearer, entity2.getId(), null);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertEquals(entity2Alerts, response.getBody());
+    assertEquals(entity2Alerts, response.getBody().get("enabled"));
   }
 
   @Test
   public void getAllAlertsBySensorIdByAdmin() {
-    ResponseEntity<List<Alert>> response = alertController.getAlerts(adminTokenWithBearer, null, sensor3.getId());
+    ResponseEntity<Map<String,List<Alert>>> response = alertController.getAlerts(adminTokenWithBearer, null, sensor3.getId());
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertEquals(sensor3Alerts, response.getBody());
+    assertEquals(sensor3Alerts, response.getBody().get("enabled"));
   }
 
   @Test
   public void getAllAlertsByEntityIdAndSensorIdByAdmin() {
-    ResponseEntity<List<Alert>> response = alertController.getAlerts(adminTokenWithBearer, entity3.getId(), sensor3.getId());
+    ResponseEntity<Map<String,List<Alert>>> response = alertController.getAlerts(adminTokenWithBearer, entity3.getId(), sensor3.getId());
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertEquals(entity3Alerts, response.getBody());
+    assertEquals(entity3Alerts, response.getBody().get("enabled"));
   }
 
   @Test
   public void getAllAlertsByUser() {
-    ResponseEntity<List<Alert>> response = alertController.getAlerts(userTokenWithBearer, null, null);
+    ResponseEntity<Map<String,List<Alert>>> response = alertController.getAlerts(userTokenWithBearer, null, null);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertEquals(entity1Alerts, response.getBody());
+    assertEquals(entity1Alerts, response.getBody().get("enabled"));
   }
 
   @Test
   public void getAllAlertsBySensorByUser() {
-    ResponseEntity<List<Alert>> response = alertController.getAlerts(userTokenWithBearer, null, sensor1.getId());
+    ResponseEntity<Map<String,List<Alert>>> response = alertController.getAlerts(userTokenWithBearer, null, sensor1.getId());
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertTrue(response.getBody().size() == 2);
+    assertTrue(response.getBody().get("enabled").size() == 2);
   }
 
   @Test
   public void getAllAlertsByUserDifferentEntityEmptyResult() {
-    ResponseEntity<List<Alert>> response = alertController.getAlerts(userTokenWithBearer, entity2.getId(), null);
+    ResponseEntity<Map<String,List<Alert>>> response = alertController.getAlerts(userTokenWithBearer, entity2.getId(), null);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertTrue(response.getBody().isEmpty());
+    assertTrue(response.getBody().get("enabled").isEmpty());
   }
 
 

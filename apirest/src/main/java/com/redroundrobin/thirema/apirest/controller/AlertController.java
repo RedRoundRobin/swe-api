@@ -2,7 +2,6 @@ package com.redroundrobin.thirema.apirest.controller;
 
 import com.redroundrobin.thirema.apirest.models.postgres.Alert;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
-import com.redroundrobin.thirema.apirest.models.postgres.ViewGraph;
 import com.redroundrobin.thirema.apirest.service.postgres.AlertService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.service.timescale.LogService;
@@ -14,6 +13,7 @@ import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -42,29 +43,44 @@ public class AlertController extends CoreController {
   }
 
   @GetMapping(value = {""})
-  public ResponseEntity<List<Alert>> getAlerts(
+  public ResponseEntity<Map<String,List<Alert>>> getAlerts(
       @RequestHeader(value = "Authorization") String authorization,
       @RequestParam(name = "entityId", required = false) Integer entityId,
       @RequestParam(name = "sensorId", required = false) Integer sensorId) {
     User user = this.getUserFromAuthorization(authorization);
+
+    Map<String,List<Alert>> response = new HashMap<>();
+
     if (user.getType() == User.Role.ADMIN) {
       if (entityId != null && sensorId != null) {
-        return ResponseEntity.ok(alertService.findAllByEntityIdAndSensorId(entityId, sensorId));
+        response.put("enabled", alertService.findAllByEntityIdAndSensorId(entityId, sensorId));
       } else if (entityId != null) {
-        return ResponseEntity.ok(alertService.findAllByEntityId(entityId));
+        response.put("enabled", alertService.findAllByEntityId(entityId));
       } else if (sensorId != null) {
-        return ResponseEntity.ok(alertService.findAllBySensorId(sensorId));
+        response.put("enabled", alertService.findAllBySensorId(sensorId));
       } else {
-        return ResponseEntity.ok(alertService.findAll());
+        response.put("enabled", alertService.findAll());
       }
     } else if (sensorId != null && (entityId == null || user.getEntity().getId() == entityId)) {
-      return ResponseEntity.ok(alertService.findAllByEntityIdAndSensorId(user.getEntity().getId(),
-          sensorId));
+      List<Alert> disabledAlerts = alertService.findAllDisabledByUserId(user.getId());
+      List<Alert> enabledAlerts = alertService.findAllByEntityIdAndSensorId(user.getEntity().getId(),
+          sensorId);
+      enabledAlerts.removeAll(disabledAlerts);
+
+      response.put("enabled", enabledAlerts);
+      response.put("disabled", disabledAlerts);
     } else if (entityId == null || user.getEntity().getId() == entityId) {
-      return ResponseEntity.ok(alertService.findAllByEntityId(user.getEntity().getId()));
+      List<Alert> disabledAlerts = alertService.findAllDisabledByUserId(user.getId());
+      List<Alert> enabledAlerts = alertService.findAllByEntityId(user.getEntity().getId());
+      enabledAlerts.removeAll(disabledAlerts);
+
+      response.put("enabled", enabledAlerts);
+      response.put("disabled", disabledAlerts);
     } else {
-      return ResponseEntity.ok(Collections.emptyList());
+      response.put("enabled", Collections.emptyList());
+      response.put("disabled", Collections.emptyList());
     }
+    return ResponseEntity.ok(response);
   }
 
   @PostMapping(value = {""})
@@ -84,7 +100,7 @@ public class AlertController extends CoreController {
   }
 
   @PutMapping(value = {"/{alertId:.+}"})
-  public ResponseEntity<Alert> disableUserAlert(
+  public ResponseEntity disableUserAlert(
       @RequestHeader("authorization") String authorization,
       @PathVariable("alertId") int alertId,
       @RequestParam("enable") boolean enable) {
@@ -101,6 +117,25 @@ public class AlertController extends CoreController {
       }
     }
     return new ResponseEntity(HttpStatus.OK);
+  }
+
+  @DeleteMapping(value = {"/{alertId:.+}"})
+  public ResponseEntity deleteAlert(@RequestHeader("authorization") String authorization,
+                                      @PathVariable("alertId") int alertId) {
+    User user = getUserFromAuthorization(authorization);
+    if (user.getType() == User.Role.ADMIN || user.getType() == User.Role.MOD) {
+      try {
+        if (alertService.deleteAlert(alertId)) {
+          return new ResponseEntity(HttpStatus.OK);
+        } else {
+          return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+      } catch (ElementNotFoundException e) {
+        return new ResponseEntity(HttpStatus.BAD_REQUEST);
+      }
+    } else {
+      return new ResponseEntity(HttpStatus.FORBIDDEN);
+    }
   }
 
 }

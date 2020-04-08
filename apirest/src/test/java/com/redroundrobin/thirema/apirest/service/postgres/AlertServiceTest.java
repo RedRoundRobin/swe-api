@@ -224,13 +224,13 @@ public class AlertServiceTest {
 
 
 
-    when(alertRepo.findAll()).thenReturn(allAlerts);
-    when(alertRepo.findAllByEntity(any(Entity.class))).thenAnswer(i -> {
+    when(alertRepo.findAllByDeletedFalse()).thenReturn(allAlerts);
+    when(alertRepo.findAllByEntityAndDeletedFalse(any(Entity.class))).thenAnswer(i -> {
       Entity entity = i.getArgument(0);
       return allAlerts.stream().filter(a -> entity.equals(a.getEntity()))
           .collect(Collectors.toList());
     });
-    when(alertRepo.findAllByEntityAndSensor(any(Entity.class),any(Sensor.class))).thenAnswer(i -> {
+    when(alertRepo.findAllByEntityAndSensorAndDeletedFalse(any(Entity.class),any(Sensor.class))).thenAnswer(i -> {
       Entity entity = i.getArgument(0);
       Sensor sensor = i.getArgument(1);
       if (entity != null && sensor != null) {
@@ -240,12 +240,12 @@ public class AlertServiceTest {
         return Collections.emptyList();
       }
     });
-    when(alertRepo.findAllBySensor(any(Sensor.class))).thenAnswer(i -> {
+    when(alertRepo.findAllBySensorAndDeletedFalse(any(Sensor.class))).thenAnswer(i -> {
       Sensor sensor = i.getArgument(0);
       return allAlerts.stream().filter(a -> sensor.equals(a.getSensor()))
           .collect(Collectors.toList());
     });
-    when(alertRepo.findAllByUsers(any(User.class))).thenAnswer(i -> {
+    when(alertRepo.findAllByUsersAndDeletedFalse(any(User.class))).thenAnswer(i -> {
       User user = i.getArgument(0);
       return allAlerts.stream().filter(a -> a.getUsers().contains(user))
           .collect(Collectors.toList());
@@ -341,14 +341,14 @@ public class AlertServiceTest {
 
   @Test
   public void findAllAlertsByUserId() {
-    List<Alert> alerts = alertService.findAllByUserId(user1.getId());
+    List<Alert> alerts = alertService.findAllDisabledByUserId(user1.getId());
 
     assertTrue(alerts.stream().count() == 1);
   }
 
   @Test
   public void findAllAlertsByNotExistentUserId() {
-    List<Alert> alerts = alertService.findAllByUserId(4);
+    List<Alert> alerts = alertService.findAllDisabledByUserId(4);
 
     assertTrue(alerts.isEmpty());
   }

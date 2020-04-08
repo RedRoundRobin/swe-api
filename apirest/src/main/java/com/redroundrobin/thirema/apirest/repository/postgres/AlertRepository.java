@@ -9,11 +9,13 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface AlertRepository extends CrudRepository<Alert, Integer> {
-  Iterable<Alert> findAllByEntity(Entity entity);
+  Iterable<Alert> findAllByDeletedFalse();
 
-  Iterable<Alert> findAllByEntityAndSensor(Entity entity, Sensor sensor);
+  Iterable<Alert> findAllByEntityAndDeletedFalse(Entity entity);
 
-  Iterable<Alert> findAllBySensor(Sensor sensor);
+  Iterable<Alert> findAllByEntityAndSensorAndDeletedFalse(Entity entity, Sensor sensor);
 
-  Iterable<Alert> findAllByUsers(User user);
+  Iterable<Alert> findAllBySensorAndDeletedFalse(Sensor sensor);
+
+  Iterable<Alert> findAllByUsersAndDeletedFalse(User user);
 }
