@@ -44,10 +44,6 @@ public class Alert {
   @JsonIdentityReference(alwaysAsId = true)
   private Sensor sensor;
 
-  @JsonIgnore
-  @ManyToMany(mappedBy = "disabledAlerts")
-  private List<User> users;
-
 
   public void setAlertId(int alertId) {
     this.alertId = alertId;
@@ -96,13 +92,5 @@ public class Alert {
 
   public Entity getEntity() {
     return entity;
-  }
-
-  public List<User> getUsers() {
-    return users;
-  }
-
-  public void setUsers(List<User> users) {
-    this.users = users;
   }
 }

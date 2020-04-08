@@ -16,7 +16,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -125,55 +127,32 @@ public class AlertServiceTest {
     allUsers.add(user3);
 
 
-    // --------------------------- Set Alerts to Entities and viceversa ---------------------------
-    List<Alert> entity1Alerts = new ArrayList<>();
-    entity1Alerts.add(alert1);
+    // ------------------------------------ Set Entities to Alerts -------------------------------
     alert1.setEntity(entity1);
-    entity1Alerts.add(alert2);
+
     alert2.setEntity(entity1);
-    entity1.setAlerts(entity1Alerts);
 
-    List<Alert> entity2Alerts = new ArrayList<>();
-    entity2Alerts.add(alert3);
     alert3.setEntity(entity2);
-    entity2.setAlerts(entity2Alerts);
-
-    entity3.setAlerts(Collections.emptyList());
 
 
-    // --------------------------- Set Alerts to Sensors and viceversa ---------------------------
-    List<Alert> sensor1Alerts = new ArrayList<>();
-    sensor1Alerts.add(alert1);
-    sensor1Alerts.add(alert2);
+    // ----------------------------------- Set Sensors to Alerts --------------------------------
     alert1.setSensor(sensor1);
+
     alert2.setSensor(sensor1);
-    sensor1.setAlerts(sensor1Alerts);
 
-    List<Alert> sensor2Alerts = new ArrayList<>();
-    sensor2Alerts.add(alert3);
     alert3.setSensor(sensor2);
-    sensor2.setAlerts(sensor2Alerts);
-
-    sensor3.setAlerts(Collections.emptyList());
 
 
-    // --------------------------- Set Alerts to Users and viceversa ---------------------------
-    List<Alert> user1Alerts = new ArrayList<>();
+    // ---------------------------------- Set Alerts to Users -----------------------------------
+    Set<Alert> user1Alerts = new HashSet<>();
     user1Alerts.add(alert1);
     user1.setDisabledAlerts(user1Alerts);
-    List<User> alert1Users = new ArrayList<>();
-    alert1Users.add(user1);
-    alert1.setUsers(alert1Users);
 
-    List<Alert> user2Alerts = new ArrayList<>();
+    Set<Alert> user2Alerts = new HashSet<>();
     user2Alerts.add(alert3);
     user2.setDisabledAlerts(user2Alerts);
-    List<User> alert3Users = new ArrayList<>();
-    alert3Users.add(user2);
-    alert3.setUsers(alert3Users);
 
-    user3.setDisabledAlerts(Collections.emptyList());
-    alert2.setUsers(Collections.emptyList());
+    user3.setDisabledAlerts(Collections.emptySet());
 
 
 
@@ -190,7 +169,7 @@ public class AlertServiceTest {
     });
     when(alertRepo.findAllByUsers(any(User.class))).thenAnswer(i -> {
       User user = i.getArgument(0);
-      return allAlerts.stream().filter(a -> a.getUsers().contains(user))
+      return allAlerts.stream().filter(a -> user.getDisabledAlerts().contains(a))
           .collect(Collectors.toList());
     });
     when(alertRepo.findById(anyInt())).thenAnswer(i -> {

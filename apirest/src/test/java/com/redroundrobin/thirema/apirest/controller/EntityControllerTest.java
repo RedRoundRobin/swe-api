@@ -19,10 +19,13 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -63,9 +66,8 @@ public class EntityControllerTest {
   List<Sensor> allSensors;
   List<Entity> allEntities;
 
-  List<Entity> sensor1And2Entities;
-  List<Sensor> entity1And2Sensors;
-  List<Sensor> entity3Sensors;
+  Set<Sensor> entity1And2Sensors;
+  Set<Sensor> entity3Sensors;
 
 
   @Before
@@ -125,34 +127,20 @@ public class EntityControllerTest {
     allSensors.add(sensor3);
 
 
-    // -------------------------- Set sensors to entities and viceversa --------------------------
-    sensor1And2Entities = new ArrayList<>();
-    sensor1And2Entities.add(entity1);
-    sensor1And2Entities.add(entity2);
-    sensor1.setEntities(sensor1And2Entities);
-    sensor2.setEntities(sensor1And2Entities);
-    entity1And2Sensors = new ArrayList<>();
+    // -------------------------------- Set sensors to entities ----------------------------------
+    entity1And2Sensors = new HashSet<>();
     entity1And2Sensors.add(sensor1);
     entity1And2Sensors.add(sensor2);
     entity1.setSensors(entity1And2Sensors);
     entity2.setSensors(entity1And2Sensors);
 
-    List<Entity> sensor3Entities = new ArrayList<>();
-    sensor3Entities.add(entity3);
-    sensor3.setEntities(sensor3Entities);
-    entity3Sensors = new ArrayList<>();
+    entity3Sensors = new HashSet<>();
     entity3Sensors.add(sensor3);
     entity3.setSensors(entity3Sensors);
 
 
-    // -------------------------- Set sensors to users and viceversa --------------------------
-    List<User> entity1Users = new ArrayList<>();
-    entity1Users.add(user);
-    entity1.setUsers(entity1Users);
+    // ------------------------------- Set entities to users -----------------------------------
     user.setEntity(entity1);
-
-    entity2.setUsers(Collections.emptyList());
-    entity3.setUsers(Collections.emptyList());
 
 
 
@@ -184,7 +172,7 @@ public class EntityControllerTest {
       User user = allUsers.stream().filter(u -> i.getArgument(1).equals(u.getId())).findFirst().orElse(null);
       if (sensor != null && user != null) {
         return allEntities.stream()
-            .filter(e -> e.getSensors().contains(sensor) && e.getUsers().contains(user))
+            .filter(e -> e.getSensors().contains(sensor) && user.getEntity().equals(e))
             .collect(Collectors.toList());
       } else {
         return Collections.emptyList();
@@ -196,7 +184,7 @@ public class EntityControllerTest {
           .findFirst().orElse(null);
       if (user != null) {
         return allEntities.stream()
-            .filter(e -> e.getUsers().contains(user))
+            .filter(e -> user.getEntity().equals(e))
             .collect(Collectors.toList());
       } else {
         return Collections.emptyList();
@@ -230,7 +218,7 @@ public class EntityControllerTest {
         adminTokenWithBearer, sensor1.getId(), null);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertEquals(sensor1And2Entities, response.getBody());
+    assertTrue(!response.getBody().isEmpty());
   }
 
   @Test
