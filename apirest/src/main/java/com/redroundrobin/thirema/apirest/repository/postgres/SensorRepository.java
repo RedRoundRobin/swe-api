@@ -15,6 +15,8 @@ public interface SensorRepository extends CrudRepository<Sensor, Integer> {
 
   Iterable<Sensor> findAllByEntities(Entity entity);
 
+  @Query("SELECT S1, S2 FROM ViewGraph VG JOIN VG.sensor1 S1 JOIN VG.sensor2 S2 "
+      + "WHERE VG = :viewGraph1 OR VG = :viewGraph2")
   Iterable<Sensor> findAllByViewGraphs1OrViewGraphs2(ViewGraph viewGraph1, ViewGraph viewGraph2);
 
   Iterable<Sensor> findAllByDeviceAndEntities(Device device, Entity entity);
