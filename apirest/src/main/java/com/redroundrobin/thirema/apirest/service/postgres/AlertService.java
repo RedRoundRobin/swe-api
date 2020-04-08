@@ -13,8 +13,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
+import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
+import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -27,7 +30,7 @@ public class AlertService {
 
   private SensorService sensorService;
 
-  private UserService userService;
+  private UserRepository userRepo;
 
   private boolean checkFields(Map<String, Object> fields) {
     List<String> allowedFields = new ArrayList<>();
@@ -111,8 +114,8 @@ public class AlertService {
   }
 
   @Autowired
-  public void setUserService(UserService userService) {
-    this.userService = userService;
+  public void setUserRepository(UserRepository userRepo) {
+    this.userRepo = userRepo;
   }
 
   public List<Alert> findAll() {
@@ -148,7 +151,7 @@ public class AlertService {
   }
 
   public List<Alert> findAllByUserId(int userId) {
-    User user = userService.findById(userId);
+    User user = userRepo.findById(userId).orElse(null);
     if (user != null) {
       return (List<Alert>) repo.findAllByUsers(user);
     } else {
@@ -166,6 +169,36 @@ public class AlertService {
       return this.addEditAlert(user, null, newAlertFields);
     } else {
       throw new MissingFieldsException("One or more needed fields are missing");
+    }
+  }
+
+  public boolean enableUserAlert(User user, int alertId, boolean enable)
+      throws ElementNotFoundException, NotAuthorizedException {
+    Alert alert = findById(alertId);
+    if (alert != null) {
+      if (alert.getEntity().equals(user.getEntity())) {
+        List<Alert> userDisabledAlerts = user.getDisabledAlerts();
+        if (enable && userDisabledAlerts.contains(alert)) {
+          userDisabledAlerts.remove(alert);
+        } else if (!enable && !userDisabledAlerts.contains(alert)) {
+          userDisabledAlerts.add(alert);
+        } else {
+          return true;
+        }
+        System.out.println("finish");
+        user.setDisabledAlerts(userDisabledAlerts);
+        User newUser = userRepo.save(user);
+        if ((enable && !newUser.getDisabledAlerts().contains(alert))
+            || (!enable && newUser.getDisabledAlerts().contains(alert))) {
+          return true;
+        } else {
+          return false;
+        }
+      } else {
+        throw new NotAuthorizedException("The alert with provided id is not authorized");
+      }
+    } else {
+      throw new ElementNotFoundException("The alert with provided id is not found");
     }
   }
 }

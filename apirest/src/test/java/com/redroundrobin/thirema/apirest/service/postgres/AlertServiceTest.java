@@ -6,6 +6,7 @@ import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.postgres.ViewGraph;
 import com.redroundrobin.thirema.apirest.repository.postgres.AlertRepository;
+import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 import com.redroundrobin.thirema.apirest.service.postgres.AlertService;
 import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
 import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
@@ -46,7 +47,7 @@ public class AlertServiceTest {
   private SensorService sensorService;
 
   @MockBean
-  private UserService userService;
+  private UserRepository userRepo;
 
 
   private AlertService alertService;
@@ -75,7 +76,7 @@ public class AlertServiceTest {
     alertService = new AlertService(repo);
     alertService.setEntityService(entityService);
     alertService.setSensorService(sensorService);
-    alertService.setUserService(userService);
+    alertService.setUserRepository(userRepo);
 
     // ----------------------------------------- Set Alerts --------------------------------------
     alert1 = new Alert();
@@ -276,9 +277,9 @@ public class AlertServiceTest {
     });
 
 
-    when(userService.findById(anyInt())).thenAnswer(i -> {
+    when(userRepo.findById(anyInt())).thenAnswer(i -> {
       return allUsers.stream().filter(u -> i.getArgument(0).equals(u.getId()))
-          .findFirst().orElse(null);
+          .findFirst();
     });
 
   }
