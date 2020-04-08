@@ -23,6 +23,7 @@ public interface SensorRepository extends CrudRepository<Sensor, Integer> {
       + "AND D.realDeviceId = :realDeviceId")
   Iterable<Sensor> findAllByGatewayIdAndRealDeviceId(int gatewayId, int realDeviceId);
 
+  @Query("SELECT S FROM Alert A JOIN A.sensor S WHERE A = :alert")
   Sensor findByAlerts(Alert alert);
 
   Sensor findByDeviceAndRealSensorId(Device device, int realSensorId);

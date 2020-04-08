@@ -36,10 +36,6 @@ public class Sensor {
   @Column(name = "real_sensor_id")
   private int realSensorId;
 
-  @JsonIgnore
-  @OneToMany(mappedBy = "sensor")
-  private List<Alert> alerts;
-
   @ManyToOne
   @JoinColumn(name = "device_id")
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "deviceId")
@@ -105,14 +101,6 @@ public class Sensor {
 
   public void setDevice(Device device) {
     this.device = device;
-  }
-
-  public List<Alert> getAlerts() {
-    return alerts;
-  }
-
-  public void setAlerts(List<Alert> alerts) {
-    this.alerts = alerts;
   }
 
   public List<Entity> getEntities() {
