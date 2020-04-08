@@ -42,10 +42,6 @@ public class Sensor {
   @JsonIdentityReference(alwaysAsId = true)
   private Device device;
 
-  @JsonIgnore
-  @ManyToMany(mappedBy = "sensors")
-  private List<Entity> entities;
-
   public Sensor() {
   }
 
@@ -93,14 +89,6 @@ public class Sensor {
 
   public void setDevice(Device device) {
     this.device = device;
-  }
-
-  public List<Entity> getEntities() {
-    return entities;
-  }
-
-  public void setEntities(List<Entity> entities) {
-    this.entities = entities;
   }
 
   @Override

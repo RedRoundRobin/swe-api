@@ -13,12 +13,15 @@ import org.springframework.stereotype.Repository;
 public interface SensorRepository extends CrudRepository<Sensor, Integer> {
   Iterable<Sensor>  findAllByDevice(Device device);
 
+  @Query("SELECT S FROM Entity E JOIN E.sensors S WHERE E = :entity")
   Iterable<Sensor> findAllByEntities(Entity entity);
 
   @Query("SELECT S1, S2 FROM ViewGraph VG JOIN VG.sensor1 S1 JOIN VG.sensor2 S2 "
       + "WHERE VG = :viewGraph1 OR VG = :viewGraph2")
   Iterable<Sensor> findAllByViewGraphs1OrViewGraphs2(ViewGraph viewGraph1, ViewGraph viewGraph2);
 
+  @Query("SELECT S FROM Entity E JOIN E.sensors S JOIN S.device D "
+      + "WHERE D = :device AND E = :entity")
   Iterable<Sensor> findAllByDeviceAndEntities(Device device, Entity entity);
 
   @Query("SELECT S FROM Sensor S JOIN S.device D JOIN D.gateway G WHERE G.gatewayId = :gatewayId "
@@ -30,8 +33,12 @@ public interface SensorRepository extends CrudRepository<Sensor, Integer> {
 
   Sensor findByDeviceAndRealSensorId(Device device, int realSensorId);
 
+  @Query("SELECT S FROM Entity E JOIN E.sensors S JOIN S.device D WHERE D = :device "
+      + "AND S.realSensorId = :realSensorId AND E = :entity")
   Sensor findByDeviceAndRealSensorIdAndEntities(Device device, int realSensorId, Entity entity);
 
+  @Query("SELECT S FROM Entity E JOIN E.sensors S "
+      + "WHERE S.sensorId = :sensorId AND E = :entity")
   Sensor findBySensorIdAndEntities(int sensorId, Entity entity);
 
   @Query("SELECT S FROM Sensor S JOIN S.device D JOIN D.gateway G "
