@@ -1,7 +1,6 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
 import com.redroundrobin.thirema.apirest.models.postgres.Device;
-import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.repository.postgres.DeviceRepository;
@@ -25,6 +24,7 @@ public class DeviceService {
 
   private EntityRepository entityRepo;
 
+  @Autowired
   public DeviceService(DeviceRepository deviceRepository, EntityRepository entityRepository,
                        GatewayRepository gatewayRepository, SensorRepository sensorRepository) {
     this.deviceRepo = deviceRepository;
@@ -38,9 +38,13 @@ public class DeviceService {
   }
 
   public List<Device> findAllByEntityId(int entityId) {
-    Entity entity = entityRepo.findById(entityId).orElse(null);
-    if (entity != null) {
-      return (List<Device>) deviceRepo.findAllByEntityId(entityId);
+    return (List<Device>) deviceRepo.findAllByEntityId(entityId);
+  }
+
+  public List<Device> findAllByEntityIdAndGatewayId(int entityId, int gatewayId) {
+    Gateway gateway = gatewayRepo.findById(gatewayId).orElse(null);
+    if (gateway != null) {
+      return (List<Device>) deviceRepo.findAllByEntityIdAndGateway(entityId, gateway);
     } else {
       return Collections.emptyList();
     }
@@ -80,5 +84,4 @@ public class DeviceService {
       return null;
     }
   }
-
 }

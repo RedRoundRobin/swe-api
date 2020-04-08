@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,6 +40,7 @@ import javax.servlet.http.HttpServletRequest;
 @RequestMapping(value = "/users")
 public class UserController extends CoreController {
 
+  @Autowired
   public UserController(JwtUtil jwtUtil, LogService logService, UserService userService) {
     super(jwtUtil, logService, userService);
   }

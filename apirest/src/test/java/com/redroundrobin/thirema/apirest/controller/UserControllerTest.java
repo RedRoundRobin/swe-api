@@ -32,7 +32,7 @@ import static org.mockito.Mockito.when;
 public class UserControllerTest {
 
   @MockBean
-  JwtUtil jwtTokenUtil;
+  JwtUtil jwtUtil;
 
   @MockBean
   private UserService userService;
@@ -65,7 +65,7 @@ public class UserControllerTest {
 
   @Before
   public void setUp() throws Exception {
-    userController = new UserController(jwtTokenUtil, logService, userService);
+    userController = new UserController(jwtUtil, logService, userService);
 
     httpRequest = new MockHttpServletRequest();
     httpRequest.setRemoteAddr("localhost");
@@ -137,38 +137,40 @@ public class UserControllerTest {
     mod2.setType(User.Role.MOD);
     mod2.setEntity(entity2);
 
-    when(jwtTokenUtil.extractRole("Bearer " + admin1Token)).thenReturn(admin1.getType());
-    when(jwtTokenUtil.extractUsername(admin1Token)).thenReturn(admin1.getEmail());
+    when(jwtUtil.extractType(anyString())).thenReturn("webapp");
+
+    when(jwtUtil.extractRole("Bearer " + admin1Token)).thenReturn(admin1.getType());
+    when(jwtUtil.extractUsername(admin1Token)).thenReturn(admin1.getEmail());
     when(userService.findByEmail(admin1.getEmail())).thenReturn(admin1);
     when(userService.findById(admin1.getId())).thenReturn(admin1);
 
-    when(jwtTokenUtil.extractRole("Bearer " + admin2Token)).thenReturn(admin2.getType());
-    when(jwtTokenUtil.extractUsername(admin2Token)).thenReturn(admin2.getEmail());
+    when(jwtUtil.extractRole("Bearer " + admin2Token)).thenReturn(admin2.getType());
+    when(jwtUtil.extractUsername(admin2Token)).thenReturn(admin2.getEmail());
     when(userService.findByEmail(admin2.getEmail())).thenReturn(admin2);
     when(userService.findById(admin2.getId())).thenReturn(admin2);
 
-    when(jwtTokenUtil.extractRole("Bearer " + mod1Token)).thenReturn(mod1.getType());
-    when(jwtTokenUtil.extractUsername(mod1Token)).thenReturn(mod1.getEmail());
+    when(jwtUtil.extractRole("Bearer " + mod1Token)).thenReturn(mod1.getType());
+    when(jwtUtil.extractUsername(mod1Token)).thenReturn(mod1.getEmail());
     when(userService.findByEmail(mod1.getEmail())).thenReturn(mod1);
     when(userService.findById(mod1.getId())).thenReturn(mod1);
 
-    when(jwtTokenUtil.extractRole("Bearer " + mod11Token)).thenReturn(mod11.getType());
-    when(jwtTokenUtil.extractUsername(mod11Token)).thenReturn(mod11.getEmail());
+    when(jwtUtil.extractRole("Bearer " + mod11Token)).thenReturn(mod11.getType());
+    when(jwtUtil.extractUsername(mod11Token)).thenReturn(mod11.getEmail());
     when(userService.findByEmail(mod11.getEmail())).thenReturn(mod11);
     when(userService.findById(mod11.getId())).thenReturn(mod11);
 
-    when(jwtTokenUtil.extractRole("Bearer " + user1Token)).thenReturn(user1.getType());
-    when(jwtTokenUtil.extractUsername(user1Token)).thenReturn(user1.getEmail());
+    when(jwtUtil.extractRole("Bearer " + user1Token)).thenReturn(user1.getType());
+    when(jwtUtil.extractUsername(user1Token)).thenReturn(user1.getEmail());
     when(userService.findByEmail(user1.getEmail())).thenReturn(user1);
     when(userService.findById(user1.getId())).thenReturn(user1);
 
-    when(jwtTokenUtil.extractRole("Bearer " + user2Token)).thenReturn(user2.getType());
-    when(jwtTokenUtil.extractUsername(user2Token)).thenReturn(user2.getEmail());
+    when(jwtUtil.extractRole("Bearer " + user2Token)).thenReturn(user2.getType());
+    when(jwtUtil.extractUsername(user2Token)).thenReturn(user2.getEmail());
     when(userService.findByEmail(user2.getEmail())).thenReturn(user2);
     when(userService.findById(user2.getId())).thenReturn(user2);
 
-    when(jwtTokenUtil.extractRole("Bearer " + mod2Token)).thenReturn(mod2.getType());
-    when(jwtTokenUtil.extractUsername(mod2Token)).thenReturn(mod2.getEmail());
+    when(jwtUtil.extractRole("Bearer " + mod2Token)).thenReturn(mod2.getType());
+    when(jwtUtil.extractUsername(mod2Token)).thenReturn(mod2.getEmail());
     when(userService.findByEmail(mod2.getEmail())).thenReturn(mod2);
     when(userService.findById(mod2.getId())).thenReturn(mod2);
 
@@ -358,7 +360,7 @@ public class UserControllerTest {
     editedUser1.setEmail(newEmail);
     editedUser1.setPassword(newPassword);
 
-    when(jwtTokenUtil.extractExpiration(user1Token)).thenReturn(new Date());
+    when(jwtUtil.extractExpiration(user1Token)).thenReturn(new Date());
 
     when(userService.editByUser(eq(user1), any(HashMap.class))).thenReturn(editedUser1);
 
@@ -424,7 +426,7 @@ public class UserControllerTest {
     User editedUser1 = cloneUser(user1);
     editedUser1.setEmail(newEmail);
 
-    when(jwtTokenUtil.extractExpiration(user1Token)).thenReturn(new Date());
+    when(jwtUtil.extractExpiration(user1Token)).thenReturn(new Date());
 
     when(userService.editByUser(eq(user1), any(HashMap.class))).thenReturn(editedUser1);
 
@@ -433,7 +435,7 @@ public class UserControllerTest {
     when(userService.loadUserByEmail(editedUser1.getEmail())).thenReturn(
         new org.springframework.security.core.userdetails.User(
             "asdf","asfdrg",Collections.emptyList()));
-    when(jwtTokenUtil.generateTokenWithExpiration(anyString(),
+    when(jwtUtil.generateTokenWithExpiration(anyString(),
         any(org.springframework.security.core.userdetails.User.class), any(Date.class)))
         .thenReturn("newToken");
 

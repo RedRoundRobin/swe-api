@@ -21,7 +21,6 @@ public abstract class CoreController {
 
   protected UserService userService;
 
-  @Autowired
   public CoreController(JwtUtil jwtUtil, LogService logService, UserService userService) {
     this.jwtUtil = jwtUtil;
     this.logService = logService;

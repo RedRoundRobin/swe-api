@@ -179,6 +179,14 @@ public class DeviceServiceTest {
         return Collections.emptyList();
       }
     });
+    when(deviceRepo.findAllByEntityIdAndGateway(anyInt(),any(Gateway.class))).thenAnswer(i -> {
+      if (i.getArgument(0).equals(entity1.getId())) {
+        return entity1Devices.stream().filter(d -> i.getArgument(1).equals(d.getGateway()))
+            .collect(Collectors.toList());
+      } else {
+        return Collections.emptyList();
+      }
+    });
     when(deviceRepo.findById(anyInt())).thenAnswer(i -> {
       return allDevices.stream().filter(d -> i.getArgument(0).equals(d.getId()))
           .findFirst();
