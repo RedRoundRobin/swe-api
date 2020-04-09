@@ -348,7 +348,7 @@ public class AlertControllerTest {
     alert.setEntity(entity1);
 
     ResponseEntity<Alert> response = alertController.createAlert(
-        adminTokenWithBearer, newAlertFields);
+        adminTokenWithBearer, newAlertFields,httpRequest);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertEquals(alert.getThreshold(), response.getBody().getThreshold());
@@ -365,7 +365,7 @@ public class AlertControllerTest {
     newAlertFields.put("entity", entity1.getId());
 
     ResponseEntity<Alert> response = alertController.createAlert(
-        adminTokenWithBearer, newAlertFields);
+        adminTokenWithBearer, newAlertFields,httpRequest);
 
     assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
   }
@@ -379,7 +379,7 @@ public class AlertControllerTest {
     newAlertFields.put("sensor", sensor1.getId());
 
     ResponseEntity<Alert> response = alertController.createAlert(
-        userTokenWithBearer, newAlertFields);
+        userTokenWithBearer, newAlertFields,httpRequest);
 
     assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
   }
@@ -438,21 +438,21 @@ public class AlertControllerTest {
 
   @Test
   public void deleteAlertsByAdminBySensorIdSuccessfull() {
-    ResponseEntity response = alertController.deleteAlerts(adminTokenWithBearer, sensor1.getId());
+    ResponseEntity response = alertController.deleteAlerts(adminTokenWithBearer, sensor1.getId(),httpRequest);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
   }
 
   @Test
   public void deleteAlertsByAdminByNotExistentSensorIdReturnErrorBadRequest() {
-    ResponseEntity response = alertController.deleteAlerts(adminTokenWithBearer, 10);
+    ResponseEntity response = alertController.deleteAlerts(adminTokenWithBearer, 10,httpRequest);
 
     assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
   }
 
   @Test
   public void deleteAlertsByUserBySensorIdReturnErrorForbidden() {
-    ResponseEntity response = alertController.deleteAlerts(userTokenWithBearer, sensor1.getId());
+    ResponseEntity response = alertController.deleteAlerts(userTokenWithBearer, sensor1.getId(),httpRequest);
 
     assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
   }
@@ -461,28 +461,28 @@ public class AlertControllerTest {
 
   @Test
   public void deleteAlertSuccessfull() {
-    ResponseEntity response = alertController.deleteAlert(adminTokenWithBearer, alert1.getId());
+    ResponseEntity response = alertController.deleteAlert(adminTokenWithBearer, alert1.getId(),httpRequest);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
   }
 
   @Test
   public void deleteAlertSimulateDBError() {
-    ResponseEntity response = alertController.deleteAlert(modTokenWithBearer, alert1.getId());
+    ResponseEntity response = alertController.deleteAlert(modTokenWithBearer, alert1.getId(),httpRequest);
 
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
   }
 
   @Test
   public void deleteAlertByModByDifferentEntityAlertReturnErrorForbidden() {
-    ResponseEntity response = alertController.deleteAlert(modTokenWithBearer, 10);
+    ResponseEntity response = alertController.deleteAlert(modTokenWithBearer, 10,httpRequest);
 
     assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
   }
 
   @Test
   public void deleteAlertByUserByNotExistentAlertIdReturnErrorBadRequest() {
-    ResponseEntity response = alertController.deleteAlert(adminTokenWithBearer, 10);
+    ResponseEntity response = alertController.deleteAlert(adminTokenWithBearer, 10,httpRequest);
 
     assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
   }
