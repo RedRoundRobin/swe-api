@@ -106,11 +106,15 @@ public class AlertController extends CoreController {
   @PostMapping(value = {""})
   public ResponseEntity<Alert> createAlert(
       @RequestHeader("authorization") String authorization,
-      @RequestBody Map<String, Object> newAlertFields) {
+      @RequestBody Map<String, Object> newAlertFields,
+      HttpServletRequest httpRequest) {
     User user = this.getUserFromAuthorization(authorization);
     if (user.getType() == User.Role.ADMIN || user.getType() == User.Role.MOD) {
       try {
-        return ResponseEntity.ok(alertService.createAlert(user, newAlertFields));
+        Alert alert = alertService.createAlert(user, newAlertFields);
+        logService.createLog(user.getId(), getIpAddress(httpRequest), "alert.created",
+            Integer.toString(alert.getId()));
+        return ResponseEntity.ok(alert);
       } catch (MissingFieldsException | InvalidFieldsValuesException fe) {
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
       }
