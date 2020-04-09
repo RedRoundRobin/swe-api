@@ -20,6 +20,7 @@ import org.junit.runner.RunWith;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.lang.reflect.Array;
@@ -56,6 +57,8 @@ public class AlertControllerTest {
   @MockBean
   private AlertService alertService;
 
+  MockHttpServletRequest httpRequest;
+
   private String userTokenWithBearer = "Bearer userToken";
   private String modTokenWithBearer = "Bearer modToken";
   private String adminTokenWithBearer = "Bearer adminToken";
@@ -66,6 +69,8 @@ public class AlertControllerTest {
   private User admin;
   private User mod;
   private User user;
+
+  List<User> allUsers;
 
   private Alert alert1;
   private Alert alert2;
@@ -91,11 +96,19 @@ public class AlertControllerTest {
   public void setUp() throws MissingFieldsException, InvalidFieldsValuesException, ElementNotFoundException, NotAuthorizedException {
     alertController = new AlertController(alertService, jwtUtil, logService, userService);
 
+    httpRequest = new MockHttpServletRequest();
+    httpRequest.setRemoteAddr("localhost");
+
 
     // ----------------------------------------- Set Users --------------------------------------
     admin = new User(1, "admin", "admin", "admin", "pass", User.Role.ADMIN);
     mod = new User(3, "mod", "mod", "mod", "pass", User.Role.MOD);
     user = new User(2, "user", "user", "user", "pass", User.Role.USER);
+
+    allUsers = new ArrayList<>();
+    allUsers.add(admin);
+    allUsers.add(mod);
+    allUsers.add(user);
 
 
     // ----------------------------------------- Set Entities --------------------------------------
@@ -191,19 +204,49 @@ public class AlertControllerTest {
         throw new ElementNotFoundException("");
       }
     });
-    when(alertService.enableUserAlert(any(User.class), anyInt(), anyBoolean())).thenAnswer(i -> {
-      User user = i.getArgument(0);
-      if (user.getType() == User.Role.USER &&
-          allAlerts.stream().anyMatch(a -> i.getArgument(1).equals(a.getId())
-              && a.getEntity().equals(user.getEntity()))) {
-        return true;
-      } else if (user.getType() == User.Role.MOD) {
-        return false;
-      } else if (user.getType() == User.Role.USER && allAlerts.stream().anyMatch(a -> i.getArgument(1).equals(a.getId()))) {
-        throw new NotAuthorizedException("");
+    when(alertService.enableUserAlert(any(User.class), any(User.class), anyInt(), anyBoolean())).thenAnswer(i -> {
+      User editingUser = i.getArgument(0);
+      User userToEdit = i.getArgument(1);
+      Alert alert = alertService.findById(i.getArgument(2));
+      if (alert != null) {
+        if (editingUser.getType() == User.Role.ADMIN || alert.getEntity().equals(userToEdit.getEntity())) {
+          if (userToEdit.getType() != User.Role.MOD) {
+            return true;
+          } else {
+            return false;
+          }
+        } else {
+          throw NotAuthorizedException.notAuthorizedMessage("alert");
+        }
       } else {
-        throw new ElementNotFoundException("");
+        throw ElementNotFoundException.notFoundMessage("alert");
       }
+    });
+    when(alertService.findByIdAndEntityId(anyInt(), anyInt())).thenAnswer(i -> {
+      Entity entity = allEntities.stream()
+          .filter(e -> i.getArgument(1).equals(e.getId()))
+          .findFirst().orElse(null);
+      Alert alert = allAlerts.stream()
+          .filter(a -> i.getArgument(0).equals(a.getId()))
+          .findFirst().orElse(null);
+      if (entity != null && alert.getEntity().equals(entity)) {
+        return alert;
+      } else if (entity == null) {
+        return null;
+      } else {
+        throw NotAuthorizedException.notAuthorizedMessage("alert");
+      }
+    });
+    when(alertService.findById(anyInt())).thenAnswer(i -> {
+      return allAlerts.stream()
+          .filter(a -> i.getArgument(0).equals(a.getId()))
+          .findFirst().orElse(null);
+    });
+
+    when(userService.findById(anyInt())).thenAnswer(i -> {
+      return allUsers.stream()
+          .filter(u -> i.getArgument(0).equals(u.getId()))
+          .findFirst().orElse(null);
     });
   }
 
@@ -266,6 +309,31 @@ public class AlertControllerTest {
 
 
   @Test
+  public void getAlertsByAdminSuccessfull() {
+    ResponseEntity<Alert> response = alertController.getAlert(adminTokenWithBearer, alert1.getId());
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(alert1, response.getBody());
+  }
+
+  @Test
+  public void getAlertsByModSuccessfull() {
+    ResponseEntity<Alert> response = alertController.getAlert(modTokenWithBearer, alert1.getId());
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(alert1, response.getBody());
+  }
+
+  @Test
+  public void getAlertsByUserReturnErrorForbidden() {
+    ResponseEntity<Alert> response = alertController.getAlert(userTokenWithBearer, alert3.getId());
+
+    assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+  }
+
+
+
+  @Test
   public void createAlertByAdminSuccessfull() {
     Map<String, Object> newAlertFields = new HashMap<>();
     newAlertFields.put("threshold", 10.0);
@@ -312,6 +380,56 @@ public class AlertControllerTest {
 
     ResponseEntity<Alert> response = alertController.createAlert(
         userTokenWithBearer, newAlertFields);
+
+    assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+  }
+
+
+
+  @Test
+  public void editAlertByAdminSuccessfull() throws ElementNotFoundException, NotAuthorizedException, MissingFieldsException, InvalidFieldsValuesException {
+    Map<String, Object> fieldsToEdit = new HashMap<>();
+    fieldsToEdit.put("threshold", 5.0);
+
+    Alert alert = new Alert();
+    alert.setThreshold(5.0);
+    alert.setType(alert1.getType());
+    alert.setSensor(alert1.getSensor());
+    alert.setEntity(alert1.getEntity());
+
+    when(alertService.editAlert(admin, fieldsToEdit, alert1.getId())).thenReturn(alert);
+
+    ResponseEntity<Alert> response = alertController.editAlert(
+        adminTokenWithBearer, fieldsToEdit, alert1.getId(), httpRequest);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(alert.getThreshold(), response.getBody().getThreshold());
+    assertEquals(alert.getType(), response.getBody().getType());
+    assertEquals(alert.getEntity(), response.getBody().getEntity());
+    assertEquals(alert.getSensor(), response.getBody().getSensor());
+  }
+
+  @Test
+  public void editAlertByAdminMissingNecessaryFields() throws ElementNotFoundException, NotAuthorizedException, MissingFieldsException, InvalidFieldsValuesException {
+    Map<String, Object> fieldsToEdit = new HashMap<>();
+
+    when(alertService.editAlert(admin, fieldsToEdit, alert1.getId())).thenThrow(new ElementNotFoundException(""));
+
+    ResponseEntity<Alert> response = alertController.editAlert(
+        adminTokenWithBearer, fieldsToEdit, alert1.getId(), httpRequest);
+
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+  }
+
+  @Test
+  public void editAlertByModDifferentEntityNotAllowedError403Forbidden() throws ElementNotFoundException, NotAuthorizedException, MissingFieldsException, InvalidFieldsValuesException {
+    Map<String, Object> fieldsToEdit = new HashMap<>();
+    fieldsToEdit.put("threshold", 10.0);
+
+    when(alertService.editAlert(mod, fieldsToEdit, alert3.getId())).thenThrow(new NotAuthorizedException(""));
+
+    ResponseEntity<Alert> response = alertController.editAlert(
+        modTokenWithBearer, fieldsToEdit, alert3.getId(), httpRequest);
 
     assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
   }
@@ -373,28 +491,28 @@ public class AlertControllerTest {
 
   @Test
   public void disableUserAlertByUserSuccessfull() {
-    ResponseEntity response = alertController.disableUserAlert(userTokenWithBearer, alert2.getId(), false);
+    ResponseEntity response = alertController.disableUserAlert(userTokenWithBearer, alert2.getId(), user.getId(), false);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
   }
 
   @Test
   public void disableUserAlertByModSimulateDBError() {
-    ResponseEntity response = alertController.disableUserAlert(modTokenWithBearer, alert2.getId(), false);
+    ResponseEntity response = alertController.disableUserAlert(modTokenWithBearer, alert2.getId(), mod.getId(), false);
 
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
   }
 
   @Test
   public void disableUserAlertByUserDifferentEntityAlertReturnForbidden() {
-    ResponseEntity response = alertController.disableUserAlert(userTokenWithBearer, alert3.getId(), false);
+    ResponseEntity response = alertController.disableUserAlert(userTokenWithBearer, alert3.getId(), user.getId(), false);
 
     assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
   }
 
   @Test
   public void disableUserAlertByUserWithNotExistentAlertIdReturnBadRequest() {
-    ResponseEntity response = alertController.disableUserAlert(userTokenWithBearer, 10, false);
+    ResponseEntity response = alertController.disableUserAlert(userTokenWithBearer, 10, user.getId(), false);
 
     assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
   }

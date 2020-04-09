@@ -64,7 +64,7 @@ public class Alert implements Serializable {
   @JsonIdentityReference(alwaysAsId = true)
   private Sensor sensor;
 
-  @JoinColumn(name = "last_sent")
+  @Column(name = "last_sent")
   private Timestamp lastSent;
 
   public Alert() {
