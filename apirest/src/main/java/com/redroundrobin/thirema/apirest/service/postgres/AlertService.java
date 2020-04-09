@@ -202,7 +202,8 @@ public class AlertService {
       throws ElementNotFoundException, NotAuthorizedException {
     Alert alert = findById(alertId);
     if (alert != null) {
-      if (editingUser.getType() == User.Role.ADMIN || alert.getEntity().equals(userToEdit.getEntity())) {
+      if (editingUser.getType() == User.Role.ADMIN
+          || alert.getEntity().equals(userToEdit.getEntity())) {
         Set<Alert> userDisabledAlerts = userToEdit.getDisabledAlerts();
         if (enable && userDisabledAlerts.contains(alert)) {
           userDisabledAlerts.remove(alert);

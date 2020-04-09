@@ -185,20 +185,25 @@ public class AlertController extends CoreController {
       @RequestParam(value = "enable") boolean enable) {
     User user = this.getUserFromAuthorization(authorization);
     User userToEdit = userService.findById(userId);
-    if (user.getType() == User.Role.ADMIN
+    if ((user.getType() == User.Role.ADMIN
+        && (userToEdit.getType() != User.Role.ADMIN || userToEdit.getId() == user.getId()))
         || (user.getType() == User.Role.MOD && user.getEntity() == userToEdit.getEntity())
         || user.getId() == userToEdit.getId()) {
       try {
-        if (!alertService.enableUserAlert(user, userToEdit, alertId, enable)) {
+        if (alertService.enableUserAlert(user, userToEdit, alertId, enable)) {
+          return new ResponseEntity(HttpStatus.OK);
+        } else {
           return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
         }
       } catch (ElementNotFoundException enfe) {
+        enfe.printStackTrace();
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
       } catch (NotAuthorizedException nae) {
-        return new ResponseEntity(HttpStatus.FORBIDDEN);
+        nae.printStackTrace();
+        // go to return FORBIDDEN
       }
     }
-    return new ResponseEntity(HttpStatus.OK);
+    return new ResponseEntity(HttpStatus.FORBIDDEN);
   }
 
 }
