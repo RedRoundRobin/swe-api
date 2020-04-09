@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -44,11 +45,15 @@ public class AlertController extends CoreController {
 
   @DeleteMapping(value = {""})
   public ResponseEntity deleteAlerts(@RequestHeader(value = "Authorization") String authorization,
-                                     @RequestParam(name = "sensorId") Integer sensorId) {
+                                     @RequestParam(name = "sensorId") Integer sensorId,
+                                     HttpServletRequest httpRequest) {
+
     User user = getUserFromAuthorization(authorization);
     if (user.getType() == User.Role.ADMIN) {
       try {
         alertService.deleteAlertsBySensorId(sensorId);
+        logService.createLog(user.getId(), getIpAddress(httpRequest), "alert.deleted",
+            "alerts with sensorId = "+sensorId);
         return new ResponseEntity(HttpStatus.OK);
       } catch (ElementNotFoundException e) {
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
