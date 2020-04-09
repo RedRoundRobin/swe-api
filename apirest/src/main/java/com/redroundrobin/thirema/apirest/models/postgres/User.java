@@ -6,10 +6,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+
+import java.io.Serializable;
 import java.util.Set;
 import javax.persistence.Column;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -22,7 +25,7 @@ import javax.persistence.Table;
 
 @javax.persistence.Entity
 @Table(name = "users")
-public class User {
+public class User implements Serializable {
 
   public enum Role {
     USER, MOD, ADMIN;
@@ -57,8 +60,8 @@ public class User {
   private String telegramChat;
 
   @Column(name = "two_factor_authentication")
-  private boolean tfa;
-  private boolean deleted;
+  private boolean tfa = false;
+  private boolean deleted = false;
 
   @ManyToOne
   @JoinColumn(name = "entity_id")
@@ -67,15 +70,33 @@ public class User {
   private Entity entity;
 
   @JsonIgnore
-  @ManyToMany
+  @ManyToMany(fetch = FetchType.LAZY)
   @JoinTable(
       name = "disabled_users_alerts",
       joinColumns = @JoinColumn(name = "user_id"),
       inverseJoinColumns = @JoinColumn(name = "alert_id"))
   private Set<Alert> disabledAlerts;
 
-  public void setId(int userId) {
+  public User() {
+    // default constructor
+  }
+
+  public User(String name, String surname, String email, String password, Role type) {
+    this.name = name;
+    this.surname = surname;
+    this.email = email;
+    this.password = password;
+    this.type = type;
+  }
+
+  public User(int userId, String name, String surname, String email, String password,
+                 Role type) {
     this.userId = userId;
+    this.name = name;
+    this.surname = surname;
+    this.email = email;
+    this.password = password;
+    this.type = type;
   }
 
   @JsonProperty(value = "userId")

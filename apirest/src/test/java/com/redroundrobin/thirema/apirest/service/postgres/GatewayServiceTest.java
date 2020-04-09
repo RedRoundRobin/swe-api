@@ -47,12 +47,9 @@ public class GatewayServiceTest {
     gatewayService = new GatewayService(gatewayRepo, deviceRepo);
 
     // -------------------------------------- Set Devices ----------------------------------------
-    device1 = new Device();
-    device1.setId(1);
-    device2 = new Device();
-    device2.setId(2);
-    device3 = new Device();
-    device3.setId(3);
+    device1 = new Device(1, "name1", 1, 1);
+    device2 = new Device(2, "name2", 2, 2);
+    device3 = new Device(3, "name3", 3, 3);
 
     List<Device> allDevices = new ArrayList<>();
     allDevices.add(device1);
@@ -61,10 +58,8 @@ public class GatewayServiceTest {
 
 
     // -------------------------------------- Set Gateways ----------------------------------------
-    gateway1 = new Gateway();
-    gateway1.setId(1);
-    gateway2 = new Gateway();
-    gateway2.setId(2);
+    gateway1 = new Gateway(1, "name1");
+    gateway2 = new Gateway(2, "name2");
 
     List<Gateway> allGateways = new ArrayList<>();
     allGateways.add(gateway1);

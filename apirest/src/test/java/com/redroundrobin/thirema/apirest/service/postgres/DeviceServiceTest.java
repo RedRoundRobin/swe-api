@@ -70,28 +70,22 @@ public class DeviceServiceTest {
     deviceService = new DeviceService(deviceRepo, entityRepo, gatewayRepo, sensorRepo);
 
     // ----------------------------------------- Set Devices --------------------------------------
-    device1 = new Device();
-    device1.setId(1);
-    device2 = new Device();
-    device2.setId(2);
-    device3 = new Device();
-    device3.setId(3);
+    device1 = new Device(1, "dev1", 1, 1);
+    device2 = new Device(2, "dev2", 2, 2);
+    device3 = new Device(3, "dev3", 3, 3);
 
     List<Device> allDevices = new ArrayList<>();
     allDevices.add(device1);
     allDevices.add(device2);
     allDevices.add(device3);
 
-    // ----------------------------------------- Set Entities --------------------------------------
-    entity1 = new Entity();
-    entity1.setId(1);
+    // ----------------------------------------- Set Entities -------------------------------------
+    entity1 = new Entity(1, "name", "location");
 
 
     // ----------------------------------------- Set Gateways --------------------------------------
-    gateway1 = new Gateway();
-    gateway1.setId(1);
-    gateway2 = new Gateway();
-    gateway2.setId(2);
+    gateway1 = new Gateway(1, "name1");
+    gateway2 = new Gateway(2, "name2");
 
     List<Gateway> allGateways = new ArrayList<>();
     allGateways.add(gateway1);
@@ -99,16 +93,11 @@ public class DeviceServiceTest {
 
 
     // ----------------------------------------- Set Sensors --------------------------------------
-    sensor1 = new Sensor();
-    sensor1.setId(1);
-    sensor2 = new Sensor();
-    sensor2.setId(2);
-    sensor3 = new Sensor();
-    sensor3.setId(3);
-    sensor4 = new Sensor();
-    sensor4.setId(4);
-    sensor5 = new Sensor();
-    sensor5.setId(5);
+    sensor1 = new Sensor(1, "type1", 1);
+    sensor2 = new Sensor(2, "type2", 2);
+    sensor3 = new Sensor(3, "type3", 3);
+    sensor4 = new Sensor(4, "type4", 4);
+    sensor5 = new Sensor(5, "type5", 5);
 
     List<Sensor> allSensors = new ArrayList<>();
     allSensors.add(sensor1);

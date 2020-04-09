@@ -396,28 +396,23 @@ public class UserService implements UserDetailsService {
       throw new NotAuthorizedException("");
     }
 
-    User newUser = new User();
-    newUser.setEntity(userToInsertEntity);
-    newUser.setType(User.Role.values()[(int)userToInsertType]);
-
-    if (rawUserToInsert.get("name").getAsString() != null
-        || rawUserToInsert.get("surname").getAsString() != null
-        || rawUserToInsert.get("password").getAsString() != null) {
-      newUser.setName(rawUserToInsert.get("name").getAsString());
-      newUser.setSurname(rawUserToInsert.get("surname").getAsString());
-      newUser.setPassword(rawUserToInsert.get("password").getAsString());
-    } else {
-      throw new InvalidFieldsValuesException("");
-    }
+    User newUser;
 
     String email = rawUserToInsert.get("email").getAsString();
-    if(email != null && userRepo.findByEmail(email) == null) {
-      newUser.setEmail(email);
-    } else if (email == null) {
-      throw new InvalidFieldsValuesException("");
-    } else {
+    if (rawUserToInsert.get("name").getAsString() != null
+        || rawUserToInsert.get("surname").getAsString() != null
+        || rawUserToInsert.get("password").getAsString() != null
+        || email != null && userRepo.findByEmail(email) == null) {
+      newUser = new User(rawUserToInsert.get("name").getAsString(),
+          rawUserToInsert.get("surname").getAsString(), email,
+          rawUserToInsert.get("password").getAsString(), User.Role.values()[(int)userToInsertType]);
+    } else if (email != null && userRepo.findByEmail(email) != null) {
       throw new ConflictException("");
+    } else {
+      throw new InvalidFieldsValuesException("");
     }
+
+    newUser.setEntity(userToInsertEntity);
 
     return userRepo.save(newUser);
   }

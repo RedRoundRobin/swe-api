@@ -18,12 +18,7 @@ public class LogService {
   }
 
   public void createLog(int userId, String ip, String operation, String data) {
-    Log newLog = new Log();
-    newLog.setTime(Timestamp.from(Instant.now()));
-    newLog.setUserId(userId);
-    newLog.setIpAddr(ip != null ? ip : "unknown");
-    newLog.setOperation(operation);
-    newLog.setData(data);
+    Log newLog = new Log(userId, ip != null ? ip : "unknown", operation, data);
 
     repo.save(newLog);
   }

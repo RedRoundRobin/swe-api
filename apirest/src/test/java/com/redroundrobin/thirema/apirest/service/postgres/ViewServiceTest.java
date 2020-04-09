@@ -43,63 +43,31 @@ public class ViewServiceTest {
 
     viewService = new ViewService(viewRepo, userRepo);
 
-    admin1 = new User(); //utente a cui non ho dato alcuna vista
-    admin1.setId(1);
-    admin1.setName("admin1");
-    admin1.setSurname("admin1");
-    admin1.setEmail("admin1");
-    admin1.setTelegramName("TNAdmin1");
-    admin1.setPassword("password");
-    admin1.setType(User.Role.ADMIN);
 
-    mod1 = new User();
-    mod1.setId(3);
-    mod1.setName("mod1");
-    mod1.setSurname("mod1");
-    mod1.setEmail("mod1");
-    mod1.setTelegramName("TNmod1");
-    mod1.setPassword("password");
-    mod1.setType(User.Role.MOD);
-
-    user1 = new User();
-    user1.setId(5);
-    user1.setName("user1");
-    user1.setSurname("user1");
-    user1.setEmail("user1");
-    user1.setTelegramName("TNuser1");
-    user1.setPassword("password");
-    user1.setType(User.Role.USER);
+    // ----------------------------------------- Set Users ---------------------------------------
+    admin1 = new User(1, "admin1", "admin1", "admin1", "pass", User.Role.ADMIN);
+    mod1 = new User(3, "mod1", "mod1", "mod1", "pass", User.Role.MOD);
+    user1 = new User(5, "user1", "user1", "user1", "pass", User.Role.USER);
 
     List<User> allUsers = new ArrayList<>();
     allUsers.add(user1);
     allUsers.add(mod1);
     allUsers.add(admin1);
 
-    view1= new View();
-    view1.setUser(user1);
-    view1.setId(1);
-    view1.setName("view1");
 
-    view2= new View();
-    view2.setUser(user1);
-    view2.setId(2);
-    view2.setName("view2");
-
-    view3= new View();
-    view3.setUser(mod1);
-    view3.setId(3);
-    view3.setName("view3");
-
-    view4= new View();
-    view4.setUser(mod1);
-    view4.setId(4);
-    view4.setName("view4");
+    // ----------------------------------------- Set Views ---------------------------------------
+    view1 = new View(1,"view1", user1);
+    view2 = new View(2,"view2", user1);
+    view3 = new View(3,"view3", mod1);
+    view4 = new View(4,"view4", mod1);
 
     List<View> allViews = new ArrayList<>();
     allViews.add(view1);
     allViews.add(view2);
     allViews.add(view3);
     allViews.add(view4);
+
+
 
     when(viewRepo.findById(anyInt())).thenAnswer(i -> {
       int id = i.getArgument(0);

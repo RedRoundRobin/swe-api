@@ -55,50 +55,32 @@ public class ViewControllerTest {
   public void setUp() throws Exception {
 
     viewController = new ViewController(viewService, jwtTokenUtil, logService, userService);
-    Entity entity1 = new Entity();
-    entity1.setId(1);
 
-    user = new User();
-    user.setId(3);
-    user.setName("user1");
-    user.setSurname("user1");
-    user.setEmail("user1");
-    user.setPassword("password");
-    user.setType(User.Role.USER);
-    user.setEntity(entity1);
 
-    mod = new User();
-    mod.setId(4);
-    mod.setName("mod");
-    mod.setSurname("mod");
-    mod.setEmail("mod");
-    mod.setPassword("password");
-    mod.setType(User.Role.MOD);
-    mod.setEntity(entity1);
+    // ---------------------------------------- Set Entities --------------------------------------
+    Entity entity1 = new Entity(1, "entity1", "loc1");
+
+
+    // ---------------------------------------- Set Entities --------------------------------------
+    mod = new User(1, "mod", "admin", "admin", "pass", User.Role.MOD);
+    user = new User(2, "user", "user", "user", "user", User.Role.USER);
 
     List<User> allUsers = new ArrayList<>();
     allUsers.add(user);
     allUsers.add(mod);
 
-    view1= new View();
-    view1.setUser(user);
-    view1.setId(1);
-    view1.setName("view1");
 
-    view2= new View();
-    view2.setUser(user);
-    view2.setId(2);
-    view2.setName("view2");
-
-    view3= new View();
-    view3.setUser(mod);
-    view3.setId(3);
-    view3.setName("view3");
+    // ---------------------------------------- Set Entities --------------------------------------
+    view1 = new View(1, "view1", user);
+    view2 = new View(2, "view2", user);
+    view3 = new View(3, "view3", mod);
 
     allViews = new ArrayList<>();
     allViews.add(view1);
     allViews.add(view2);
     allViews.add(view3);
+
+
 
     when(jwtTokenUtil.extractRole("Bearer "+userToken)).thenReturn(user.getType());
     when(jwtTokenUtil.extractUsername(userToken)).thenReturn(user.getEmail());
@@ -113,7 +95,6 @@ public class ViewControllerTest {
         .collect(Collectors.toList());
       return views;
   });
-
     when(viewService.findById(anyInt())).thenAnswer(i -> {
       int viewId = i.getArgument(0);
       Optional<View> retView = allViews.stream()
@@ -131,7 +112,6 @@ public class ViewControllerTest {
         return null;
       }
     });
-
     when(viewService.serializeView(any(JsonObject.class), any(User.class))).thenAnswer(i -> {
       JsonObject jsonViewToCreate = i.getArgument(0);
       User user = i.getArgument(1);
@@ -150,7 +130,6 @@ public class ViewControllerTest {
             " fields are missing: cannot create user");
       else throw new KeysNotFoundException("");
     });
-
     doAnswer(i -> {
       User deletingUser =  i.getArgument(0);
       int viewToDeleteId = i.getArgument(1);

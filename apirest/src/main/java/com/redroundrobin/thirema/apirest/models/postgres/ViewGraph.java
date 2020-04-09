@@ -13,10 +13,11 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import java.io.Serializable;
 
 @javax.persistence.Entity
 @Table(name = "views_graphs")
-public class ViewGraph {
+public class ViewGraph implements Serializable {
 
   public enum Correlation {
     NULL, COVARIANCE, PEARSON, SPEARMAN;
@@ -65,13 +66,22 @@ public class ViewGraph {
   @JsonIdentityReference(alwaysAsId = true)
   private Sensor sensor2;
 
+  public ViewGraph() {
+    // default constructor
+  }
+
+  public ViewGraph(Correlation correlation) {
+    this.correlation = correlation;
+  }
+
+  public ViewGraph(int graphId, Correlation correlation) {
+    this.graphId = graphId;
+    this.correlation = correlation;
+  }
+
   @JsonProperty(value = "viewGraphId")
   public int getId() {
     return graphId;
-  }
-
-  public void setId(int graphId) {
-    this.graphId = graphId;
   }
 
   public Correlation getCorrelation() {
