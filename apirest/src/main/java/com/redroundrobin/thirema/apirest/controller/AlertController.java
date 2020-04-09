@@ -10,6 +10,8 @@ import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundExceptio
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +35,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/alerts")
 public class AlertController extends CoreController {
+
+  Logger logger = LoggerFactory.getLogger(AlertController.class);
 
   private AlertService alertService;
 
@@ -112,7 +116,7 @@ public class AlertController extends CoreController {
       try {
         return ResponseEntity.ok(alertService.findByIdAndEntityId(alertId, user.getEntity().getId()));
       } catch (NotAuthorizedException nae) {
-        nae.printStackTrace();
+        logger.trace(nae.toString());
         return new ResponseEntity(HttpStatus.FORBIDDEN);
       }
     }
@@ -148,9 +152,10 @@ public class AlertController extends CoreController {
             Integer.toString(alertId));
         return ResponseEntity.ok(alert);
       } catch (MissingFieldsException | InvalidFieldsValuesException | ElementNotFoundException e) {
-        e.printStackTrace();
+        logger.trace(e.toString());
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
       } catch (NotAuthorizedException e) {
+        logger.trace(e.toString());
         // go to return FORBIDDEN
       }
     }
@@ -197,9 +202,10 @@ public class AlertController extends CoreController {
         }
       } catch (ElementNotFoundException enfe) {
         enfe.printStackTrace();
+        logger.trace(enfe.toString());
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
       } catch (NotAuthorizedException nae) {
-        nae.printStackTrace();
+        logger.trace(nae.toString());
         // go to return FORBIDDEN
       }
     }
