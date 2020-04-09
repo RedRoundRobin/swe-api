@@ -18,7 +18,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -251,7 +250,7 @@ public class SensorServiceTest {
     });
 
     when(alertRepo.findById(anyInt())).thenAnswer(i -> {
-      return allAlerts.stream().filter(a -> i.getArgument(0).equals(a.getAlertId()))
+      return allAlerts.stream().filter(a -> i.getArgument(0).equals(a.getId()))
           .findFirst();
     });
 
@@ -382,7 +381,7 @@ public class SensorServiceTest {
 
   @Test
   public void findSensorByAlertId() {
-    Sensor sensor = sensorService.findByAlertId(alert1.getAlertId());
+    Sensor sensor = sensorService.findByAlertId(alert1.getId());
 
     assertNotNull(sensor);
   }
