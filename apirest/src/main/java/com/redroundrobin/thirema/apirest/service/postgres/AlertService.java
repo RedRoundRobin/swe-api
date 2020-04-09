@@ -22,6 +22,7 @@ import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 
 @Service
 public class AlertService {
@@ -34,15 +35,19 @@ public class AlertService {
 
   private UserRepository userRepo;
 
-  private boolean checkFields(Map<String, Object> fields) {
+  private boolean checkFields(Map<String, Object> fields, boolean edit) {
     List<String> allowedFields = new ArrayList<>();
     allowedFields.add("threshold");
     allowedFields.add("type");
     allowedFields.add("sensor");
     allowedFields.add("entity");
 
-    return fields.containsKey("threshold") && fields.containsKey("type")
-        && (fields.containsKey("sensor") && fields.containsKey("entity"));
+    if (!edit) {
+      return fields.containsKey("threshold") && fields.containsKey("type")
+          && (fields.containsKey("sensor") && fields.containsKey("entity"));
+    } else {
+      return fields.keySet().stream().anyMatch(k -> allowedFields.contains(k));
+    }
   }
 
   private Alert addEditAlert(User user, Alert alert, Map<String, Object> fields)
@@ -154,22 +159,52 @@ public class AlertService {
     return alertRepo.findById(id).orElse(null);
   }
 
+  public Alert findByIdAndEntityId(int id, int entityId) throws NotAuthorizedException {
+    Entity entity = entityRepo.findById(entityId).orElse(null);
+    if (entity != null) {
+      Alert alert = alertRepo.findById(id).orElse(null);
+      if (alert == null || alert.getEntity().equals(entity)) {
+        return alert;
+      } else {
+        throw NotAuthorizedException.notAuthorizedMessage("alert");
+      }
+    } else {
+      return null;
+    }
+  }
 
   public Alert createAlert(User user, Map<String, Object> newAlertFields)
       throws InvalidFieldsValuesException, MissingFieldsException {
-    if (this.checkFields(newAlertFields)) {
+    if (this.checkFields(newAlertFields, false)) {
       return this.addEditAlert(user, null, newAlertFields);
     } else {
       throw new MissingFieldsException("One or more needed fields are missing");
     }
   }
 
-  public boolean enableUserAlert(User user, int alertId, boolean enable)
+  public Alert editAlert(User user, Map<String, Object> fieldsToEdit, int alertId)
+      throws InvalidFieldsValuesException, MissingFieldsException, ElementNotFoundException,
+      NotAuthorizedException {
+    Alert alert = alertRepo.findById(alertId).orElse(null);
+    if (alert == null) {
+      throw ElementNotFoundException.notFoundMessage("alert");
+    } else if (user.getType() == User.Role.MOD && !alert.getEntity().equals(user.getEntity())) {
+      throw NotAuthorizedException.notAuthorizedMessage("alert");
+    }
+    if (this.checkFields(fieldsToEdit, true)) {
+      return this.addEditAlert(user, alert, fieldsToEdit);
+    } else {
+      throw new MissingFieldsException("One or more needed fields are missing");
+    }
+  }
+
+  public boolean enableUserAlert(User editingUser, User userToEdit, int alertId, boolean enable)
       throws ElementNotFoundException, NotAuthorizedException {
     Alert alert = findById(alertId);
     if (alert != null) {
-      if (alert.getEntity().equals(user.getEntity())) {
-        Set<Alert> userDisabledAlerts = user.getDisabledAlerts();
+      if (editingUser.getType() == User.Role.ADMIN
+          || alert.getEntity().equals(userToEdit.getEntity())) {
+        Set<Alert> userDisabledAlerts = userToEdit.getDisabledAlerts();
         if (enable && userDisabledAlerts.contains(alert)) {
           userDisabledAlerts.remove(alert);
         } else if (!enable && !userDisabledAlerts.contains(alert)) {
@@ -177,9 +212,8 @@ public class AlertService {
         } else {
           return true;
         }
-        System.out.println("finish");
-        user.setDisabledAlerts(userDisabledAlerts);
-        User newUser = userRepo.save(user);
+        userToEdit.setDisabledAlerts(userDisabledAlerts);
+        User newUser = userRepo.save(userToEdit);
         if ((enable && !newUser.getDisabledAlerts().contains(alert))
             || (!enable && newUser.getDisabledAlerts().contains(alert))) {
           return true;

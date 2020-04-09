@@ -312,6 +312,44 @@ public class AlertServiceTest {
 
 
   @Test
+  public void findAlertByIdAndDifferenteEntityIdSuccessfull() {
+    try {
+      Alert alert = alertService.findByIdAndEntityId(alert1.getId(), entity1.getId());
+
+      assertEquals(alert1, alert);
+    } catch (NotAuthorizedException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    }
+  }
+
+  @Test
+  public void findAlertByIdAndNotExistentEntityIdThrowElementNotFound() {
+    try {
+      Alert alert = alertService.findByIdAndEntityId(alert1.getId(), 15);
+
+      assertNull(alert);
+    } catch (NotAuthorizedException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    }
+  }
+
+  @Test
+  public void findAlertByIdAndEntityIdThrowNotAuthorizedException() {
+    try {
+      Alert alert = alertService.findByIdAndEntityId(alert1.getId(), entity3.getId());
+
+      assertTrue(false);
+    } catch (NotAuthorizedException e) {
+      e.printStackTrace();
+      assertTrue(true);
+    }
+  }
+
+
+
+  @Test
   public void createAlertSuccessfull() {
     Map<String, Object> newAlertFields = new HashMap<>();
     newAlertFields.put("threshold", 10.0);
@@ -414,10 +452,104 @@ public class AlertServiceTest {
 
 
   @Test
+  public void editAlertSuccessfull() {
+    Map<String, Object> fieldsToEdit = new HashMap<>();
+    fieldsToEdit.put("threshold", 5.0);
+    try {
+      Alert alert = alertService.editAlert(admin1, fieldsToEdit, alert1.getId());
+
+      assertEquals(5.0, alert.getThreshold());
+    } catch (InvalidFieldsValuesException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    } catch (MissingFieldsException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    } catch (ElementNotFoundException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    } catch (NotAuthorizedException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    }
+  }
+
+  @Test
+  public void editAlertThrowMissingFieldsException() {
+    Map<String, Object> fieldsToEdit = new HashMap<>();
+    fieldsToEdit.put("tresold", 5.0);
+    try {
+      Alert alert = alertService.editAlert(admin1, fieldsToEdit, alert1.getId());
+
+      assertTrue(false);
+    } catch (InvalidFieldsValuesException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    } catch (MissingFieldsException e) {
+      e.printStackTrace();
+      assertTrue(true);
+    } catch (ElementNotFoundException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    } catch (NotAuthorizedException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    }
+  }
+
+  @Test
+  public void editAlertThrowElementNotFoundException() {
+    Map<String, Object> fieldsToEdit = new HashMap<>();
+    fieldsToEdit.put("tresold", 5.0);
+    try {
+      Alert alert = alertService.editAlert(admin1, fieldsToEdit, 15);
+
+      assertTrue(false);
+    } catch (InvalidFieldsValuesException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    } catch (MissingFieldsException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    } catch (ElementNotFoundException e) {
+      e.printStackTrace();
+      assertTrue(true);
+    } catch (NotAuthorizedException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    }
+  }
+
+  @Test
+  public void editAlertThrowNotAuthorizedException() {
+    Map<String, Object> fieldsToEdit = new HashMap<>();
+    fieldsToEdit.put("tresold", 5.0);
+    try {
+      Alert alert = alertService.editAlert(mod2, fieldsToEdit, alert1.getId());
+
+      assertTrue(false);
+    } catch (InvalidFieldsValuesException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    } catch (MissingFieldsException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    } catch (ElementNotFoundException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    } catch (NotAuthorizedException e) {
+      e.printStackTrace();
+      assertTrue(true);
+    }
+  }
+
+
+
+  @Test
   public void enbleUserAlertDisableUser1AlertSuccessfull() {
     when(userRepo.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
     try {
-      boolean disabled = alertService.enableUserAlert(user1, alert1.getId(), true);
+      boolean disabled = alertService.enableUserAlert(user1, user1, alert1.getId(), true);
 
       assertTrue(disabled);
     } catch (ElementNotFoundException e) {
@@ -433,7 +565,7 @@ public class AlertServiceTest {
   public void enbleUserAlertAlreadyEnabledUser1AlertSuccessfull() {
     when(userRepo.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
     try {
-      boolean disabled = alertService.enableUserAlert(user1, alert2.getId(), true);
+      boolean disabled = alertService.enableUserAlert(user1, user1, alert2.getId(), true);
 
       assertTrue(disabled);
     } catch (ElementNotFoundException e) {
@@ -449,7 +581,7 @@ public class AlertServiceTest {
   public void enbleUserAlertDisableUser1AlertSimulateDBError() {
     when(userRepo.save(any(User.class))).thenAnswer(i -> admin1);
     try {
-      boolean disabled = alertService.enableUserAlert(user1, alert2.getId(), false);
+      boolean disabled = alertService.enableUserAlert(user1, user1, alert2.getId(), false);
 
       assertFalse(disabled);
     } catch (ElementNotFoundException e) {
@@ -464,7 +596,7 @@ public class AlertServiceTest {
   @Test
   public void enbleUserAlertEnableUser1AlertThrowNotAuthorizedException() {
     try {
-      boolean disabled = alertService.enableUserAlert(user1, alert3.getId(), true);
+      boolean disabled = alertService.enableUserAlert(mod2, user1, alert3.getId(), true);
 
       assertTrue(false);
     } catch (ElementNotFoundException e) {
@@ -479,7 +611,7 @@ public class AlertServiceTest {
   @Test
   public void enbleUserAlertEnableUser1AlertThrowElementNotFoundException() {
     try {
-      boolean disabled = alertService.enableUserAlert(user1, 10, true);
+      boolean disabled = alertService.enableUserAlert(user1, user1, 10, true);
 
       assertTrue(false);
     } catch (ElementNotFoundException e) {
