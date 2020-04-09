@@ -2,6 +2,7 @@ package com.redroundrobin.thirema.apirest.models.timescale;
 
 import java.io.Serializable;
 import java.sql.Timestamp;
+import java.time.Instant;
 import javax.persistence.Column;
 import javax.persistence.Id;
 import javax.persistence.Table;
@@ -26,6 +27,7 @@ public class Log implements Serializable {
   }
 
   public Log(int userId, String ipAddr, String operation, String data) {
+    time = Timestamp.from(Instant.now());
     this.userId = userId;
     this.ipAddr = ipAddr;
     this.operation = operation;

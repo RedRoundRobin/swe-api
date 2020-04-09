@@ -82,9 +82,7 @@ public class ViewService {
       throw new MissingFieldsException("Some necessary fields are missing: cannot create view");
     }
 
-    View newView = new View();
-    newView.setName(rawViewToInsert.get("name").getAsString());
-    newView.setUser(insertingUser);
+    View newView = new View(rawViewToInsert.get("name").getAsString(), insertingUser);
     return viewRepo.save(newView);
   }
 
