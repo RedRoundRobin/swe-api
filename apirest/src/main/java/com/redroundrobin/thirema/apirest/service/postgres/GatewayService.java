@@ -41,4 +41,8 @@ public class GatewayService {
     return gatewayRepo.findById(id).orElse(null);
   }
 
+  public Gateway findByIdAndEntityId(int id, int entityId) {
+    return gatewayRepo.findByIdAndEntityId(id, entityId);
+  }
+
 }

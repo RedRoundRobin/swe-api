@@ -20,4 +20,8 @@ public interface GatewayRepository extends CrudRepository<Gateway, Integer> {
   @Query("SELECT G FROM Entity E JOIN E.sensors S JOIN S.device D JOIN D.gateway G "
       + "WHERE D = :deviceId AND E = :entityId")
   Gateway findByDeviceIdAndEntityId(int deviceId, int entityId);
+
+  @Query("SELECT G FROM Entity E JOIN E.sensors S JOIN S.device D JOIN D.gateway G "
+      + "WHERE G.gatewayId = :id AND E.entityId = :entityId")
+  Gateway findByIdAndEntityId(int id, int entityId);
 }

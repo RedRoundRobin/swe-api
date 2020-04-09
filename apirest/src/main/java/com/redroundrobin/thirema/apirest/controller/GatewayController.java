@@ -82,7 +82,8 @@ public class GatewayController extends CoreController {
     if (user.getType() == User.Role.ADMIN) {
       return ResponseEntity.ok(gatewayService.findById(gatewayId));
     } else {
-      return new ResponseEntity(HttpStatus.FORBIDDEN);
+      return ResponseEntity.ok(gatewayService.findByIdAndEntityId(gatewayId,
+          user.getEntity().getId()));
     }
   }
 
