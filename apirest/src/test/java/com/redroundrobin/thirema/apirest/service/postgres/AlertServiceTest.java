@@ -116,14 +116,13 @@ public class AlertServiceTest {
     user1 = new User(1, "name1", "surname1", "email1", "pass1", User.Role.USER);
     user2 = new User(2, "name2", "surname2", "email2", "pass2", User.Role.USER);
     user3 = new User(3, "name3", "surname3", "email3", "pass3", User.Role.USER);
-    admin1 = new User();
-    admin1.setId(4);
-    admin1.setType(User.Role.ADMIN);
+    admin1 = new User(4, "name4", "surname4", "email4", "pass4", User.Role.ADMIN);
 
     List<User> allUsers = new ArrayList<>();
     allUsers.add(user1);
     allUsers.add(user2);
     allUsers.add(user3);
+    allUsers.add(admin1);
 
 
     // ---------------------------------- Set Alerts to Users -----------------------------------
@@ -136,6 +135,8 @@ public class AlertServiceTest {
     user2.setDisabledAlerts(user2Alerts);
 
     user3.setDisabledAlerts(Collections.emptySet());
+
+    admin1.setDisabledAlerts(Collections.emptySet());
 
 
     // ---------------------------------- Set Entities to Users ----------------------------------
@@ -235,7 +236,7 @@ public class AlertServiceTest {
 
   @Test
   public void findAllAlertsByNotExistentEntityId() {
-    List<Alert> alerts = alertService.findAllByEntityId(4);
+    List<Alert> alerts = alertService.findAllByEntityId(10);
 
     assertTrue(alerts.isEmpty());
   }
