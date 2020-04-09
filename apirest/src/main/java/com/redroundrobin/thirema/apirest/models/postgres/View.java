@@ -5,8 +5,11 @@ import com.fasterxml.jackson.annotation.JsonIdentityReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+
+import java.io.Serializable;
 import java.util.List;
 import javax.persistence.Column;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -18,7 +21,7 @@ import javax.persistence.Table;
 
 @javax.persistence.Entity
 @Table(name = "views")
-public class View {
+public class View implements Serializable {
   @Id
   @GeneratedValue(generator = "views_view_id_seq", strategy = GenerationType.SEQUENCE)
   @SequenceGenerator(
@@ -36,19 +39,26 @@ public class View {
   @JsonIdentityReference(alwaysAsId = true)
   private User user;
 
-  @JsonIgnore
-  @OneToMany(mappedBy = "view")
-  private List<ViewGraph> viewGraphs;
+  public View() {
+    // default constructor
+  }
+
+  public View(String name, User user) {
+    this.name = name;
+    this.user = user;
+  }
+
+  public View(int viewId, String name, User user) {
+    this.viewId = viewId;
+    this.name = name;
+    this.user = user;
+  }
 
   //setter and getter
 
   @JsonProperty(value = "viewId")
   public int getId() {
     return viewId;
-  }
-
-  public void setId(int viewId) {
-    this.viewId = viewId;
   }
 
   public User getUser() {
@@ -59,20 +69,11 @@ public class View {
     this.user = userId;
   }
 
-
   public String getName() {
     return name;
   }
 
   public void setName(String name) {
     this.name = name;
-  }
-
-  public List<ViewGraph> getViewGraphs() {
-    return viewGraphs;
-  }
-
-  public void setViewGraphs(List<ViewGraph> viewGraphs) {
-    this.viewGraphs = viewGraphs;
   }
 }

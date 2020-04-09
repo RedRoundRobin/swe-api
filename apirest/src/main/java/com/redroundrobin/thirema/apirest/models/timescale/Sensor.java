@@ -1,6 +1,8 @@
 package com.redroundrobin.thirema.apirest.models.timescale;
 
+import java.sql.Time;
 import java.sql.Timestamp;
+import java.time.Instant;
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -26,12 +28,18 @@ public class Sensor {
 
   private double value;
 
-  public Timestamp getTime() {
-    return time;
+  public Sensor() {
   }
 
-  public void setTime(Timestamp time) {
-    this.time = time;
+  public Sensor(String gatewayName, int realDeviceId, int realSensorId) {
+    this.time = Timestamp.from(Instant.now());
+    this.gatewayName = gatewayName;
+    this.realDeviceId = realDeviceId;
+    this.realSensorId = realSensorId;
+  }
+
+  public Timestamp getTime() {
+    return time;
   }
 
   public String getGatewayName() {
