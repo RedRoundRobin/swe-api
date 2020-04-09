@@ -100,6 +100,27 @@ public class AlertController extends CoreController {
     return ResponseEntity.ok(response);
   }
 
+  @GetMapping(value = {"/{alertId:.+}"})
+  public ResponseEntity<Alert> getAlert(
+      @RequestHeader(value = "Authorization") String authorization,
+      @PathVariable("alertId") int alertId) {
+    User user = this.getUserFromAuthorization(authorization);
+
+    if (user.getType() == User.Role.ADMIN) {
+      return ResponseEntity.ok(alertService.findById(alertId));
+    } else {
+      try {
+        return ResponseEntity.ok(alertService.findByIdAndEntityId(alertId, user.getEntity().getId()));
+      } catch (NotAuthorizedException nae) {
+        nae.printStackTrace();
+        return new ResponseEntity(HttpStatus.FORBIDDEN);
+      } catch (ElementNotFoundException e) {
+        e.printStackTrace();
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+      }
+    }
+  }
+
   @PostMapping(value = {""})
   public ResponseEntity<Alert> createAlert(
       @RequestHeader("authorization") String authorization,
@@ -126,6 +147,8 @@ public class AlertController extends CoreController {
     if (user.getType() == User.Role.ADMIN || user.getType() == User.Role.MOD) {
       try {
         Alert alert = alertService.editAlert(user, fieldsToEdit, alertId);
+        logService.createLog(user.getId(), getIpAddress(httpRequest), "alert.edit",
+            Integer.toString(alertId));
         return ResponseEntity.ok(alert);
       } catch (MissingFieldsException | InvalidFieldsValuesException | ElementNotFoundException e) {
         e.printStackTrace();
@@ -156,6 +179,7 @@ public class AlertController extends CoreController {
     }
     return new ResponseEntity(HttpStatus.FORBIDDEN);
   }
+
   //@PutMapping(value = {"/{alertId:.+}"})
   public ResponseEntity disableUserAlert(
       @RequestHeader("authorization") String authorization,

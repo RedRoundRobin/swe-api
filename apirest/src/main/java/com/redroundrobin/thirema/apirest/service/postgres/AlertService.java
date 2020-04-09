@@ -159,6 +159,20 @@ public class AlertService {
     return alertRepo.findById(id).orElse(null);
   }
 
+  public Alert findByIdAndEntityId(int id, int entityId) throws ElementNotFoundException, NotAuthorizedException {
+    Entity entity = entityRepo.findById(entityId).orElse(null);
+    if (entity != null) {
+      Alert alert = alertRepo.findById(id).orElse(null);
+      if (alert == null || alert.getEntity().equals(entity)) {
+        return alert;
+      } else {
+        throw NotAuthorizedException.notAuthorizedMessage("alert");
+      }
+    } else {
+      throw ElementNotFoundException.notFoundMessage("entity");
+    }
+  }
+
   public Alert createAlert(User user, Map<String, Object> newAlertFields)
       throws InvalidFieldsValuesException, MissingFieldsException {
     if (this.checkFields(newAlertFields, false)) {
