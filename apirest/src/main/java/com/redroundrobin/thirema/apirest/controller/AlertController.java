@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -115,6 +116,27 @@ public class AlertController extends CoreController {
     }
   }
 
+  @PutMapping(value = {"/{alertId:.+}"})
+  public ResponseEntity<Alert> editAlert(
+      @RequestHeader("authorization") String authorization,
+      @RequestBody Map<String, Object> fieldsToEdit,
+      @PathVariable("alertId") int alertId,
+      HttpServletRequest httpRequest) {
+    User user = this.getUserFromAuthorization(authorization);
+    if (user.getType() == User.Role.ADMIN || user.getType() == User.Role.MOD) {
+      try {
+        Alert alert = alertService.editAlert(user, fieldsToEdit, alertId);
+        return ResponseEntity.ok(alert);
+      } catch (MissingFieldsException | InvalidFieldsValuesException | ElementNotFoundException e) {
+        e.printStackTrace();
+        return new ResponseEntity(HttpStatus.BAD_REQUEST);
+      } catch (NotAuthorizedException e) {
+        // go to return FORBIDDEN
+      }
+    }
+    return new ResponseEntity(HttpStatus.FORBIDDEN);
+  }
+
   @DeleteMapping(value = {"/{alertId:.+}"})
   public ResponseEntity deleteAlert(@RequestHeader("authorization") String authorization,
                                     @PathVariable("alertId") int alertId) {
@@ -134,8 +156,7 @@ public class AlertController extends CoreController {
     }
     return new ResponseEntity(HttpStatus.FORBIDDEN);
   }
-
-  @PutMapping(value = {"/{alertId:.+}"})
+  //@PutMapping(value = {"/{alertId:.+}"})
   public ResponseEntity disableUserAlert(
       @RequestHeader("authorization") String authorization,
       @PathVariable("alertId") int alertId,

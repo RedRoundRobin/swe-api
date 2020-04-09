@@ -22,6 +22,7 @@ import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 
 @Service
 public class AlertService {
@@ -34,15 +35,19 @@ public class AlertService {
 
   private UserRepository userRepo;
 
-  private boolean checkFields(Map<String, Object> fields) {
+  private boolean checkFields(Map<String, Object> fields, boolean edit) {
     List<String> allowedFields = new ArrayList<>();
     allowedFields.add("threshold");
     allowedFields.add("type");
     allowedFields.add("sensor");
     allowedFields.add("entity");
 
-    return fields.containsKey("threshold") && fields.containsKey("type")
-        && (fields.containsKey("sensor") && fields.containsKey("entity"));
+    if (!edit) {
+      return fields.containsKey("threshold") && fields.containsKey("type")
+          && (fields.containsKey("sensor") && fields.containsKey("entity"));
+    } else {
+      return fields.keySet().stream().anyMatch(k -> allowedFields.contains(k));
+    }
   }
 
   private Alert addEditAlert(User user, Alert alert, Map<String, Object> fields)
@@ -154,11 +159,26 @@ public class AlertService {
     return alertRepo.findById(id).orElse(null);
   }
 
-
   public Alert createAlert(User user, Map<String, Object> newAlertFields)
       throws InvalidFieldsValuesException, MissingFieldsException {
-    if (this.checkFields(newAlertFields)) {
+    if (this.checkFields(newAlertFields, false)) {
       return this.addEditAlert(user, null, newAlertFields);
+    } else {
+      throw new MissingFieldsException("One or more needed fields are missing");
+    }
+  }
+
+  public Alert editAlert(User user, Map<String, Object> fieldsToEdit, int alertId)
+      throws InvalidFieldsValuesException, MissingFieldsException, ElementNotFoundException,
+      NotAuthorizedException {
+    Alert alert = alertRepo.findById(alertId).orElse(null);
+    if (alert == null) {
+      throw ElementNotFoundException.notFoundMessage("alert");
+    } else if (user.getType() == User.Role.MOD && !alert.getEntity().equals(user.getEntity())) {
+      throw NotAuthorizedException.notAuthorizedMessage("alert");
+    }
+    if (this.checkFields(fieldsToEdit, true)) {
+      return this.addEditAlert(user, alert, fieldsToEdit);
     } else {
       throw new MissingFieldsException("One or more needed fields are missing");
     }
