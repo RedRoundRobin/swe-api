@@ -42,7 +42,7 @@ public class ViewGraph implements Serializable {
   @SequenceGenerator(
       name = "views_graphs_graph_id_seq",
       sequenceName = "views_graphs_graph_id_seq",
-      allocationSize = 50
+      allocationSize = 25
   )
   @Column(name = "graph_id")
   private int graphId;

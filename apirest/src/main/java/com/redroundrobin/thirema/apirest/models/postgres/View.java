@@ -27,7 +27,7 @@ public class View implements Serializable {
   @SequenceGenerator(
       name = "views_view_id_seq",
       sequenceName = "views_view_id_seq",
-      allocationSize = 50
+      allocationSize = 25
   )
   @Column(name = "view_id")
   private int viewId;

@@ -27,7 +27,7 @@ public class Device {
   @SequenceGenerator(
       name = "devices_device_id_seq",
       sequenceName = "devices_device_id_seq",
-      allocationSize = 50
+      allocationSize = 25
   )
   @Column(name = "device_id")
   private int deviceId;

@@ -30,7 +30,7 @@ public class Sensor implements Serializable {
   @SequenceGenerator(
       name = "sensors_sensor_id_seq",
       sequenceName = "sensors_sensor_id_seq",
-      allocationSize = 50
+      allocationSize = 25
   )
   @Column(name = "sensor_id")
   private int sensorId;

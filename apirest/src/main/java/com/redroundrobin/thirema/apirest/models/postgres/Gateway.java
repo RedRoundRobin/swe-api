@@ -18,7 +18,7 @@ public class Gateway implements Serializable {
   @SequenceGenerator(
       name = "gateways_gateway_id_seq",
       sequenceName = "gateways_gateway_id_seq",
-      allocationSize = 50
+      allocationSize = 25
   )
   @Column(name = "gateway_id")
   private int gatewayId;
