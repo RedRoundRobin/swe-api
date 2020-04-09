@@ -4,17 +4,14 @@ import com.redroundrobin.thirema.apirest.models.postgres.Alert;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
-import com.redroundrobin.thirema.apirest.models.postgres.ViewGraph;
 import com.redroundrobin.thirema.apirest.repository.postgres.AlertRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
-import com.redroundrobin.thirema.apirest.service.postgres.AlertService;
-import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
-import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
-import com.redroundrobin.thirema.apirest.service.postgres.UserService;
+import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
+import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,11 +28,14 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
@@ -73,6 +73,7 @@ public class AlertServiceTest {
   private User user1;
   private User user2;
   private User user3;
+  private User mod2;
 
 
   @Before
@@ -116,12 +117,14 @@ public class AlertServiceTest {
     user1 = new User(1, "name1", "surname1", "email1", "pass1", User.Role.USER);
     user2 = new User(2, "name2", "surname2", "email2", "pass2", User.Role.USER);
     user3 = new User(3, "name3", "surname3", "email3", "pass3", User.Role.USER);
+    mod2 = new User(5, "name5", "surname5", "email5", "pass5", User.Role.MOD);
     admin1 = new User(4, "name4", "surname4", "email4", "pass4", User.Role.ADMIN);
 
     List<User> allUsers = new ArrayList<>();
     allUsers.add(user1);
     allUsers.add(user2);
     allUsers.add(user3);
+    allUsers.add(mod2);
     allUsers.add(admin1);
 
 
@@ -141,6 +144,7 @@ public class AlertServiceTest {
 
     // ---------------------------------- Set Entities to Users ----------------------------------
     user1.setEntity(entity1);
+    mod2.setEntity(entity2);
 
 
     // ------------------------------- Set Sensors to Entites ------------------------------------
@@ -187,10 +191,17 @@ public class AlertServiceTest {
           .collect(Collectors.toList());
     });
     when(alertRepo.findById(anyInt())).thenAnswer(i -> {
-      return allAlerts.stream().filter(a -> i.getArgument(0).equals(a.getAlertId()))
+      return allAlerts.stream().filter(a -> i.getArgument(0).equals(a.getId()))
           .findFirst();
     });
-    when(alertRepo.save(any(Alert.class))).thenAnswer(i -> i.getArgument(0));
+    when(alertRepo.save(any(Alert.class))).thenAnswer(i -> {
+      Alert alert = i.getArgument(0);
+      if (alert.getId() == alert3.getId()) {
+        return new Alert();
+      } else {
+        return i.getArgument(0);
+      }
+    });
 
     when(entityRepo.findById(anyInt())).thenAnswer(i -> {
       return allEntities.stream().filter(e -> i.getArgument(0).equals(e.getId()))
@@ -276,15 +287,15 @@ public class AlertServiceTest {
 
 
   @Test
-  public void findAllAlertsByUserId() {
+  public void findAllDisabledAlertsByUserId() {
     List<Alert> alerts = alertService.findAllDisabledByUserId(user1.getId());
 
     assertTrue(alerts.stream().count() == 1);
   }
 
   @Test
-  public void findAllAlertsByNotExistentUserId() {
-    List<Alert> alerts = alertService.findAllDisabledByUserId(4);
+  public void findAllDisabledAlertsByNotExistentUserId() {
+    List<Alert> alerts = alertService.findAllDisabledByUserId(10);
 
     assertTrue(alerts.isEmpty());
   }
@@ -293,7 +304,7 @@ public class AlertServiceTest {
 
   @Test
   public void findAlertById() {
-    Alert alert = alertService.findById(alert1.getAlertId());
+    Alert alert = alertService.findById(alert1.getId());
 
     assertNotNull(alert);
   }
@@ -397,6 +408,183 @@ public class AlertServiceTest {
     } catch (MissingFieldsException e) {
       System.out.println(e);
       assertTrue(false);
+    }
+  }
+
+
+
+  @Test
+  public void enbleUserAlertDisableUser1AlertSuccessfull() {
+    when(userRepo.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
+    try {
+      boolean disabled = alertService.enableUserAlert(user1, alert1.getId(), true);
+
+      assertTrue(disabled);
+    } catch (ElementNotFoundException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    } catch (NotAuthorizedException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    }
+  }
+
+  @Test
+  public void enbleUserAlertAlreadyEnabledUser1AlertSuccessfull() {
+    when(userRepo.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
+    try {
+      boolean disabled = alertService.enableUserAlert(user1, alert2.getId(), true);
+
+      assertTrue(disabled);
+    } catch (ElementNotFoundException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    } catch (NotAuthorizedException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    }
+  }
+
+  @Test
+  public void enbleUserAlertDisableUser1AlertSimulateDBError() {
+    when(userRepo.save(any(User.class))).thenAnswer(i -> admin1);
+    try {
+      boolean disabled = alertService.enableUserAlert(user1, alert2.getId(), false);
+
+      assertFalse(disabled);
+    } catch (ElementNotFoundException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    } catch (NotAuthorizedException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    }
+  }
+
+  @Test
+  public void enbleUserAlertEnableUser1AlertThrowNotAuthorizedException() {
+    try {
+      boolean disabled = alertService.enableUserAlert(user1, alert3.getId(), true);
+
+      assertTrue(false);
+    } catch (ElementNotFoundException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    } catch (NotAuthorizedException e) {
+      e.printStackTrace();
+      assertTrue(true);
+    }
+  }
+
+  @Test
+  public void enbleUserAlertEnableUser1AlertThrowElementNotFoundException() {
+    try {
+      boolean disabled = alertService.enableUserAlert(user1, 10, true);
+
+      assertTrue(false);
+    } catch (ElementNotFoundException e) {
+      e.printStackTrace();
+      assertTrue(true);
+    } catch (NotAuthorizedException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    }
+  }
+
+
+
+  @Test
+  public void deleteAlertByAdminSuccessfull() {
+    try {
+      boolean deleted = alertService.deleteAlert(admin1, alert1.getId());
+
+      assertTrue(deleted);
+    } catch (ElementNotFoundException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    } catch (NotAuthorizedException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    }
+  }
+
+  @Test
+  public void deleteAlertByMod3SimulateDBError() {
+    try {
+      boolean deleted = alertService.deleteAlert(mod2, alert3.getId());
+
+      assertFalse(deleted);
+    } catch (ElementNotFoundException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    } catch (NotAuthorizedException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    }
+  }
+
+  @Test
+  public void deleteAlertByUserThrowNotAuthorizedException() {
+    try {
+      boolean deleted = alertService.deleteAlert(user1, alert1.getId());
+
+      assertTrue(false);
+    } catch (ElementNotFoundException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    } catch (NotAuthorizedException e) {
+      e.printStackTrace();
+      assertTrue(true);
+    }
+  }
+
+  @Test
+  public void deleteAlertByAdmin1WithNotExistentAlertThrowElementNotFoundException() {
+    when(alertRepo.save(any(Alert.class))).thenAnswer(i -> {
+      if (i.getArgument(0).equals(alert3)) {
+        return alert3;
+      } else {
+        return i.getArgument(0);
+      }
+    });
+    try {
+      boolean deleted = alertService.deleteAlert(admin1, 10);
+
+      assertTrue(false);
+    } catch (ElementNotFoundException e) {
+      e.printStackTrace();
+      assertTrue(true);
+    } catch (NotAuthorizedException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    }
+  }
+
+
+
+  @Test
+  public void deleteAlertBySensorIdByAdmin1Successfull() {
+    doNothing().when(alertRepo).setDeletedBySensor(anyBoolean(), any(Sensor.class));
+    try {
+      alertService.deleteAlertsBySensorId(sensor1.getId());
+
+      assertTrue(true);
+    } catch (ElementNotFoundException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    }
+  }
+
+  @Test
+  public void deleteAlertByNotExistentSensorIdByAdmin1ThrowElementNotFoundException() {
+    doNothing().when(alertRepo).setDeletedBySensor(anyBoolean(), any(Sensor.class));
+    try {
+      alertService.deleteAlertsBySensorId(10);
+
+      assertTrue(false);
+    } catch (ElementNotFoundException e) {
+      e.printStackTrace();
+      assertTrue(true);
     }
   }
 }

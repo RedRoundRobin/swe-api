@@ -22,7 +22,7 @@ import javax.persistence.Table;
 public class Alert implements Serializable {
 
   public enum Type {
-    LOWER, GREATER, EQUAL;
+    GREATER, LOWER, EQUAL;
 
     @JsonValue
     public int toValue() {
@@ -87,7 +87,7 @@ public class Alert implements Serializable {
   }
 
   @JsonProperty(value = "alertId")
-  public int getAlertId() {
+  public int getId() {
     return alertId;
   }
 
