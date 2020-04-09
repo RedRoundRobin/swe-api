@@ -25,13 +25,16 @@ public class GatewayService {
     return (List<Gateway>) gatewayRepo.findAll();
   }
 
+  public List<Gateway> findAllByEntityId(int entityId) {
+    return (List<Gateway>) gatewayRepo.findAllByEntityId(entityId);
+  }
+
   public Gateway findByDeviceId(int deviceId) {
-    Device device = deviceRepo.findById(deviceId).orElse(null);
-    if (device != null) {
-      return gatewayRepo.findByDevices(device);
-    } else {
-      return null;
-    }
+    return gatewayRepo.findByDevice(deviceId);
+  }
+
+  public Gateway findByDeviceIdAndEntityId(int deviceId, int entityId) {
+    return gatewayRepo.findByDeviceIdAndEntityId(deviceId, entityId);
   }
 
   public Gateway findById(int id) {
