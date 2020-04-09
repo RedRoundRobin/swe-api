@@ -179,7 +179,7 @@ public class ViewGraphService {
     if (viewGraph == null) {
       throw ElementNotFoundException.defaultMessage("ViewGraph");
     } else {
-      return viewGraph.getView().getId() == userId;
+      return viewGraph.getView().getUser().getId() == userId;
     }
   }
 
