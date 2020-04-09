@@ -93,7 +93,7 @@ public class DeviceController extends CoreController {
   }
 
   // Get sensor by deviceId and realSensorId
-  @GetMapping(value = {"/{deviceId:.+}/sensor/{realSensorId:.+}"})
+  @GetMapping(value = {"/{deviceId:.+}/sensors/{realSensorId:.+}"})
   public ResponseEntity<Sensor> getSensorByDevice(
       @RequestHeader("Authorization") String authorization,
       @PathVariable("deviceId") int deviceId,
