@@ -84,23 +84,13 @@ public class GatewayControllerTest {
     gatewayController = new GatewayController(gatewayService, deviceService, sensorService, jwtUtil, logService, userService);
 
     // ----------------------------------------- Set Users --------------------------------------
-    admin = new User();
-    admin.setId(1);
-    admin.setEmail("admin");
-    admin.setType(User.Role.ADMIN);
-
-    user = new User();
-    user.setId(2);
-    user.setEmail("user");
-    user.setType(User.Role.USER);
+    admin = new User(1, "admin", "admin", "admin", "pass", User.Role.ADMIN);
+    user = new User(2, "user", "user", "user", "user", User.Role.USER);
 
     // ----------------------------------------- Set Devices --------------------------------------
-    device1 = new Device();
-    device1.setId(1);
-    device2 = new Device();
-    device2.setId(2);
-    device3 = new Device();
-    device3.setId(3);
+    device1 = new Device(1, "dev1", 1, 1);
+    device2 = new Device(2, "dev2", 1, 2);
+    device3 = new Device(3, "dev3", 1, 3);
 
     List<Device> allDevices = new ArrayList<>();
     allDevices.add(device1);
@@ -109,10 +99,8 @@ public class GatewayControllerTest {
 
 
     // ----------------------------------------- Set Gateways --------------------------------------
-    gateway1 = new Gateway();
-    gateway1.setId(1);
-    gateway2 = new Gateway();
-    gateway2.setId(2);
+    gateway1 = new Gateway(1, "gw1");
+    gateway2 = new Gateway(2, "gw2");
 
     allGateways = new ArrayList<>();
     allGateways.add(gateway1);
@@ -120,14 +108,10 @@ public class GatewayControllerTest {
 
 
     // ----------------------------------------- Set Sensors --------------------------------------
-    sensor1 = new Sensor();
-    sensor1.setId(1);
-    sensor2 = new Sensor();
-    sensor2.setId(2);
-    sensor3 = new Sensor();
-    sensor3.setId(3);
-    sensor4 = new Sensor();
-    sensor4.setId(4);
+    sensor1 = new Sensor(1, "type1", 1);
+    sensor2 = new Sensor(2, "type2", 2);
+    sensor3 = new Sensor(3, "type3", 3);
+    sensor4 = new Sensor(4, "type4", 4);
 
     List<Sensor> allSensors = new ArrayList<>();
     allSensors.add(sensor1);

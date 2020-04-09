@@ -84,40 +84,23 @@ public class DeviceControllerTest {
   public void setUp() {
     deviceController = new DeviceController(deviceService, sensorService, jwtUtil, logService, userService);
 
-    admin = new User();
-    admin.setId(1);
-    admin.setEmail("admin");
-    admin.setType(User.Role.ADMIN);
-
-    user = new User();
-    user.setId(2);
-    user.setEmail("user");
-    user.setType(User.Role.USER);
+    admin = new User(1, "admin", "admin", "admin", "pass", User.Role.ADMIN);
+    user = new User(2, "user", "user", "user", "user", User.Role.USER);
 
 
     // -------------------------------------- Set entities ----------------------------------------
-    entity1 = new Entity();
-    entity1.setId(1);
-    user.setEntity(entity1);
+    entity1 = new Entity(1, "entity1", "loc1");
+    entity2 = new Entity(2, "entity2", "loc2");
 
-    entity2 = new Entity();
-    entity2.setId(2);
 
     // -------------------------------------- Set Devices -----------------------------------------
-    device1 = new Device();
-    device1.setId(1);
-    device2 = new Device();
-    device2.setId(2);
-    device3 = new Device();
-    device3.setId(3);
-    device4 = new Device();
-    device4.setId(4);
-    device5 = new Device();
-    device5.setId(5);
-    device6 = new Device();
-    device6.setId(6);
-    device7 = new Device();
-    device7.setId(7);
+    device1 = new Device(1, "dev1", 1, 1);
+    device2 = new Device(2, "dev2", 1, 1);
+    device3 = new Device(3, "dev3", 1, 2);
+    device4 = new Device(4, "dev4", 1, 2);
+    device5 = new Device(5, "dev5", 1, 3);
+    device6 = new Device(6, "dev6", 1, 4);
+    device7 = new Device(7, "dev7", 1, 1);
 
     allDevices = new ArrayList<>();
     allDevices.add(device1);
@@ -129,20 +112,19 @@ public class DeviceControllerTest {
     allDevices.add(device7);
 
 
+    // ----------------------------------- Set entities to users ----------------------------------
+    user.setEntity(entity1);
+
+
     // ---------------------------------------- Set gateways ---------------------------------------
-    gateway1 = new Gateway();
-    gateway1.setId(1);
-    gateway2 = new Gateway();
-    gateway2.setId(2);
-    gateway3 = new Gateway();
-    gateway3.setId(3);
+    gateway1 = new Gateway(1, "gw1");
+    gateway2 = new Gateway(2, "gw2");
+    gateway3 = new Gateway(3, "gw3");
 
 
     // ---------------------------------------- Set sensors ---------------------------------------
-    sensor1 = new Sensor();
-    sensor1.setRealSensorId(1);
-    sensor2 = new Sensor();
-    sensor2.setRealSensorId(2);
+    sensor1 = new Sensor(1, "type1", 1);
+    sensor2 = new Sensor(2, "type2", 2);
 
 
     // --------------------------------- Set devices to sensors ----------------------------------

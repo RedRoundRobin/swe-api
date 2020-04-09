@@ -80,27 +80,17 @@ public class ViewGraphServiceTest {
 
 
     // ----------------------------------------- Set Entities --------------------------------------
-    entity1 = new Entity();
-    entity1.setId(1);
-    entity2 = new Entity();
-    entity2.setId(2);
+    entity1 = new Entity(1, "entity1", "loc1");
+    entity2 = new Entity(2, "entity2", "loc2");
 
     allEntities = new ArrayList<>();
     allEntities.add(entity1);
     allEntities.add(entity2);
 
     // ----------------------------------------- Set Sensors --------------------------------------
-    sensor1 = new Sensor();
-    sensor1.setId(1);
-    sensor1.setRealSensorId(1);
-
-    sensor2 = new Sensor();
-    sensor2.setId(2);
-    sensor2.setRealSensorId(2);
-
-    sensor3 = new Sensor();
-    sensor3.setId(3);
-    sensor3.setRealSensorId(1);
+    sensor1 = new Sensor(1, "type1", 1);
+    sensor2 = new Sensor(2, "type2", 2);
+    sensor3 = new Sensor(3, "type3", 3);
 
     allSensors = new ArrayList<>();
     allSensors.add(sensor1);
@@ -109,11 +99,8 @@ public class ViewGraphServiceTest {
 
 
     // --------------------------------------- Set Users -------------------------------------
-    user1 = new User();
-    user1.setId(1);
-
-    user2 = new User();
-    user2.setId(2);
+    user1 = new User(1, "name1", "surname1", "email1", "pass1", User.Role.USER);
+    user2 = new User(2, "name2", "surname2", "email2", "pass2", User.Role.USER);
 
     allUsers = new ArrayList<>();
     allUsers.add(user1);
@@ -121,13 +108,8 @@ public class ViewGraphServiceTest {
 
 
     // --------------------------------------- Set Views -------------------------------------
-    view1 = new View();
-    view1.setId(1);
-    view1.setName("view1");
-
-    view2 = new View();
-    view2.setId(2);
-    view2.setName("view2");
+    view1 = new View(1, "view1", user1);
+    view2 = new View(2, "view2", user2);
 
     allView = new ArrayList<>();
     allView.add(view1);
@@ -135,14 +117,9 @@ public class ViewGraphServiceTest {
 
 
     // ------------------------------------- Set ViewGraphs ---------------------------------------
-    viewGraph1 = new ViewGraph();
-    viewGraph1.setId(1);
-
-    viewGraph2 = new ViewGraph();
-    viewGraph2.setId(2);
-
-    viewGraph3 = new ViewGraph();
-    viewGraph3.setId(3);
+    viewGraph1 = new ViewGraph(1, ViewGraph.Correlation.NULL);
+    viewGraph2 = new ViewGraph(2, ViewGraph.Correlation.NULL);
+    viewGraph3 = new ViewGraph(3, ViewGraph.Correlation.NULL);
 
     allViewGraphs = new ArrayList<>();
     allViewGraphs.add(viewGraph1);
@@ -160,26 +137,13 @@ public class ViewGraphServiceTest {
 
 
     // --------------------------------- Set view to viewGraphs ----------------------------------
-    List<ViewGraph> view1ViewGraphs = new ArrayList<>();
-    view1ViewGraphs.add(viewGraph1);
-    view1ViewGraphs.add(viewGraph3);
-    view1.setViewGraphs(view1ViewGraphs);
     viewGraph1.setView(view1);
-    viewGraph3.setView(view1);
-
-    List<ViewGraph> view2ViewGraphs = new ArrayList<>();
-    view2ViewGraphs.add(viewGraph2);
-    view2.setViewGraphs(view2ViewGraphs);
     viewGraph2.setView(view2);
+    viewGraph3.setView(view1);
 
 
     // ----------------------------------- Set users to view -------------------------------------
-    List<View> user1Views = new ArrayList<>();
-    user1Views.add(view1);
     view1.setUser(user1);
-
-    List<View> user2Views = new ArrayList<>();
-    user2Views.add(view2);
     view2.setUser(user2);
 
 
