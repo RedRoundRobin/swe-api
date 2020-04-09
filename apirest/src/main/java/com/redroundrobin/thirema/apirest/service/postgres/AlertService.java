@@ -159,7 +159,7 @@ public class AlertService {
     return alertRepo.findById(id).orElse(null);
   }
 
-  public Alert findByIdAndEntityId(int id, int entityId) throws ElementNotFoundException, NotAuthorizedException {
+  public Alert findByIdAndEntityId(int id, int entityId) throws NotAuthorizedException {
     Entity entity = entityRepo.findById(entityId).orElse(null);
     if (entity != null) {
       Alert alert = alertRepo.findById(id).orElse(null);
@@ -169,7 +169,7 @@ public class AlertService {
         throw NotAuthorizedException.notAuthorizedMessage("alert");
       }
     } else {
-      throw ElementNotFoundException.notFoundMessage("entity");
+      return null;
     }
   }
 
@@ -198,12 +198,12 @@ public class AlertService {
     }
   }
 
-  public boolean enableUserAlert(User user, int alertId, boolean enable)
+  public boolean enableUserAlert(User editingUser, User userToEdit, int alertId, boolean enable)
       throws ElementNotFoundException, NotAuthorizedException {
     Alert alert = findById(alertId);
     if (alert != null) {
-      if (alert.getEntity().equals(user.getEntity())) {
-        Set<Alert> userDisabledAlerts = user.getDisabledAlerts();
+      if (editingUser.getType() == User.Role.ADMIN || alert.getEntity().equals(userToEdit.getEntity())) {
+        Set<Alert> userDisabledAlerts = userToEdit.getDisabledAlerts();
         if (enable && userDisabledAlerts.contains(alert)) {
           userDisabledAlerts.remove(alert);
         } else if (!enable && !userDisabledAlerts.contains(alert)) {
@@ -211,9 +211,8 @@ public class AlertService {
         } else {
           return true;
         }
-        System.out.println("finish");
-        user.setDisabledAlerts(userDisabledAlerts);
-        User newUser = userRepo.save(user);
+        userToEdit.setDisabledAlerts(userDisabledAlerts);
+        User newUser = userRepo.save(userToEdit);
         if ((enable && !newUser.getDisabledAlerts().contains(alert))
             || (!enable && newUser.getDisabledAlerts().contains(alert))) {
           return true;

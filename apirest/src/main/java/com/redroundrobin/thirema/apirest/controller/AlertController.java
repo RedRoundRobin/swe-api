@@ -114,9 +114,6 @@ public class AlertController extends CoreController {
       } catch (NotAuthorizedException nae) {
         nae.printStackTrace();
         return new ResponseEntity(HttpStatus.FORBIDDEN);
-      } catch (ElementNotFoundException e) {
-        e.printStackTrace();
-        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
       }
     }
   }
@@ -180,15 +177,19 @@ public class AlertController extends CoreController {
     return new ResponseEntity(HttpStatus.FORBIDDEN);
   }
 
-  //@PutMapping(value = {"/{alertId:.+}"})
+  @PostMapping("/{alertId:.+}")
   public ResponseEntity disableUserAlert(
       @RequestHeader("authorization") String authorization,
       @PathVariable("alertId") int alertId,
-      @RequestParam("enable") boolean enable) {
+      @RequestParam(value = "userId") int userId,
+      @RequestParam(value = "enable") boolean enable) {
     User user = this.getUserFromAuthorization(authorization);
-    if (user.getType() != User.Role.ADMIN) {
+    User userToEdit = userService.findById(userId);
+    if (user.getType() == User.Role.ADMIN
+        || (user.getType() == User.Role.MOD && user.getEntity() == userToEdit.getEntity())
+        || user.getId() == userToEdit.getId()) {
       try {
-        if (!alertService.enableUserAlert(user, alertId, enable)) {
+        if (!alertService.enableUserAlert(user, userToEdit, alertId, enable)) {
           return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
         }
       } catch (ElementNotFoundException enfe) {
