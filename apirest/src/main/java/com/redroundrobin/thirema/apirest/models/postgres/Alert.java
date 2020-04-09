@@ -2,24 +2,24 @@ package com.redroundrobin.thirema.apirest.models.postgres;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIdentityReference;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
-import java.util.List;
+import java.io.Serializable;
+import java.sql.Timestamp;
 import javax.persistence.Column;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 @javax.persistence.Entity
 @Table(name = "alerts")
-public class Alert {
+public class Alert implements Serializable {
 
   public enum Type {
     LOWER, GREATER, EQUAL;
@@ -64,9 +64,26 @@ public class Alert {
   @JsonIdentityReference(alwaysAsId = true)
   private Sensor sensor;
 
+  @JoinColumn(name = "last_sent")
+  private Timestamp lastSent;
 
-  public void setAlertId(int alertId) {
+  public Alert() {
+    // default constructor
+  }
+
+  public Alert(int alertId, double threshold, Type type, Entity entity, Sensor sensor) {
     this.alertId = alertId;
+    this.threshold = threshold;
+    this.type = type;
+    this.entity = entity;
+    this.sensor = sensor;
+  }
+
+  public Alert(double threshold, Type type, Entity entity, Sensor sensor) {
+    this.threshold = threshold;
+    this.type = type;
+    this.entity = entity;
+    this.sensor = sensor;
   }
 
   @JsonProperty(value = "alertId")
@@ -112,5 +129,13 @@ public class Alert {
 
   public Entity getEntity() {
     return entity;
+  }
+
+  public Timestamp getLastSent() {
+    return lastSent;
+  }
+
+  public void setLastSent(Timestamp lastSent) {
+    this.lastSent = lastSent;
   }
 }

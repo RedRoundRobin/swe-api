@@ -84,100 +84,48 @@ public class DataControllerTest {
   public void setUp() {
     dataController = new DataController(sensorService, jwtUtil, logService, userService);
 
-    admin = new User();
-    admin.setId(1);
-    admin.setEmail("admin");
-    admin.setType(User.Role.ADMIN);
 
-    user = new User();
-    user.setId(2);
-    user.setEmail("user");
-    user.setType(User.Role.USER);
-
-    entity1 = new Entity();
-    entity1.setId(1);
-    entity1.setName("entity1");
+    // ---------------------------------------- Set Users -----------------------------------------
+    admin = new User(1, "admin", "admin", "admin", "pass", User.Role.ADMIN);
+    user = new User(2, "user", "user", "user", "pass", User.Role.USER);
 
     List<User> allUsers = new ArrayList<>();
+    allUsers.add(admin);
     allUsers.add(user);
+
+
+    // -------------------------------------- Set Entities ----------------------------------------
+    entity1 = new Entity(1, "entity1", "loc1");
 
 
 
     // ------------------------------------ Set Timescale Sensors ---------------------------------
-    sensor1111 = new Sensor();
-    sensor1111.setTime(new Timestamp(100));
-    sensor1111.setGatewayName("gateway1");
-    sensor1111.setRealDeviceId(1);
-    sensor1111.setRealSensorId(1);
+    sensor1111 = new Sensor("gw1", 1, 1);
     sensor1111.setValue(1);
-    sensor1112 = new Sensor();
-    sensor1112.setTime(new Timestamp(200));
-    sensor1112.setGatewayName("gateway1");
-    sensor1112.setRealDeviceId(1);
-    sensor1112.setRealSensorId(1);
+    sensor1112 = new Sensor("gw1", 1, 1);
     sensor1112.setValue(2);
-    sensor1113 = new Sensor();
-    sensor1113.setTime(new Timestamp(300));
-    sensor1113.setGatewayName("gateway1");
-    sensor1113.setRealDeviceId(1);
-    sensor1113.setRealSensorId(1);
+    sensor1113 = new Sensor("gw1", 1, 1);
     sensor1113.setValue(3);
 
-    sensor1121 = new Sensor();
-    sensor1121.setTime(new Timestamp(100));
-    sensor1121.setGatewayName("gateway1");
-    sensor1121.setRealDeviceId(1);
-    sensor1121.setRealSensorId(2);
+    sensor1121 = new Sensor("gw1", 1, 2);
     sensor1121.setValue(1);
-    sensor1122 = new Sensor();
-    sensor1122.setTime(new Timestamp(200));
-    sensor1122.setGatewayName("gateway1");
-    sensor1122.setRealDeviceId(1);
-    sensor1122.setRealSensorId(2);
+    sensor1122 = new Sensor("gw1", 1, 2);
     sensor1122.setValue(2);
-    sensor1123 = new Sensor();
-    sensor1123.setTime(new Timestamp(300));
-    sensor1123.setGatewayName("gateway1");
-    sensor1123.setRealDeviceId(1);
-    sensor1123.setRealSensorId(2);
+    sensor1123 = new Sensor("gw1", 1, 2);
     sensor1123.setValue(3);
 
-    sensor1211 = new Sensor();
-    sensor1211.setTime(new Timestamp(100));
-    sensor1211.setGatewayName("gateway1");
-    sensor1211.setRealDeviceId(2);
-    sensor1211.setRealSensorId(1);
+    sensor1211 = new Sensor("gw1", 2, 1);
     sensor1211.setValue(1);
-    sensor1212 = new Sensor();
-    sensor1212.setTime(new Timestamp(200));
-    sensor1212.setGatewayName("gateway1");
-    sensor1212.setRealDeviceId(2);
-    sensor1212.setRealSensorId(1);
+    sensor1212 = new Sensor("gw1", 2, 1);
     sensor1212.setValue(2);
-    sensor1213 = new Sensor();
-    sensor1213.setTime(new Timestamp(300));
-    sensor1213.setGatewayName("gateway1");
-    sensor1213.setRealDeviceId(2);
-    sensor1213.setRealSensorId(1);
+    sensor1213 = new Sensor("gw1", 2, 1);
     sensor1213.setValue(3);
 
-    sensor1221 = new Sensor();
-    sensor1221.setTime(new Timestamp(100));
-    sensor1221.setGatewayName("gateway1");
-    sensor1221.setRealDeviceId(2);
-    sensor1221.setRealSensorId(2);
+    sensor1221 = new Sensor("gw1", 2, 2);
     sensor1221.setValue(1);
-    sensor1222 = new Sensor();
-    sensor1222.setTime(new Timestamp(200));
-    sensor1222.setGatewayName("gateway1");
-    sensor1222.setRealDeviceId(2);
-    sensor1222.setRealSensorId(2);
+    sensor1222 = new Sensor("gw1", 2, 2);
     sensor1222.setValue(2);
-    sensor1223 = new Sensor();
-    sensor1223.setTime(new Timestamp(300));
-    sensor1223.setGatewayName("gateway1");
-    sensor1223.setRealDeviceId(2);
-    sensor1223.setRealSensorId(2);
+    sensor1223 = new Sensor("gw1", 2, 2);
     sensor1223.setValue(3);
 
     allSensors = new ArrayList<>();

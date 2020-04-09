@@ -81,81 +81,69 @@ public class SensorServiceTest {
     sensorService = new SensorService(sensorRepo, postgreSensorRepo, entityRepo);
 
 
+
+
+    // -------------------------------------- Set Entities ----------------------------------------
+    entity1 = new Entity(1, "entity1", "loc1");
+    entity2 = new Entity(2, "entity2", "loc2");
+
+
+    // -------------------------------------- Set Gateway ----------------------------------------
+    Gateway gateway1 = new Gateway(1, "gw1");
+
+
+    // -------------------------------------- Set Devices ----------------------------------------
+    Device device1 = new Device(1, "dev1", 1, 1);
+    device1.setGateway(gateway1);
+
+    Device device2 = new Device(2, "dev2", 1, 2);
+    device2.setGateway(gateway1);
+
+    List<Device> allDevices = new ArrayList<>();
+    allDevices.add(device1);
+    allDevices.add(device2);
+
+
+    // ----------------------------------- Set Postgre Sensors ------------------------------------
+    sensor1 = new com.redroundrobin.thirema.apirest.models.postgres.Sensor(1, "type1", 1);
+    sensor2 = new com.redroundrobin.thirema.apirest.models.postgres.Sensor(2, "type2", 2);
+    sensor3 = new com.redroundrobin.thirema.apirest.models.postgres.Sensor(3, "type3", 1);
+    sensor4 = new com.redroundrobin.thirema.apirest.models.postgres.Sensor(4, "type4", 2);
+
+    allPostgreSensors = new ArrayList<>();
+    allPostgreSensors.add(sensor1);
+    allPostgreSensors.add(sensor2);
+    allPostgreSensors.add(sensor3);
+    allPostgreSensors.add(sensor4);
+
+
     // ------------------------------------ Set Timescale Sensors ---------------------------------
-    sensor1111 = new Sensor();
-    sensor1111.setTime(new Timestamp(100));
-    sensor1111.setGatewayName("gateway1");
-    sensor1111.setRealDeviceId(1);
-    sensor1111.setRealSensorId(1);
+    sensor1111 = new Sensor(gateway1.getName(), device1.getRealDeviceId(), sensor1.getRealSensorId());
     sensor1111.setValue(1);
-    sensor1112 = new Sensor();
-    sensor1112.setTime(new Timestamp(200));
-    sensor1112.setGatewayName("gateway1");
-    sensor1112.setRealDeviceId(1);
-    sensor1112.setRealSensorId(1);
+    sensor1112 = new Sensor(gateway1.getName(), device1.getRealDeviceId(), sensor1.getRealSensorId());
     sensor1112.setValue(2);
-    sensor1113 = new Sensor();
-    sensor1113.setTime(new Timestamp(300));
-    sensor1113.setGatewayName("gateway1");
-    sensor1113.setRealDeviceId(1);
-    sensor1113.setRealSensorId(1);
+    sensor1113 = new Sensor(gateway1.getName(), device1.getRealDeviceId(), sensor1.getRealSensorId());
     sensor1113.setValue(3);
 
-    sensor1121 = new Sensor();
-    sensor1121.setTime(new Timestamp(100));
-    sensor1121.setGatewayName("gateway1");
-    sensor1121.setRealDeviceId(1);
-    sensor1121.setRealSensorId(2);
+    sensor1121 = new Sensor(gateway1.getName(), device1.getRealDeviceId(), sensor2.getRealSensorId());
     sensor1121.setValue(1);
-    sensor1122 = new Sensor();
-    sensor1122.setTime(new Timestamp(200));
-    sensor1122.setGatewayName("gateway1");
-    sensor1122.setRealDeviceId(1);
-    sensor1122.setRealSensorId(2);
+    sensor1122 = new Sensor(gateway1.getName(), device1.getRealDeviceId(), sensor2.getRealSensorId());
     sensor1122.setValue(2);
-    sensor1123 = new Sensor();
-    sensor1123.setTime(new Timestamp(300));
-    sensor1123.setGatewayName("gateway1");
-    sensor1123.setRealDeviceId(1);
-    sensor1123.setRealSensorId(2);
+    sensor1123 = new Sensor(gateway1.getName(), device1.getRealDeviceId(), sensor2.getRealSensorId());
     sensor1123.setValue(3);
 
-    sensor1211 = new Sensor();
-    sensor1211.setTime(new Timestamp(100));
-    sensor1211.setGatewayName("gateway1");
-    sensor1211.setRealDeviceId(2);
-    sensor1211.setRealSensorId(1);
+    sensor1211 = new Sensor(gateway1.getName(), device2.getRealDeviceId(), sensor3.getRealSensorId());
     sensor1211.setValue(1);
-    sensor1212 = new Sensor();
-    sensor1212.setTime(new Timestamp(200));
-    sensor1212.setGatewayName("gateway1");
-    sensor1212.setRealDeviceId(2);
-    sensor1212.setRealSensorId(1);
+    sensor1212 = new Sensor(gateway1.getName(), device2.getRealDeviceId(), sensor3.getRealSensorId());
     sensor1212.setValue(2);
-    sensor1213 = new Sensor();
-    sensor1213.setTime(new Timestamp(300));
-    sensor1213.setGatewayName("gateway1");
-    sensor1213.setRealDeviceId(2);
-    sensor1213.setRealSensorId(1);
+    sensor1213 = new Sensor(gateway1.getName(), device2.getRealDeviceId(), sensor3.getRealSensorId());
     sensor1213.setValue(3);
 
-    sensor1221 = new Sensor();
-    sensor1221.setTime(new Timestamp(100));
-    sensor1221.setGatewayName("gateway1");
-    sensor1221.setRealDeviceId(2);
-    sensor1221.setRealSensorId(2);
+    sensor1221 = new Sensor(gateway1.getName(), device2.getRealDeviceId(), sensor4.getRealSensorId());
     sensor1221.setValue(1);
-    sensor1222 = new Sensor();
-    sensor1222.setTime(new Timestamp(200));
-    sensor1222.setGatewayName("gateway1");
-    sensor1222.setRealDeviceId(2);
-    sensor1222.setRealSensorId(2);
+    sensor1222 = new Sensor(gateway1.getName(), device2.getRealDeviceId(), sensor4.getRealSensorId());
     sensor1222.setValue(2);
-    sensor1223 = new Sensor();
-    sensor1223.setTime(new Timestamp(300));
-    sensor1223.setGatewayName("gateway1");
-    sensor1223.setRealDeviceId(2);
-    sensor1223.setRealSensorId(2);
+    sensor1223 = new Sensor(gateway1.getName(), device2.getRealDeviceId(), sensor4.getRealSensorId());
     sensor1223.setValue(3);
 
     allSensors = new ArrayList<>();
@@ -197,62 +185,11 @@ public class SensorServiceTest {
     allG1D2S2Sensors.add(sensor1223);
 
 
-    // -------------------------------------- Set Entities ----------------------------------------
-    Entity entity1 = new Entity();
-    entity1.setId(1);
-
-    Entity entity2 = new Entity();
-    entity2.setId(2);
-
-
-    // -------------------------------------- Set Gateway ----------------------------------------
-    Gateway gateway1 = new Gateway();
-    gateway1.setId(1);
-    gateway1.setName("gateway1");
-
-
-    // -------------------------------------- Set Devices ----------------------------------------
-    Device device1 = new Device();
-    device1.setId(1);
-    device1.setRealDeviceId(1);
-    device1.setGateway(gateway1);
-
-    Device device2 = new Device();
-    device2.setId(2);
-    device2.setRealDeviceId(2);
-    device2.setGateway(gateway1);
-
-    List<Device> allDevices = new ArrayList<>();
-    allDevices.add(device1);
-    allDevices.add(device2);
-
-
-    // ----------------------------------- Set Postgre Sensors ------------------------------------
-    sensor1 = new com.redroundrobin.thirema.apirest.models.postgres.Sensor();
-    sensor1.setId(1);
-    sensor1.setRealSensorId(1);
+    // -------------------------------- Set Devices to Postgre Sensors ----------------------------
     sensor1.setDevice(device1);
-
-    sensor2 = new com.redroundrobin.thirema.apirest.models.postgres.Sensor();
-    sensor2.setId(2);
-    sensor2.setRealSensorId(2);
     sensor2.setDevice(device1);
-
-    sensor3 = new com.redroundrobin.thirema.apirest.models.postgres.Sensor();
-    sensor3.setId(3);
-    sensor3.setRealSensorId(1);
     sensor3.setDevice(device2);
-
-    sensor4 = new com.redroundrobin.thirema.apirest.models.postgres.Sensor();
-    sensor4.setId(4);
-    sensor4.setRealSensorId(2);
     sensor4.setDevice(device2);
-
-    allPostgreSensors = new ArrayList<>();
-    allPostgreSensors.add(sensor1);
-    allPostgreSensors.add(sensor2);
-    allPostgreSensors.add(sensor3);
-    allPostgreSensors.add(sensor4);
 
     // sensor 1 & 3 are entity 1 sensors, 2 & 4 are entity 2 sensor
 

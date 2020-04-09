@@ -82,17 +82,9 @@ public class SensorServiceTest {
 
 
     // ----------------------------------------- Set Entities --------------------------------------
-    entity1 = new Entity();
-    entity1.setId(1);
-    entity1.setName("entity1");
-
-    entity2 = new Entity();
-    entity2.setId(2);
-    entity2.setName("entity2");
-
-    entity3 = new Entity();
-    entity3.setId(3);
-    entity3.setName("entity3");
+    entity1 = new Entity(1, "entity1", "location1");
+    entity2 = new Entity(2, "entity2", "location2");
+    entity3 = new Entity(3, "entity3", "location3");
 
     List<Entity> allEntities = new ArrayList<>();
     allEntities.add(entity1);
@@ -101,17 +93,9 @@ public class SensorServiceTest {
 
 
     // ----------------------------------------- Set Sensors --------------------------------------
-    sensor1 = new Sensor();
-    sensor1.setId(1);
-    sensor1.setRealSensorId(1);
-
-    sensor2 = new Sensor();
-    sensor2.setId(2);
-    sensor2.setRealSensorId(2);
-
-    sensor3 = new Sensor();
-    sensor3.setId(3);
-    sensor3.setRealSensorId(1);
+    sensor1 = new Sensor(1, "type1", 1);
+    sensor2 = new Sensor(2, "type2", 2);
+    sensor3 = new Sensor(3, "type3", 3);
 
     List<Sensor> allSensors = new ArrayList<>();
     allSensors.add(sensor1);
@@ -120,11 +104,8 @@ public class SensorServiceTest {
 
 
     // ----------------------------------------- Set Devices --------------------------------------
-    device1 = new Device();
-    device1.setId(1);
-
-    device2 = new Device();
-    device2.setId(2);
+    device1 = new Device(1, "name1", 1, 1);
+    device2 = new Device(2, "name2", 2, 2);
 
     List<Device> allDevices = new ArrayList<>();
     allDevices.add(device1);
@@ -132,14 +113,9 @@ public class SensorServiceTest {
 
 
     // ----------------------------------------- Set Alerts --------------------------------------
-    alert1 = new Alert();
-    alert1.setAlertId(1);
-
-    alert2 = new Alert();
-    alert2.setAlertId(2);
-
-    alert3 = new Alert();
-    alert3.setAlertId(3);
+    alert1 = new Alert(1, 10.0, Alert.Type.GREATER, entity1, sensor1);
+    alert2 = new Alert(2, 10.0, Alert.Type.GREATER, entity1, sensor1);
+    alert3 = new Alert(3, 10.0, Alert.Type.GREATER, entity2, sensor2);
 
     List<Alert> allAlerts = new ArrayList<>();
     allAlerts.add(alert1);
@@ -148,11 +124,8 @@ public class SensorServiceTest {
 
 
     // --------------------------------------- Set ViewGraphs -------------------------------------
-    viewGraph1 = new ViewGraph();
-    viewGraph1.setId(1);
-
-    viewGraph2 = new ViewGraph();
-    viewGraph2.setId(2);
+    viewGraph1 = new ViewGraph(1, ViewGraph.Correlation.NULL);
+    viewGraph2 = new ViewGraph(2, ViewGraph.Correlation.NULL);
 
     List<ViewGraph> allViewGraphs = new ArrayList<>();
     allViewGraphs.add(viewGraph1);
@@ -160,24 +133,13 @@ public class SensorServiceTest {
 
 
     // --------------------------------------- Set Gateways -------------------------------------
-    gateway1 = new Gateway();
-    gateway1.setId(1);
-
-    gateway2 = new Gateway();
-    gateway1.setId(2);
+    gateway1 = new Gateway(1, "gw1");
+    gateway2 = new Gateway(2, "gw2");
 
     List<Gateway> allGateways = new ArrayList<>();
     allGateways.add(gateway1);
     allGateways.add(gateway2);
 
-
-
-    // --------------------------------- Set sensors to alerts ----------------------------------
-    alert1.setSensor(sensor1);
-
-    alert2.setSensor(sensor1);
-
-    alert3.setSensor(sensor2);
 
 
     // -------------------------------- Set sensors to entities ---------------------------------

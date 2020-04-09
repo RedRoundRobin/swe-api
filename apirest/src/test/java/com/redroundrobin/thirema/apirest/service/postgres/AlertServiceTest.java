@@ -79,30 +79,10 @@ public class AlertServiceTest {
   public void setUp() {
     alertService = new AlertService(alertRepo,entityRepo,sensorRepo,userRepo);
 
-    // ----------------------------------------- Set Alerts --------------------------------------
-    alert1 = new Alert();
-    alert1.setAlertId(1);
-    alert2 = new Alert();
-    alert2.setAlertId(2);
-    alert3 = new Alert();
-    alert3.setAlertId(3);
-
-    List<Alert> allAlerts = new ArrayList<>();
-    allAlerts.add(alert1);
-    allAlerts.add(alert2);
-    allAlerts.add(alert3);
-
-
     // ----------------------------------------- Set Entities --------------------------------------
-    entity1 = new Entity();
-    entity1.setId(1);
-    entity1.setName("entity1");
-    entity2 = new Entity();
-    entity2.setId(2);
-    entity2.setName("entity2");
-    entity3 = new Entity();
-    entity3.setId(3);
-    entity3.setName("entity3");
+    entity1 = new Entity(1, "entity1", "location1");
+    entity2 = new Entity(2, "entity2", "location2");
+    entity3 = new Entity(3, "entity3", "location3");
 
     List<Entity> allEntities = new ArrayList<>();
     allEntities.add(entity1);
@@ -111,12 +91,9 @@ public class AlertServiceTest {
 
 
     // ----------------------------------------- Set Sensors --------------------------------------
-    sensor1 = new Sensor();
-    sensor1.setId(1);
-    sensor2 = new Sensor();
-    sensor2.setId(2);
-    sensor3 = new Sensor();
-    sensor3.setId(3);
+    sensor1 = new Sensor(1, "type1", 1);
+    sensor2 = new Sensor(2, "type2", 2);
+    sensor3 = new Sensor(3, "type3", 3);
 
     List<Sensor> allSensors = new ArrayList<>();
     allSensors.add(sensor1);
@@ -124,13 +101,21 @@ public class AlertServiceTest {
     allSensors.add(sensor3);
 
 
+    // ----------------------------------------- Set Alerts --------------------------------------
+    alert1 = new Alert(1, 10.0, Alert.Type.GREATER, entity1, sensor1);
+    alert2 = new Alert(2, 10.0, Alert.Type.GREATER, entity1, sensor1);
+    alert3 = new Alert(3, 10.0, Alert.Type.GREATER, entity2, sensor2);
+
+    List<Alert> allAlerts = new ArrayList<>();
+    allAlerts.add(alert1);
+    allAlerts.add(alert2);
+    allAlerts.add(alert3);
+
+
     // ----------------------------------------- Set Users --------------------------------------
-    user1 = new User();
-    user1.setId(1);
-    user2 = new User();
-    user2.setId(2);
-    user3 = new User();
-    user3.setId(3);
+    user1 = new User(1, "name1", "surname1", "email1", "pass1", User.Role.USER);
+    user2 = new User(2, "name2", "surname2", "email2", "pass2", User.Role.USER);
+    user3 = new User(3, "name3", "surname3", "email3", "pass3", User.Role.USER);
     admin1 = new User();
     admin1.setId(4);
     admin1.setType(User.Role.ADMIN);
@@ -139,22 +124,6 @@ public class AlertServiceTest {
     allUsers.add(user1);
     allUsers.add(user2);
     allUsers.add(user3);
-
-
-    // ------------------------------------ Set Entities to Alerts -------------------------------
-    alert1.setEntity(entity1);
-
-    alert2.setEntity(entity1);
-
-    alert3.setEntity(entity2);
-
-
-    // ----------------------------------- Set Sensors to Alerts --------------------------------
-    alert1.setSensor(sensor1);
-
-    alert2.setSensor(sensor1);
-
-    alert3.setSensor(sensor2);
 
 
     // ---------------------------------- Set Alerts to Users -----------------------------------

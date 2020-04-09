@@ -75,32 +75,18 @@ public class EntityControllerTest {
     entityController = new EntityController(entityService, jwtUtil, logService, userService);
 
 
-    admin = new User();
-    admin.setId(1);
-    admin.setEmail("admin");
-    admin.setType(User.Role.ADMIN);
-
-    user = new User();
-    user.setId(2);
-    user.setEmail("user");
-    user.setType(User.Role.USER);
+    // ----------------------------------------- Set Users --------------------------------------
+    admin = new User(1, "admin", "admin", "admin", "pass", User.Role.ADMIN);
+    user = new User(2, "user", "user", "user", "user", User.Role.USER);
 
     List<User> allUsers = new ArrayList<>();
     allUsers.add(user);
 
 
     // ----------------------------------------- Set Entities --------------------------------------
-    entity1 = new Entity();
-    entity1.setId(1);
-    entity1.setName("entity1");
-
-    entity2 = new Entity();
-    entity2.setId(2);
-    entity2.setName("entity2");
-
-    entity3 = new Entity();
-    entity3.setId(3);
-    entity3.setName("entity3");
+    entity1 = new Entity(1, "entity1", "loc1");
+    entity2 = new Entity(2, "entity2", "loc2");
+    entity3 = new Entity(3, "entity3", "loc3");
 
     allEntities = new ArrayList<>();
     allEntities.add(entity1);
@@ -109,17 +95,9 @@ public class EntityControllerTest {
 
 
     // ----------------------------------------- Set Sensors --------------------------------------
-    sensor1 = new Sensor();
-    sensor1.setId(1);
-    sensor1.setRealSensorId(1);
-
-    sensor2 = new Sensor();
-    sensor2.setId(2);
-    sensor2.setRealSensorId(2);
-
-    sensor3 = new Sensor();
-    sensor3.setId(3);
-    sensor3.setRealSensorId(1);
+    sensor1 = new Sensor(1, "type1", 1);
+    sensor2 = new Sensor(2, "type2", 2);
+    sensor3 = new Sensor(3, "type3", 3);
 
     allSensors = new ArrayList<>();
     allSensors.add(sensor1);

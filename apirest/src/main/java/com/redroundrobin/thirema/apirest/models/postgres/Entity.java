@@ -1,24 +1,24 @@
 package com.redroundrobin.thirema.apirest.models.postgres;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.List;
+
+import java.io.Serializable;
 import java.util.Set;
 import javax.persistence.Column;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
-import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 @javax.persistence.Entity
 @Table(name = "entities")
-public class Entity {
+public class Entity implements Serializable {
   @Id
   @GeneratedValue(generator = "entities_entity_id_seq", strategy = GenerationType.SEQUENCE)
   @SequenceGenerator(
@@ -30,23 +30,34 @@ public class Entity {
   private int entityId;
   private String name;
   private String location;
-  private boolean deleted;
+  private boolean deleted = false;
 
   @JsonIgnore
-  @ManyToMany
+  @ManyToMany(fetch = FetchType.LAZY)
   @JoinTable(
       name = "entity_sensors",
       joinColumns = @JoinColumn(name = "entity_id"),
       inverseJoinColumns = @JoinColumn(name = "sensor_id"))
   private Set<Sensor> sensors;
 
+  public Entity() {
+    // default constructor
+  }
+
+  public Entity(String name, String location) {
+    this.name = name;
+    this.location = location;
+  }
+
+  public Entity(int entityId, String name, String location) {
+    this.entityId = entityId;
+    this.name = name;
+    this.location = location;
+  }
+
   @JsonProperty(value = "entityId")
   public int getId() {
     return entityId;
-  }
-
-  public void setId(int entityId) {
-    this.entityId = entityId;
   }
 
   public String getName() {
