@@ -10,8 +10,10 @@ import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.service.timescale.LogService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
+import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
+import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,8 +33,10 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
@@ -53,11 +57,14 @@ public class AlertControllerTest {
   private AlertService alertService;
 
   private String userTokenWithBearer = "Bearer userToken";
+  private String modTokenWithBearer = "Bearer modToken";
   private String adminTokenWithBearer = "Bearer adminToken";
   private String userToken = "userToken";
+  private String modToken = "modToken";
   private String adminToken = "adminToken";
 
   private User admin;
+  private User mod;
   private User user;
 
   private Alert alert1;
@@ -81,12 +88,13 @@ public class AlertControllerTest {
 
 
   @Before
-  public void setUp() throws MissingFieldsException, InvalidFieldsValuesException {
+  public void setUp() throws MissingFieldsException, InvalidFieldsValuesException, ElementNotFoundException, NotAuthorizedException {
     alertController = new AlertController(alertService, jwtUtil, logService, userService);
 
 
     // ----------------------------------------- Set Users --------------------------------------
     admin = new User(1, "admin", "admin", "admin", "pass", User.Role.ADMIN);
+    mod = new User(3, "mod", "mod", "mod", "pass", User.Role.MOD);
     user = new User(2, "user", "user", "user", "pass", User.Role.USER);
 
 
@@ -128,10 +136,13 @@ public class AlertControllerTest {
 
     // Core Controller needed mock
     user.setEntity(entity1);
+    mod.setEntity(entity1);
     when(jwtUtil.extractUsername(userToken)).thenReturn(user.getEmail());
+    when(jwtUtil.extractUsername(modToken)).thenReturn(mod.getEmail());
     when(jwtUtil.extractUsername(adminToken)).thenReturn(admin.getEmail());
     when(jwtUtil.extractType(anyString())).thenReturn("webapp");
     when(userService.findByEmail(admin.getEmail())).thenReturn(admin);
+    when(userService.findByEmail(mod.getEmail())).thenReturn(mod);
     when(userService.findByEmail(user.getEmail())).thenReturn(user);
 
     when(alertService.findAll()).thenReturn(allAlerts);
@@ -159,6 +170,39 @@ public class AlertControllerTest {
         return alert;
       } else {
         throw new MissingFieldsException("");
+      }
+    });
+    doAnswer(i -> {
+      if (allSensors.stream().anyMatch(s -> i.getArgument(0).equals(s.getId()))) {
+        return true;
+      } else {
+        throw new ElementNotFoundException("");
+      }
+    }).when(alertService).deleteAlertsBySensorId(anyInt());
+    when(alertService.deleteAlert(any(User.class), anyInt())).thenAnswer(i -> {
+      User user = i.getArgument(0);
+      if (user.getType() == User.Role.ADMIN && allAlerts.stream().anyMatch(a -> i.getArgument(1).equals(a.getId()))) {
+        return true;
+      } else if (user.getType() == User.Role.MOD && allAlerts.stream().anyMatch(a -> i.getArgument(1).equals(a.getId()))) {
+        return false;
+      } else if (user.getType() == User.Role.MOD) {
+        throw new NotAuthorizedException("");
+      } else {
+        throw new ElementNotFoundException("");
+      }
+    });
+    when(alertService.enableUserAlert(any(User.class), anyInt(), anyBoolean())).thenAnswer(i -> {
+      User user = i.getArgument(0);
+      if (user.getType() == User.Role.USER &&
+          allAlerts.stream().anyMatch(a -> i.getArgument(1).equals(a.getId())
+              && a.getEntity().equals(user.getEntity()))) {
+        return true;
+      } else if (user.getType() == User.Role.MOD) {
+        return false;
+      } else if (user.getType() == User.Role.USER && allAlerts.stream().anyMatch(a -> i.getArgument(1).equals(a.getId()))) {
+        throw new NotAuthorizedException("");
+      } else {
+        throw new ElementNotFoundException("");
       }
     });
   }
@@ -270,5 +314,88 @@ public class AlertControllerTest {
         userTokenWithBearer, newAlertFields);
 
     assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+  }
+
+
+
+  @Test
+  public void deleteAlertsByAdminBySensorIdSuccessfull() {
+    ResponseEntity response = alertController.deleteAlerts(adminTokenWithBearer, sensor1.getId());
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+  }
+
+  @Test
+  public void deleteAlertsByAdminByNotExistentSensorIdReturnErrorBadRequest() {
+    ResponseEntity response = alertController.deleteAlerts(adminTokenWithBearer, 10);
+
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+  }
+
+  @Test
+  public void deleteAlertsByUserBySensorIdReturnErrorForbidden() {
+    ResponseEntity response = alertController.deleteAlerts(userTokenWithBearer, sensor1.getId());
+
+    assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+  }
+
+
+
+  @Test
+  public void deleteAlertSuccessfull() {
+    ResponseEntity response = alertController.deleteAlert(adminTokenWithBearer, alert1.getId());
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+  }
+
+  @Test
+  public void deleteAlertSimulateDBError() {
+    ResponseEntity response = alertController.deleteAlert(modTokenWithBearer, alert1.getId());
+
+    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+  }
+
+  @Test
+  public void deleteAlertByModByDifferentEntityAlertReturnErrorForbidden() {
+    ResponseEntity response = alertController.deleteAlert(modTokenWithBearer, 10);
+
+    assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+  }
+
+  @Test
+  public void deleteAlertByUserByNotExistentAlertIdReturnErrorBadRequest() {
+    ResponseEntity response = alertController.deleteAlert(adminTokenWithBearer, 10);
+
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+  }
+
+
+
+  @Test
+  public void disableUserAlertByUserSuccessfull() {
+    ResponseEntity response = alertController.disableUserAlert(userTokenWithBearer, alert2.getId(), false);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+  }
+
+  @Test
+  public void disableUserAlertByModSimulateDBError() {
+    ResponseEntity response = alertController.disableUserAlert(modTokenWithBearer, alert2.getId(), false);
+
+    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+  }
+
+  @Test
+  public void disableUserAlertByUserDifferentEntityAlertReturnForbidden() {
+    ResponseEntity response = alertController.disableUserAlert(userTokenWithBearer, alert3.getId(), false);
+
+    assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+  }
+
+  @Test
+  public void disableUserAlertByUserWithNotExistentAlertIdReturnBadRequest() {
+    ResponseEntity response = alertController.disableUserAlert(userTokenWithBearer, 10, false);
+
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
   }
 }
