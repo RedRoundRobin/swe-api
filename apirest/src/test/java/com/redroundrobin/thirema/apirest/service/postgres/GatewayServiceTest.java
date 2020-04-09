@@ -77,8 +77,12 @@ public class GatewayServiceTest {
     when(gatewayRepo.findAll()).thenReturn(allGateways);
     when(gatewayRepo.findByDevice(anyInt())).thenAnswer(i -> {
       Device device = deviceRepo.findById(i.getArgument(0)).orElse(null);
-      return allGateways.stream().filter(g -> device.getGateway().equals(g))
-          .findFirst().orElse(null);
+      if (device != null) {
+        return allGateways.stream().filter(g -> device.getGateway().equals(g))
+            .findFirst().orElse(null);
+      } else {
+        return null;
+      }
     });
     when(gatewayRepo.findById(anyInt())).thenAnswer(i -> {
       return allGateways.stream().filter(g -> i.getArgument(0).equals(g.getId()))

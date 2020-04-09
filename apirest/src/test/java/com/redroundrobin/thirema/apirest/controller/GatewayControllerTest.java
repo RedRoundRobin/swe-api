@@ -26,6 +26,8 @@ package com.redroundrobin.thirema.apirest.controller;
     import java.util.stream.Collectors;
 
     import static org.junit.jupiter.api.Assertions.assertEquals;
+    import static org.junit.jupiter.api.Assertions.assertNotNull;
+    import static org.junit.jupiter.api.Assertions.assertNull;
     import static org.junit.jupiter.api.Assertions.assertTrue;
     import static org.mockito.ArgumentMatchers.anyInt;
     import static org.mockito.ArgumentMatchers.anyString;
@@ -87,6 +89,8 @@ public class GatewayControllerTest {
     admin = new User(1, "admin", "admin", "admin", "pass", User.Role.ADMIN);
     user = new User(2, "user", "user", "user", "user", User.Role.USER);
 
+    user.setEntity(new Entity(1, "name", "loc"));
+
     // ----------------------------------------- Set Devices --------------------------------------
     device1 = new Device(1, "dev1", 1, 1);
     device2 = new Device(2, "dev2", 1, 2);
@@ -146,6 +150,9 @@ public class GatewayControllerTest {
     when(userService.findByEmail(user.getEmail())).thenReturn(user);
 
     when(gatewayService.findAll()).thenReturn(allGateways);
+    when(gatewayService.findAllByEntityId(anyInt())).thenAnswer(i -> {
+      return Collections.emptyList();
+    });
     when(gatewayService.findById(anyInt())).thenAnswer(i -> {
       return allGateways.stream()
           .filter(g -> i.getArgument(0).equals(g.getId()))
@@ -232,10 +239,11 @@ public class GatewayControllerTest {
   }
 
   @Test
-  public void getAllGatewaysByUserError403() {
+  public void getAllGatewaysByUserEmptyList() {
     ResponseEntity<List<Gateway>> response = gatewayController.getGateways(userTokenWithBearer, null);
 
-    assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertTrue(response.getBody().isEmpty());
   }
 
 
@@ -250,11 +258,12 @@ public class GatewayControllerTest {
   }
 
   @Test
-  public void getGatewayByIdByUserError403() {
+  public void getGatewayByIdByUserNull() {
     ResponseEntity<Gateway> response = gatewayController.getGateway(
         userTokenWithBearer, gateway1.getId());
 
-    assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertNull(response.getBody());
   }
 
 
