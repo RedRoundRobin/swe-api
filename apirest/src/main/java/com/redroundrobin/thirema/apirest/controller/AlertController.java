@@ -47,7 +47,6 @@ public class AlertController extends CoreController {
   public ResponseEntity deleteAlerts(@RequestHeader(value = "Authorization") String authorization,
                                      @RequestParam(name = "sensorId") Integer sensorId,
                                      HttpServletRequest httpRequest) {
-
     User user = getUserFromAuthorization(authorization);
     if (user.getType() == User.Role.ADMIN) {
       try {
@@ -122,11 +121,14 @@ public class AlertController extends CoreController {
 
   @DeleteMapping(value = {"/{alertId:.+}"})
   public ResponseEntity deleteAlert(@RequestHeader("authorization") String authorization,
-                                    @PathVariable("alertId") int alertId) {
+                                    @PathVariable("alertId") int alertId,
+                                    HttpServletRequest httpRequest) {
     User user = getUserFromAuthorization(authorization);
     if (user.getType() == User.Role.ADMIN || (user.getType() == User.Role.MOD)) {
       try {
         if (alertService.deleteAlert(user, alertId)) {
+          logService.createLog(user.getId(), getIpAddress(httpRequest), "alert.deleted",
+              Integer.toString(alertId));
           return new ResponseEntity(HttpStatus.OK);
         } else {
           return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
