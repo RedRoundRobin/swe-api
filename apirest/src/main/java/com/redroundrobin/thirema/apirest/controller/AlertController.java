@@ -49,11 +49,14 @@ public class AlertController extends CoreController {
 
   @DeleteMapping(value = {""})
   public ResponseEntity deleteAlerts(@RequestHeader(value = "Authorization") String authorization,
-                                     @RequestParam(name = "sensorId") Integer sensorId) {
+                                     @RequestParam(name = "sensorId") Integer sensorId,
+                                     HttpServletRequest httpRequest) {
     User user = getUserFromAuthorization(authorization);
     if (user.getType() == User.Role.ADMIN) {
       try {
         alertService.deleteAlertsBySensorId(sensorId);
+        logService.createLog(user.getId(), getIpAddress(httpRequest), "alert.deleted",
+            "alerts with sensorId = "+sensorId);
         return new ResponseEntity(HttpStatus.OK);
       } catch (ElementNotFoundException e) {
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
@@ -125,11 +128,15 @@ public class AlertController extends CoreController {
   @PostMapping(value = {""})
   public ResponseEntity<Alert> createAlert(
       @RequestHeader("authorization") String authorization,
-      @RequestBody Map<String, Object> newAlertFields) {
+      @RequestBody Map<String, Object> newAlertFields,
+      HttpServletRequest httpRequest) {
     User user = this.getUserFromAuthorization(authorization);
     if (user.getType() == User.Role.ADMIN || user.getType() == User.Role.MOD) {
       try {
-        return ResponseEntity.ok(alertService.createAlert(user, newAlertFields));
+        Alert alert = alertService.createAlert(user, newAlertFields);
+        logService.createLog(user.getId(), getIpAddress(httpRequest), "alert.created",
+            Integer.toString(alert.getId()));
+        return ResponseEntity.ok(alert);
       } catch (MissingFieldsException | InvalidFieldsValuesException fe) {
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
       }
@@ -164,11 +171,14 @@ public class AlertController extends CoreController {
 
   @DeleteMapping(value = {"/{alertId:.+}"})
   public ResponseEntity deleteAlert(@RequestHeader("authorization") String authorization,
-                                    @PathVariable("alertId") int alertId) {
+                                    @PathVariable("alertId") int alertId,
+                                    HttpServletRequest httpRequest) {
     User user = getUserFromAuthorization(authorization);
     if (user.getType() == User.Role.ADMIN || (user.getType() == User.Role.MOD)) {
       try {
         if (alertService.deleteAlert(user, alertId)) {
+          logService.createLog(user.getId(), getIpAddress(httpRequest), "alert.deleted",
+              Integer.toString(alertId));
           return new ResponseEntity(HttpStatus.OK);
         } else {
           return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
