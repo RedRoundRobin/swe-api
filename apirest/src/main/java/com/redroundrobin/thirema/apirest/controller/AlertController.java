@@ -211,7 +211,6 @@ public class AlertController extends CoreController {
           return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
         }
       } catch (ElementNotFoundException enfe) {
-        enfe.printStackTrace();
         logger.trace(enfe.toString());
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
       } catch (NotAuthorizedException nae) {

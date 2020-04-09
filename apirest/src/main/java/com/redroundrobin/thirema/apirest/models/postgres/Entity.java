@@ -24,7 +24,7 @@ public class Entity implements Serializable {
   @SequenceGenerator(
       name = "entities_entity_id_seq",
       sequenceName = "entities_entity_id_seq",
-      allocationSize = 50
+      allocationSize = 25
   )
   @Column(name = "entity_id")
   private int entityId;

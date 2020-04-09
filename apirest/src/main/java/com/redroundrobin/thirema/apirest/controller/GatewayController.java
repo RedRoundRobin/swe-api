@@ -49,17 +49,27 @@ public class GatewayController extends CoreController {
       @RequestHeader(value = "Authorization") String authorization,
       @RequestParam(name = "deviceId", required = false) Integer deviceId) {
     User user = this.getUserFromAuthorization(authorization);
-    if (user.getType() == User.Role.ADMIN && deviceId != null) {
+    if (user.getType() == User.Role.ADMIN ) {
+      if (deviceId != null) {
+        List<Gateway> gateways = new ArrayList<>();
+        Gateway gateway = gatewayService.findByDeviceId(deviceId);
+        if (gateway != null) {
+          gateways.add(gateway);
+        }
+        return ResponseEntity.ok(gateways);
+      } else {
+        return ResponseEntity.ok(gatewayService.findAll());
+      }
+    } else if (deviceId != null) {
       List<Gateway> gateways = new ArrayList<>();
-      Gateway gateway = gatewayService.findByDeviceId(deviceId);
+      Gateway gateway = gatewayService.findByDeviceIdAndEntityId(deviceId,
+          user.getEntity().getId());
       if (gateway != null) {
         gateways.add(gateway);
       }
       return ResponseEntity.ok(gateways);
-    } else if (user.getType() == User.Role.ADMIN) {
-      return ResponseEntity.ok(gatewayService.findAll());
     } else {
-      return new ResponseEntity(HttpStatus.FORBIDDEN);
+      return ResponseEntity.ok(gatewayService.findAllByEntityId(user.getEntity().getId()));
     }
   }
 
@@ -72,7 +82,8 @@ public class GatewayController extends CoreController {
     if (user.getType() == User.Role.ADMIN) {
       return ResponseEntity.ok(gatewayService.findById(gatewayId));
     } else {
-      return new ResponseEntity(HttpStatus.FORBIDDEN);
+      return ResponseEntity.ok(gatewayService.findByIdAndEntityId(gatewayId,
+          user.getEntity().getId()));
     }
   }
 

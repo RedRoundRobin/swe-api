@@ -44,7 +44,7 @@ public class Alert implements Serializable {
   @SequenceGenerator(
       name = "alerts_alert_id_seq",
       sequenceName = "alerts_alert_id_seq",
-      allocationSize = 50
+      allocationSize = 25
   )
   @Column(name = "alert_id")
   private int alertId;

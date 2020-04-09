@@ -41,7 +41,7 @@ public class User implements Serializable {
   @SequenceGenerator(
       name = "users_user_id_seq",
       sequenceName = "users_user_id_seq",
-      allocationSize = 50
+      allocationSize = 25
   )
   @Column(name = "user_id")
   private int userId;
