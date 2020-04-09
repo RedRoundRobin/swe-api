@@ -10,6 +10,8 @@ import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundExceptio
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -32,6 +35,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/alerts")
 public class AlertController extends CoreController {
+
+  Logger logger = LoggerFactory.getLogger(AlertController.class);
 
   private AlertService alertService;
 
@@ -99,6 +104,24 @@ public class AlertController extends CoreController {
     return ResponseEntity.ok(response);
   }
 
+  @GetMapping(value = {"/{alertId:.+}"})
+  public ResponseEntity<Alert> getAlert(
+      @RequestHeader(value = "Authorization") String authorization,
+      @PathVariable("alertId") int alertId) {
+    User user = this.getUserFromAuthorization(authorization);
+
+    if (user.getType() == User.Role.ADMIN) {
+      return ResponseEntity.ok(alertService.findById(alertId));
+    } else {
+      try {
+        return ResponseEntity.ok(alertService.findByIdAndEntityId(alertId, user.getEntity().getId()));
+      } catch (NotAuthorizedException nae) {
+        logger.trace(nae.toString());
+        return new ResponseEntity(HttpStatus.FORBIDDEN);
+      }
+    }
+  }
+
   @PostMapping(value = {""})
   public ResponseEntity<Alert> createAlert(
       @RequestHeader("authorization") String authorization,
@@ -113,6 +136,30 @@ public class AlertController extends CoreController {
     } else {
       return new ResponseEntity(HttpStatus.FORBIDDEN);
     }
+  }
+
+  @PutMapping(value = {"/{alertId:.+}"})
+  public ResponseEntity<Alert> editAlert(
+      @RequestHeader("authorization") String authorization,
+      @RequestBody Map<String, Object> fieldsToEdit,
+      @PathVariable("alertId") int alertId,
+      HttpServletRequest httpRequest) {
+    User user = this.getUserFromAuthorization(authorization);
+    if (user.getType() == User.Role.ADMIN || user.getType() == User.Role.MOD) {
+      try {
+        Alert alert = alertService.editAlert(user, fieldsToEdit, alertId);
+        logService.createLog(user.getId(), getIpAddress(httpRequest), "alert.edit",
+            Integer.toString(alertId));
+        return ResponseEntity.ok(alert);
+      } catch (MissingFieldsException | InvalidFieldsValuesException | ElementNotFoundException e) {
+        logger.trace(e.toString());
+        return new ResponseEntity(HttpStatus.BAD_REQUEST);
+      } catch (NotAuthorizedException e) {
+        logger.trace(e.toString());
+        // go to return FORBIDDEN
+      }
+    }
+    return new ResponseEntity(HttpStatus.FORBIDDEN);
   }
 
   @DeleteMapping(value = {"/{alertId:.+}"})
@@ -135,24 +182,34 @@ public class AlertController extends CoreController {
     return new ResponseEntity(HttpStatus.FORBIDDEN);
   }
 
-  @PutMapping(value = {"/{alertId:.+}"})
+  @PostMapping("/{alertId:.+}")
   public ResponseEntity disableUserAlert(
       @RequestHeader("authorization") String authorization,
       @PathVariable("alertId") int alertId,
-      @RequestParam("enable") boolean enable) {
+      @RequestParam(value = "userId") int userId,
+      @RequestParam(value = "enable") boolean enable) {
     User user = this.getUserFromAuthorization(authorization);
-    if (user.getType() != User.Role.ADMIN) {
+    User userToEdit = userService.findById(userId);
+    if ((user.getType() == User.Role.ADMIN
+        && (userToEdit.getType() != User.Role.ADMIN || userToEdit.getId() == user.getId()))
+        || (user.getType() == User.Role.MOD && user.getEntity() == userToEdit.getEntity())
+        || user.getId() == userToEdit.getId()) {
       try {
-        if (!alertService.enableUserAlert(user, alertId, enable)) {
+        if (alertService.enableUserAlert(user, userToEdit, alertId, enable)) {
+          return new ResponseEntity(HttpStatus.OK);
+        } else {
           return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
         }
       } catch (ElementNotFoundException enfe) {
+        enfe.printStackTrace();
+        logger.trace(enfe.toString());
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
       } catch (NotAuthorizedException nae) {
-        return new ResponseEntity(HttpStatus.FORBIDDEN);
+        logger.trace(nae.toString());
+        // go to return FORBIDDEN
       }
     }
-    return new ResponseEntity(HttpStatus.OK);
+    return new ResponseEntity(HttpStatus.FORBIDDEN);
   }
 
 }
