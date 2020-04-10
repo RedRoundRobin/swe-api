@@ -8,6 +8,8 @@ import com.redroundrobin.thirema.apirest.service.TelegramService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import com.redroundrobin.thirema.apirest.utils.exception.TelegramChatNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
+
+import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -33,6 +35,8 @@ public class AuthController extends CoreController {
 
   private TelegramService telegramService;
 
+  private Random rnd;
+
   @Autowired
   public AuthController(CustomAuthenticationManager authenticationManager,
                         TelegramService telegramService, JwtUtil jwtUtil, LogService logService,
@@ -40,6 +44,8 @@ public class AuthController extends CoreController {
     super(jwtUtil, logService, userService);
     this.authenticationManager = authenticationManager;
     this.telegramService = telegramService;
+
+    rnd = new SecureRandom();
   }
 
   @PostMapping(value = "/auth")
@@ -76,7 +82,6 @@ public class AuthController extends CoreController {
 
     if (user.getTfa()) {
       if (user.getTelegramChat() != null && !user.getTelegramChat().isEmpty()) {
-        Random rnd = new Random();
         int sixDigitsCode = 100000 + rnd.nextInt(900000);
 
         Map<String, Object> telegramRequest = new HashMap<>();
