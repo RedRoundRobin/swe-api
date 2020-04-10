@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.springframework.stereotype.Service;
 
 @Service(value = "timescaleSensorService")
@@ -56,8 +55,9 @@ public class SensorService {
                   limit, gatewayName, realDeviceId, realSensorId));
         } else {
           sensorsData.put(id,
-              (List<Sensor>) sensorRepo.findAllByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(
-                  gatewayName, realDeviceId, realSensorId));
+              (List<Sensor>) sensorRepo
+                  .findAllByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(gatewayName,
+                      realDeviceId, realSensorId));
         }
       } else {
         sensorsData.put(id, Collections.emptyList());
@@ -95,8 +95,9 @@ public class SensorService {
                 gatewayName, realDeviceId, realSensorId));
       } else {
         sensorsMap.put(s.getId(),
-            (List<Sensor>) sensorRepo.findAllByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(
-                gatewayName, realDeviceId, realSensorId));
+            (List<Sensor>) sensorRepo
+                .findAllByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(gatewayName,
+                    realDeviceId, realSensorId));
       }
     }
 
@@ -132,8 +133,8 @@ public class SensorService {
       String gatewayName = sensor.getDevice().getGateway().getName();
       int realDeviceId = sensor.getDevice().getRealDeviceId();
       int realSensorId = sensor.getRealSensorId();
-      return sensorRepo.findTopByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(gatewayName,
-          realDeviceId, realSensorId);
+      return sensorRepo.findTopByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(
+          gatewayName, realDeviceId, realSensorId);
     } else {
       return null;
     }
