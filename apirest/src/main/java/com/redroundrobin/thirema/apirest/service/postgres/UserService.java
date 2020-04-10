@@ -79,12 +79,13 @@ public class UserService implements UserDetailsService {
     userFields.put("telegramName", true);
     userFields.put("twoFactorAuthentication", true);
     userFields.put("entityId", true);
-    userFields.put("deleted", false);
+    userFields.put("deleted", true);
 
     switch (role) {
       case ADMIN:
         if (itself) {
           userFields.replace("type", false);
+          userFields.replace("deleted", false);
           userFields.replace("entityId", false);
         }
 
@@ -94,6 +95,8 @@ public class UserService implements UserDetailsService {
           userFields.replace("password", false);
           userFields.replace("telegramName", false);
           userFields.replace("twoFactorAuthentication", false);
+        } else {
+          userFields.replace("deleted", false);
         }
         userFields.replace("type", false);
         userFields.replace("entityId", false);
@@ -104,6 +107,7 @@ public class UserService implements UserDetailsService {
         userFields.replace("surname", false);
         userFields.replace("type", false);
         userFields.replace("entityId", false);
+        userFields.replace("deleted", false);
 
         break;
       default:
@@ -176,6 +180,9 @@ public class UserService implements UserDetailsService {
           break;
         case "entityId":
           userToEdit.setEntity(entityRepo.findById((int)fieldsToEdit.get("entityId")).orElse(null));
+          break;
+        case "deleted":
+          userToEdit.setDeleted((boolean) value);
           break;
         default:
       }
