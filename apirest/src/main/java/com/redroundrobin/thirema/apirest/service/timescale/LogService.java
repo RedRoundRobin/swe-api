@@ -14,11 +14,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class LogService {
 
-  private EntityRepository entityRepo;
+  private final EntityRepository entityRepo;
 
-  private LogRepository logRepo;
+  private final LogRepository logRepo;
 
-  private UserRepository userRepo;
+  private final UserRepository userRepo;
 
   private List<Log> findAllByOptEntityId(Integer entityId) {
     List<Integer> userIds;

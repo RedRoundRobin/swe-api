@@ -13,11 +13,11 @@ import org.springframework.stereotype.Service;
 @Service(value = "timescaleSensorService")
 public class SensorService {
 
-  private SensorRepository sensorRepo;
+  private final SensorRepository sensorRepo;
 
-  private com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository postgreSensorRepo;
+  private final com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository postgreSensorRepo;
 
-  private EntityRepository entityRepo;
+  private final EntityRepository entityRepo;
 
   public SensorService(SensorRepository sensorRepository,
                        com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository

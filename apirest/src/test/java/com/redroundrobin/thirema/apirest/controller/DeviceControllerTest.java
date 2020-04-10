@@ -13,7 +13,6 @@ import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentMatchers;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -23,8 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -49,10 +47,10 @@ public class DeviceControllerTest {
   @MockBean
   private SensorService sensorService;
 
-  private String userTokenWithBearer = "Bearer userToken";
-  private String adminTokenWithBearer = "Bearer adminToken";
-  private String userToken = "userToken";
-  private String adminToken = "adminToken";
+  private final String userTokenWithBearer = "Bearer userToken";
+  private final String adminTokenWithBearer = "Bearer adminToken";
+  private final String userToken = "userToken";
+  private final String adminToken = "adminToken";
 
   private Entity entity1;
   private Entity entity2;
@@ -87,11 +85,9 @@ public class DeviceControllerTest {
     admin = new User(1, "admin", "admin", "admin", "pass", User.Role.ADMIN);
     user = new User(2, "user", "user", "user", "user", User.Role.USER);
 
-
     // -------------------------------------- Set entities ----------------------------------------
     entity1 = new Entity(1, "entity1", "loc1");
     entity2 = new Entity(2, "entity2", "loc2");
-
 
     // -------------------------------------- Set Devices -----------------------------------------
     device1 = new Device(1, "dev1", 1, 1);
@@ -111,26 +107,21 @@ public class DeviceControllerTest {
     allDevices.add(device6);
     allDevices.add(device7);
 
-
     // ----------------------------------- Set entities to users ----------------------------------
     user.setEntity(entity1);
-
 
     // ---------------------------------------- Set gateways ---------------------------------------
     gateway1 = new Gateway(1, "gw1");
     gateway2 = new Gateway(2, "gw2");
     gateway3 = new Gateway(3, "gw3");
 
-
     // ---------------------------------------- Set sensors ---------------------------------------
     sensor1 = new Sensor(1, "type1", 1);
     sensor2 = new Sensor(2, "type2", 2);
 
-
     // --------------------------------- Set devices to sensors ----------------------------------
     sensor1.setDevice(device1);
     sensor2.setDevice(device1);
-
 
     // ---------------------------------- Set gateways to devices -------------------------------
     device1.setGateway(gateway1);
@@ -147,7 +138,6 @@ public class DeviceControllerTest {
     entity1Devices.add(device3);
     entity1Devices.add(device4);
 
-
     // Core Controller needed mock
     when(jwtUtil.extractUsername(userToken)).thenReturn(user.getEmail());
     when(jwtUtil.extractUsername(adminToken)).thenReturn(admin.getEmail());
@@ -157,10 +147,8 @@ public class DeviceControllerTest {
 
     when(deviceService.findAll()).thenReturn(allDevices);
     when(deviceService.findAllByEntityId(1)).thenReturn(entity1Devices);
-    when(deviceService.findAllByGatewayId(anyInt())).thenAnswer(i -> {
-      return allDevices.stream().filter(d -> i.getArgument(0).equals(d.getGateway().getId()))
-          .collect(Collectors.toList());
-    });
+    when(deviceService.findAllByGatewayId(anyInt())).thenAnswer(i -> allDevices.stream().filter(d -> i.getArgument(0).equals(d.getGateway().getId()))
+        .collect(Collectors.toList()));
     when(deviceService.findAllByEntityIdAndGatewayId(anyInt(),anyInt())).thenAnswer(i -> {
       if (i.getArgument(0).equals(1)) {
         return entity1Devices.stream().filter(d -> i.getArgument(1).equals(d.getGateway().getId()))
@@ -200,14 +188,14 @@ public class DeviceControllerTest {
   public void getEntity1AndGateway1DevicesByAdmin() {
     ResponseEntity<List<Device>> response = deviceController.getDevices(adminTokenWithBearer, 1, 1);
 
-    assertTrue(!response.getBody().isEmpty());
+    assertFalse(response.getBody().isEmpty());
   }
 
   @Test
   public void getGateway1DevicesByAdmin() {
     ResponseEntity<List<Device>> response = deviceController.getDevices(adminTokenWithBearer, null, 1);
 
-    assertTrue(!response.getBody().isEmpty());
+    assertFalse(response.getBody().isEmpty());
   }
 
   @Test
@@ -221,7 +209,7 @@ public class DeviceControllerTest {
   public void getGateway1DevicesByUser() {
     ResponseEntity<List<Device>> response = deviceController.getDevices(userTokenWithBearer, null, 1);
 
-    assertTrue(!response.getBody().isEmpty());
+    assertFalse(response.getBody().isEmpty());
   }
 
   @Test
@@ -230,8 +218,6 @@ public class DeviceControllerTest {
 
     assertEquals(entity1Devices, response.getBody());
   }
-
-
 
   @Test
   public void getDeviceByAdmin() {
@@ -246,10 +232,8 @@ public class DeviceControllerTest {
     ResponseEntity<Device> response = deviceController.getDevice(userTokenWithBearer,
         device6.getId());
 
-    assertEquals(null, response.getBody());
+    assertNull(response.getBody());
   }
-
-
 
   @Test
   public void getSensorsByDeviceIdByAdmin() {
@@ -266,8 +250,6 @@ public class DeviceControllerTest {
 
     assertEquals(device1Sensors, response.getBody());
   }
-
-
 
   @Test
   public void getSensorByDeviceByAdmin() {

@@ -32,11 +32,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserService implements UserDetailsService {
 
-  private UserRepository userRepo;
+  private final UserRepository userRepo;
 
-  private AlertRepository alertRepo;
+  private final AlertRepository alertRepo;
 
-  private EntityRepository entityRepo;
+  private final EntityRepository entityRepo;
 
   @Autowired
   public UserService(UserRepository userRepository, AlertRepository alertRepository,
@@ -56,9 +56,7 @@ public class UserService implements UserDetailsService {
     creatable.add("entityId");
     creatable.add("password");
 
-    boolean onlyCreatableKeys = keys.stream()
-        .filter(key -> !creatable.contains(key))
-        .count() == 0;
+    boolean onlyCreatableKeys = creatable.containsAll(keys);
 
     if (!onlyCreatableKeys) {
       throw new InvalidFieldsValuesException("");
@@ -115,15 +113,14 @@ public class UserService implements UserDetailsService {
 
     List<String> editable = new ArrayList<>();
     List<String> notEditable = new ArrayList<>();
-    userFields.entrySet().stream()
-        .forEach(e -> {
-          if (e.getValue()) {
-            editable.add(e.getKey());
-          } else {
-            notEditable.add(e.getKey());
-          }
-        });
-    if (!keys.stream().anyMatch(k -> userFields.keySet().contains(k))) {
+    userFields.forEach((key, value) -> {
+      if (value) {
+        editable.add(key);
+      } else {
+        notEditable.add(key);
+      }
+    });
+    if (keys.stream().noneMatch(userFields::containsKey)) {
       throw new MissingFieldsException("There aren't fields that can be edited");
     } else {
       return keys.stream().allMatch(k -> editable.contains(k) || !notEditable.contains(k));
@@ -270,12 +267,7 @@ public class UserService implements UserDetailsService {
 
   public List<User> findAllByDisabledAlerts(List<Integer> alertsIds) {
     List<Alert> alerts = new ArrayList<>();
-    alertsIds.forEach(aid -> {
-      Alert alert = alertRepo.findById(aid).orElse(null);
-      if (alert != null) {
-        alerts.add(alert);
-      }
-    });
+    alertsIds.forEach(aid -> alertRepo.findById(aid).ifPresent(alerts::add));
     if (!alerts.isEmpty()) {
       return (List<User>) userRepo.findAllByDisabledAlertsIn(alerts);
     } else {
@@ -413,7 +405,7 @@ public class UserService implements UserDetailsService {
         || email != null && userRepo.findByEmail(email) == null) {
       newUser = new User(rawUserToInsert.get("name").getAsString(),
           rawUserToInsert.get("surname").getAsString(), email,
-          rawUserToInsert.get("password").getAsString(), User.Role.values()[(int)userToInsertType]);
+          rawUserToInsert.get("password").getAsString(), User.Role.values()[userToInsertType]);
     } else if (email != null && userRepo.findByEmail(email) != null) {
       throw new ConflictException("");
     } else {

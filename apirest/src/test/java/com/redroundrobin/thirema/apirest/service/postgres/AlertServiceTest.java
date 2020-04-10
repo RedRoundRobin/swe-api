@@ -17,7 +17,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringRunner;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -27,11 +26,7 @@ import java.util.Set;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -53,9 +48,7 @@ public class AlertServiceTest {
   @MockBean
   private UserRepository userRepo;
 
-
   private AlertService alertService;
-
 
   private Entity entity1;
   private Entity entity2;
@@ -75,7 +68,6 @@ public class AlertServiceTest {
   private User user3;
   private User mod2;
 
-
   @Before
   public void setUp() {
     alertService = new AlertService(alertRepo,entityRepo,sensorRepo,userRepo);
@@ -90,7 +82,6 @@ public class AlertServiceTest {
     allEntities.add(entity2);
     allEntities.add(entity3);
 
-
     // ----------------------------------------- Set Sensors --------------------------------------
     sensor1 = new Sensor(1, "type1", 1);
     sensor2 = new Sensor(2, "type2", 2);
@@ -101,7 +92,6 @@ public class AlertServiceTest {
     allSensors.add(sensor2);
     allSensors.add(sensor3);
 
-
     // ----------------------------------------- Set Alerts --------------------------------------
     alert1 = new Alert(1, 10.0, Alert.Type.GREATER, entity1, sensor1);
     alert2 = new Alert(2, 10.0, Alert.Type.GREATER, entity1, sensor1);
@@ -111,7 +101,6 @@ public class AlertServiceTest {
     allAlerts.add(alert1);
     allAlerts.add(alert2);
     allAlerts.add(alert3);
-
 
     // ----------------------------------------- Set Users --------------------------------------
     user1 = new User(1, "name1", "surname1", "email1", "pass1", User.Role.USER);
@@ -127,7 +116,6 @@ public class AlertServiceTest {
     allUsers.add(mod2);
     allUsers.add(admin1);
 
-
     // ---------------------------------- Set Alerts to Users -----------------------------------
     Set<Alert> user1Alerts = new HashSet<>();
     user1Alerts.add(alert1);
@@ -141,11 +129,9 @@ public class AlertServiceTest {
 
     admin1.setDisabledAlerts(Collections.emptySet());
 
-
     // ---------------------------------- Set Entities to Users ----------------------------------
     user1.setEntity(entity1);
     mod2.setEntity(entity2);
-
 
     // ------------------------------- Set Sensors to Entites ------------------------------------
     Set<Sensor> entity1Sensors = new HashSet<>();
@@ -161,8 +147,6 @@ public class AlertServiceTest {
     entity3Sensors.add(sensor3);
     entity3.setSensors(entity3Sensors);
     // entity1 has sensor1, entity2 has sensor2, entity3 has sensor2 and sensor3
-
-
 
     when(alertRepo.findAllByDeletedFalse()).thenReturn(allAlerts);
     when(alertRepo.findAllByEntityAndDeletedFalse(any(Entity.class))).thenAnswer(i -> {
@@ -190,10 +174,8 @@ public class AlertServiceTest {
       return allAlerts.stream().filter(a -> user.getDisabledAlerts().contains(a))
           .collect(Collectors.toList());
     });
-    when(alertRepo.findById(anyInt())).thenAnswer(i -> {
-      return allAlerts.stream().filter(a -> i.getArgument(0).equals(a.getId()))
-          .findFirst();
-    });
+    when(alertRepo.findById(anyInt())).thenAnswer(i -> allAlerts.stream().filter(a -> i.getArgument(0).equals(a.getId()))
+        .findFirst());
     when(alertRepo.save(any(Alert.class))).thenAnswer(i -> {
       Alert alert = i.getArgument(0);
       if (alert.getId() == alert3.getId()) {
@@ -203,15 +185,11 @@ public class AlertServiceTest {
       }
     });
 
-    when(entityRepo.findById(anyInt())).thenAnswer(i -> {
-      return allEntities.stream().filter(e -> i.getArgument(0).equals(e.getId()))
-          .findFirst();
-    });
+    when(entityRepo.findById(anyInt())).thenAnswer(i -> allEntities.stream().filter(e -> i.getArgument(0).equals(e.getId()))
+        .findFirst());
 
-    when(sensorRepo.findById(anyInt())).thenAnswer(i -> {
-      return allSensors.stream().filter(s -> i.getArgument(0).equals(s.getId()))
-          .findFirst();
-    });
+    when(sensorRepo.findById(anyInt())).thenAnswer(i -> allSensors.stream().filter(s -> i.getArgument(0).equals(s.getId()))
+        .findFirst());
     when(sensorRepo.findBySensorIdAndEntities(anyInt(),any(Entity.class))).thenAnswer(i -> {
       Sensor sensor = allSensors.stream().filter(s -> i.getArgument(0).equals(s.getId())).findFirst().orElse(null);
       Entity entity = i.getArgument(1);
@@ -222,10 +200,8 @@ public class AlertServiceTest {
       }
     });
 
-    when(userRepo.findById(anyInt())).thenAnswer(i -> {
-      return allUsers.stream().filter(u -> i.getArgument(0).equals(u.getId()))
-          .findFirst();
-    });
+    when(userRepo.findById(anyInt())).thenAnswer(i -> allUsers.stream().filter(u -> i.getArgument(0).equals(u.getId()))
+        .findFirst());
 
   }
 
@@ -233,16 +209,14 @@ public class AlertServiceTest {
   public void findAllAlerts() {
     List<Alert> alerts = alertService.findAll();
 
-    assertTrue(!alerts.isEmpty());
+    assertFalse(alerts.isEmpty());
   }
-
-
 
   @Test
   public void findAllAlertsByEntityId() {
     List<Alert> alerts = alertService.findAllByEntityId(entity1.getId());
 
-    assertTrue(!alerts.isEmpty());
+    assertFalse(alerts.isEmpty());
   }
 
   @Test
@@ -252,13 +226,11 @@ public class AlertServiceTest {
     assertTrue(alerts.isEmpty());
   }
 
-
-
   @Test
   public void findAllAlertsByEntityIdAndSensorId() {
     List<Alert> alerts = alertService.findAllByEntityIdAndSensorId(entity1.getId(), sensor1.getId());
 
-    assertTrue(!alerts.isEmpty());
+    assertFalse(alerts.isEmpty());
   }
 
   @Test
@@ -268,13 +240,11 @@ public class AlertServiceTest {
     assertTrue(alerts.isEmpty());
   }
 
-
-
   @Test
   public void findAllAlertsBySensorId() {
     List<Alert> alerts = alertService.findAllBySensorId(sensor1.getId());
 
-    assertTrue(alerts.stream().count() == 2);
+    assertEquals(2, (long) alerts.size());
   }
 
   @Test
@@ -284,13 +254,11 @@ public class AlertServiceTest {
     assertTrue(alerts.isEmpty());
   }
 
-
-
   @Test
   public void findAllDisabledAlertsByUserId() {
     List<Alert> alerts = alertService.findAllDisabledByUserId(user1.getId());
 
-    assertTrue(alerts.stream().count() == 1);
+    assertEquals(1, (long) alerts.size());
   }
 
   @Test
@@ -300,16 +268,12 @@ public class AlertServiceTest {
     assertTrue(alerts.isEmpty());
   }
 
-
-
   @Test
   public void findAlertById() {
     Alert alert = alertService.findById(alert1.getId());
 
     assertNotNull(alert);
   }
-
-
 
   @Test
   public void findAlertByIdAndDifferenteEntityIdSuccessfull() {
@@ -319,7 +283,7 @@ public class AlertServiceTest {
       assertEquals(alert1, alert);
     } catch (NotAuthorizedException e) {
       e.printStackTrace();
-      assertTrue(false);
+      fail();
     }
   }
 
@@ -331,23 +295,21 @@ public class AlertServiceTest {
       assertNull(alert);
     } catch (NotAuthorizedException e) {
       e.printStackTrace();
-      assertTrue(false);
+      fail();
     }
   }
 
   @Test
   public void findAlertByIdAndEntityIdThrowNotAuthorizedException() {
     try {
-      Alert alert = alertService.findByIdAndEntityId(alert1.getId(), entity3.getId());
+      alertService.findByIdAndEntityId(alert1.getId(), entity3.getId());
 
-      assertTrue(false);
+      fail();
     } catch (NotAuthorizedException e) {
       e.printStackTrace();
       assertTrue(true);
     }
   }
-
-
 
   @Test
   public void createAlertSuccessfull() {
@@ -362,8 +324,8 @@ public class AlertServiceTest {
 
       assertNotNull(alert);
     } catch (Exception e) {
-      System.out.println(e);
-      assertTrue(false);
+      e.printStackTrace();
+      fail();
     }
   }
 
@@ -376,15 +338,15 @@ public class AlertServiceTest {
     newAlertFields.put("entity", entity1.getId());
 
     try {
-      Alert alert = alertService.createAlert(admin1, newAlertFields);
+      alertService.createAlert(admin1, newAlertFields);
 
-      assertTrue(false);
+      fail();
     } catch (InvalidFieldsValuesException e) {
       assertEquals("The type with provided id is not found", e.getMessage());
       assertTrue(true);
     } catch (Exception e) {
-      System.out.println(e);
-      assertTrue(false);
+      e.printStackTrace();
+      fail();
     }
   }
 
@@ -396,14 +358,14 @@ public class AlertServiceTest {
     newAlertFields.put("sensor", sensor1.getId());
 
     try {
-      Alert alert = alertService.createAlert(user1, newAlertFields);
+      alertService.createAlert(user1, newAlertFields);
 
-      assertTrue(false);
+      fail();
     } catch (MissingFieldsException e) {
       assertEquals("One or more needed fields are missing", e.getMessage());
       assertTrue(true);
     } catch (Exception e) {
-      assertTrue(false);
+      fail();
     }
   }
 
@@ -416,15 +378,15 @@ public class AlertServiceTest {
     newAlertFields.put("entity", entity2.getId());
 
     try {
-      Alert alert = alertService.createAlert(user1, newAlertFields);
+      alertService.createAlert(user1, newAlertFields);
 
-      assertTrue(false);
+      fail();
     } catch (InvalidFieldsValuesException e) {
       assertEquals("The entity with provided id is not found or not authorized", e.getMessage());
       assertTrue(true);
     } catch (Exception e) {
-      System.out.println(e);
-      assertTrue(false);
+      e.printStackTrace();
+      fail();
     }
   }
 
@@ -437,19 +399,17 @@ public class AlertServiceTest {
     newAlertFields.put("entity", entity1.getId());
 
     try {
-      Alert alert = alertService.createAlert(user1, newAlertFields);
+      alertService.createAlert(user1, newAlertFields);
 
-      assertTrue(false);
+      fail();
     } catch (InvalidFieldsValuesException e) {
       assertEquals("The sensor with provided id is not found or not authorized", e.getMessage());
       assertTrue(true);
     } catch (MissingFieldsException e) {
-      System.out.println(e);
-      assertTrue(false);
+      e.printStackTrace();
+      fail();
     }
   }
-
-
 
   @Test
   public void editAlertSuccessfull() {
@@ -459,18 +419,9 @@ public class AlertServiceTest {
       Alert alert = alertService.editAlert(admin1, fieldsToEdit, alert1.getId());
 
       assertEquals(5.0, alert.getThreshold());
-    } catch (InvalidFieldsValuesException e) {
+    } catch (InvalidFieldsValuesException | MissingFieldsException | ElementNotFoundException | NotAuthorizedException e) {
       e.printStackTrace();
-      assertTrue(false);
-    } catch (MissingFieldsException e) {
-      e.printStackTrace();
-      assertTrue(false);
-    } catch (ElementNotFoundException e) {
-      e.printStackTrace();
-      assertTrue(false);
-    } catch (NotAuthorizedException e) {
-      e.printStackTrace();
-      assertTrue(false);
+      fail();
     }
   }
 
@@ -479,21 +430,15 @@ public class AlertServiceTest {
     Map<String, Object> fieldsToEdit = new HashMap<>();
     fieldsToEdit.put("tresold", 5.0);
     try {
-      Alert alert = alertService.editAlert(admin1, fieldsToEdit, alert1.getId());
+      alertService.editAlert(admin1, fieldsToEdit, alert1.getId());
 
-      assertTrue(false);
-    } catch (InvalidFieldsValuesException e) {
+      fail();
+    } catch (InvalidFieldsValuesException | ElementNotFoundException | NotAuthorizedException e) {
       e.printStackTrace();
-      assertTrue(false);
+      fail();
     } catch (MissingFieldsException e) {
       e.printStackTrace();
       assertTrue(true);
-    } catch (ElementNotFoundException e) {
-      e.printStackTrace();
-      assertTrue(false);
-    } catch (NotAuthorizedException e) {
-      e.printStackTrace();
-      assertTrue(false);
     }
   }
 
@@ -502,21 +447,15 @@ public class AlertServiceTest {
     Map<String, Object> fieldsToEdit = new HashMap<>();
     fieldsToEdit.put("tresold", 5.0);
     try {
-      Alert alert = alertService.editAlert(admin1, fieldsToEdit, 15);
+      alertService.editAlert(admin1, fieldsToEdit, 15);
 
-      assertTrue(false);
-    } catch (InvalidFieldsValuesException e) {
+      fail();
+    } catch (InvalidFieldsValuesException | MissingFieldsException | NotAuthorizedException e) {
       e.printStackTrace();
-      assertTrue(false);
-    } catch (MissingFieldsException e) {
-      e.printStackTrace();
-      assertTrue(false);
+      fail();
     } catch (ElementNotFoundException e) {
       e.printStackTrace();
       assertTrue(true);
-    } catch (NotAuthorizedException e) {
-      e.printStackTrace();
-      assertTrue(false);
     }
   }
 
@@ -525,25 +464,17 @@ public class AlertServiceTest {
     Map<String, Object> fieldsToEdit = new HashMap<>();
     fieldsToEdit.put("tresold", 5.0);
     try {
-      Alert alert = alertService.editAlert(mod2, fieldsToEdit, alert1.getId());
+      alertService.editAlert(mod2, fieldsToEdit, alert1.getId());
 
-      assertTrue(false);
-    } catch (InvalidFieldsValuesException e) {
+      fail();
+    } catch (InvalidFieldsValuesException | ElementNotFoundException | MissingFieldsException e) {
       e.printStackTrace();
-      assertTrue(false);
-    } catch (MissingFieldsException e) {
-      e.printStackTrace();
-      assertTrue(false);
-    } catch (ElementNotFoundException e) {
-      e.printStackTrace();
-      assertTrue(false);
+      fail();
     } catch (NotAuthorizedException e) {
       e.printStackTrace();
       assertTrue(true);
     }
   }
-
-
 
   @Test
   public void enbleUserAlertDisableUser1AlertSuccessfull() {
@@ -552,12 +483,9 @@ public class AlertServiceTest {
       boolean disabled = alertService.enableUserAlert(user1, user1, alert1.getId(), true);
 
       assertTrue(disabled);
-    } catch (ElementNotFoundException e) {
+    } catch (ElementNotFoundException | NotAuthorizedException e) {
       e.printStackTrace();
-      assertTrue(false);
-    } catch (NotAuthorizedException e) {
-      e.printStackTrace();
-      assertTrue(false);
+      fail();
     }
   }
 
@@ -568,12 +496,9 @@ public class AlertServiceTest {
       boolean disabled = alertService.enableUserAlert(user1, user1, alert2.getId(), true);
 
       assertTrue(disabled);
-    } catch (ElementNotFoundException e) {
+    } catch (ElementNotFoundException | NotAuthorizedException e) {
       e.printStackTrace();
-      assertTrue(false);
-    } catch (NotAuthorizedException e) {
-      e.printStackTrace();
-      assertTrue(false);
+      fail();
     }
   }
 
@@ -584,24 +509,21 @@ public class AlertServiceTest {
       boolean disabled = alertService.enableUserAlert(user1, user1, alert2.getId(), false);
 
       assertFalse(disabled);
-    } catch (ElementNotFoundException e) {
+    } catch (ElementNotFoundException | NotAuthorizedException e) {
       e.printStackTrace();
-      assertTrue(false);
-    } catch (NotAuthorizedException e) {
-      e.printStackTrace();
-      assertTrue(false);
+      fail();
     }
   }
 
   @Test
   public void enbleUserAlertEnableUser1AlertThrowNotAuthorizedException() {
     try {
-      boolean disabled = alertService.enableUserAlert(mod2, user1, alert3.getId(), true);
+      alertService.enableUserAlert(mod2, user1, alert3.getId(), true);
 
-      assertTrue(false);
+      fail();
     } catch (ElementNotFoundException e) {
       e.printStackTrace();
-      assertTrue(false);
+      fail();
     } catch (NotAuthorizedException e) {
       e.printStackTrace();
       assertTrue(true);
@@ -611,19 +533,17 @@ public class AlertServiceTest {
   @Test
   public void enbleUserAlertEnableUser1AlertThrowElementNotFoundException() {
     try {
-      boolean disabled = alertService.enableUserAlert(user1, user1, 10, true);
+      alertService.enableUserAlert(user1, user1, 10, true);
 
-      assertTrue(false);
+      fail();
     } catch (ElementNotFoundException e) {
       e.printStackTrace();
       assertTrue(true);
     } catch (NotAuthorizedException e) {
       e.printStackTrace();
-      assertTrue(false);
+      fail();
     }
   }
-
-
 
   @Test
   public void deleteAlertByAdminSuccessfull() {
@@ -631,12 +551,9 @@ public class AlertServiceTest {
       boolean deleted = alertService.deleteAlert(admin1, alert1.getId());
 
       assertTrue(deleted);
-    } catch (ElementNotFoundException e) {
+    } catch (ElementNotFoundException | NotAuthorizedException e) {
       e.printStackTrace();
-      assertTrue(false);
-    } catch (NotAuthorizedException e) {
-      e.printStackTrace();
-      assertTrue(false);
+      fail();
     }
   }
 
@@ -646,24 +563,21 @@ public class AlertServiceTest {
       boolean deleted = alertService.deleteAlert(mod2, alert3.getId());
 
       assertFalse(deleted);
-    } catch (ElementNotFoundException e) {
+    } catch (ElementNotFoundException | NotAuthorizedException e) {
       e.printStackTrace();
-      assertTrue(false);
-    } catch (NotAuthorizedException e) {
-      e.printStackTrace();
-      assertTrue(false);
+      fail();
     }
   }
 
   @Test
   public void deleteAlertByUserThrowNotAuthorizedException() {
     try {
-      boolean deleted = alertService.deleteAlert(user1, alert1.getId());
+      alertService.deleteAlert(user1, alert1.getId());
 
-      assertTrue(false);
+      fail();
     } catch (ElementNotFoundException e) {
       e.printStackTrace();
-      assertTrue(false);
+      fail();
     } catch (NotAuthorizedException e) {
       e.printStackTrace();
       assertTrue(true);
@@ -680,19 +594,17 @@ public class AlertServiceTest {
       }
     });
     try {
-      boolean deleted = alertService.deleteAlert(admin1, 10);
+      alertService.deleteAlert(admin1, 10);
 
-      assertTrue(false);
+      fail();
     } catch (ElementNotFoundException e) {
       e.printStackTrace();
       assertTrue(true);
     } catch (NotAuthorizedException e) {
       e.printStackTrace();
-      assertTrue(false);
+      fail();
     }
   }
-
-
 
   @Test
   public void deleteAlertBySensorIdByAdmin1Successfull() {
@@ -703,7 +615,7 @@ public class AlertServiceTest {
       assertTrue(true);
     } catch (ElementNotFoundException e) {
       e.printStackTrace();
-      assertTrue(false);
+      fail();
     }
   }
 
@@ -713,7 +625,7 @@ public class AlertServiceTest {
     try {
       alertService.deleteAlertsBySensorId(10);
 
-      assertTrue(false);
+      fail();
     } catch (ElementNotFoundException e) {
       e.printStackTrace();
       assertTrue(true);

@@ -24,8 +24,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -58,7 +56,6 @@ public class AuthControllerTest {
   private LogService logService;
 
   private AuthController authController;
-
 
   MockHttpServletRequest httpRequest;
 
@@ -185,12 +182,10 @@ public class AuthControllerTest {
     });
   }
 
-
-
   // authentication METHOD TESTS
 
   @Test
-  public void authenticationSuccessfull() throws Exception {
+  public void authenticationSuccessfull() {
 
     Map<String, Object> request = new HashMap<>();
     request.put("username",admin.getEmail());
@@ -206,12 +201,12 @@ public class AuthControllerTest {
       assertNotEquals("", (String) responseMap.get("token"));
       assertNotNull(responseMap.get("user"));
     } catch (ClassCastException cce) {
-      assertTrue(false);
+      fail();
     }
   }
 
   @Test
-  public void authenticationBadRequestError400() throws Exception {
+  public void authenticationBadRequestError400() {
 
     Map<String, Object> request = new HashMap<>();
 
@@ -221,7 +216,7 @@ public class AuthControllerTest {
   }
 
   @Test
-  public void authenticationWrongPasswordFoundError401() throws Exception {
+  public void authenticationWrongPasswordFoundError401() {
 
     Map<String, Object> request = new HashMap<>();
     request.put("username",admin.getEmail());
@@ -233,7 +228,7 @@ public class AuthControllerTest {
   }
 
   @Test
-  public void authenticationDisabledUserError403() throws Exception {
+  public void authenticationDisabledUserError403() {
 
     Map<String, Object> request = new HashMap<>();
     request.put("username",disabledAdmin.getEmail());
@@ -245,7 +240,7 @@ public class AuthControllerTest {
   }
 
   @Test
-  public void authenticationWithTfaSuccessfull() throws Exception {
+  public void authenticationWithTfaSuccessfull() {
 
     Map<String, Object> request = new HashMap<>();
     request.put("username",adminTfa1.getEmail());
@@ -264,12 +259,12 @@ public class AuthControllerTest {
       assertNotNull(responseMap.get("token"));
       assertTrue((boolean) responseMap.get("tfa"));
     } catch (ClassCastException cce) {
-      assertTrue(false);
+      fail();
     }
   }
 
   @Test
-  public void authenticationWithTfaNoTelegramComunicationError500() throws Exception {
+  public void authenticationWithTfaNoTelegramComunicationError500() {
 
     Map<String, Object> request = new HashMap<>();
     request.put("username",adminTfa1.getEmail());
@@ -283,7 +278,7 @@ public class AuthControllerTest {
   }
 
   @Test
-  public void authenticationWithTfaUserWithoutTelegramChatError500() throws Exception {
+  public void authenticationWithTfaUserWithoutTelegramChatError500() {
 
     Map<String, Object> request = new HashMap<>();
     request.put("username",adminTfa2.getEmail());
@@ -294,12 +289,10 @@ public class AuthControllerTest {
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
   }
 
-
-
   // tfaAuthentication METHOD TESTS
 
   @Test
-  public void tfaAuthenticationSuccessfull() throws Exception {
+  public void tfaAuthenticationSuccessfull() {
 
     String authCode = "code";
     Map<String, Object> request = new HashMap<>();
@@ -319,12 +312,12 @@ public class AuthControllerTest {
       assertNotEquals("", (String) responseMap.get("token"));
       assertNotNull(responseMap.get("user"));
     } catch (ClassCastException cce) {
-      assertTrue(false);
+      fail();
     }
   }
 
   @Test
-  public void tfaAuthenticationBadRequestError400() throws Exception {
+  public void tfaAuthenticationBadRequestError400() {
 
     String authCode = "code";
     Map<String, Object> request = new HashMap<>();
@@ -339,7 +332,7 @@ public class AuthControllerTest {
   }
 
   @Test
-  public void tfaAuthenticationBadRequestIsNotTfaError400() throws Exception {
+  public void tfaAuthenticationBadRequestIsNotTfaError400() {
 
     String authCode = "code";
     Map<String, Object> request = new HashMap<>();
@@ -355,7 +348,7 @@ public class AuthControllerTest {
   }
 
   @Test
-  public void tfaAuthenticationUserNotFoundError401() throws Exception {
+  public void tfaAuthenticationUserNotFoundError401() {
 
     String authCode = "code";
     Map<String, Object> request = new HashMap<>();
@@ -371,7 +364,7 @@ public class AuthControllerTest {
   }
 
   @Test
-  public void tfaAuthenticationUserDisabledError403() throws Exception {
+  public void tfaAuthenticationUserDisabledError403() {
 
     String authCode = "code";
     Map<String, Object> request = new HashMap<>();
@@ -387,7 +380,7 @@ public class AuthControllerTest {
   }
 
   @Test
-  public void tfaAuthenticationWrongAuthCodeError401() throws Exception {
+  public void tfaAuthenticationWrongAuthCodeError401() {
 
     String authCode = "code";
     Map<String, Object> request = new HashMap<>();
@@ -402,12 +395,10 @@ public class AuthControllerTest {
     assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
   }
 
-
-
   // telegramAuthentication METHOD TESTS
 
   @Test
-  public void telegramAuthenticationSuccessfullCode1() throws Exception {
+  public void telegramAuthenticationSuccessfullCode1() {
 
     Map<String, Object> request = new HashMap<>();
     request.put("telegramName", adminTfa2.getTelegramName());
@@ -431,12 +422,12 @@ public class AuthControllerTest {
       assertNotEquals("", (String) responseMap.get("token"));
       assertEquals(1,(Integer) responseMap.get("code"));
     } catch (ClassCastException cce) {
-      assertTrue(false);
+      fail();
     }
   }
 
   @Test
-  public void telegramAuthenticationSuccessfullCode2() throws Exception {
+  public void telegramAuthenticationSuccessfullCode2() {
 
     Map<String, Object> request = new HashMap<>();
     request.put("telegramName", adminTfa1.getTelegramName());
@@ -456,12 +447,12 @@ public class AuthControllerTest {
       assertNotEquals("", (String) responseMap.get("token"));
       assertEquals(2,(Integer) responseMap.get("code"));
     } catch (ClassCastException cce) {
-      assertTrue(false);
+      fail();
     }
   }
 
   @Test
-  public void telegramAuthenticationBadRequestError400() throws Exception {
+  public void telegramAuthenticationBadRequestError400() {
 
     Map<String, Object> request = new HashMap<>();
     request.put("telegramName", adminTfa2.getTelegramName());
@@ -472,7 +463,7 @@ public class AuthControllerTest {
   }
 
   @Test
-  public void telegramAuthenticationNoTelegramNameFoundCode0() throws Exception {
+  public void telegramAuthenticationNoTelegramNameFoundCode0() {
 
     Map<String, Object> request = new HashMap<>();
     request.put("telegramName", adminTfa2.getTelegramName());
@@ -490,7 +481,7 @@ public class AuthControllerTest {
       assertEquals("", responseMap.get("token"));
       assertEquals(0,(Integer) responseMap.get("code"));
     } catch (ClassCastException cce) {
-      assertTrue(false);
+      fail();
     }
   }
 }

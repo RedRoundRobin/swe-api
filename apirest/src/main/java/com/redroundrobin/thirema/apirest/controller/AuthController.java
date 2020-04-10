@@ -29,11 +29,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class AuthController extends CoreController {
 
-  private CustomAuthenticationManager authenticationManager;
+  private final CustomAuthenticationManager authenticationManager;
 
-  private TelegramService telegramService;
+  private final TelegramService telegramService;
 
-  private Random rnd;
+  private final Random rnd;
 
   @Autowired
   public AuthController(CustomAuthenticationManager authenticationManager,

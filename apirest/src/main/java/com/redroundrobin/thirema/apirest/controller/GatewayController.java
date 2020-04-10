@@ -26,11 +26,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value = {"/gateways"})
 public class GatewayController extends CoreController {
 
-  private GatewayService gatewayService;
+  private final GatewayService gatewayService;
 
-  private DeviceService deviceService;
+  private final DeviceService deviceService;
 
-  private SensorService sensorService;
+  private final SensorService sensorService;
 
   @Autowired
   public GatewayController(GatewayService gatewayService, DeviceService deviceService,

@@ -23,9 +23,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value = {"/devices"})
 public class DeviceController extends CoreController {
 
-  private DeviceService deviceService;
+  private final DeviceService deviceService;
 
-  private SensorService sensorService;
+  private final SensorService sensorService;
 
   @Autowired
   public DeviceController(DeviceService deviceService, SensorService sensorService, JwtUtil jwtUtil,

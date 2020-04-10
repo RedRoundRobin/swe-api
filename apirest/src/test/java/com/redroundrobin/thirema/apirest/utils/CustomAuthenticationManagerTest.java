@@ -13,8 +13,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
@@ -31,8 +30,6 @@ public class CustomAuthenticationManagerTest {
     customAuthenticationManager = new CustomAuthenticationManager(userService);
   }
 
-
-
   @Test
   public void authenticateSuccessfull() {
     User user = new User("name","surname","email","password", User.Role.USER);
@@ -48,10 +45,8 @@ public class CustomAuthenticationManagerTest {
 
       assertEquals(auth.getPrincipal()+"", user.getEmail());
       assertEquals(auth.getCredentials()+"", user.getPassword());
-    } catch (BadCredentialsException bce) {
-      assertTrue(false);
-    } catch (DisabledException de) {
-      assertTrue(false);
+    } catch (BadCredentialsException | DisabledException bce) {
+      fail();
     }
   }
 
@@ -66,13 +61,13 @@ public class CustomAuthenticationManagerTest {
         user.getEmail(), "pass");
 
     try {
-      Authentication auth = customAuthenticationManager.authenticate(authenticationToken);
+      customAuthenticationManager.authenticate(authenticationToken);
 
-      assertTrue(false);
+      fail();
     } catch (BadCredentialsException bce) {
       assertTrue(true);
     } catch (DisabledException de) {
-      assertTrue(false);
+      fail();
     }
   }
 
@@ -88,11 +83,11 @@ public class CustomAuthenticationManagerTest {
         user.getEmail(), user.getPassword());
 
     try {
-      Authentication auth = customAuthenticationManager.authenticate(authenticationToken);
+      customAuthenticationManager.authenticate(authenticationToken);
 
-      assertTrue(false);
+      fail();
     } catch (BadCredentialsException bce) {
-      assertTrue(false);
+      fail();
     } catch (DisabledException de) {
       assertTrue(true);
     }

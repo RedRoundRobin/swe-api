@@ -4,9 +4,7 @@ import com.redroundrobin.thirema.apirest.models.postgres.Alert;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
-import com.redroundrobin.thirema.apirest.models.postgres.ViewGraph;
 import com.redroundrobin.thirema.apirest.service.postgres.AlertService;
-import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.service.timescale.LogService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
@@ -23,20 +21,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 
@@ -59,12 +51,12 @@ public class AlertControllerTest {
 
   MockHttpServletRequest httpRequest;
 
-  private String userTokenWithBearer = "Bearer userToken";
-  private String modTokenWithBearer = "Bearer modToken";
-  private String adminTokenWithBearer = "Bearer adminToken";
-  private String userToken = "userToken";
-  private String modToken = "modToken";
-  private String adminToken = "adminToken";
+  private final String userTokenWithBearer = "Bearer userToken";
+  private final String modTokenWithBearer = "Bearer modToken";
+  private final String adminTokenWithBearer = "Bearer adminToken";
+  private final String userToken = "userToken";
+  private final String modToken = "modToken";
+  private final String adminToken = "adminToken";
 
   private User admin;
   private User mod;
@@ -91,14 +83,12 @@ public class AlertControllerTest {
 
   List<Sensor> allSensors;
 
-
   @Before
   public void setUp() throws MissingFieldsException, InvalidFieldsValuesException, ElementNotFoundException, NotAuthorizedException {
     alertController = new AlertController(alertService, jwtUtil, logService, userService);
 
     httpRequest = new MockHttpServletRequest();
     httpRequest.setRemoteAddr("localhost");
-
 
     // ----------------------------------------- Set Users --------------------------------------
     admin = new User(1, "admin", "admin", "admin", "pass", User.Role.ADMIN);
@@ -110,7 +100,6 @@ public class AlertControllerTest {
     allUsers.add(mod);
     allUsers.add(user);
 
-
     // ----------------------------------------- Set Entities --------------------------------------
     entity1 = new Entity(1, "entity1", "loc1");
     entity2 = new Entity(2, "entity2", "loc2");
@@ -121,7 +110,6 @@ public class AlertControllerTest {
     allEntities.add(entity2);
     allEntities.add(entity3);
 
-
     // ----------------------------------------- Set Sensors --------------------------------------
     sensor1 = new Sensor(1, "type1", 1);
     sensor2 = new Sensor(2, "type2", 2);
@@ -131,7 +119,6 @@ public class AlertControllerTest {
     allSensors.add(sensor1);
     allSensors.add(sensor2);
     allSensors.add(sensor3);
-
 
     // ----------------------------------------- Set Alerts --------------------------------------
     alert1 = new Alert(1, 10.0, Alert.Type.GREATER, entity1, sensor1);
@@ -145,8 +132,6 @@ public class AlertControllerTest {
     allAlerts.add(alert3);
     allAlerts.add(alert4);
 
-
-
     // Core Controller needed mock
     user.setEntity(entity1);
     mod.setEntity(entity1);
@@ -159,22 +144,16 @@ public class AlertControllerTest {
     when(userService.findByEmail(user.getEmail())).thenReturn(user);
 
     when(alertService.findAll()).thenReturn(allAlerts);
-    when(alertService.findAllByEntityId(anyInt())).thenAnswer(i -> {
-      return allAlerts.stream().filter(a -> i.getArgument(0).equals(a.getEntity().getId()))
-          .collect(Collectors.toList());
-    });
-    when(alertService.findAllBySensorId(anyInt())).thenAnswer(i -> {
-      return allAlerts.stream().filter(a -> i.getArgument(0).equals(a.getSensor().getId()))
-          .collect(Collectors.toList());
-    });
-    when(alertService.findAllByEntityIdAndSensorId(anyInt(),anyInt())).thenAnswer(i -> {
-      return allAlerts.stream().filter(a -> i.getArgument(0).equals(a.getEntity().getId())
-          && i.getArgument(1).equals(a.getSensor().getId()))
-          .collect(Collectors.toList());
-    });
+    when(alertService.findAllByEntityId(anyInt())).thenAnswer(i -> allAlerts.stream().filter(a -> i.getArgument(0).equals(a.getEntity().getId()))
+        .collect(Collectors.toList()));
+    when(alertService.findAllBySensorId(anyInt())).thenAnswer(i -> allAlerts.stream().filter(a -> i.getArgument(0).equals(a.getSensor().getId()))
+        .collect(Collectors.toList()));
+    when(alertService.findAllByEntityIdAndSensorId(anyInt(),anyInt())).thenAnswer(i -> allAlerts.stream().filter(a -> i.getArgument(0).equals(a.getEntity().getId())
+        && i.getArgument(1).equals(a.getSensor().getId()))
+        .collect(Collectors.toList()));
     when(alertService.createAlert(any(User.class), any(HashMap.class))).thenAnswer(i -> {
       Map<String, Object> fields = i.getArgument(1);
-      if (fields.keySet().contains("sensor") && fields.get("sensor").equals(sensor1.getId())) {
+      if (fields.containsKey("sensor") && fields.get("sensor").equals(sensor1.getId())) {
         Alert alert = new Alert();
         alert.setEntity(entity1);
         alert.setThreshold(10.0);
@@ -210,11 +189,7 @@ public class AlertControllerTest {
       Alert alert = alertService.findById(i.getArgument(2));
       if (alert != null) {
         if (editingUser.getType() == User.Role.ADMIN || alert.getEntity().equals(userToEdit.getEntity())) {
-          if (userToEdit.getType() != User.Role.MOD) {
-            return true;
-          } else {
-            return false;
-          }
+          return userToEdit.getType() != User.Role.MOD;
         } else {
           throw NotAuthorizedException.notAuthorizedMessage("alert");
         }
@@ -229,7 +204,7 @@ public class AlertControllerTest {
       Alert alert = allAlerts.stream()
           .filter(a -> i.getArgument(0).equals(a.getId()))
           .findFirst().orElse(null);
-      if (entity != null && alert.getEntity().equals(entity)) {
+      if (alert.getEntity().equals(entity)) {
         return alert;
       } else if (entity == null) {
         return null;
@@ -237,17 +212,13 @@ public class AlertControllerTest {
         throw NotAuthorizedException.notAuthorizedMessage("alert");
       }
     });
-    when(alertService.findById(anyInt())).thenAnswer(i -> {
-      return allAlerts.stream()
-          .filter(a -> i.getArgument(0).equals(a.getId()))
-          .findFirst().orElse(null);
-    });
+    when(alertService.findById(anyInt())).thenAnswer(i -> allAlerts.stream()
+        .filter(a -> i.getArgument(0).equals(a.getId()))
+        .findFirst().orElse(null));
 
-    when(userService.findById(anyInt())).thenAnswer(i -> {
-      return allUsers.stream()
-          .filter(u -> i.getArgument(0).equals(u.getId()))
-          .findFirst().orElse(null);
-    });
+    when(userService.findById(anyInt())).thenAnswer(i -> allUsers.stream()
+        .filter(u -> i.getArgument(0).equals(u.getId()))
+        .findFirst().orElse(null));
   }
 
   @Test
@@ -263,7 +234,7 @@ public class AlertControllerTest {
     ResponseEntity<Map<String,List<Alert>>> response = alertController.getAlerts(adminTokenWithBearer, entity2.getId(), null);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertTrue(!response.getBody().get("enabled").isEmpty());
+    assertFalse(response.getBody().get("enabled").isEmpty());
   }
 
   @Test
@@ -271,7 +242,7 @@ public class AlertControllerTest {
     ResponseEntity<Map<String,List<Alert>>> response = alertController.getAlerts(adminTokenWithBearer, null, sensor3.getId());
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertTrue(!response.getBody().get("enabled").isEmpty());
+    assertFalse(response.getBody().get("enabled").isEmpty());
   }
 
   @Test
@@ -279,7 +250,7 @@ public class AlertControllerTest {
     ResponseEntity<Map<String,List<Alert>>> response = alertController.getAlerts(adminTokenWithBearer, entity3.getId(), sensor3.getId());
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertTrue(!response.getBody().get("enabled").isEmpty());
+    assertFalse(response.getBody().get("enabled").isEmpty());
   }
 
   @Test
@@ -287,7 +258,7 @@ public class AlertControllerTest {
     ResponseEntity<Map<String,List<Alert>>> response = alertController.getAlerts(userTokenWithBearer, null, null);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertTrue(!response.getBody().get("enabled").isEmpty());
+    assertFalse(response.getBody().get("enabled").isEmpty());
   }
 
   @Test
@@ -295,7 +266,7 @@ public class AlertControllerTest {
     ResponseEntity<Map<String,List<Alert>>> response = alertController.getAlerts(userTokenWithBearer, null, sensor1.getId());
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertTrue(response.getBody().get("enabled").size() == 2);
+    assertEquals(2, response.getBody().get("enabled").size());
   }
 
   @Test
@@ -305,8 +276,6 @@ public class AlertControllerTest {
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertTrue(response.getBody().get("enabled").isEmpty());
   }
-
-
 
   @Test
   public void getAlertsByAdminSuccessfull() {
@@ -330,8 +299,6 @@ public class AlertControllerTest {
 
     assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
   }
-
-
 
   @Test
   public void createAlertByAdminSuccessfull() {
@@ -384,8 +351,6 @@ public class AlertControllerTest {
     assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
   }
 
-
-
   @Test
   public void editAlertByAdminSuccessfull() throws ElementNotFoundException, NotAuthorizedException, MissingFieldsException, InvalidFieldsValuesException {
     Map<String, Object> fieldsToEdit = new HashMap<>();
@@ -434,8 +399,6 @@ public class AlertControllerTest {
     assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
   }
 
-
-
   @Test
   public void deleteAlertsByAdminBySensorIdSuccessfull() {
     ResponseEntity response = alertController.deleteAlerts(adminTokenWithBearer, sensor1.getId(),httpRequest);
@@ -456,8 +419,6 @@ public class AlertControllerTest {
 
     assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
   }
-
-
 
   @Test
   public void deleteAlertSuccessfull() {
@@ -486,8 +447,6 @@ public class AlertControllerTest {
 
     assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
   }
-
-
 
   @Test
   public void disableUserAlertByUserSuccessfull() {

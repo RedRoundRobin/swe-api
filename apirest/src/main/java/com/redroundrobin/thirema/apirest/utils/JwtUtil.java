@@ -18,13 +18,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class JwtUtil {
 
-  private String encodingStrength;
+  private final String encodingStrength;
 
-  private int tokenExpiration;
+  private final int tokenExpiration;
 
-  private int tfaTokenExpiration;
+  private final int tfaTokenExpiration;
 
-  private String signingKey;
+  private final String signingKey;
 
   @Autowired
   public JwtUtil(@Value("${security.encoding-strength}") String encodingStrength,

@@ -37,7 +37,7 @@ public class AlertController extends CoreController {
 
   Logger logger = LoggerFactory.getLogger(AlertController.class);
 
-  private AlertService alertService;
+  private final AlertService alertService;
 
   @Autowired
   public AlertController(AlertService alertService, JwtUtil jwtUtil, LogService logService,

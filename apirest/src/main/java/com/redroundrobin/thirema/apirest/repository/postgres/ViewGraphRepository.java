@@ -5,7 +5,6 @@ import com.redroundrobin.thirema.apirest.models.postgres.View;
 import com.redroundrobin.thirema.apirest.models.postgres.ViewGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.stereotype.Repository;
 
 public interface ViewGraphRepository extends CrudRepository<ViewGraph, Integer> {
 

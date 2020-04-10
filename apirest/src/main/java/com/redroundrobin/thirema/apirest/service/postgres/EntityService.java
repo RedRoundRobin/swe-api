@@ -14,11 +14,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class EntityService {
 
-  private EntityRepository entityRepo;
+  private final EntityRepository entityRepo;
 
-  private SensorRepository sensorRepo;
+  private final SensorRepository sensorRepo;
 
-  private UserRepository userRepo;
+  private final UserRepository userRepo;
 
   @Autowired
   public EntityService(EntityRepository entityRepository, SensorRepository sensorRepository,
