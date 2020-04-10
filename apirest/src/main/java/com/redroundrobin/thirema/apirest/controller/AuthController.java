@@ -33,6 +33,8 @@ public class AuthController extends CoreController {
 
   private TelegramService telegramService;
 
+  private Random rnd = new Random();
+
   @Autowired
   public AuthController(CustomAuthenticationManager authenticationManager,
                         TelegramService telegramService, JwtUtil jwtUtil, LogService logService,
@@ -76,7 +78,6 @@ public class AuthController extends CoreController {
 
     if (user.getTfa()) {
       if (user.getTelegramChat() != null && !user.getTelegramChat().isEmpty()) {
-        Random rnd = new Random();
         int sixDigitsCode = 100000 + rnd.nextInt(900000);
 
         Map<String, Object> telegramRequest = new HashMap<>();
