@@ -12,6 +12,7 @@ import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -48,6 +49,20 @@ public class SensorController extends CoreController {
       } else {
         return ResponseEntity.ok(Collections.emptyList());
       }
+    }
+  }
+
+  // Get all sensors also with entity id if provided
+  @GetMapping(value = {"/{sensorId:.+}"})
+  public ResponseEntity<Sensor> getSensor(
+      @RequestHeader(value = "Authorization") String authorization,
+      @PathVariable("sensorId") int sensorId) {
+    User user = this.getUserFromAuthorization(authorization);
+    if (user.getType() == User.Role.ADMIN) {
+      return ResponseEntity.ok(sensorService.findById(sensorId));
+    } else {
+      return ResponseEntity.ok(sensorService.findByIdAndEntityId(sensorId,
+          user.getEntity().getId()));
     }
   }
 }
