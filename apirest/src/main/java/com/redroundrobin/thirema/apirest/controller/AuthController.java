@@ -33,7 +33,7 @@ public class AuthController extends CoreController {
 
   private TelegramService telegramService;
 
-  private Random rnd = new Random();
+  private Random rnd;
 
   @Autowired
   public AuthController(CustomAuthenticationManager authenticationManager,
@@ -42,6 +42,8 @@ public class AuthController extends CoreController {
     super(jwtUtil, logService, userService);
     this.authenticationManager = authenticationManager;
     this.telegramService = telegramService;
+
+    rnd = new Random();
   }
 
   @PostMapping(value = "/auth")
