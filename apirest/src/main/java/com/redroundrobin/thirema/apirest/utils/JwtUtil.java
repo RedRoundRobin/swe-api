@@ -8,6 +8,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,17 +18,24 @@ import org.springframework.stereotype.Component;
 @Component
 public class JwtUtil {
 
-  @Value("${security.encoding-strength}")
   private String encodingStrength;
 
-  @Value("${security.token-expiration}")
   private int tokenExpiration;
 
-  @Value("${security.tfa-token-expiration}")
   private int tfaTokenExpiration;
 
-  @Value("${security.signing-key}")
   private String signingKey;
+
+  @Autowired
+  public JwtUtil(@Value("${security.encoding-strength}") String encodingStrength,
+                 @Value("${security.token-expiration}") int tokenExpiration,
+                 @Value("${security.tfa-token-expiration}") int tfaTokenExpiration,
+                 @Value("${security.signing-key}") String signingKey) {
+    this.encodingStrength = encodingStrength;
+    this.tokenExpiration = tokenExpiration;
+    this.tfaTokenExpiration = tfaTokenExpiration;
+    this.signingKey = signingKey;
+  }
 
   private String createToken(Map<String, Object> claims, String subject) {
     int expiration = tokenExpiration;
