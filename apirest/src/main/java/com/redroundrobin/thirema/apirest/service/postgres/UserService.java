@@ -177,6 +177,9 @@ public class UserService implements UserDetailsService {
           break;
         case "twoFactorAuthentication":
           userToEdit.setTfa((boolean) value);
+          if (!(boolean) value) {
+            userToEdit.setTelegramChat(null);
+          }
           break;
         case "entityId":
           userToEdit.setEntity(entityRepo.findById((int)fieldsToEdit.get("entityId")).orElse(null));
