@@ -5,24 +5,20 @@ import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.repository.postgres.AlertRepository;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
-import java.util.Map;
-import java.util.Set;
-
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
 
 @Service
 public class AlertService {
@@ -59,7 +55,7 @@ public class AlertService {
     for (Map.Entry<String, Object> entry : fields.entrySet()) {
       switch (entry.getKey()) {
         case "threshold":
-            alert.setThreshold((double) entry.getValue());
+          alert.setThreshold((double) entry.getValue());
           break;
         case "type":
           if (Alert.Type.isValid((int) entry.getValue())) {
