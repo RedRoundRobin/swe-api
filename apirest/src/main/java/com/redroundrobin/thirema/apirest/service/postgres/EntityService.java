@@ -4,11 +4,10 @@ import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
-import java.util.Collections;
-import java.util.List;
-
 import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
+import java.util.Collections;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

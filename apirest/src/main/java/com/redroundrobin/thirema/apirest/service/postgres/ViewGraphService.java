@@ -27,8 +27,8 @@ public class ViewGraphService {
   private ViewRepository viewRepo;
 
   @Autowired
-  public ViewGraphService(ViewGraphRepository viewGraphRepository, SensorRepository sensorRepository,
-                          ViewRepository viewRepository) {
+  public ViewGraphService(ViewGraphRepository viewGraphRepository,
+                          SensorRepository sensorRepository, ViewRepository viewRepository) {
     this.viewGraphRepo = viewGraphRepository;
     this.sensorRepo = sensorRepository;
     this.viewRepo = viewRepository;

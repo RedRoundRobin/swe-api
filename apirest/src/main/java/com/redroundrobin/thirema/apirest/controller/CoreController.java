@@ -4,8 +4,6 @@ import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.service.timescale.LogService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import javax.servlet.http.HttpServletRequest;
 
 /*

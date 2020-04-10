@@ -10,6 +10,11 @@ import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundExceptio
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,12 +30,6 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import javax.servlet.http.HttpServletRequest;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/alerts")
@@ -56,7 +55,7 @@ public class AlertController extends CoreController {
       try {
         alertService.deleteAlertsBySensorId(sensorId);
         logService.createLog(user.getId(), getIpAddress(httpRequest), "alert.deleted",
-            "alerts with sensorId = "+sensorId);
+            "alerts with sensorId = " + sensorId);
         return new ResponseEntity(HttpStatus.OK);
       } catch (ElementNotFoundException e) {
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
@@ -87,8 +86,8 @@ public class AlertController extends CoreController {
       }
     } else if (sensorId != null && (entityId == null || user.getEntity().getId() == entityId)) {
       List<Alert> disabledAlerts = alertService.findAllDisabledByUserId(user.getId());
-      List<Alert> enabledAlerts = alertService.findAllByEntityIdAndSensorId(user.getEntity().getId(),
-          sensorId);
+      List<Alert> enabledAlerts = alertService.findAllByEntityIdAndSensorId(
+          user.getEntity().getId(), sensorId);
       enabledAlerts.removeAll(disabledAlerts);
 
       response.put("enabled", enabledAlerts);
@@ -117,7 +116,8 @@ public class AlertController extends CoreController {
       return ResponseEntity.ok(alertService.findById(alertId));
     } else {
       try {
-        return ResponseEntity.ok(alertService.findByIdAndEntityId(alertId, user.getEntity().getId()));
+        return ResponseEntity.ok(alertService.findByIdAndEntityId(alertId,
+            user.getEntity().getId()));
       } catch (NotAuthorizedException nae) {
         logger.trace(nae.toString());
         return new ResponseEntity(HttpStatus.FORBIDDEN);

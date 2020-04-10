@@ -13,7 +13,6 @@ import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
 import com.redroundrobin.thirema.apirest.utils.exception.TelegramChatNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -393,10 +392,9 @@ public class UserService implements UserDetailsService {
     }
 
     int userToInsertType;
-    if ((userToInsertType =
-        rawUserToInsert.get("type").getAsInt()) == 2 ||
-        userToInsertType != 1 && userToInsertType != 0) {
-        throw new InvalidFieldsValuesException("");
+    if ((userToInsertType = rawUserToInsert.get("type").getAsInt()) == 2
+        || userToInsertType != 1 && userToInsertType != 0) {
+      throw new InvalidFieldsValuesException("");
     }
 
     //qui so che entity_id dato esiste && so il tipo dello user che si vuole inserire

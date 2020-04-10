@@ -11,13 +11,12 @@ import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesExce
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
 import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
+import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -33,8 +32,6 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import javax.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping(value = "/users")
@@ -94,7 +91,7 @@ public class UserController extends CoreController {
       return ResponseEntity.ok(createdUser);
     } catch (MissingFieldsException | InvalidFieldsValuesException e) {
       return new ResponseEntity(HttpStatus.BAD_REQUEST);
-    } catch(ConflictException e) {
+    } catch (ConflictException e) {
       return new ResponseEntity(HttpStatus.CONFLICT);
     } catch (NotAuthorizedException e) {
       return new ResponseEntity(HttpStatus.FORBIDDEN);

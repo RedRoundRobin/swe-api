@@ -3,7 +3,6 @@ package com.redroundrobin.thirema.apirest.repository.timescale;
 import com.redroundrobin.thirema.apirest.models.timescale.Log;
 import java.sql.Timestamp;
 import java.util.List;
-
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
