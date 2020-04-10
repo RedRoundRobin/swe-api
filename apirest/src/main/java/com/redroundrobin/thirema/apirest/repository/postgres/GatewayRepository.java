@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface GatewayRepository extends CrudRepository<Gateway, Integer> {
 
-  @Query("SELECT G FROM Entity E JOIN E.sensors S JOIN S.device D JOIN D.gateway G "
+  @Query("SELECT DISTINCT G FROM Entity E JOIN E.sensors S JOIN S.device D JOIN D.gateway G "
       + "WHERE E.entityId = :entityId")
   Iterable<Gateway> findAllByEntityId(int entityId);
 
