@@ -13,6 +13,9 @@ import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
 import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +31,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping(value = "/views")
 public class ViewController extends CoreController {
+
+  protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
   private final ViewService viewService;
 
@@ -55,6 +60,7 @@ public class ViewController extends CoreController {
     try {
       return ResponseEntity.ok(viewService.serializeView(jsonNewView, user));
     } catch (KeysNotFoundException | MissingFieldsException e) {
+      logger.debug(e.toString());
       return new ResponseEntity(e, HttpStatus.BAD_REQUEST);
     }
   }
@@ -69,8 +75,10 @@ public class ViewController extends CoreController {
       viewService.deleteView(user, viewToDeleteId);
       return ResponseEntity.ok("deleted view succesfully");
     } catch (NotAuthorizedException e) {
+      logger.debug(e.toString());
       return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     } catch (InvalidFieldsValuesException e) {
+      logger.debug(e.toString());
       return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
     }
   }
@@ -84,6 +92,7 @@ public class ViewController extends CoreController {
     if (view != null) {
       return ResponseEntity.ok(view);
     } else {
+      logger.debug("RESPONSE STATUS: BAD_REQUEST. View " + viewId + " does not exist.");
       return new ResponseEntity(HttpStatus.BAD_REQUEST);
     }
   }

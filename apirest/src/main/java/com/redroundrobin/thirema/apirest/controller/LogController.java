@@ -7,6 +7,9 @@ import com.redroundrobin.thirema.apirest.service.timescale.LogService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import java.util.Collections;
 import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping(value = "/logs")
 public class LogController extends CoreController {
+
+  protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
   public LogController(JwtUtil jwtUtil, LogService logService, UserService userService) {
     super(jwtUtil, logService, userService);
@@ -48,6 +53,8 @@ public class LogController extends CoreController {
         return ResponseEntity.ok(Collections.emptyList());
       }
     } else {
+      logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId() + " is not an administrator"
+          + " or a moderator");
       return new ResponseEntity(HttpStatus.FORBIDDEN);
     }
   }
