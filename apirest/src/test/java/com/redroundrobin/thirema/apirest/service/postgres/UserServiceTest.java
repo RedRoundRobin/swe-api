@@ -664,7 +664,7 @@ public class UserServiceTest {
 
     HashMap<String, Object> fieldsToEdit = new HashMap<>();
     fieldsToEdit.put("name",newName);
-    fieldsToEdit.put("twoFactorAuthentication", true);
+    fieldsToEdit.put("tfa", true);
 
     User editedUser = cloneUser(mod11);
     editedUser.setName(newName);
@@ -727,7 +727,7 @@ public class UserServiceTest {
 
     HashMap<String, Object> fieldsToEdit = new HashMap<>();
     fieldsToEdit.put("telegramName",newTelegramName);
-    fieldsToEdit.put("twoFactorAuthentication", true);
+    fieldsToEdit.put("tfa", true);
 
     try {
       userService.editByUser(user1, fieldsToEdit);
@@ -748,7 +748,7 @@ public class UserServiceTest {
 
     HashMap<String, Object> fieldsToEdit = new HashMap<>();
     fieldsToEdit.put("telegramaName",newTelegramName);
-    fieldsToEdit.put("tfa", true);
+    fieldsToEdit.put("tfaa", true);
 
     try {
       userService.editByUser(user1, fieldsToEdit);

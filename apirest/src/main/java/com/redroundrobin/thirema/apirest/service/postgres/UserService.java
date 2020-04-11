@@ -74,7 +74,7 @@ public class UserService implements UserDetailsService {
     userFields.put("password", true);
     userFields.put("type", true);
     userFields.put("telegramName", true);
-    userFields.put("twoFactorAuthentication", true);
+    userFields.put("tfa", true);
     userFields.put("entityId", true);
     userFields.put("deleted", true);
 
@@ -91,7 +91,7 @@ public class UserService implements UserDetailsService {
         if (!itself) {
           userFields.replace("password", false);
           userFields.replace("telegramName", false);
-          userFields.replace("twoFactorAuthentication", false);
+          userFields.replace("tfa", false);
         } else {
           userFields.replace("deleted", false);
         }
@@ -129,10 +129,10 @@ public class UserService implements UserDetailsService {
 
   private User editAndSave(User userToEdit, Map<String, Object> fieldsToEdit)
       throws ConflictException, InvalidFieldsValuesException {
-    if (fieldsToEdit.containsKey("twoFactorAuthentication")
-        && (boolean)fieldsToEdit.get("twoFactorAuthentication")
+    if (fieldsToEdit.containsKey("tfa")
+        && (boolean)fieldsToEdit.get("tfa")
         && (fieldsToEdit.containsKey("telegramName")
-        || userToEdit.getTelegramChat().isEmpty())) {
+        || userToEdit.getTelegramChat() == null || userToEdit.getTelegramChat().isEmpty())) {
       throw new ConflictException("TFA can't be edited because either telegramName is "
           + "in the request or telegram chat not present");
     }
@@ -171,7 +171,7 @@ public class UserService implements UserDetailsService {
           userToEdit.setTfa(false);
           userToEdit.setTelegramChat(null);
           break;
-        case "twoFactorAuthentication":
+        case "tfa":
           userToEdit.setTfa((boolean) value);
           if (!(boolean) value) {
             userToEdit.setTelegramChat(null);
