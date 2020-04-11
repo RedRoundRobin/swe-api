@@ -3,6 +3,10 @@ package com.redroundrobin.thirema.apirest.config;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.utils.CustomAuthenticationManager;
 import com.redroundrobin.thirema.apirest.utils.JwtRequestFilter;
+import java.util.Arrays;
+import java.util.HashSet;
+
+import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -21,10 +25,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
   private final JwtRequestFilter jwtRequestFilter;
 
+  private final String[] publicRequests = new String[]{"/auth", "/auth/telegram",
+      "/v3/api-docs.yaml"};
+
   @Autowired
-  public SecurityConfig(JwtRequestFilter jwtRequestFilter, UserService userService) {
+  public SecurityConfig(JwtUtil jwtUtil, UserService userService) {
     this.userService = userService;
-    this.jwtRequestFilter = jwtRequestFilter;
+    this.jwtRequestFilter = new JwtRequestFilter(jwtUtil, userService,
+        new HashSet<>(Arrays.asList(publicRequests)));
   }
 
   @Override
@@ -35,7 +43,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
   @Override
   protected void configure(HttpSecurity http) throws Exception {
     http.csrf().disable()
-        .authorizeRequests().antMatchers("/auth","/auth/telegram","/v3/api-docs.yaml").permitAll()
+        .authorizeRequests().antMatchers(publicRequests).permitAll()
         .anyRequest().authenticated()
         .and().sessionManagement()
         .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
