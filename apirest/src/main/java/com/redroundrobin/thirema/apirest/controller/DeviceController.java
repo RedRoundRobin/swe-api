@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping(value = {"/devices"})
 public class DeviceController extends CoreController {
+
   protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
   private final DeviceService deviceService;

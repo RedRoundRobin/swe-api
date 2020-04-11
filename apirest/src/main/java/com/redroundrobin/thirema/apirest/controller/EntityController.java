@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/entities")
 public class EntityController extends CoreController {
+
   protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
   private final EntityService entityService;

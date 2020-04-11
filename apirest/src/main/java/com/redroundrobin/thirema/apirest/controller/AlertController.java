@@ -35,7 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/alerts")
 public class AlertController extends CoreController {
 
-  protected Logger logger = LoggerFactory.getLogger(AlertController.class);
+  protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
   private final AlertService alertService;
 

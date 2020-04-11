@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping(value = {"/gateways"})
 public class GatewayController extends CoreController {
+
   protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
   private final GatewayService gatewayService;
