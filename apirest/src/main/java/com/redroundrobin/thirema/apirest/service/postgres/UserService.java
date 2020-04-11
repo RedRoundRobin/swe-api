@@ -132,7 +132,7 @@ public class UserService implements UserDetailsService {
     if (fieldsToEdit.containsKey("tfa")
         && (boolean)fieldsToEdit.get("tfa")
         && (fieldsToEdit.containsKey("telegramName")
-        || userToEdit.getTelegramChat().isEmpty())) {
+        || userToEdit.getTelegramChat() == null || userToEdit.getTelegramChat().isEmpty())) {
       throw new ConflictException("TFA can't be edited because either telegramName is "
           + "in the request or telegram chat not present");
     }
