@@ -11,8 +11,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringRunner;
-
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -34,7 +32,6 @@ public class SensorServiceTest {
 
   private SensorService sensorService;
 
-
   @MockBean
   private EntityRepository entityRepo;
 
@@ -43,7 +40,6 @@ public class SensorServiceTest {
 
   @MockBean
   private com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository postgreSensorRepo;
-
 
   Sensor sensor1111;
   Sensor sensor1112;
@@ -75,22 +71,16 @@ public class SensorServiceTest {
   List<Sensor> allG1D2S1Sensors;
   List<Sensor> allG1D2S2Sensors;
 
-
   @Before
   public void setUp() {
     sensorService = new SensorService(sensorRepo, postgreSensorRepo, entityRepo);
-
-
-
 
     // -------------------------------------- Set Entities ----------------------------------------
     entity1 = new Entity(1, "entity1", "loc1");
     entity2 = new Entity(2, "entity2", "loc2");
 
-
     // -------------------------------------- Set Gateway ----------------------------------------
     Gateway gateway1 = new Gateway(1, "gw1");
-
 
     // -------------------------------------- Set Devices ----------------------------------------
     Device device1 = new Device(1, "dev1", 1, 1);
@@ -103,7 +93,6 @@ public class SensorServiceTest {
     allDevices.add(device1);
     allDevices.add(device2);
 
-
     // ----------------------------------- Set Postgre Sensors ------------------------------------
     sensor1 = new com.redroundrobin.thirema.apirest.models.postgres.Sensor(1, "type1", 1);
     sensor2 = new com.redroundrobin.thirema.apirest.models.postgres.Sensor(2, "type2", 2);
@@ -115,7 +104,6 @@ public class SensorServiceTest {
     allPostgreSensors.add(sensor2);
     allPostgreSensors.add(sensor3);
     allPostgreSensors.add(sensor4);
-
 
     // ------------------------------------ Set Timescale Sensors ---------------------------------
     sensor1111 = new Sensor(gateway1.getName(), device1.getRealDeviceId(), sensor1.getRealSensorId());
@@ -184,7 +172,6 @@ public class SensorServiceTest {
     allG1D2S2Sensors.add(sensor1222);
     allG1D2S2Sensors.add(sensor1223);
 
-
     // -------------------------------- Set Devices to Postgre Sensors ----------------------------
     sensor1.setDevice(device1);
     sensor2.setDevice(device1);
@@ -192,7 +179,6 @@ public class SensorServiceTest {
     sensor4.setDevice(device2);
 
     // sensor 1 & 3 are entity 1 sensors, 2 & 4 are entity 2 sensor
-
 
     when(sensorRepo.findAllByGatewayNameAndRealDeviceIdAndRealSensorIdOrderByTimeDesc(anyString(), anyInt(),
         anyInt())).thenAnswer(i -> {
@@ -221,9 +207,7 @@ public class SensorServiceTest {
       int deviceId = i.getArgument(1);
       int sensorId = i.getArgument(2);
       return allSensors.stream().filter(s -> s.getGatewayName().equals(gatewayName)
-          && s.getRealDeviceId() == deviceId && s.getRealSensorId() == sensorId)
-          .sorted((t1,t2) -> Long.compare(t2.getTime().getTime(),t1.getTime().getTime()))
-          .findFirst().orElse(null);
+              && s.getRealDeviceId() == deviceId && s.getRealSensorId() == sensorId).min((t1, t2) -> Long.compare(t2.getTime().getTime(), t1.getTime().getTime())).orElse(null);
     });
 
     when(postgreSensorRepo.findAll()).thenReturn(allPostgreSensors);
@@ -253,10 +237,8 @@ public class SensorServiceTest {
         return Optional.empty();
       }
     });
-    when(postgreSensorRepo.findById(anyInt())).thenAnswer(i -> {
-      return allPostgreSensors.stream().filter(s -> i.getArgument(0).equals(s.getId()))
-          .findFirst();
-    });
+    when(postgreSensorRepo.findById(anyInt())).thenAnswer(i -> allPostgreSensors.stream().filter(s -> i.getArgument(0).equals(s.getId()))
+        .findFirst());
 
     when(entityRepo.findById(anyInt())).thenAnswer(i -> {
       if (i.getArgument(0).equals(1)) {
@@ -275,11 +257,9 @@ public class SensorServiceTest {
 
     System.out.println(sensors);
     assertEquals(4, sensors.keySet().size());
-    sensors.entrySet().forEach(e -> System.out.println(e.getValue().size()));
+    sensors.forEach((key, value) -> System.out.println(value.size()));
     assertTrue(sensors.entrySet().stream().allMatch(e -> e.getValue().size() == 3));
   }
-
-
 
   @Test
   public void findAllForEachSensorByEntityIdSuccessfull() {
@@ -289,8 +269,6 @@ public class SensorServiceTest {
     assertTrue(sensors.entrySet().stream().allMatch(e -> e.getValue().size() == 3));
   }
 
-
-
   @Test
   public void findTopNForEachSensorSuccessfull() {
     Map<Integer, List<Sensor>> sensors = sensorService.findTopNForEachSensor(2);
@@ -299,8 +277,6 @@ public class SensorServiceTest {
     assertTrue(sensors.entrySet().stream().allMatch(e -> e.getValue().size() == 2));
   }
 
-
-
   @Test
   public void findTopNForEachSensorByEntityIdSuccessfull() {
     Map<Integer, List<Sensor>> sensors = sensorService.findTopNForEachSensorByEntityId(1, 2);
@@ -308,8 +284,6 @@ public class SensorServiceTest {
     assertEquals(2, sensors.keySet().size());
     assertTrue(sensors.entrySet().stream().allMatch(e -> e.getValue().size() == 1));
   }
-
-
 
   @Test
   public void findAllBySensorIdListSuccessfull() {
@@ -322,8 +296,6 @@ public class SensorServiceTest {
     assertTrue(sensors.entrySet().stream().allMatch(e -> e.getValue().size() == 3));
   }
 
-
-
   @Test
   public void findAllBySensorIdListAndByEntityIdEmpty() {
     List<Integer> sensorIds = new ArrayList<>();
@@ -332,11 +304,9 @@ public class SensorServiceTest {
     Map<Integer, List<Sensor>> sensors = sensorService.findAllBySensorIdListAndEntityId(sensorIds, 1);
 
     assertEquals(2, sensors.keySet().size());
-    assertTrue(sensors.get(1).size() == 3);
+    assertEquals(3, sensors.get(1).size());
     assertTrue(sensors.get(4).isEmpty());
   }
-
-
 
   @Test
   public void findTopNBySensorIdListSuccessfull() {
@@ -349,8 +319,6 @@ public class SensorServiceTest {
     assertTrue(sensors.entrySet().stream().allMatch(e -> e.getValue().size() == 1));
   }
 
-
-
   @Test
   public void findTopNBySensorIdListAndEntityIdSuccessfull() {
     List<Integer> sensorIds = new ArrayList<>();
@@ -358,9 +326,8 @@ public class SensorServiceTest {
     Map<Integer, List<Sensor>> sensors = sensorService.findTopNBySensorIdListAndEntityId(1, sensorIds, 1);
 
     assertEquals(1, sensors.keySet().size());
-    assertTrue(sensors.get(1).size() == 1);
+    assertEquals(1, sensors.get(1).size());
   }
-
 
   @Test
   public void findTopBySensorId() {
@@ -375,7 +342,6 @@ public class SensorServiceTest {
 
     assertNull(sensor);
   }
-
 
   @Test
   public void findTopBySensorIdAndEntityId() {

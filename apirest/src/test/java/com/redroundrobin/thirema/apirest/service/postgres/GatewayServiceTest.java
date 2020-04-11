@@ -4,20 +4,14 @@ import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
 import com.redroundrobin.thirema.apirest.repository.postgres.DeviceRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.GatewayRepository;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringRunner;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 
@@ -26,13 +20,11 @@ public class GatewayServiceTest {
 
   private GatewayService gatewayService;
 
-
   @MockBean
   private GatewayRepository gatewayRepo;
 
   @MockBean
   private DeviceRepository deviceRepo;
-
 
   private Device device1;
   private Device device2;
@@ -40,7 +32,6 @@ public class GatewayServiceTest {
 
   private Gateway gateway1;
   private Gateway gateway2;
-
 
   @Before
   public void setUp() {
@@ -56,7 +47,6 @@ public class GatewayServiceTest {
     allDevices.add(device2);
     allDevices.add(device3);
 
-
     // -------------------------------------- Set Gateways ----------------------------------------
     gateway1 = new Gateway(1, "name1");
     gateway2 = new Gateway(2, "name2");
@@ -65,14 +55,11 @@ public class GatewayServiceTest {
     allGateways.add(gateway1);
     allGateways.add(gateway2);
 
-
     // -------------------------------- Set Gateways to Devices --------------------------------
     device1.setGateway(gateway1);
     device2.setGateway(gateway1);
 
     device3.setGateway(gateway2);
-
-
 
     when(gatewayRepo.findAll()).thenReturn(allGateways);
     when(gatewayRepo.findByDevice(anyInt())).thenAnswer(i -> {
@@ -84,15 +71,11 @@ public class GatewayServiceTest {
         return null;
       }
     });
-    when(gatewayRepo.findById(anyInt())).thenAnswer(i -> {
-      return allGateways.stream().filter(g -> i.getArgument(0).equals(g.getId()))
-          .findFirst();
-    });
+    when(gatewayRepo.findById(anyInt())).thenAnswer(i -> allGateways.stream().filter(g -> i.getArgument(0).equals(g.getId()))
+        .findFirst());
 
-    when(deviceRepo.findById(anyInt())).thenAnswer(i -> {
-      return allDevices.stream().filter(d -> i.getArgument(0).equals(d.getId()))
-          .findFirst();
-    });
+    when(deviceRepo.findById(anyInt())).thenAnswer(i -> allDevices.stream().filter(d -> i.getArgument(0).equals(d.getId()))
+        .findFirst());
 
   }
 
@@ -100,8 +83,8 @@ public class GatewayServiceTest {
   public void findAllGateways() {
     List<Gateway> gateways = gatewayService.findAll();
 
-    assertTrue(!gateways.isEmpty());
-    assertTrue(gateways.stream().count() == 2);
+    assertFalse(gateways.isEmpty());
+    assertEquals(2, (long) gateways.size());
   }
 
   @Test

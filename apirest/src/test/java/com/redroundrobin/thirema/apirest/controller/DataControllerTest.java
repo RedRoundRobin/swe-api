@@ -15,7 +15,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -48,10 +47,10 @@ public class DataControllerTest {
   @MockBean
   private SensorService sensorService;
 
-  private String userTokenWithBearer = "Bearer userToken";
-  private String adminTokenWithBearer = "Bearer adminToken";
-  private String userToken = "userToken";
-  private String adminToken = "adminToken";
+  private final String userTokenWithBearer = "Bearer userToken";
+  private final String adminTokenWithBearer = "Bearer adminToken";
+  private final String userToken = "userToken";
+  private final String adminToken = "adminToken";
 
   private User admin;
   private User user;
@@ -79,11 +78,9 @@ public class DataControllerTest {
   List<Sensor> id3Sensors;
   List<Sensor> id4Sensors;
 
-
   @Before
   public void setUp() {
     dataController = new DataController(sensorService, jwtUtil, logService, userService);
-
 
     // ---------------------------------------- Set Users -----------------------------------------
     admin = new User(1, "admin", "admin", "admin", "pass", User.Role.ADMIN);
@@ -93,11 +90,8 @@ public class DataControllerTest {
     allUsers.add(admin);
     allUsers.add(user);
 
-
     // -------------------------------------- Set Entities ----------------------------------------
     entity1 = new Entity(1, "entity1", "loc1");
-
-
 
     // ------------------------------------ Set Timescale Sensors ---------------------------------
     sensor1111 = new Sensor("gw1", 1, 1);
@@ -159,13 +153,11 @@ public class DataControllerTest {
     id4Sensors.add(sensor1222);
     id4Sensors.add(sensor1223);
 
-
     allSensorsMap = new HashMap<>();
     allSensorsMap.put(1, id1Sensors);
     allSensorsMap.put(2, id2Sensors);
     allSensorsMap.put(3, id3Sensors);
     allSensorsMap.put(4, id4Sensors);
-
 
     // Core Controller needed mock
     user.setEntity(entity1);
@@ -174,7 +166,6 @@ public class DataControllerTest {
     when(jwtUtil.extractType(anyString())).thenReturn("webapp");
     when(userService.findByEmail(admin.getEmail())).thenReturn(admin);
     when(userService.findByEmail(user.getEmail())).thenReturn(user);
-
     when(sensorService.findAllForEachSensor()).thenReturn(allSensorsMap);
     when(sensorService.findAllForEachSensorByEntityId(anyInt())).thenAnswer(i -> {
       int entityId = i.getArgument(0);
@@ -245,7 +236,7 @@ public class DataControllerTest {
     });
     when(sensorService.findTopNBySensorIdListAndEntityId(anyInt(), any(List.class), anyInt()))
         .thenAnswer(i -> {
-          Long limit = i.getArgument(0, Integer.class).longValue();
+          long limit = i.getArgument(0, Integer.class).longValue();
           List<Integer> sensorIdsList = i.getArgument(1);
           int entityId = i.getArgument(2);
           Map<Integer, List<Sensor>> responseMap = new HashMap<>();
@@ -259,19 +250,13 @@ public class DataControllerTest {
           }
           return responseMap;
         });
-    when(sensorService.findLastValueBySensorId(anyInt())).thenAnswer(i -> {
-      return allSensorsMap.get(i.getArgument(0)).stream()
-          .sorted((v1, v2) -> Long.compare(v2.getTime().getTime(), v1.getTime().getTime()))
-          .findFirst().orElse(null);
-    });
+    when(sensorService.findLastValueBySensorId(anyInt())).thenAnswer(i -> allSensorsMap.get(i.getArgument(0)).stream().min((v1, v2) -> Long.compare(v2.getTime().getTime(), v1.getTime().getTime())).orElse(null));
     when(sensorService.findLastValueBySensorIdAndEntityId(anyInt(), anyInt())).thenAnswer(i -> {
       int id = i.getArgument(0);
       int entityId = i.getArgument(1);
       if ((entityId == 1 && (id == 1 || id == 3))
           || (entityId == 2 && (id == 2 || id == 4))) {
-        return allSensorsMap.get(id).stream()
-            .sorted((v1, v2) -> Long.compare(v2.getTime().getTime(), v1.getTime().getTime()))
-            .findFirst().orElse(null);
+        return allSensorsMap.get(id).stream().min((v1, v2) -> Long.compare(v2.getTime().getTime(), v1.getTime().getTime())).orElse(null);
       } else {
         return null;
       }
@@ -284,7 +269,7 @@ public class DataControllerTest {
         adminTokenWithBearer, null, null, null);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertTrue(response.getBody().keySet().size() == 4);
+    assertEquals(4, response.getBody().keySet().size());
     assertTrue(response.getBody().entrySet().stream().allMatch(e -> e.getValue().size() == 3));
   }
 
@@ -294,7 +279,7 @@ public class DataControllerTest {
         adminTokenWithBearer, null, 1, null);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertTrue(response.getBody().keySet().size() == 4);
+    assertEquals(4, response.getBody().keySet().size());
     assertTrue(response.getBody().entrySet().stream().allMatch(e -> e.getValue().size() == 1));
   }
 
@@ -304,7 +289,7 @@ public class DataControllerTest {
         adminTokenWithBearer, null, null, 1);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertTrue(response.getBody().keySet().size() == 2);
+    assertEquals(2, response.getBody().keySet().size());
     assertTrue(response.getBody().entrySet().stream().allMatch(e -> e.getValue().size() == 3));
   }
 
@@ -314,7 +299,7 @@ public class DataControllerTest {
         adminTokenWithBearer, new Integer[]{1,3}, null, null);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertTrue(response.getBody().keySet().size() == 2);
+    assertEquals(2, response.getBody().keySet().size());
     assertTrue(response.getBody().entrySet().stream().allMatch(e -> e.getValue().size() == 3));
   }
 
@@ -324,7 +309,7 @@ public class DataControllerTest {
         adminTokenWithBearer, null, 2, 2);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertTrue(response.getBody().keySet().size() == 2);
+    assertEquals(2, response.getBody().keySet().size());
     assertTrue(response.getBody().entrySet().stream().allMatch(e -> e.getValue().size() == 2));
   }
 
@@ -334,7 +319,7 @@ public class DataControllerTest {
         adminTokenWithBearer, new Integer[]{1,2}, 5, null);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertTrue(response.getBody().keySet().size() == 2);
+    assertEquals(2, response.getBody().keySet().size());
     assertTrue(response.getBody().entrySet().stream().allMatch(e -> e.getValue().size() == 3));
   }
 
@@ -344,7 +329,7 @@ public class DataControllerTest {
         adminTokenWithBearer, new Integer[]{1,2}, null, 1);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertTrue(response.getBody().keySet().size() == 2);
+    assertEquals(2, response.getBody().keySet().size());
     assertTrue(response.getBody().entrySet().stream().anyMatch(e -> e.getValue().size() == 3));
     assertTrue(response.getBody().entrySet().stream().anyMatch(e -> e.getValue().size() == 0));
   }
@@ -355,7 +340,7 @@ public class DataControllerTest {
         adminTokenWithBearer, new Integer[]{1}, 1, 1);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertTrue(response.getBody().keySet().size() == 1);
+    assertEquals(1, response.getBody().keySet().size());
     assertTrue(response.getBody().entrySet().stream().allMatch(e -> e.getValue().size() == 1));
   }
 
@@ -365,7 +350,7 @@ public class DataControllerTest {
         userTokenWithBearer, null, null, 1);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertTrue(response.getBody().keySet().size() == 2);
+    assertEquals(2, response.getBody().keySet().size());
     assertTrue(response.getBody().entrySet().stream().allMatch(e -> e.getValue().size() == 3));
   }
 
@@ -375,7 +360,7 @@ public class DataControllerTest {
         userTokenWithBearer, null, null, 2);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertTrue(response.getBody().keySet().size() == 0);
+    assertEquals(0, response.getBody().keySet().size());
   }
 
   @Test
@@ -384,7 +369,7 @@ public class DataControllerTest {
         userTokenWithBearer, null, 1, 1);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertTrue(response.getBody().keySet().size() == 2);
+    assertEquals(2, response.getBody().keySet().size());
     assertTrue(response.getBody().entrySet().stream().allMatch(e -> e.getValue().size() == 1));
   }
 
@@ -394,7 +379,7 @@ public class DataControllerTest {
         userTokenWithBearer, new Integer[]{1,2,3}, null, 1);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertTrue(response.getBody().keySet().size() == 3);
+    assertEquals(3, response.getBody().keySet().size());
     assertTrue(response.getBody().entrySet().stream().anyMatch(e -> e.getValue().size() == 3));
     assertTrue(response.getBody().entrySet().stream().anyMatch(e -> e.getValue().size() == 0));
   }
@@ -405,11 +390,9 @@ public class DataControllerTest {
         userTokenWithBearer, new Integer[]{3}, 2, 1);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertTrue(response.getBody().keySet().size() == 1);
+    assertEquals(1, response.getBody().keySet().size());
     assertTrue(response.getBody().entrySet().stream().allMatch(e -> e.getValue().size() == 2));
   }
-
-
 
   @Test
   public void getLastSensorValueByAdminSuccesfull() {

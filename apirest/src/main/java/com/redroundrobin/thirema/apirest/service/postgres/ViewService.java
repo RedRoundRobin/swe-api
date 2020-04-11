@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class ViewService {
 
-  private ViewRepository viewRepo;
+  private final ViewRepository viewRepo;
 
   private UserRepository userRepo;
 

@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
@@ -47,13 +46,13 @@ public class UserControllerTest {
 
   MockHttpServletRequest httpRequest;
 
-  private String admin1Token = "admin1Token";
-  private String admin2Token = "admin2Token";
-  private String mod1Token = "mod1Token";
-  private String mod2Token = "mod2Token";
-  private String mod11Token = "mod11Token";
-  private String user1Token = "user1Token";
-  private String user2Token = "user2Token";
+  private final String admin1Token = "admin1Token";
+  private final String admin2Token = "admin2Token";
+  private final String mod1Token = "mod1Token";
+  private final String mod2Token = "mod2Token";
+  private final String mod11Token = "mod11Token";
+  private final String user1Token = "user1Token";
+  private final String user2Token = "user2Token";
 
   private User admin1;
   private User admin2;
@@ -101,7 +100,6 @@ public class UserControllerTest {
     allUsers.add(user2);
     allUsers.add(mod2);
 
-
     // ----------------------------------------- Set Entities --------------------------------------
     Entity entity1 = new Entity(1, "entity1", "loc1");
     Entity entity2 = new Entity(2, "entity2", "loc2");
@@ -110,7 +108,6 @@ public class UserControllerTest {
     allEntities.add(entity1);
     allEntities.add(entity2);
 
-
     // ------------------------------- Set Entities to Users --------------------------------------
     mod1.setEntity(entity1);
     mod11.setEntity(entity1);
@@ -118,8 +115,6 @@ public class UserControllerTest {
 
     mod2.setEntity(entity2);
     user2.setEntity(entity2);
-
-
 
     when(jwtUtil.extractType(anyString())).thenReturn("webapp");
 
@@ -164,10 +159,9 @@ public class UserControllerTest {
     when(userService.findAllByEntityId(anyInt())).thenAnswer(i -> {
       int id = i.getArgument(0);
       if (id < 3) {
-        List<User> users = allUsers.stream()
+        return allUsers.stream()
             .filter(user -> user.getEntity() != null && user.getEntity().getId() == id)
             .collect(Collectors.toList());
-        return users;
       } else {
         return Collections.emptyList();
       }
@@ -204,10 +198,7 @@ public class UserControllerTest {
       creatable.add("entityId");
       creatable.add("password");  //SOLUZIONE TEMPORANEA: NON PREVISTA DA USE CASES
 
-      boolean onlyCreatableKeys = rawUserToInsert.keySet()
-          .stream()
-          .filter(key -> !creatable.contains(key))
-          .count() == 0;
+      boolean onlyCreatableKeys = creatable.containsAll(rawUserToInsert.keySet());
 
       if (!onlyCreatableKeys)
         throw new InvalidFieldsValuesException("");
@@ -241,7 +232,7 @@ public class UserControllerTest {
 
       User newUser = new User();
       newUser.setEntity(userToInsertEntity);
-      newUser.setType(User.Role.values()[(int)userToInsertType]);
+      newUser.setType(User.Role.values()[userToInsertType]);
 
       if (rawUserToInsert.get("name").getAsString() != null
           || rawUserToInsert.get("surname").getAsString() != null
@@ -254,10 +245,9 @@ public class UserControllerTest {
       }
 
       String email = rawUserToInsert.get("email").getAsString();
-      long debug =  allUsers.stream().filter(user-> user.getEmail().equals(email)).count();
+      allUsers.stream().filter(user -> user.getEmail().equals(email)).count();
       if (email != null &&
-          allUsers.stream().filter(user-> user.getEmail().equals(email))
-              .count() == 0) //email gia usata
+              allUsers.stream().noneMatch(user -> user.getEmail().equals(email))) //email gia usata
         newUser.setEmail(email);
       else if(email == null) {
         throw new InvalidFieldsValuesException("");
@@ -282,7 +272,7 @@ public class UserControllerTest {
   }
 
   @Test
-  public void editAdmin2ByAdmin1EditNotAllowedError403() throws Exception {
+  public void editAdmin2ByAdmin1EditNotAllowedError403() {
 
     HashMap<String, Object> request = new HashMap<>();
     request.put("email", "newemail");
@@ -297,7 +287,7 @@ public class UserControllerTest {
   }
 
   @Test
-  public void editUser1ByAdmin1UserNotExistError400() throws Exception {
+  public void editUser1ByAdmin1UserNotExistError400() {
 
     when(userService.findById(5)).thenReturn(null);
 
@@ -417,7 +407,7 @@ public class UserControllerTest {
   }
 
   @Test
-  public void editUser2ByUser1NotAllowedError403() throws Exception {
+  public void editUser2ByUser1NotAllowedError403() {
 
     HashMap<String, Object> request = new HashMap<>();
     request.put("email", "newEmail");
@@ -544,7 +534,6 @@ public class UserControllerTest {
   public void editMod1ByItselfFieldsToEditContainNotFoundKeys409() throws Exception {
 
     String newTelegramName = "newEmail";
-    boolean tfa = true;
 
     String tfaError = "TFA can't be edited because either telegram_name is "
         + "in the request or telegram chat not present";
@@ -591,8 +580,8 @@ public class UserControllerTest {
 
     ResponseEntity<List<User>> response = userController.getUsers(authorization,null, null, null);
 
-    assertTrue(response.getStatusCode() == HttpStatus.OK);
-    assertTrue(!response.getBody().isEmpty());
+    assertSame(HttpStatus.OK, response.getStatusCode());
+    assertFalse(response.getBody().isEmpty());
   }
 
   @Test
@@ -601,8 +590,8 @@ public class UserControllerTest {
 
     ResponseEntity<List<User>> response = userController.getUsers(authorization,1, null, null);
 
-    assertTrue(response.getStatusCode() == HttpStatus.OK);
-    assertTrue(!response.getBody().isEmpty());
+    assertSame(HttpStatus.OK, response.getStatusCode());
+    assertFalse(response.getBody().isEmpty());
   }
 
   @Test
@@ -611,7 +600,7 @@ public class UserControllerTest {
 
     ResponseEntity<List<User>> response = userController.getUsers(authorization,3, null, null);
 
-    assertTrue(response.getStatusCode() == HttpStatus.OK);
+    assertSame(HttpStatus.OK, response.getStatusCode());
     assertTrue(response.getBody().isEmpty());
   }
 
@@ -621,14 +610,14 @@ public class UserControllerTest {
 
     ResponseEntity<List<User>> response = userController.getUsers(authorization,null, null, null);
 
-    assertTrue(response.getStatusCode() == HttpStatus.OK);
-    assertTrue(!response.getBody().isEmpty());
+    assertSame(HttpStatus.OK, response.getStatusCode());
+    assertFalse(response.getBody().isEmpty());
 
     ResponseEntity<List<User>> response1 = userController.getUsers(authorization,1, null, null);
 
-    assertTrue(response1.getStatusCode() == HttpStatus.OK);
-    assertTrue(!response1.getBody().isEmpty());
-    assertTrue(response.getBody().equals(response1.getBody()));
+    assertSame(HttpStatus.OK, response1.getStatusCode());
+    assertFalse(response1.getBody().isEmpty());
+    assertEquals(response.getBody(), response1.getBody());
   }
 
   @Test
@@ -637,7 +626,7 @@ public class UserControllerTest {
 
     ResponseEntity<List<User>> response = userController.getUsers(authorization,null, 1, null);
 
-    assertTrue(response.getStatusCode() == HttpStatus.FORBIDDEN);
+    assertSame(HttpStatus.FORBIDDEN, response.getStatusCode());
   }
 
   @Test
@@ -646,7 +635,7 @@ public class UserControllerTest {
 
     ResponseEntity<List<User>> response = userController.getUsers(authorization,null, 1, null);
 
-    assertTrue(response.getStatusCode() == HttpStatus.BAD_REQUEST);
+    assertSame(HttpStatus.BAD_REQUEST, response.getStatusCode());
   }
 
   @Test
@@ -655,7 +644,7 @@ public class UserControllerTest {
 
     ResponseEntity<List<User>> response = userController.getUsers(authorization,null, null, 1);
 
-    assertTrue(response.getStatusCode() == HttpStatus.BAD_REQUEST);
+    assertSame(HttpStatus.BAD_REQUEST, response.getStatusCode());
   }
 
   //creazione di un nuovo utente
@@ -672,8 +661,8 @@ public class UserControllerTest {
     jsonUser.addProperty("password", "password");
 
     ResponseEntity<User> response = userController.createUser(authorization, jsonUser.toString(), httpRequest);
-    assertTrue(response.getStatusCode() == HttpStatus.OK);
-    assertTrue(response.getBody() != null);
+    assertSame(HttpStatus.OK, response.getStatusCode());
+    assertNotNull(response.getBody());
   }
 
   @Test
@@ -688,8 +677,8 @@ public class UserControllerTest {
     jsonUser.addProperty("password", "password");
 
     ResponseEntity<User> response = userController.createUser(authorization, jsonUser.toString(), httpRequest);
-    assertTrue(response.getStatusCode() == HttpStatus.OK);
-    assertTrue(response.getBody() != null);
+    assertSame(HttpStatus.OK, response.getStatusCode());
+    assertNotNull(response.getBody());
   }
 
   @Test
@@ -704,8 +693,8 @@ public class UserControllerTest {
     jsonUser.addProperty("password", "password");
 
     ResponseEntity<User> response = userController.createUser(authorization, jsonUser.toString(), httpRequest);
-    assertTrue(response.getStatusCode() == HttpStatus.CONFLICT);
-    assertTrue(response.getBody() == null);
+    assertSame(HttpStatus.CONFLICT, response.getStatusCode());
+    assertNull(response.getBody());
   }
 
   @Test
@@ -720,8 +709,8 @@ public class UserControllerTest {
     jsonUser.addProperty("password", "password");
 
     ResponseEntity<User> response = userController.createUser(authorization, jsonUser.toString(), httpRequest);
-    assertTrue(response.getStatusCode() == HttpStatus.FORBIDDEN);
-    assertTrue(response.getBody() == null);
+    assertSame(HttpStatus.FORBIDDEN, response.getStatusCode());
+    assertNull(response.getBody());
   }
 
   @Test
@@ -729,7 +718,7 @@ public class UserControllerTest {
     String authorization = "Bearer "+admin1Token;
 
     ResponseEntity<User> response = userController.deleteUser(authorization, user1.getId(), httpRequest);
-    assertTrue(response.getStatusCode() == HttpStatus.OK);
+    assertSame(HttpStatus.OK, response.getStatusCode());
 
     User expected = user1;
     User actual = response.getBody();
@@ -743,7 +732,7 @@ public class UserControllerTest {
     String authorization = "Bearer "+mod1Token;
 
     ResponseEntity<User> response = userController.deleteUser(authorization, user1.getId(), httpRequest);
-    assertTrue(response.getStatusCode() == HttpStatus.OK);
+    assertSame(HttpStatus.OK, response.getStatusCode());
     
     User expected = user1;
     User actual = response.getBody();
@@ -757,8 +746,8 @@ public class UserControllerTest {
     String authorization = "Bearer "+mod2Token;
 
     ResponseEntity<User> response = userController.deleteUser(authorization, user1.getId(), httpRequest);
-    assertTrue(response.getStatusCode() == HttpStatus.FORBIDDEN);
-    assertTrue(response.getBody() != null);
+    assertSame(HttpStatus.FORBIDDEN, response.getStatusCode());
+    assertNotNull(response.getBody());
   }
 
   @Test
@@ -767,8 +756,8 @@ public class UserControllerTest {
     int notExistingId = 50;
 
     ResponseEntity<User> response = userController.deleteUser(authorization, notExistingId, httpRequest);
-    assertTrue(response.getStatusCode() == HttpStatus.BAD_REQUEST);
-    assertTrue(response.getBody() != null);
+    assertSame(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    assertNotNull(response.getBody());
   }
 
 }

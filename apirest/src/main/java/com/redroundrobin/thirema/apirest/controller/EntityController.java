@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/entities")
 public class EntityController extends CoreController {
 
-  private EntityService entityService;
+  private final EntityService entityService;
 
   public EntityController(EntityService entityService, JwtUtil jwtUtil, LogService logService,
                           UserService userService) {

@@ -20,11 +20,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class ViewGraphService {
 
-  private ViewGraphRepository viewGraphRepo;
+  private final ViewGraphRepository viewGraphRepo;
 
-  private SensorRepository sensorRepo;
+  private final SensorRepository sensorRepo;
 
-  private ViewRepository viewRepo;
+  private final ViewRepository viewRepo;
 
   @Autowired
   public ViewGraphService(ViewGraphRepository viewGraphRepository,
@@ -103,7 +103,7 @@ public class ViewGraphService {
     allowedFields.add("sensor2");
 
     if (edit) {
-      return fields.keySet().stream().anyMatch(key -> allowedFields.contains(key));
+      return fields.keySet().stream().anyMatch(allowedFields::contains);
     } else {
       return fields.containsKey("correlation") && fields.containsKey("view")
           && (fields.containsKey("sensor1") || fields.containsKey("sensor2"));

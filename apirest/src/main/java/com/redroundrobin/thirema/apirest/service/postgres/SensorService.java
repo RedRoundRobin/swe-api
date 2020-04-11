@@ -18,15 +18,15 @@ import org.springframework.stereotype.Service;
 @Service
 public class SensorService {
 
-  private SensorRepository sensorRepo;
+  private final SensorRepository sensorRepo;
 
-  private AlertRepository alertRepo;
+  private final AlertRepository alertRepo;
 
-  private DeviceRepository deviceRepo;
+  private final DeviceRepository deviceRepo;
 
-  private EntityRepository entityRepo;
+  private final EntityRepository entityRepo;
 
-  private ViewGraphRepository viewGraphRepo;
+  private final ViewGraphRepository viewGraphRepo;
 
   @Autowired
   public SensorService(SensorRepository sensorRepository, AlertRepository alertRepository,

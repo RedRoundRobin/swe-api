@@ -3,7 +3,6 @@ package com.redroundrobin.thirema.apirest;
 import java.sql.Connection;
 import java.sql.SQLException;
 import javax.sql.DataSource;
-import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -20,10 +19,9 @@ import org.springframework.retry.annotation.Retryable;
 public class ApirestApplication {
 
   @Order(Ordered.HIGHEST_PRECEDENCE)
-  private class RetryableDataSourceBeanPostProcessor implements BeanPostProcessor {
+  private static class RetryableDataSourceBeanPostProcessor implements BeanPostProcessor {
     @Override
-    public Object postProcessBeforeInitialization(Object bean, String beanName)
-            throws BeansException {
+    public Object postProcessBeforeInitialization(Object bean, String beanName) {
       if (bean instanceof DataSource) {
         bean = new RetryableDataSource((DataSource)bean);
       }
@@ -31,8 +29,7 @@ public class ApirestApplication {
     }
 
     @Override
-    public Object postProcessAfterInitialization(Object bean, String beanName)
-            throws BeansException {
+    public Object postProcessAfterInitialization(Object bean, String beanName) {
       return bean;
     }
   }
@@ -42,7 +39,7 @@ public class ApirestApplication {
   }
 
   @Bean
-  public BeanPostProcessor dataSouceWrapper() {
+  public BeanPostProcessor dataSourceWrapper() {
     return new RetryableDataSourceBeanPostProcessor();
   }
 
@@ -60,7 +57,7 @@ public class ApirestApplication {
 
 class RetryableDataSource extends AbstractDataSource {
 
-  private DataSource delegate;
+  private final DataSource delegate;
 
   public RetryableDataSource(DataSource delegate) {
     this.delegate = delegate;

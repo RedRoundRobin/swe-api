@@ -8,7 +8,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
@@ -18,13 +17,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class JwtUtil {
 
-  private String encodingStrength;
+  private final String encodingStrength;
 
-  private int tokenExpiration;
+  private final int tokenExpiration;
 
-  private int tfaTokenExpiration;
+  private final int tfaTokenExpiration;
 
-  private String signingKey;
+  private final String signingKey;
 
   @Autowired
   public JwtUtil(@Value("${security.encoding-strength}") String encodingStrength,

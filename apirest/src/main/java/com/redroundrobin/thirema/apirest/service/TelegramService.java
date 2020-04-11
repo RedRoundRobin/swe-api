@@ -17,7 +17,7 @@ public class TelegramService {
   @Value("${telegram.url}")
   private String telegramUrl;
 
-  private RestTemplate restTemplate;
+  private final RestTemplate restTemplate;
 
   public TelegramService() {
     this.restTemplate = new RestTemplate();

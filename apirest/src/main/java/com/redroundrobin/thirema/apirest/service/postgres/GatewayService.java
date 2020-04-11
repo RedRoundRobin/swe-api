@@ -1,6 +1,5 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
-import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
 import com.redroundrobin.thirema.apirest.repository.postgres.DeviceRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.GatewayRepository;
@@ -11,9 +10,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class GatewayService {
 
-  private GatewayRepository gatewayRepo;
+  private final GatewayRepository gatewayRepo;
 
-  private DeviceRepository deviceRepo;
+  private final DeviceRepository deviceRepo;
 
   @Autowired
   public GatewayService(GatewayRepository gatewayRepository, DeviceRepository deviceRepository) {

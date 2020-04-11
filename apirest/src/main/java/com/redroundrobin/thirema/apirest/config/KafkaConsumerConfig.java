@@ -51,7 +51,8 @@ public class KafkaConsumerConfig {
     props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
     props.put(ConsumerConfig.GROUP_ID_CONFIG, "alerts");
     return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(),
-        new JsonDeserializer<>(new TypeReference<Object[]>() {}));
+        new JsonDeserializer<>(new TypeReference<>() {
+        }));
   }
 
   @Bean

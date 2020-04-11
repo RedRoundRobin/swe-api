@@ -4,7 +4,6 @@ import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
-import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.service.timescale.LogService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
@@ -17,15 +16,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -47,10 +44,10 @@ public class EntityControllerTest {
   @MockBean
   private EntityService entityService;
 
-  private String userTokenWithBearer = "Bearer userToken";
-  private String adminTokenWithBearer = "Bearer adminToken";
-  private String userToken = "userToken";
-  private String adminToken = "adminToken";
+  private final String userTokenWithBearer = "Bearer userToken";
+  private final String adminTokenWithBearer = "Bearer adminToken";
+  private final String userToken = "userToken";
+  private final String adminToken = "adminToken";
 
   private User admin;
   private User user;
@@ -69,11 +66,9 @@ public class EntityControllerTest {
   Set<Sensor> entity1And2Sensors;
   Set<Sensor> entity3Sensors;
 
-
   @Before
   public void setUp() {
     entityController = new EntityController(entityService, jwtUtil, logService, userService);
-
 
     // ----------------------------------------- Set Users --------------------------------------
     admin = new User(1, "admin", "admin", "admin", "pass", User.Role.ADMIN);
@@ -81,7 +76,6 @@ public class EntityControllerTest {
 
     List<User> allUsers = new ArrayList<>();
     allUsers.add(user);
-
 
     // ----------------------------------------- Set Entities --------------------------------------
     entity1 = new Entity(1, "entity1", "loc1");
@@ -93,7 +87,6 @@ public class EntityControllerTest {
     allEntities.add(entity2);
     allEntities.add(entity3);
 
-
     // ----------------------------------------- Set Sensors --------------------------------------
     sensor1 = new Sensor(1, "type1", 1);
     sensor2 = new Sensor(2, "type2", 2);
@@ -103,7 +96,6 @@ public class EntityControllerTest {
     allSensors.add(sensor1);
     allSensors.add(sensor2);
     allSensors.add(sensor3);
-
 
     // -------------------------------- Set sensors to entities ----------------------------------
     entity1And2Sensors = new HashSet<>();
@@ -116,11 +108,8 @@ public class EntityControllerTest {
     entity3Sensors.add(sensor3);
     entity3.setSensors(entity3Sensors);
 
-
     // ------------------------------- Set entities to users -----------------------------------
     user.setEntity(entity1);
-
-
 
     // Core Controller needed mock
     user.setEntity(entity1);
@@ -196,7 +185,7 @@ public class EntityControllerTest {
         adminTokenWithBearer, sensor1.getId(), null);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertTrue(!response.getBody().isEmpty());
+    assertFalse(response.getBody().isEmpty());
   }
 
   @Test
@@ -230,8 +219,6 @@ public class EntityControllerTest {
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertEquals(user.getEntity(), response.getBody().stream().findFirst().orElse(null));
   }
-
-
 
   @Test
   public void getEntityByIdByAdminSuccessfull() {

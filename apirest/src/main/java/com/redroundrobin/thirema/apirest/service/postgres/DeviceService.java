@@ -15,13 +15,13 @@ import org.springframework.stereotype.Service;
 @Service
 public class DeviceService {
 
-  private DeviceRepository deviceRepo;
+  private final DeviceRepository deviceRepo;
 
-  private GatewayRepository gatewayRepo;
+  private final GatewayRepository gatewayRepo;
 
-  private SensorRepository sensorRepo;
+  private final SensorRepository sensorRepo;
 
-  private EntityRepository entityRepo;
+  private final EntityRepository entityRepo;
 
   @Autowired
   public DeviceService(DeviceRepository deviceRepository, EntityRepository entityRepository,

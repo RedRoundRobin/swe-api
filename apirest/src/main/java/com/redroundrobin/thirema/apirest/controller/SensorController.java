@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value = {"/sensors"})
 public class SensorController extends CoreController {
 
-  private SensorService sensorService;
+  private final SensorService sensorService;
 
   @Autowired
   public SensorController(SensorService sensorService, JwtUtil jwtUtil, LogService logService,

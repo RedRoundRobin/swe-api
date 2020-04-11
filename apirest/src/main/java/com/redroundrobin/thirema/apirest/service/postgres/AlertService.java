@@ -23,13 +23,13 @@ import org.springframework.stereotype.Service;
 @Service
 public class AlertService {
 
-  private AlertRepository alertRepo;
+  private final AlertRepository alertRepo;
 
-  private EntityRepository entityRepo;
+  private final EntityRepository entityRepo;
 
-  private SensorRepository sensorRepo;
+  private final SensorRepository sensorRepo;
 
-  private UserRepository userRepo;
+  private final UserRepository userRepo;
 
   private boolean checkFields(Map<String, Object> fields, boolean edit) {
     List<String> allowedFields = new ArrayList<>();
@@ -42,7 +42,7 @@ public class AlertService {
       return fields.containsKey("threshold") && fields.containsKey("type")
           && (fields.containsKey("sensor") && fields.containsKey("entity"));
     } else {
-      return fields.keySet().stream().anyMatch(k -> allowedFields.contains(k));
+      return fields.keySet().stream().anyMatch(allowedFields::contains);
     }
   }
 
@@ -210,12 +210,8 @@ public class AlertService {
         }
         userToEdit.setDisabledAlerts(userDisabledAlerts);
         User newUser = userRepo.save(userToEdit);
-        if ((enable && !newUser.getDisabledAlerts().contains(alert))
-            || (!enable && newUser.getDisabledAlerts().contains(alert))) {
-          return true;
-        } else {
-          return false;
-        }
+        return (enable && !newUser.getDisabledAlerts().contains(alert))
+                || (!enable && newUser.getDisabledAlerts().contains(alert));
       } else {
         throw NotAuthorizedException.notAuthorizedMessage("alert");
       }
@@ -232,11 +228,7 @@ public class AlertService {
           && deletingUser.getEntity().equals(alert.getEntity()))) {
         alert.setDeleted(true);
         Alert newAlert = alertRepo.save(alert);
-        if (newAlert.isDeleted()) {
-          return true;
-        } else {
-          return false;
-        }
+        return newAlert.isDeleted();
       } else {
         throw NotAuthorizedException.notAuthorizedMessage("alert");
       }

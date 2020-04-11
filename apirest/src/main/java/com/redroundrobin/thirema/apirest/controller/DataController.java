@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value = "/data")
 public class DataController extends CoreController {
 
-  private SensorService timescaleSensorService;
+  private final SensorService timescaleSensorService;
 
   private Map<Integer,List<Sensor>> getSensorsValuesByAdmin(Integer[] sensorIds, Integer limit,
                                                             Integer entityId) {

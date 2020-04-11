@@ -1,6 +1,5 @@
 package com.redroundrobin.thirema.apirest.models.timescale;
 
-import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.Instant;
 import javax.persistence.Column;

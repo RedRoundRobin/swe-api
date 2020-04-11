@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value = {"/viewGraphs"})
 public class ViewGraphController extends CoreController {
 
-  private ViewGraphService viewGraphService;
+  private final ViewGraphService viewGraphService;
 
   @Autowired
   public ViewGraphController(ViewGraphService viewGraphService, JwtUtil jwtUtil,

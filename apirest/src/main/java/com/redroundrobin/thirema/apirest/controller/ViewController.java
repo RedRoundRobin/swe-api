@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value = "/views")
 public class ViewController extends CoreController {
 
-  private ViewService viewService;
+  private final ViewService viewService;
 
   @Autowired
   public ViewController(ViewService viewService, JwtUtil jwtUtil, LogService logService,

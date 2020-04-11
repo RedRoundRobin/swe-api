@@ -13,17 +13,17 @@ import org.springframework.stereotype.Service;
 @Service(value = "timescaleSensorService")
 public class SensorService {
 
-  private SensorRepository sensorRepo;
+  private final SensorRepository sensorRepo;
 
-  private com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository postgreSensorRepo;
+  private final com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository pgSensorRepo;
 
-  private EntityRepository entityRepo;
+  private final EntityRepository entityRepo;
 
   public SensorService(SensorRepository sensorRepository,
                        com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository
                            postgreSensorRepository, EntityRepository entityRepository) {
     this.sensorRepo = sensorRepository;
-    this.postgreSensorRepo = postgreSensorRepository;
+    this.pgSensorRepo = postgreSensorRepository;
     this.entityRepo = entityRepository;
   }
 
@@ -39,9 +39,9 @@ public class SensorService {
     for (Integer id : sensorIds) {
       com.redroundrobin.thirema.apirest.models.postgres.Sensor sensor;
       if (entityId != null) {
-        sensor = postgreSensorRepo.findBySensorIdAndEntities(id, entity);
+        sensor = pgSensorRepo.findBySensorIdAndEntities(id, entity);
       } else {
-        sensor = postgreSensorRepo.findById(id).orElse(null);
+        sensor = pgSensorRepo.findById(id).orElse(null);
       }
 
       if (sensor != null) {
@@ -79,10 +79,10 @@ public class SensorService {
     List<com.redroundrobin.thirema.apirest.models.postgres.Sensor> postgreSensors;
     if (entityId != null) {
       postgreSensors = (List<com.redroundrobin.thirema.apirest.models.postgres.Sensor>)
-          postgreSensorRepo.findAllByEntities(entity);
+          pgSensorRepo.findAllByEntities(entity);
     } else {
       postgreSensors = (List<com.redroundrobin.thirema.apirest.models.postgres.Sensor>)
-          postgreSensorRepo.findAll();
+          pgSensorRepo.findAll();
     }
 
     for (com.redroundrobin.thirema.apirest.models.postgres.Sensor s : postgreSensors) {
@@ -125,9 +125,9 @@ public class SensorService {
     com.redroundrobin.thirema.apirest.models.postgres.Sensor sensor;
     if (entityId != null) {
       Entity entity = entityRepo.findById(entityId).orElse(null);
-      sensor = postgreSensorRepo.findBySensorIdAndEntities(sensorId, entity);
+      sensor = pgSensorRepo.findBySensorIdAndEntities(sensorId, entity);
     } else {
-      sensor = postgreSensorRepo.findById(sensorId).orElse(null);
+      sensor = pgSensorRepo.findById(sensorId).orElse(null);
     }
     if (sensor != null) {
       String gatewayName = sensor.getDevice().getGateway().getName();

@@ -20,13 +20,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.test.context.junit4.SpringRunner;
-
 import java.util.Collections;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
@@ -51,8 +47,6 @@ public class JwtRequestFilterTest {
     filterChain = new MockFilterChain();
     jwtRequestFilter = new JwtRequestFilter(userService, jwtUtil);
   }
-
-
 
   @Test
   public void doFilterInternalRightWebappTokenSuccessfull() throws UserDisabledException {
@@ -80,17 +74,17 @@ public class JwtRequestFilterTest {
       Authentication auth = SecurityContextHolder.getContext().getAuthentication();
       assertEquals(userAuth, auth);
     } catch (Exception e) {
-      assertTrue(false);
+      fail();
     }
   }
 
   @Test
-  public void doFilterInternalExpiredTokenSetResponse419() throws UserDisabledException {
+  public void doFilterInternalExpiredTokenSetResponse419() {
     httpRequest.addHeader("Authorization", "Bearer prova");
 
     User user = new User("name","surname","email","password", User.Role.ADMIN);
-    UserDetails userDetails = new org.springframework.security.core.userdetails.User(
-        user.getEmail(), user.getPassword(), Collections.emptyList());
+    new org.springframework.security.core.userdetails.User(
+            user.getEmail(), user.getPassword(), Collections.emptyList());
 
     when(jwtUtil.extractType("prova")).thenThrow(
         new ExpiredJwtException(new DefaultHeader(), new DefaultClaims(), ""));
@@ -100,7 +94,7 @@ public class JwtRequestFilterTest {
 
       assertEquals(419, httpResponse.getStatus());
     } catch (Exception e) {
-      assertTrue(false);
+      fail();
     }
   }
 
@@ -124,12 +118,12 @@ public class JwtRequestFilterTest {
 
       assertNull(SecurityContextHolder.getContext().getAuthentication());
     } catch (Exception e) {
-      assertTrue(false);
+      fail();
     }
   }
 
   @Test
-  public void doFilterInternalNotExistentTokenType() throws TelegramChatNotFoundException, UserDisabledException {
+  public void doFilterInternalNotExistentTokenType() {
     httpRequest.addHeader("Authorization", "Bearer prova");
 
     User user = new User("name","surname","email","password", User.Role.ADMIN);
@@ -143,7 +137,7 @@ public class JwtRequestFilterTest {
 
       assertNull(SecurityContextHolder.getContext().getAuthentication());
     } catch (Exception e) {
-      assertTrue(false);
+      fail();
     }
   }
 }
