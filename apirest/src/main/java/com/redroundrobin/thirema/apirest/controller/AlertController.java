@@ -84,6 +84,7 @@ public class AlertController extends CoreController {
       } else {
         response.put("enabled", alertService.findAll());
       }
+      response.put("disabled", Collections.emptyList());
     } else if (sensorId != null && (entityId == null || user.getEntity().getId() == entityId)) {
       List<Alert> disabledAlerts = alertService.findAllDisabledByUserId(user.getId());
       List<Alert> enabledAlerts = alertService.findAllByEntityIdAndSensorId(
