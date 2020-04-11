@@ -7,6 +7,8 @@ import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.service.timescale.LogService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +26,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/stats")
 public class StatsController extends CoreController {
+
+  protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
   private DeviceService deviceService;
 
