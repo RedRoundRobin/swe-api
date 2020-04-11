@@ -119,8 +119,20 @@ public class UserController extends CoreController {
 
   // Get user by userId
   @GetMapping(value = {"/{userid:.+}"})
-  public User user(@PathVariable("userid") int userId) {
-    return userService.findById(userId);
+  public ResponseEntity user(@RequestHeader("Authorization") String authorization,
+                   @PathVariable("userid") int userId) {
+    User user = getUserFromAuthorization(authorization);
+    if (user.getType() == User.Role.ADMIN) {
+      return ResponseEntity.ok(userService.findById(userId));
+    } else if (user.getType() == User.Role.MOD) {
+      User userToReturn = userService.findById(userId);
+      if (userToReturn.getEntity() == user.getEntity()) {
+        return ResponseEntity.ok(userToReturn);
+      }
+    } else if (user.getId() == userId) {
+      return ResponseEntity.ok(user);
+    }
+    return new ResponseEntity(HttpStatus.FORBIDDEN);
   }
 
   // Edit user by userId and a map with data to edit
