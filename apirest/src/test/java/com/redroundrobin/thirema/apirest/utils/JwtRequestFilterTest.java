@@ -45,7 +45,7 @@ public class JwtRequestFilterTest {
     httpRequest = new MockHttpServletRequest();
     httpResponse = new MockHttpServletResponse();
     filterChain = new MockFilterChain();
-    jwtRequestFilter = new JwtRequestFilter(userService, jwtUtil);
+    jwtRequestFilter = new JwtRequestFilter(jwtUtil, userService, Collections.emptySet());
   }
 
   @Test
