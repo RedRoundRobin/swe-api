@@ -94,7 +94,7 @@ public class AuthController extends CoreController {
 
         token = jwtUtil.generateTfaToken("tfa", userDetails, String.valueOf(sixDigitsCode));
 
-        logService.createLog(user.getId(), ip, "login", "sent tfa code");
+        logService.createLog(user.getId(), ip, "auth.tfa", "sent tfa code");
       } else {
         return  new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
       }
@@ -103,7 +103,7 @@ public class AuthController extends CoreController {
 
       token = jwtUtil.generateToken("webapp", userDetails);
 
-      logService.createLog(user.getId(), ip, "login", "webapp");
+      logService.createLog(user.getId(), ip, "auth.login", "webapp");
     }
 
     response.put("token", token);
@@ -153,7 +153,7 @@ public class AuthController extends CoreController {
       response.put("token", token);
       response.put("user", user);
 
-      logService.createLog(user.getId(), ip, "login", "tfa confirmed");
+      logService.createLog(user.getId(), ip, "auth.login", "tfa confirmed");
 
       return ResponseEntity.ok(response);
     } else {
@@ -196,7 +196,7 @@ public class AuthController extends CoreController {
 
         token = jwtUtil.generateToken("telegram", userDetails);
 
-        logService.createLog(user.getId(), ip, "login", "telegram");
+        logService.createLog(user.getId(), ip, "auth.login", "telegram");
       }
     } catch (UsernameNotFoundException | UserDisabledException | TelegramChatNotFoundException ue) {
       code = 0;
