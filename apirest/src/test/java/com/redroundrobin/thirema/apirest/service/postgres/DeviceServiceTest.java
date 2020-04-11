@@ -22,10 +22,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
@@ -48,7 +45,6 @@ public class DeviceServiceTest {
 
   private DeviceService deviceService;
 
-
   private Device device1;
   private Device device2;
   private Device device3;
@@ -63,7 +59,6 @@ public class DeviceServiceTest {
   private Sensor sensor3;
   private Sensor sensor4;
   private Sensor sensor5;
-
 
   @Before
   public void setUp() {
@@ -82,7 +77,6 @@ public class DeviceServiceTest {
     // ----------------------------------------- Set Entities -------------------------------------
     entity1 = new Entity(1, "name", "location");
 
-
     // ----------------------------------------- Set Gateways --------------------------------------
     gateway1 = new Gateway(1, "name1");
     gateway2 = new Gateway(2, "name2");
@@ -90,7 +84,6 @@ public class DeviceServiceTest {
     List<Gateway> allGateways = new ArrayList<>();
     allGateways.add(gateway1);
     allGateways.add(gateway2);
-
 
     // ----------------------------------------- Set Sensors --------------------------------------
     sensor1 = new Sensor(1, "type1", 1);
@@ -106,12 +99,10 @@ public class DeviceServiceTest {
     allSensors.add(sensor4);
     allSensors.add(sensor5);
 
-
     // --------------------------------- Set Gateways to Devices ---------------------------------
     device1.setGateway(gateway1);
     device2.setGateway(gateway1);
     device3.setGateway(gateway2);
-
 
     // --------------------------------- Set Devices to Sensors ---------------------------------
     sensor1.setDevice(device1);
@@ -122,7 +113,6 @@ public class DeviceServiceTest {
 
     sensor5.setDevice(device3);
 
-
     // --------------------------------- Set Sensors to Entities --------------------------------
     Set<Sensor> entity1Sensor = new HashSet<>();
     entity1Sensor.add(sensor1);
@@ -131,8 +121,6 @@ public class DeviceServiceTest {
     List<Device> entity1Devices = new ArrayList<>();
     entity1Devices.add(device1);
     entity1Devices.add(device2);
-
-
 
     when(deviceRepo.findAll()).thenReturn(allDevices);
     when(deviceRepo.findAllByGateway(any(Gateway.class))).thenAnswer(i -> {
@@ -155,24 +143,18 @@ public class DeviceServiceTest {
         return Collections.emptyList();
       }
     });
-    when(deviceRepo.findById(anyInt())).thenAnswer(i -> {
-      return allDevices.stream().filter(d -> i.getArgument(0).equals(d.getId()))
-          .findFirst();
-    });
-    when(deviceRepo.findByIdAndEntityId(anyInt(), eq(entity1.getId()))).thenAnswer(i -> {
-      return entity1Devices.stream().filter(d -> i.getArgument(0).equals(d.getId()))
-          .findFirst().orElse(null);
-    });
+    when(deviceRepo.findById(anyInt())).thenAnswer(i -> allDevices.stream().filter(d -> i.getArgument(0).equals(d.getId()))
+        .findFirst());
+    when(deviceRepo.findByIdAndEntityId(anyInt(), eq(entity1.getId()))).thenAnswer(i -> entity1Devices.stream().filter(d -> i.getArgument(0).equals(d.getId()))
+        .findFirst().orElse(null));
     when(deviceRepo.findBySensors(any(Sensor.class))).thenAnswer(i -> {
       Sensor sensor = i.getArgument(0);
       return allDevices.stream().filter(d -> sensor.getDevice().equals(d))
           .findFirst().orElse(null);
     });
-    when(deviceRepo.findByGatewayAndRealDeviceId(any(Gateway.class), anyInt())).thenAnswer(i -> {
-      return allDevices.stream().filter(d -> d.getGateway().equals(i.getArgument(0))
-          && i.getArgument(1).equals(d.getRealDeviceId()))
-          .findFirst().orElse(null);
-    });
+    when(deviceRepo.findByGatewayAndRealDeviceId(any(Gateway.class), anyInt())).thenAnswer(i -> allDevices.stream().filter(d -> d.getGateway().equals(i.getArgument(0))
+        && i.getArgument(1).equals(d.getRealDeviceId()))
+        .findFirst().orElse(null));
 
     when(entityRepo.findById(anyInt())).thenAnswer(i -> {
       if (i.getArgument(0).equals(entity1.getId())) {
@@ -182,15 +164,11 @@ public class DeviceServiceTest {
       }
     });
 
-    when(gatewayRepo.findById(anyInt())).thenAnswer(i -> {
-      return allGateways.stream().filter(g -> i.getArgument(0).equals(g.getId()))
-          .findFirst();
-    });
+    when(gatewayRepo.findById(anyInt())).thenAnswer(i -> allGateways.stream().filter(g -> i.getArgument(0).equals(g.getId()))
+        .findFirst());
 
-    when(sensorRepo.findById(anyInt())).thenAnswer(i -> {
-      return allSensors.stream().filter(s -> i.getArgument(0).equals(s.getId()))
-          .findFirst();
-    });
+    when(sensorRepo.findById(anyInt())).thenAnswer(i -> allSensors.stream().filter(s -> i.getArgument(0).equals(s.getId()))
+        .findFirst());
 
   }
 
@@ -198,18 +176,16 @@ public class DeviceServiceTest {
   public void findAllDevices() {
     List<Device> devices = deviceService.findAll();
 
-    assertTrue(!devices.isEmpty());
-    assertTrue(devices.stream().count() == 3);
+    assertFalse(devices.isEmpty());
+    assertEquals(3, (long) devices.size());
   }
-
-
 
   @Test
   public void findAllDevicesByEntityIdAndGatewayId() {
     List<Device> devices = deviceService.findAllByEntityIdAndGatewayId(entity1.getId(), gateway1.getId());
 
-    assertTrue(!devices.isEmpty());
-    assertTrue(devices.stream().count() == 2);
+    assertFalse(devices.isEmpty());
+    assertEquals(2, (long) devices.size());
   }
 
   @Test
@@ -219,14 +195,12 @@ public class DeviceServiceTest {
     assertTrue(devices.isEmpty());
   }
 
-
-
   @Test
   public void findAllDevicesByGatewayId() {
     List<Device> devices = deviceService.findAllByGatewayId(gateway1.getId());
 
-    assertTrue(!devices.isEmpty());
-    assertTrue(devices.stream().count() == 2);
+    assertFalse(devices.isEmpty());
+    assertEquals(2, (long) devices.size());
   }
 
   @Test
@@ -240,8 +214,8 @@ public class DeviceServiceTest {
   public void findAllDevicesByEntityId() {
     List<Device> devices = deviceService.findAllByEntityId(entity1.getId());
 
-    assertTrue(!devices.isEmpty());
-    assertTrue(devices.stream().count() == 2);
+    assertFalse(devices.isEmpty());
+    assertEquals(2, (long) devices.size());
   }
 
   @Test
@@ -279,8 +253,6 @@ public class DeviceServiceTest {
 
     assertNotNull(device);
   }
-
-
 
   @Test
   public void findDeviceByGatewayIdAndRealSensorId() {

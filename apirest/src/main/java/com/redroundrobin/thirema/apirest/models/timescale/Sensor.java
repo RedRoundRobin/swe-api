@@ -1,8 +1,12 @@
 package com.redroundrobin.thirema.apirest.models.timescale;
 
-import javax.persistence.*;
 import java.sql.Timestamp;
 import java.time.Instant;
+import javax.persistence.Column;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
 @javax.persistence.Entity
 @Table(name = "sensors")

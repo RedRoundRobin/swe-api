@@ -1,4 +1,5 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
+
 import com.google.gson.JsonObject;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.postgres.View;
@@ -12,7 +13,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringRunner;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -43,7 +43,6 @@ public class ViewServiceTest {
 
     viewService = new ViewService(viewRepo, userRepo);
 
-
     // ----------------------------------------- Set Users ---------------------------------------
     admin1 = new User(1, "admin1", "admin1", "admin1", "pass", User.Role.ADMIN);
     mod1 = new User(3, "mod1", "mod1", "mod1", "pass", User.Role.MOD);
@@ -53,7 +52,6 @@ public class ViewServiceTest {
     allUsers.add(user1);
     allUsers.add(mod1);
     allUsers.add(admin1);
-
 
     // ----------------------------------------- Set Views ---------------------------------------
     view1 = new View(1,"view1", user1);
@@ -67,31 +65,23 @@ public class ViewServiceTest {
     allViews.add(view3);
     allViews.add(view4);
 
-
-
     when(viewRepo.findById(anyInt())).thenAnswer(i -> {
       int id = i.getArgument(0);
-      Optional<View> viewFound = allViews.stream()
+      return allViews.stream()
           .filter(view -> view.getId() == id)
           .findFirst();
-      return viewFound;
     });
     when(viewRepo.findAllByUser(any(User.class))).thenAnswer(i -> {
       User user = i.getArgument(0);
-      List<View> views = allViews.stream()
-          .filter(view -> view.getUser() == user).collect(Collectors.toList());
-      return views;
-    });
-    when(viewRepo.findByViewIdAndUser(anyInt(), any(User.class))).thenAnswer(i -> {
       return allViews.stream()
-          .filter(v -> i.getArgument(0).equals(v.getId())
-              && i.getArgument(1).equals(v.getUser())).findFirst().orElse(null);
+          .filter(view -> view.getUser() == user).collect(Collectors.toList());
     });
+    when(viewRepo.findByViewIdAndUser(anyInt(), any(User.class))).thenAnswer(i -> allViews.stream()
+        .filter(v -> i.getArgument(0).equals(v.getId())
+            && i.getArgument(1).equals(v.getUser())).findFirst().orElse(null));
 
-    when(userRepo.findById(anyInt())).thenAnswer(i -> {
-      return allUsers.stream()
-        .filter(u -> i.getArgument(0).equals(u.getId())).findFirst();
-    });
+    when(userRepo.findById(anyInt())).thenAnswer(i -> allUsers.stream()
+      .filter(u -> i.getArgument(0).equals(u.getId())).findFirst());
   }
 
   @Test
@@ -103,10 +93,8 @@ public class ViewServiceTest {
   @Test
   public void findAllByUserTest() {
     List<View> views = viewService.findAllByUser(user1);
-    assertTrue(!views.isEmpty() && views.size() == 2);
+    assertEquals(2, views.size());
   }
-
-
 
   @Test
   public void findViewByIdAndUserId() {
@@ -122,8 +110,6 @@ public class ViewServiceTest {
     assertNull(view);
   }
 
-
-
   @Test
   public void serializeViewSuccesfulTest() {
     JsonObject rawViewToInsert = new JsonObject();
@@ -133,11 +119,8 @@ public class ViewServiceTest {
       viewService.serializeView(rawViewToInsert, user1);
       assertTrue(true);
     }
-    catch(KeysNotFoundException e) {
-      assertTrue(false);
-    }
-    catch(MissingFieldsException e) {
-      assertTrue(false);
+    catch(KeysNotFoundException | MissingFieldsException e) {
+      fail();
     }
   }
 
@@ -149,13 +132,13 @@ public class ViewServiceTest {
 
     try {
       viewService.serializeView(rawViewToInsert, user1);
-      assertTrue(false);
+      fail();
     }
     catch(KeysNotFoundException e) {
       assertTrue(true);
     }
     catch(MissingFieldsException e) {
-      assertTrue(false);
+      fail();
     }
   }
 
@@ -166,10 +149,10 @@ public class ViewServiceTest {
 
     try {
       viewService.serializeView(rawViewToInsert, user1);
-      assertTrue(false);
+      fail();
     }
     catch(KeysNotFoundException e) {
-      assertTrue(false);
+      fail();
     }
     catch(MissingFieldsException e) {
       assertTrue(true);
@@ -182,11 +165,8 @@ public class ViewServiceTest {
       viewService.deleteView(user1, 1);
       assertTrue(true);
     }
-    catch(NotAuthorizedException e) {
-      assertTrue(false);
-    }
-    catch(InvalidFieldsValuesException e) {
-      assertTrue(false);
+    catch(NotAuthorizedException | InvalidFieldsValuesException e) {
+      fail();
     }
   }
 
@@ -194,13 +174,13 @@ public class ViewServiceTest {
   public void deleteViewNotAuthorizedToDeleteUserExceptionTest() {
     try {
       viewService.deleteView(user1, 3);
-      assertTrue(false);
+      fail();
     }
     catch(NotAuthorizedException e) {
       assertTrue(true);
     }
     catch(InvalidFieldsValuesException e) {
-      assertTrue(false);
+      fail();
     }
   }
 
@@ -208,10 +188,10 @@ public class ViewServiceTest {
   public void deleteViewValuesNotAllowedExceptionTest() {
     try {
       viewService.deleteView(user1, 8);
-      assertTrue(false);
+      fail();
     }
     catch(NotAuthorizedException e) {
-      assertTrue(false);
+      fail();
     }
     catch(InvalidFieldsValuesException e) {
       assertTrue(true);
@@ -219,4 +199,3 @@ public class ViewServiceTest {
   }
 
 }
-
