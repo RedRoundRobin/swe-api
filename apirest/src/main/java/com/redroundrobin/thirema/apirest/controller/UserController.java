@@ -251,7 +251,7 @@ public class UserController extends CoreController {
         // go to return BAD_REQUEST
       }
     } else {
-      logger.debug("RESPONSE STATUS: BAD_REQUEST. User " + userToEdit.getId() + " does not exist");
+      logger.debug("RESPONSE STATUS: BAD_REQUEST. User " + userId + " does not exist");
     }
     // when db error is not for duplicate unique or when userToEdit with id furnished is not found
     // or there are missing edit fields or invalid values
