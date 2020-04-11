@@ -3,10 +3,9 @@ package com.redroundrobin.thirema.apirest.config;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.utils.CustomAuthenticationManager;
 import com.redroundrobin.thirema.apirest.utils.JwtRequestFilter;
+import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import java.util.Arrays;
 import java.util.HashSet;
-
-import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
