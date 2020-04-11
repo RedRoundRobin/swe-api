@@ -2,6 +2,10 @@ package com.redroundrobin.thirema.apirest.service;
 
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+
+import com.redroundrobin.thirema.apirest.controller.AlertController;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +17,8 @@ import org.springframework.web.client.RestTemplate;
 
 @Service
 public class TelegramService {
+
+  Logger logger = LoggerFactory.getLogger(AlertController.class);
 
   @Value("${telegram.url}")
   private String telegramUrl;
@@ -48,8 +54,12 @@ public class TelegramService {
       containerFactory = "objectListKafkaListenerContainerFactory")
   public void sendAlerts(Object[] objectList) {
     for (Object obj : objectList) {
-      System.out.println("Received Messasge in group 'alerts': \n\t" + obj);
-      restTemplate.postForEntity(telegramUrl, obj, String.class);
+      logger.debug("Received Messasge in group 'alerts': \n\t" + obj);
+      try {
+        restTemplate.postForEntity(telegramUrl, obj, String.class);
+      } catch (RestClientResponseException | ResourceAccessException rae) {
+        logger.trace(rae.toString());
+      }
     }
     new CountDownLatch(3).countDown();
   }
