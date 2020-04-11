@@ -3,12 +3,12 @@ package com.redroundrobin.thirema.apirest.service.postgres;
 import com.google.gson.JsonObject;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.postgres.View;
+import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.ViewRepository;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -18,18 +18,22 @@ import org.springframework.stereotype.Service;
 @Service
 public class ViewService {
 
-  private ViewRepository viewRepo;
+  private final ViewRepository viewRepo;
 
-  private UserService userService;
+  private UserRepository userRepo;
+
+  @Autowired
+  public ViewService(ViewRepository viewRepository, UserRepository userRepository) {
+    this.viewRepo = viewRepository;
+    this.userRepo = userRepository;
+  }
 
   private boolean checkCreatableFields(Set<String> keys)
       throws KeysNotFoundException {
     Set<String> creatable = new HashSet<>();
     creatable.add("name");
 
-    boolean onlyCreatableKeys = keys.stream()
-        .filter(key -> !creatable.contains(key))
-        .count() == 0;
+    boolean onlyCreatableKeys = creatable.containsAll(keys);
 
     if (!onlyCreatableKeys) {
       throw new KeysNotFoundException("There are some keys that either"
@@ -37,45 +41,6 @@ public class ViewService {
     }
 
     return creatable.size() == keys.size();
-  }
-
-  @Autowired
-  public ViewService(ViewRepository viewRepo) {
-    this.viewRepo = viewRepo;
-  }
-
-  @Autowired
-  public void setUserService(UserService userService) {
-    this.userService = userService;
-  }
-
-  public List<View> findAllByUser(User user) {
-    return viewRepo.findAllByUser(user);
-  }
-
-  public View findById(int viewId) {
-    return viewRepo.findById(viewId).orElse(null);
-  }
-
-  public View findByIdAndUserId(int viewId, int userId) {
-    User user = userService.findById(userId);
-    if (user != null) {
-      return viewRepo.findByViewIdAndUser(viewId, user);
-    } else {
-      return null;
-    }
-  }
-
-  public View serializeView(JsonObject rawViewToInsert, User insertingUser)
-      throws KeysNotFoundException, MissingFieldsException {
-    if (!checkCreatableFields(rawViewToInsert.keySet())) {
-      throw new MissingFieldsException("Some necessary fields are missing: cannot create view");
-    }
-
-    View newView = new View();
-    newView.setName(rawViewToInsert.get("name").getAsString());
-    newView.setUser(insertingUser);
-    return viewRepo.save(newView);
   }
 
   public void deleteView(User deletingUser, int viewToDeleteId)
@@ -92,4 +57,37 @@ public class ViewService {
 
     viewRepo.delete(viewToDelete);
   }
+
+  public List<View> findAllByUser(User user) {
+    return (List<View>) viewRepo.findAllByUser(user);
+  }
+
+  public View findById(int id) {
+    return viewRepo.findById(id).orElse(null);
+  }
+
+  public View findByIdAndUserId(int id, int userId) {
+    User user = userRepo.findById(userId).orElse(null);
+    if (user != null) {
+      return viewRepo.findByViewIdAndUser(id, user);
+    } else {
+      return null;
+    }
+  }
+
+  public View serializeView(JsonObject rawViewToInsert, User insertingUser)
+      throws KeysNotFoundException, MissingFieldsException {
+    if (!checkCreatableFields(rawViewToInsert.keySet())) {
+      throw new MissingFieldsException("Some necessary fields are missing: cannot create view");
+    }
+
+    View newView = new View(rawViewToInsert.get("name").getAsString(), insertingUser);
+    return viewRepo.save(newView);
+  }
+
+  @Autowired
+  public void setUserRepository(UserRepository userRepository) {
+    this.userRepo = userRepository;
+  }
+
 }

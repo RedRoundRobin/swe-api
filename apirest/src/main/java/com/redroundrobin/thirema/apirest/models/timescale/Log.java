@@ -1,13 +1,15 @@
 package com.redroundrobin.thirema.apirest.models.timescale;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
+import java.time.Instant;
 import javax.persistence.Column;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
 @javax.persistence.Entity
 @Table(name = "logs")
-public class Log {
+public class Log implements Serializable {
 
   @Id
   private Timestamp time;
@@ -17,17 +19,23 @@ public class Log {
 
   @Column(name = "ip_addr")
   private String ipAddr;
-
   private String operation;
-
   private String data;
+
+  public Log() {
+
+  }
+
+  public Log(int userId, String ipAddr, String operation, String data) {
+    time = Timestamp.from(Instant.now());
+    this.userId = userId;
+    this.ipAddr = ipAddr;
+    this.operation = operation;
+    this.data = data;
+  }
 
   public Timestamp getTime() {
     return time;
-  }
-
-  public void setTime(Timestamp time) {
-    this.time = time;
   }
 
   public int getUserId() {

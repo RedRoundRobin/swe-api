@@ -6,10 +6,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
-import java.util.List;
+import java.io.Serializable;
+import java.util.Set;
 import javax.persistence.Column;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -17,13 +19,12 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 @javax.persistence.Entity
 @Table(name = "users")
-public class User {
+public class User implements Serializable {
 
   public enum Role {
     USER, MOD, ADMIN;
@@ -39,7 +40,7 @@ public class User {
   @SequenceGenerator(
       name = "users_user_id_seq",
       sequenceName = "users_user_id_seq",
-      allocationSize = 50
+      allocationSize = 25
   )
   @Column(name = "user_id")
   private int userId;
@@ -58,8 +59,8 @@ public class User {
   private String telegramChat;
 
   @Column(name = "two_factor_authentication")
-  private boolean tfa;
-  private boolean deleted;
+  private boolean tfa = false;
+  private boolean deleted = false;
 
   @ManyToOne
   @JoinColumn(name = "entity_id")
@@ -68,19 +69,33 @@ public class User {
   private Entity entity;
 
   @JsonIgnore
-  @OneToMany(mappedBy = "user")
-  private List<View> views;
-
-  @JsonIgnore
-  @ManyToMany
+  @ManyToMany(fetch = FetchType.LAZY)
   @JoinTable(
       name = "disabled_users_alerts",
       joinColumns = @JoinColumn(name = "user_id"),
       inverseJoinColumns = @JoinColumn(name = "alert_id"))
-  private List<Alert> disabledAlerts;
+  private Set<Alert> disabledAlerts;
 
-  public void setId(int userId) {
+  public User() {
+    // default constructor
+  }
+
+  public User(String name, String surname, String email, String password, Role type) {
+    this.name = name;
+    this.surname = surname;
+    this.email = email;
+    this.password = password;
+    this.type = type;
+  }
+
+  public User(int userId, String name, String surname, String email, String password,
+                 Role type) {
     this.userId = userId;
+    this.name = name;
+    this.surname = surname;
+    this.email = email;
+    this.password = password;
+    this.type = type;
   }
 
   @JsonProperty(value = "userId")
@@ -168,19 +183,11 @@ public class User {
     return entity;
   }
 
-  public List<Alert> getDisabledAlerts() {
+  public Set<Alert> getDisabledAlerts() {
     return disabledAlerts;
   }
 
-  public void setDisabledAlerts(List<Alert> disabledAlerts) {
+  public void setDisabledAlerts(Set<Alert> disabledAlerts) {
     this.disabledAlerts = disabledAlerts;
-  }
-
-  public List<View> getViews() {
-    return views;
-  }
-
-  public void setViews(List<View> views) {
-    this.views = views;
   }
 }

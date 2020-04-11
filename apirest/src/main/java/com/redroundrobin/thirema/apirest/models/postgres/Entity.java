@@ -1,59 +1,62 @@
 package com.redroundrobin.thirema.apirest.models.postgres;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.List;
+import java.io.Serializable;
+import java.util.Set;
 import javax.persistence.Column;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
-import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 @javax.persistence.Entity
 @Table(name = "entities")
-public class Entity {
+public class Entity implements Serializable {
   @Id
   @GeneratedValue(generator = "entities_entity_id_seq", strategy = GenerationType.SEQUENCE)
   @SequenceGenerator(
       name = "entities_entity_id_seq",
       sequenceName = "entities_entity_id_seq",
-      allocationSize = 50
+      allocationSize = 25
   )
   @Column(name = "entity_id")
   private int entityId;
   private String name;
   private String location;
-  private boolean deleted;
+  private boolean deleted = false;
 
   @JsonIgnore
-  @OneToMany(mappedBy = "entity")
-  private List<User> users;
-
-  @JsonIgnore
-  @OneToMany(mappedBy = "entity")
-  private List<Alert> alerts;
-
-  @JsonIgnore
-  @ManyToMany
+  @ManyToMany(fetch = FetchType.LAZY)
   @JoinTable(
       name = "entity_sensors",
       joinColumns = @JoinColumn(name = "entity_id"),
       inverseJoinColumns = @JoinColumn(name = "sensor_id"))
-  private List<Sensor> sensors;
+  private Set<Sensor> sensors;
+
+  public Entity() {
+    // default constructor
+  }
+
+  public Entity(String name, String location) {
+    this.name = name;
+    this.location = location;
+  }
+
+  public Entity(int entityId, String name, String location) {
+    this.entityId = entityId;
+    this.name = name;
+    this.location = location;
+  }
 
   @JsonProperty(value = "entityId")
   public int getId() {
     return entityId;
-  }
-
-  public void setId(int entityId) {
-    this.entityId = entityId;
   }
 
   public String getName() {
@@ -72,22 +75,6 @@ public class Entity {
     this.location = location;
   }
 
-  public List<User> getUsers() {
-    return users;
-  }
-
-  public void setUsers(List<User> users) {
-    this.users = users;
-  }
-
-  public List<Alert> getAlerts() {
-    return alerts;
-  }
-
-  public void setAlerts(List<Alert> alerts) {
-    this.alerts = alerts;
-  }
-
   public boolean isDeleted() {
     return this.deleted;
   }
@@ -96,11 +83,11 @@ public class Entity {
     this.deleted = deleted;
   }
 
-  public List<Sensor> getSensors() {
+  public Set<Sensor> getSensors() {
     return sensors;
   }
 
-  public void setSensors(List<Sensor> sensors) {
+  public void setSensors(Set<Sensor> sensors) {
     this.sensors = sensors;
   }
 }

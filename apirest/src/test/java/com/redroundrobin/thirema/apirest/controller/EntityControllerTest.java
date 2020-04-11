@@ -4,8 +4,8 @@ import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
-import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
+import com.redroundrobin.thirema.apirest.service.timescale.LogService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,12 +16,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -35,15 +36,18 @@ public class EntityControllerTest {
   private JwtUtil jwtUtil;
 
   @MockBean
+  private LogService logService;
+
+  @MockBean
   private UserService userService;
 
   @MockBean
   private EntityService entityService;
 
-  private String userTokenWithBearer = "Bearer userToken";
-  private String adminTokenWithBearer = "Bearer adminToken";
-  private String userToken = "userToken";
-  private String adminToken = "adminToken";
+  private final String userTokenWithBearer = "Bearer userToken";
+  private final String adminTokenWithBearer = "Bearer adminToken";
+  private final String userToken = "userToken";
+  private final String adminToken = "adminToken";
 
   private User admin;
   private User user;
@@ -59,100 +63,53 @@ public class EntityControllerTest {
   List<Sensor> allSensors;
   List<Entity> allEntities;
 
-  List<Entity> sensor1And2Entities;
-  List<Sensor> entity1And2Sensors;
-  List<Sensor> entity3Sensors;
-
+  Set<Sensor> entity1And2Sensors;
+  Set<Sensor> entity3Sensors;
 
   @Before
   public void setUp() {
-    entityController = new EntityController(entityService);
-    entityController.setJwtUtil(jwtUtil);
-    entityController.setUserService(userService);
+    entityController = new EntityController(entityService, jwtUtil, logService, userService);
 
-
-    admin = new User();
-    admin.setId(1);
-    admin.setEmail("admin");
-    admin.setType(User.Role.ADMIN);
-
-    user = new User();
-    user.setId(2);
-    user.setEmail("user");
-    user.setType(User.Role.USER);
+    // ----------------------------------------- Set Users --------------------------------------
+    admin = new User(1, "admin", "admin", "admin", "pass", User.Role.ADMIN);
+    user = new User(2, "user", "user", "user", "user", User.Role.USER);
 
     List<User> allUsers = new ArrayList<>();
     allUsers.add(user);
 
-
     // ----------------------------------------- Set Entities --------------------------------------
-    entity1 = new Entity();
-    entity1.setId(1);
-    entity1.setName("entity1");
-
-    entity2 = new Entity();
-    entity2.setId(2);
-    entity2.setName("entity2");
-
-    entity3 = new Entity();
-    entity3.setId(3);
-    entity3.setName("entity3");
+    entity1 = new Entity(1, "entity1", "loc1");
+    entity2 = new Entity(2, "entity2", "loc2");
+    entity3 = new Entity(3, "entity3", "loc3");
 
     allEntities = new ArrayList<>();
     allEntities.add(entity1);
     allEntities.add(entity2);
     allEntities.add(entity3);
 
-
     // ----------------------------------------- Set Sensors --------------------------------------
-    sensor1 = new Sensor();
-    sensor1.setId(1);
-    sensor1.setRealSensorId(1);
-
-    sensor2 = new Sensor();
-    sensor2.setId(2);
-    sensor2.setRealSensorId(2);
-
-    sensor3 = new Sensor();
-    sensor3.setId(3);
-    sensor3.setRealSensorId(1);
+    sensor1 = new Sensor(1, "type1", 1);
+    sensor2 = new Sensor(2, "type2", 2);
+    sensor3 = new Sensor(3, "type3", 3);
 
     allSensors = new ArrayList<>();
     allSensors.add(sensor1);
     allSensors.add(sensor2);
     allSensors.add(sensor3);
 
-
-    // -------------------------- Set sensors to entities and viceversa --------------------------
-    sensor1And2Entities = new ArrayList<>();
-    sensor1And2Entities.add(entity1);
-    sensor1And2Entities.add(entity2);
-    sensor1.setEntities(sensor1And2Entities);
-    sensor2.setEntities(sensor1And2Entities);
-    entity1And2Sensors = new ArrayList<>();
+    // -------------------------------- Set sensors to entities ----------------------------------
+    entity1And2Sensors = new HashSet<>();
     entity1And2Sensors.add(sensor1);
     entity1And2Sensors.add(sensor2);
     entity1.setSensors(entity1And2Sensors);
     entity2.setSensors(entity1And2Sensors);
 
-    List<Entity> sensor3Entities = new ArrayList<>();
-    sensor3Entities.add(entity3);
-    sensor3.setEntities(sensor3Entities);
-    entity3Sensors = new ArrayList<>();
+    entity3Sensors = new HashSet<>();
     entity3Sensors.add(sensor3);
     entity3.setSensors(entity3Sensors);
 
-
-    // -------------------------- Set sensors to users and viceversa --------------------------
-    List<User> entity1Users = new ArrayList<>();
-    entity1Users.add(user);
-    entity1.setUsers(entity1Users);
+    // ------------------------------- Set entities to users -----------------------------------
     user.setEntity(entity1);
-
-    entity2.setUsers(Collections.emptyList());
-    entity3.setUsers(Collections.emptyList());
-
-
 
     // Core Controller needed mock
     user.setEntity(entity1);
@@ -182,7 +139,7 @@ public class EntityControllerTest {
       User user = allUsers.stream().filter(u -> i.getArgument(1).equals(u.getId())).findFirst().orElse(null);
       if (sensor != null && user != null) {
         return allEntities.stream()
-            .filter(e -> e.getSensors().contains(sensor) && e.getUsers().contains(user))
+            .filter(e -> e.getSensors().contains(sensor) && user.getEntity().equals(e))
             .collect(Collectors.toList());
       } else {
         return Collections.emptyList();
@@ -194,7 +151,7 @@ public class EntityControllerTest {
           .findFirst().orElse(null);
       if (user != null) {
         return allEntities.stream()
-            .filter(e -> e.getUsers().contains(user))
+            .filter(e -> user.getEntity().equals(e))
             .collect(Collectors.toList());
       } else {
         return Collections.emptyList();
@@ -228,7 +185,7 @@ public class EntityControllerTest {
         adminTokenWithBearer, sensor1.getId(), null);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertEquals(sensor1And2Entities, response.getBody());
+    assertFalse(response.getBody().isEmpty());
   }
 
   @Test
@@ -262,8 +219,6 @@ public class EntityControllerTest {
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertEquals(user.getEntity(), response.getBody().stream().findFirst().orElse(null));
   }
-
-
 
   @Test
   public void getEntityByIdByAdminSuccessfull() {

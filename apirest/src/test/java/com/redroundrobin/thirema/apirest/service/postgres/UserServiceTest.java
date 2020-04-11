@@ -1,17 +1,16 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
 import com.google.gson.JsonObject;
-import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
-import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
+import com.redroundrobin.thirema.apirest.repository.postgres.AlertRepository;
+import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 import com.redroundrobin.thirema.apirest.utils.exception.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -28,13 +27,16 @@ import static org.mockito.Mockito.when;
 @RunWith(SpringRunner.class)
 public class UserServiceTest {
 
+  private UserService userService;
+
+  @MockBean
+  private AlertRepository alertRepo;
+
+  @MockBean
+  private EntityRepository entityRepo;
+
   @MockBean
   private UserRepository userRepo;
-
-  @MockBean
-  private EntityService entityService;
-
-  private UserService userService;
 
   private User admin1;
   private User admin2;
@@ -50,82 +52,29 @@ public class UserServiceTest {
   @Before
   public void setUp() {
 
-    userService = new UserService(userRepo);
-    userService.setEntityService(entityService);
+    userService = new UserService(userRepo, alertRepo, entityRepo);
 
-    admin1 = new User();
-    admin1.setId(1);
-    admin1.setName("admin1");
-    admin1.setSurname("admin1");
-    admin1.setEmail("admin1");
+    // ----------------------------------------- Set Users ---------------------------------------
+    admin1 = new User(1, "admin1", "admin1", "admin1", "pass", User.Role.ADMIN);
     admin1.setTelegramName("TNAdmin1");
-    admin1.setPassword("password");
-    admin1.setType(User.Role.ADMIN);
 
-    admin2 = new User();
-    admin2.setId(2);
-    admin2.setName("admin2");
-    admin2.setSurname("admin2");
-    admin2.setEmail("admin2");
+    admin2 = new User(2, "admin2", "admin2", "admin2", "pass", User.Role.ADMIN);
     admin2.setTelegramName("TNAdmin2");
-    admin2.setPassword("password");
-    admin2.setType(User.Role.ADMIN);
 
-    entity1 = new Entity();
-    entity1.setId(1);
-
-    mod1 = new User();
-    mod1.setId(3);
-    mod1.setName("mod1");
-    mod1.setSurname("mod1");
-    mod1.setEmail("mod1");
+    mod1 = new User(3, "mod1", "mod1", "mod1", "pass", User.Role.MOD);
     mod1.setTelegramName("TNmod1");
-    mod1.setPassword("password");
-    mod1.setType(User.Role.MOD);
-    mod1.setEntity(entity1);
 
-    mod11 = new User();
-    mod11.setId(4);
-    mod11.setName("mod11");
-    mod11.setSurname("mod11");
-    mod11.setEmail("mod11");
+    mod11 = new User(4, "mod11", "mod11", "mod11", "pass", User.Role.MOD);
     mod11.setTelegramName("TNmod11");
-    mod11.setPassword("password");
-    mod11.setType(User.Role.MOD);
-    mod11.setEntity(entity1);
 
-    entity2 = new Entity();
-    entity2.setId(2);
-
-    mod2 = new User();
-    mod2.setId(7);
-    mod2.setName("mod2");
-    mod2.setSurname("mod2");
-    mod2.setEmail("mod2");
+    mod2 = new User(7, "mod2", "mod2", "mod2", "pass", User.Role.MOD);
     mod2.setTelegramName("TNmod2");
-    mod2.setPassword("password");
-    mod2.setType(User.Role.MOD);
-    mod2.setEntity(entity2);
 
-    user1 = new User();
-    user1.setId(5);
-    user1.setName("user1");
-    user1.setSurname("user1");
-    user1.setEmail("user1");
+    user1 = new User(5, "user1", "user1", "user1", "pass", User.Role.USER);
     user1.setTelegramName("TNuser1");
-    user1.setPassword("password");
-    user1.setType(User.Role.USER);
-    user1.setEntity(entity1);
 
-    user2 = new User();
-    user2.setId(6);
-    user2.setName("user2");
-    user2.setSurname("user2");
-    user2.setEmail("user2");
+    user2 = new User(6, "user2", "user2", "user2", "pass", User.Role.USER);
     user2.setTelegramName("TNuser2");
-    user2.setPassword("password");
-    user2.setType(User.Role.USER);
-    user2.setEntity(entity2);
 
     List<User> allUsers = new ArrayList<>();
     allUsers.add(admin1);
@@ -135,82 +84,77 @@ public class UserServiceTest {
     allUsers.add(user1);
     allUsers.add(user2);
 
+    // --------------------------------------- Set Entities ---------------------------------------
+    entity1 = new Entity(1, "entity1", "loc1");
+    entity2 = new Entity(2, "entity2", "loc2");
+
+    // --------------------------------- Set Entities To Users ------------------------------------
+    mod1.setEntity(entity1);
+    mod11.setEntity(entity1);
+
+    mod2.setEntity(entity2);
+
+    user1.setEntity(entity1);
+    user2.setEntity(entity2);
+
     when(userRepo.findAll()).thenReturn(allUsers);
     when(userRepo.findById(anyInt())).thenAnswer(i -> {
       int id = i.getArgument(0);
-      Optional<User> userFound = allUsers.stream()
+      return allUsers.stream()
           .filter(user -> user.getId() == id)
           .findFirst();
-      return userFound;
     });
-
     when(userRepo.findByTelegramNameAndTelegramChat(anyString(), anyString())).thenAnswer(i -> {
       String tn = i.getArgument(0);
       String tc = i.getArgument(1);
       Optional<User> userFound = allUsers.stream()
-          .filter(user -> user.getTelegramName() == tn && user.getTelegramChat() == tc)
+          .filter(user -> user.getTelegramName().equals(tn) && user.getTelegramChat().equals(tc))
           .findFirst();
-      return userFound.isPresent() ? userFound.get() : null;
+      return userFound.orElse(null);
     });
-
-    List<Device> devices = new ArrayList<>();
-    when(userRepo.userDevices(anyInt())).thenReturn(devices);
-
     when(userRepo.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
-
     when(userRepo.findByEmail(anyString())).thenAnswer(i -> {
       String emailNewUser = i.getArgument(0);
       return allUsers.stream()
-          .filter(user -> user.getEmail() == emailNewUser)
+          .filter(user -> user.getEmail().equals(emailNewUser))
           .findFirst().orElse(null);
     });
-
-    when(entityService.findById(anyInt())).thenAnswer(i -> {
-      int id = i.getArgument(0);
-      if (id == 1) {
-        return entity1;
-      } else if (id == 2) {
-        return entity2;
-      } else {
-        return null;
-      }
-    });
-
     when(userRepo.findAllByEntity(any(Entity.class))).thenAnswer(i -> {
       Entity ent = i.getArgument(0);
-      List<User> users = allUsers.stream()
+      return allUsers.stream()
           .filter(user -> user.getEntity() == ent).collect(Collectors.toList());
-      return users;
+    });
+
+    when(entityRepo.findById(anyInt())).thenAnswer(i -> {
+      int id = i.getArgument(0);
+      if (id == 1) {
+        return Optional.of(entity1);
+      } else if (id == 2) {
+        return Optional.of(entity2);
+      } else {
+        return Optional.empty();
+      }
     });
   }
 
   private User cloneUser(User user) {
-    User clone = new User();
-    clone.setEmail(user.getEmail());
+    User clone = new User(user.getId(), user.getName(), user.getSurname(), user.getEmail(),
+        user.getPassword(), user.getType());
     clone.setTelegramName(user.getTelegramName());
-    clone.setId(user.getId());
     clone.setEntity(user.getEntity());
     clone.setDeleted(user.isDeleted());
     clone.setTelegramChat(user.getTelegramChat());
-    clone.setName(user.getName());
-    clone.setSurname(user.getSurname());
-    clone.setType(user.getType());
     clone.setTfa(user.getTfa());
-    clone.setPassword(user.getPassword());
 
     return clone;
   }
-
-
 
   // findAll method tests
   @Test
   public void findAllSuccessfull() {
     List<User> users = userService.findAll();
-    assertTrue(!users.isEmpty());
+    assertFalse(users.isEmpty());
   }
-
-
 
   // findById method tests
   @Test
@@ -219,17 +163,6 @@ public class UserServiceTest {
     assertEquals(user2, user);
   }
 
-
-
-  // findById method tests
-  @Test
-  public void userDevicesEmpty() {
-    List<Device> devices = userService.userDevices(6);
-    assertTrue(devices.isEmpty());
-  }
-
-
-
   // findByTelegramNameAndTelegramChat method tests
   @Test
   public void findByTelegramNameAndTelegramChatNull() {
@@ -237,11 +170,9 @@ public class UserServiceTest {
     assertNull(user);
   }
 
-
-
   // loadByUsername method tests
   @Test
-  public void loadUser1ByNameSuccessfull() throws Exception {
+  public void loadUser1ByNameSuccessfull() {
 
     when(userRepo.findByEmail(user1.getEmail())).thenReturn(user1);
 
@@ -249,13 +180,13 @@ public class UserServiceTest {
       UserDetails userDetails = userService.loadUserByUsername(user1.getEmail());
 
       assertNotNull(userDetails);
-      assertTrue(userDetails.getUsername() == user1.getEmail());
-      assertTrue(userDetails.getPassword() == user1.getPassword());
+      assertSame(userDetails.getUsername(), user1.getEmail());
+      assertSame(userDetails.getPassword(), user1.getPassword());
       assertTrue(userDetails.getAuthorities().stream().findFirst().isPresent());
-      assertTrue(((SimpleGrantedAuthority) userDetails.getAuthorities().stream().findFirst().get())
-          .toString().equals(String.valueOf(user1.getType())));
+      assertEquals(userDetails.getAuthorities().stream().findFirst().get()
+              .toString(), String.valueOf(user1.getType()));
     } catch (UsernameNotFoundException unfe) {
-      assertTrue(false);
+      fail();
     }
   }
 
@@ -268,13 +199,13 @@ public class UserServiceTest {
       UserDetails userDetails = userService.loadUserByUsername(admin1.getEmail());
 
       assertNotNull(userDetails);
-      assertTrue(userDetails.getUsername() == admin1.getEmail());
-      assertTrue(userDetails.getPassword() == admin1.getPassword());
+      assertSame(userDetails.getUsername(), admin1.getEmail());
+      assertSame(userDetails.getPassword(), admin1.getPassword());
       assertTrue(userDetails.getAuthorities().stream().findFirst().isPresent());
-      assertTrue(((SimpleGrantedAuthority) userDetails.getAuthorities().stream().findFirst().get())
-          .toString().equals(String.valueOf(admin1.getType())));
+      assertEquals(userDetails.getAuthorities().stream().findFirst().get()
+              .toString(), String.valueOf(admin1.getType()));
     } catch (UsernameNotFoundException unfe) {
-      assertTrue(false);
+      fail();
     }
   }
 
@@ -284,14 +215,12 @@ public class UserServiceTest {
     when(userRepo.findByEmail(user1.getEmail())).thenReturn(null);
 
     try {
-      UserDetails userDetails = userService.loadUserByUsername(user1.getEmail());
-      assertTrue(false);
+      userService.loadUserByUsername(user1.getEmail());
+      fail();
     } catch (UsernameNotFoundException unfe) {
       assertTrue(true);
     }
   }
-
-
 
   // loadByUserEmail method tests
   @Test
@@ -303,13 +232,13 @@ public class UserServiceTest {
       UserDetails userDetails = userService.loadUserByEmail(user2.getEmail());
 
       assertNotNull(userDetails);
-      assertTrue(userDetails.getUsername() == user2.getEmail());
-      assertTrue(userDetails.getPassword() == user2.getPassword());
+      assertSame(userDetails.getUsername(), user2.getEmail());
+      assertSame(userDetails.getPassword(), user2.getPassword());
       assertTrue(userDetails.getAuthorities().stream().findFirst().isPresent());
-      assertTrue(((SimpleGrantedAuthority) userDetails.getAuthorities().stream().findFirst().get())
-          .toString().equals(String.valueOf(user2.getType())));
+      assertEquals(userDetails.getAuthorities().stream().findFirst().get()
+              .toString(), String.valueOf(user2.getType()));
     } catch(UsernameNotFoundException | UserDisabledException ue) {
-      assertTrue(false);
+      fail();
     }
   }
 
@@ -319,12 +248,12 @@ public class UserServiceTest {
     when(userRepo.findByEmail(user1.getEmail())).thenReturn(null);
 
     try {
-      UserDetails userDetails = userService.loadUserByEmail(user1.getEmail());
-      assertTrue(false);
+      userService.loadUserByEmail(user1.getEmail());
+      fail();
     } catch (UsernameNotFoundException unfe) {
       assertTrue(true);
     } catch (UserDisabledException ude) {
-      assertTrue(false);
+      fail();
     }
   }
 
@@ -336,16 +265,14 @@ public class UserServiceTest {
     when(userRepo.findByEmail(user1.getEmail())).thenReturn(user1);
 
     try {
-      UserDetails userDetails = userService.loadUserByEmail(user1.getEmail());
-      assertTrue(false);
+      userService.loadUserByEmail(user1.getEmail());
+      fail();
     } catch (UsernameNotFoundException unfe) {
-      assertTrue(false);
+      fail();
     } catch (UserDisabledException ude) {
       assertTrue(true);
     }
   }
-
-
 
   // loadByTelegramName method tests
   @Test
@@ -360,15 +287,13 @@ public class UserServiceTest {
       UserDetails userDetails = userService.loadUserByTelegramName(mod1.getTelegramName());
 
       assertNotNull(userDetails);
-      assertTrue(userDetails.getUsername() == mod1.getTelegramName());
-      assertTrue(userDetails.getPassword() == mod1.getTelegramChat());
+      assertSame(userDetails.getUsername(), mod1.getTelegramName());
+      assertSame(userDetails.getPassword(), mod1.getTelegramChat());
       assertTrue(userDetails.getAuthorities().stream().findFirst().isPresent());
-      assertTrue(((SimpleGrantedAuthority) userDetails.getAuthorities().stream().findFirst().get())
-          .toString().equals(String.valueOf(mod1.getType())));
-    } catch(UsernameNotFoundException | UserDisabledException ue) {
-      assertTrue(false);
-    } catch (TelegramChatNotFoundException tcnfe) {
-      assertTrue(false);
+      assertEquals(userDetails.getAuthorities().stream().findFirst().get()
+              .toString(), String.valueOf(mod1.getType()));
+    } catch(UsernameNotFoundException | UserDisabledException | TelegramChatNotFoundException ue) {
+      fail();
     }
   }
 
@@ -378,11 +303,11 @@ public class UserServiceTest {
     when(userRepo.findByTelegramName(mod1.getTelegramName())).thenReturn(mod1);
 
     try {
-      UserDetails userDetails = userService.loadUserByTelegramName(mod1.getTelegramName());
+      userService.loadUserByTelegramName(mod1.getTelegramName());
 
-      assertTrue(false);
+      fail();
     } catch(UsernameNotFoundException | UserDisabledException ue) {
-      assertTrue(false);
+      fail();
     } catch (TelegramChatNotFoundException tcnfe) {
       assertTrue(true);
     }
@@ -394,12 +319,12 @@ public class UserServiceTest {
     when(userRepo.findByTelegramName(user2.getTelegramName())).thenReturn(null);
 
     try {
-      UserDetails userDetails = userService.loadUserByTelegramName(user2.getTelegramName());
-      assertTrue(false);
+      userService.loadUserByTelegramName(user2.getTelegramName());
+      fail();
     } catch (UsernameNotFoundException unfe) {
       assertTrue(true);
     } catch (UserDisabledException | TelegramChatNotFoundException ude) {
-      assertTrue(false);
+      fail();
     }
   }
 
@@ -411,16 +336,14 @@ public class UserServiceTest {
     when(userRepo.findByTelegramName(mod11.getTelegramName())).thenReturn(mod11);
 
     try {
-      UserDetails userDetails = userService.loadUserByTelegramName(mod11.getTelegramName());
-      assertTrue(false);
+      userService.loadUserByTelegramName(mod11.getTelegramName());
+      fail();
     } catch (UsernameNotFoundException | TelegramChatNotFoundException unfe) {
-      assertTrue(false);
+      fail();
     } catch (UserDisabledException ude) {
       assertTrue(true);
     }
   }
-
-
 
   // serializeUser method tests
   @Test
@@ -440,10 +363,10 @@ public class UserServiceTest {
     fieldsToCreate.addProperty("entityId", entityId);
 
     try {
-      User user = userService.serializeUser(fieldsToCreate, mod1);
+      userService.serializeUser(fieldsToCreate, mod1);
       assertTrue(true);
     } catch (Exception e) {
-      assertTrue(false);
+      fail();
     }
   }
 
@@ -464,10 +387,10 @@ public class UserServiceTest {
     fieldsToCreate.addProperty("entityId", entityId);
 
     try {
-      User user = userService.serializeUser(fieldsToCreate, admin1);
+      userService.serializeUser(fieldsToCreate, admin1);
       assertTrue(true);
     } catch (Exception e) {
-      assertTrue(false);
+      fail();
     }
   }
 
@@ -488,10 +411,10 @@ public class UserServiceTest {
     fieldsToCreate.addProperty("entityId", entityId);
 
     try {
-      User user = userService.serializeUser(fieldsToCreate, admin1);
+      userService.serializeUser(fieldsToCreate, admin1);
       assertTrue(true);
     } catch (Exception e) {
-      assertTrue(false);
+      fail();
     }
   }
 
@@ -512,8 +435,8 @@ public class UserServiceTest {
     fieldsToCreate.addProperty("entityId", entityId);
 
     try {
-      User user = userService.serializeUser(fieldsToCreate, user1);
-      assertTrue(false);
+      userService.serializeUser(fieldsToCreate, user1);
+      fail();
     } catch (Exception e) {
       assertTrue(true);
     }
@@ -536,8 +459,8 @@ public class UserServiceTest {
     fieldsToCreate.addProperty("entityId", entityId);
 
     try {
-      User user = userService.serializeUser(fieldsToCreate, user1);
-      assertTrue(false);
+      userService.serializeUser(fieldsToCreate, user1);
+      fail();
     } catch (Exception e) {
       assertTrue(true);
     }
@@ -560,13 +483,12 @@ public class UserServiceTest {
     fieldsToCreate.addProperty("entityId", entityId);
 
     try {
-      User user = userService.serializeUser(fieldsToCreate, admin1);
-      assertTrue(false);
+      userService.serializeUser(fieldsToCreate, admin1);
+      fail();
     } catch (Exception e) {
       assertTrue(true);
     }
   }
-
 
   // editByAdmin method tests
   @Test
@@ -584,15 +506,14 @@ public class UserServiceTest {
     editedUser.setTelegramChat(null);
 
     try {
-      User user = userService.editByAdministrator(admin1, true, fieldsToEdit);
+      User user = userService.editByAdministrator(admin1, fieldsToEdit, true);
 
       assertNotNull(user);
       assertEquals(editedUser.getTelegramName(), user.getTelegramName());
       assertEquals(editedUser.getTelegramChat(), user.getTelegramChat());
       assertEquals(editedUser.getTfa(), user.getTfa());
     } catch (Exception e) {
-      System.out.println(e);
-      assertTrue(false);
+      fail();
     }
   }
 
@@ -627,10 +548,10 @@ public class UserServiceTest {
     editedUser.setTelegramName(newTelegramName);
     editedUser.setEntity(entity2);
 
-    when(entityService.findById(newEntityId)).thenReturn(entity2);
+    when(entityRepo.findById(newEntityId)).thenReturn(Optional.of(entity2));
 
     try {
-      User user = userService.editByAdministrator(user1, false, fieldsToEdit);
+      User user = userService.editByAdministrator(user1, fieldsToEdit, false);
 
       assertNotNull(user);
       assertEquals(editedUser.getName(), user.getName());
@@ -641,8 +562,7 @@ public class UserServiceTest {
       assertEquals(editedUser.getTelegramName(), user.getTelegramName());
       assertEquals(editedUser.getEntity(), user.getEntity());
     } catch (Exception e) {
-      System.out.println(e);
-      assertTrue(false);
+      fail();
     }
   }
 
@@ -654,14 +574,13 @@ public class UserServiceTest {
     fieldsToEdit.put("type",3);
 
     try {
-      User user = userService.editByAdministrator(user1, false, fieldsToEdit);
-      assertTrue(false);
+      userService.editByAdministrator(user1, fieldsToEdit, false);
+      fail();
     } catch (InvalidFieldsValuesException urnfe) {
       assertTrue(urnfe.getMessage().contains("role"));
       assertTrue(true);
     } catch (Exception e) {
-      System.out.println(e);
-      assertTrue(false);
+      fail();
     }
   }
 
@@ -672,17 +591,17 @@ public class UserServiceTest {
     HashMap<String, Object> fieldsToEdit = new HashMap<>();
     fieldsToEdit.put("entityId",3);
 
-    when(entityService.findById(3)).thenReturn(null);
+    when(entityRepo.findById(3)).thenReturn(Optional.empty());
 
     try {
-      User user = userService.editByAdministrator(mod1, false, fieldsToEdit);
-      assertTrue(false);
+      userService.editByAdministrator(mod1, fieldsToEdit, false);
+      fail();
     } catch (InvalidFieldsValuesException urnfe) {
       assertTrue(urnfe.getMessage().contains("entity"));
       assertTrue(true);
-    } catch (Exception e) {
+    } catch (MissingFieldsException | NotAuthorizedException | ConflictException e) {
       System.out.println(e);
-      assertTrue(false);
+      fail();
     }
   }
 
@@ -694,18 +613,15 @@ public class UserServiceTest {
     fieldsToEdit.put("type",1);
 
     try {
-      User user = userService.editByAdministrator(admin2, false, fieldsToEdit);
+      userService.editByAdministrator(admin2, fieldsToEdit, false);
 
-      assertTrue(false);
+      fail();
     } catch (NotAuthorizedException e) {
       assertTrue(true);
     } catch (Exception e) {
-      System.out.println(e);
-      assertTrue(false);
+      fail();
     }
   }
-
-
 
   // editByModerator method tests
   @Test
@@ -715,7 +631,6 @@ public class UserServiceTest {
     String newName = "newName";
     String newSurname = "newSurname";
     String newEmail = "newEmail";
-    boolean newDeleted = true;
 
     HashMap<String, Object> fieldsToEdit = new HashMap<>();
     fieldsToEdit.put("name",newName);
@@ -728,15 +643,14 @@ public class UserServiceTest {
     editedUser.setEmail(newEmail);
 
     try {
-      User user = userService.editByModerator(user2, false, fieldsToEdit);
+      User user = userService.editByModerator(user2, fieldsToEdit, false);
 
       assertNotNull(user);
       assertEquals(editedUser.getName(), user.getName());
       assertEquals(editedUser.getSurname(), user.getSurname());
       assertEquals(editedUser.getEmail(), user.getEmail());
     } catch (Exception e) {
-      System.out.println(e);
-      assertTrue(false);
+      fail();
     }
   }
 
@@ -745,27 +659,25 @@ public class UserServiceTest {
     // modificare name, surname, email, deleted
 
     String newName = "newName";
-    boolean tfa = true;
 
     mod11.setTelegramChat("TC");
 
     HashMap<String, Object> fieldsToEdit = new HashMap<>();
     fieldsToEdit.put("name",newName);
-    fieldsToEdit.put("twoFactorAuthentication",tfa);
+    fieldsToEdit.put("twoFactorAuthentication", true);
 
     User editedUser = cloneUser(mod11);
     editedUser.setName(newName);
-    editedUser.setTfa(tfa);
+    editedUser.setTfa(true);
 
     try {
-      User user = userService.editByModerator(mod11, true, fieldsToEdit);
+      User user = userService.editByModerator(mod11, fieldsToEdit, true);
 
       assertNotNull(user);
       assertEquals(editedUser.getName(), user.getName());
       assertEquals(editedUser.getTfa(), user.getTfa());
     } catch (Exception e) {
-      System.out.println(e);
-      assertTrue(false);
+      fail();
     }
   }
 
@@ -777,18 +689,15 @@ public class UserServiceTest {
     fieldsToEdit.put("entityId",2);
 
     try {
-      User user = userService.editByModerator(mod11, true, fieldsToEdit);
+      userService.editByModerator(mod11, fieldsToEdit, true);
 
-      assertTrue(false);
+      fail();
     } catch (NotAuthorizedException e) {
       assertTrue(true);
     } catch (Exception e) {
-      System.out.println(e);
-      assertTrue(false);
+      fail();
     }
   }
-
-
 
   @Test
   public void editUser1ByItselfEditNotAllowed() {
@@ -800,14 +709,13 @@ public class UserServiceTest {
     fieldsToEdit.put("name",newName);
 
     try {
-      User user = userService.editByUser(user1, fieldsToEdit);
+      userService.editByUser(user1, fieldsToEdit);
 
-      assertTrue(false);
+      fail();
     } catch (NotAuthorizedException natde) {
       assertTrue(true);
     } catch (Exception e) {
-      System.out.println(e);
-      assertTrue(false);
+      fail();
     }
   }
 
@@ -816,21 +724,19 @@ public class UserServiceTest {
     // set telegram name and tfa true
 
     String newTelegramName = "newName";
-    boolean newTfa = true;
 
     HashMap<String, Object> fieldsToEdit = new HashMap<>();
     fieldsToEdit.put("telegramName",newTelegramName);
-    fieldsToEdit.put("twoFactorAuthentication",newTfa);
+    fieldsToEdit.put("twoFactorAuthentication", true);
 
     try {
-      User user = userService.editByUser(user1, fieldsToEdit);
+      userService.editByUser(user1, fieldsToEdit);
 
-      assertTrue(false);
+      fail();
     } catch (ConflictException ce) {
       assertTrue(true);
     } catch (Exception e) {
-      System.out.println(e);
-      assertTrue(false);
+      fail();
     }
   }
 
@@ -839,32 +745,28 @@ public class UserServiceTest {
     // set telegram name and tfa true
 
     String newTelegramName = "newName";
-    boolean newTfa = true;
 
     HashMap<String, Object> fieldsToEdit = new HashMap<>();
     fieldsToEdit.put("telegramaName",newTelegramName);
-    fieldsToEdit.put("tfa",newTfa);
+    fieldsToEdit.put("tfa", true);
 
     try {
-      User user = userService.editByUser(user1, fieldsToEdit);
+      userService.editByUser(user1, fieldsToEdit);
 
-      assertTrue(false);
+      fail();
     } catch (MissingFieldsException mfe) {
       assertTrue(true);
     } catch (Exception e) {
-      System.out.println(e);
-      assertTrue(false);
+      fail();
     }
   }
-
-
 
   // findAllByEntityId method test
   @Test
   public void findAllByEntityIdSuccessfull() {
     List<User> users = userService.findAllByEntityId(1);
 
-    assertTrue(!users.isEmpty());
+    assertFalse(users.isEmpty());
   }
 
   @Test
@@ -874,16 +776,15 @@ public class UserServiceTest {
     assertTrue(users.isEmpty());
   }
 
-
   @Test
   public void deleteUser1SuccesfullyByAdmin1Test() {
     try {
       User expected = user1;
       User actual = userService.deleteUser(admin1, user1.getId());
       assertEquals(expected, actual);
-      assertEquals(actual.isDeleted(), true);
+      assertTrue(actual.isDeleted());
     } catch (Exception e) {
-      assertTrue(false);
+      fail();
     }
   }
 
@@ -893,9 +794,9 @@ public class UserServiceTest {
       User expected = user1;
       User actual = userService.deleteUser(admin2, user1.getId());
       assertEquals(expected, actual);
-      assertEquals(actual.isDeleted(), true);
+      assertTrue(actual.isDeleted());
     } catch (Exception e) {
-      assertTrue(false);
+      fail();
     }
   }
 
@@ -905,9 +806,9 @@ public class UserServiceTest {
       User expected = user1;
       User actual = userService.deleteUser(mod1, user1.getId());
       assertEquals(expected, actual);
-      assertEquals(actual.isDeleted(), true);
+      assertTrue(actual.isDeleted());
     } catch (Exception e) {
-      assertTrue(false);
+      fail();
     }
   }
 
@@ -917,11 +818,11 @@ public class UserServiceTest {
       User expected = user1;
       User actual = userService.deleteUser(user2, user1.getId());
       assertEquals(expected, actual);
-      assertEquals(actual.isDeleted(), false);
+      assertFalse(actual.isDeleted());
     } catch (NotAuthorizedException e) {
       assertTrue(true);
     } catch (InvalidFieldsValuesException e) {
-      assertTrue(false);
+      fail();
     }
   }
 
@@ -931,12 +832,11 @@ public class UserServiceTest {
         User expected = user1;
         User actual = userService.deleteUser(mod2, user1.getId());
         assertEquals(expected, actual);
-        assertEquals(actual.isDeleted(), false);
+        assertFalse(actual.isDeleted());
       } catch (NotAuthorizedException e) {
         assertTrue(true);
       } catch (InvalidFieldsValuesException e) {
-        assertTrue(false);
+        fail();
       }
   }
-
 }

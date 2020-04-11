@@ -8,51 +8,67 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-@Service
+@Component
 public class JwtUtil {
 
-  @Value("${security.signing-key}")
-  private String signingKey;
+  private final String encodingStrength;
 
-  @Value("${security.encoding-strength}")
-  private String encodingStrength;
+  private final int tokenExpiration;
 
-  @Value("${security.token-expiration}")
-  private int tokenExpiration;
+  private final int tfaTokenExpiration;
 
-  @Value("${security.tfa-token-expiration}")
-  private int tfaTokenExpiration;
+  private final String signingKey;
 
-  public String extractUsername(String token) {
-    return extractClaim(token, Claims::getSubject);
+  @Autowired
+  public JwtUtil(@Value("${security.encoding-strength}") String encodingStrength,
+                 @Value("${security.token-expiration}") int tokenExpiration,
+                 @Value("${security.tfa-token-expiration}") int tfaTokenExpiration,
+                 @Value("${security.signing-key}") String signingKey) {
+    this.encodingStrength = encodingStrength;
+    this.tokenExpiration = tokenExpiration;
+    this.tfaTokenExpiration = tfaTokenExpiration;
+    this.signingKey = signingKey;
   }
 
-  public String extractType(String token) {
-    return extractAllClaims(token).get("type", java.lang.String.class);
-  }
-
-  public User.Role extractRole(String bearerToken) {
-    String token = bearerToken.substring(7);
-    if (extractAllClaims(token).containsKey("role")) {
-      return User.Role.values()[extractAllClaims(token).get("role", Integer.class)];
-    } else {
-      throw new IllegalArgumentException();
+  private String createToken(Map<String, Object> claims, String subject) {
+    int expiration = tokenExpiration;
+    if (claims.containsKey("tfa") && (boolean)claims.get("tfa")) {
+      expiration = tfaTokenExpiration;
     }
+
+    return Jwts.builder()
+        .setClaims(claims)
+        .setSubject(subject)
+        .setIssuedAt(new Date(System.currentTimeMillis()))
+        .setExpiration(new Date(System.currentTimeMillis() + (expiration * 1000)))
+        .signWith(SignatureAlgorithm.forName("HS" + encodingStrength), signingKey).compact();
   }
 
-  public Date extractExpiration(String token) {
-    return extractClaim(token, Claims::getExpiration);
+  private String createTokenWithExpiration(Map<String, Object> claims, Date expiration,
+                                           String subject) {
+
+    return Jwts.builder()
+        .setClaims(claims)
+        .setSubject(subject)
+        .setIssuedAt(new Date(System.currentTimeMillis()))
+        .setExpiration(expiration)
+        .signWith(SignatureAlgorithm.forName("HS" + encodingStrength), signingKey).compact();
   }
 
-  public boolean isTfa(String token) {
-    return extractAllClaims(token).containsKey("tfa");
+  private Claims extractAllClaims(String token) {
+    return Jwts.parser().setSigningKey(signingKey).parseClaimsJws(token).getBody();
   }
+
+  private boolean isTokenExpired(String token) {
+    return extractExpiration(token).before(new Date());
+  }
+
 
   /**
    * Method that return the authCode decoded from token if found, else it throw
@@ -69,17 +85,27 @@ public class JwtUtil {
     }
   }
 
-  public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+  public Date extractExpiration(String token) {
     final Claims claims = extractAllClaims(token);
-    return claimsResolver.apply(claims);
+    return claims.getExpiration();
   }
 
-  private Claims extractAllClaims(String token) {
-    return Jwts.parser().setSigningKey(signingKey).parseClaimsJws(token).getBody();
+  public User.Role extractRole(String bearerToken) {
+    String token = bearerToken.substring(7);
+    if (extractAllClaims(token).containsKey("role")) {
+      return User.Role.values()[extractAllClaims(token).get("role", Integer.class)];
+    } else {
+      throw new IllegalArgumentException();
+    }
   }
 
-  private Boolean isTokenExpired(String token) {
-    return extractExpiration(token).before(new Date());
+  public String extractType(String token) {
+    return extractAllClaims(token).get("type", java.lang.String.class);
+  }
+
+  public String extractUsername(String token) {
+    final Claims claims = extractAllClaims(token);
+    return claims.getSubject();
   }
 
   /**
@@ -110,7 +136,7 @@ public class JwtUtil {
    * @param userDetails userDetails class that contain username and password to be encoded in token
    * @return jwt token that will be generated
    */
-  public String generateTokenWithExpiration(String type, Date expiration,UserDetails userDetails) {
+  public String generateTokenWithExpiration(String type,UserDetails userDetails, Date expiration) {
     Map<String, Object> claims = new HashMap<>();
     claims.put("type", type);
     User.Role role = User.Role.USER;
@@ -132,7 +158,7 @@ public class JwtUtil {
    * @param userDetails userDetails class that contain username and password to be encoded in token
    * @return jwt token that will be generated
    */
-  public String generateTfaToken(String type, String authCode, UserDetails userDetails) {
+  public String generateTfaToken(String type, UserDetails userDetails, String authCode) {
     Map<String, Object> claims = new HashMap<>();
     claims.put("type", type);
     claims.put("tfa", true);
@@ -147,32 +173,11 @@ public class JwtUtil {
     return createToken(claims, userDetails.getUsername());
   }
 
-  private String createToken(Map<String, Object> claims, String subject) {
-    int expiration = tokenExpiration;
-    if (claims.containsKey("tfa") && (boolean)claims.get("tfa")) {
-      expiration = tfaTokenExpiration;
-    }
-
-    return Jwts.builder()
-        .setClaims(claims)
-        .setSubject(subject)
-        .setIssuedAt(new Date(System.currentTimeMillis()))
-        .setExpiration(new Date(System.currentTimeMillis() + (expiration * 1000)))
-        .signWith(SignatureAlgorithm.forName("HS" + encodingStrength), signingKey).compact();
+  public boolean isTfa(String token) {
+    return extractAllClaims(token).containsKey("tfa");
   }
 
-  private String createTokenWithExpiration(Map<String, Object> claims, Date expiration,
-                                           String subject) {
-
-    return Jwts.builder()
-        .setClaims(claims)
-        .setSubject(subject)
-        .setIssuedAt(new Date(System.currentTimeMillis()))
-        .setExpiration(expiration)
-        .signWith(SignatureAlgorithm.forName("HS" + encodingStrength), signingKey).compact();
-  }
-
-  public Boolean validateToken(String token, UserDetails userDetails) {
+  public boolean validateToken(String token, UserDetails userDetails) {
     final String username = extractUsername(token);
     return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
   }

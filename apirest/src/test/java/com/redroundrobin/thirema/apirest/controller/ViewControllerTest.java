@@ -4,10 +4,14 @@ import com.google.gson.JsonObject;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.postgres.View;
-import com.redroundrobin.thirema.apirest.service.postgres.ViewService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
+import com.redroundrobin.thirema.apirest.service.postgres.ViewService;
+import com.redroundrobin.thirema.apirest.service.timescale.LogService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
-import com.redroundrobin.thirema.apirest.utils.exception.*;
+import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
+import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
+import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -16,20 +20,24 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
 public class ViewControllerTest {
 
   @MockBean
   JwtUtil jwtTokenUtil;
+
+  @MockBean
+  private LogService logService;
 
   @MockBean
   private UserService userService;
@@ -43,53 +51,30 @@ public class ViewControllerTest {
   private View view1;
   private View view2;
   private View view3;
-  private String userToken = "userToken";
-  private String modToken = "modToken";
+  private final String userToken = "userToken";
+  private final String modToken = "modToken";
   private List<View> allViews;
 
   @Before
   public void setUp() throws Exception {
 
-    viewController = new ViewController(jwtTokenUtil, userService, viewService);
-    Entity entity1 = new Entity();
-    entity1.setId(1);
+    viewController = new ViewController(viewService, jwtTokenUtil, logService, userService);
 
-    user = new User();
-    user.setId(3);
-    user.setName("user1");
-    user.setSurname("user1");
-    user.setEmail("user1");
-    user.setPassword("password");
-    user.setType(User.Role.USER);
-    user.setEntity(entity1);
+    // ---------------------------------------- Set Entities --------------------------------------
+    new Entity(1, "entity1", "loc1");
 
-    mod = new User();
-    mod.setId(4);
-    mod.setName("mod");
-    mod.setSurname("mod");
-    mod.setEmail("mod");
-    mod.setPassword("password");
-    mod.setType(User.Role.MOD);
-    mod.setEntity(entity1);
+    // ---------------------------------------- Set Entities --------------------------------------
+    mod = new User(1, "mod", "admin", "admin", "pass", User.Role.MOD);
+    user = new User(2, "user", "user", "user", "user", User.Role.USER);
 
     List<User> allUsers = new ArrayList<>();
     allUsers.add(user);
     allUsers.add(mod);
 
-    view1= new View();
-    view1.setUser(user);
-    view1.setId(1);
-    view1.setName("view1");
-
-    view2= new View();
-    view2.setUser(user);
-    view2.setId(2);
-    view2.setName("view2");
-
-    view3= new View();
-    view3.setUser(mod);
-    view3.setId(3);
-    view3.setName("view3");
+    // ---------------------------------------- Set Entities --------------------------------------
+    view1 = new View(1, "view1", user);
+    view2 = new View(2, "view2", user);
+    view3 = new View(3, "view3", mod);
 
     allViews = new ArrayList<>();
     allViews.add(view1);
@@ -101,15 +86,12 @@ public class ViewControllerTest {
     when(userService.findByEmail(user.getEmail())).thenReturn(user);
     when(userService.findById(user.getId())).thenReturn(user);
 
-
     when(viewService.findAllByUser(any(User.class))).thenAnswer(i -> {
       User user = i.getArgument(0);
-      List<View> views = allViews.stream()
+      return allViews.stream()
         .filter(view -> view.getUser() == user)
         .collect(Collectors.toList());
-      return views;
   });
-
     when(viewService.findById(anyInt())).thenAnswer(i -> {
       int viewId = i.getArgument(0);
       Optional<View> retView = allViews.stream()
@@ -127,7 +109,6 @@ public class ViewControllerTest {
         return null;
       }
     });
-
     when(viewService.serializeView(any(JsonObject.class), any(User.class))).thenAnswer(i -> {
       JsonObject jsonViewToCreate = i.getArgument(0);
       User user = i.getArgument(1);
@@ -139,14 +120,11 @@ public class ViewControllerTest {
         allViews.add(newView);
         return newView;
       }
-      if(jsonViewToCreate.keySet().stream()
-          .filter(key -> key != "name")
-          .count() == 0)
+      if(jsonViewToCreate.keySet().stream().allMatch(key -> key.equals("name")))
         throw new MissingFieldsException("Some necessary" +
             " fields are missing: cannot create user");
       else throw new KeysNotFoundException("");
     });
-
     doAnswer(i -> {
       User deletingUser =  i.getArgument(0);
       int viewToDeleteId = i.getArgument(1);
@@ -170,20 +148,18 @@ public class ViewControllerTest {
     }).when(viewService).deleteView(any(User.class), anyInt());
   }
 
-
   //@GetMapping(value = {"/views"}) test
   @Test
   public void getViewsTest() {
     String authorization = "Bearer "+userToken;
     ResponseEntity<List<View>> rsp = viewController.views(authorization);
-    assertTrue(rsp.getStatusCode() == HttpStatus.OK);
-    assertTrue(!rsp.getBody().isEmpty());
+    assertSame(HttpStatus.OK, rsp.getStatusCode());
+    assertFalse(rsp.getBody().isEmpty());
   }
-
 
   //@GetMapping(value = {"/views/{viewId:.+}"}) test
   @Test
-  public void selectOneViewSuccesfulTest() throws Exception{
+  public void selectOneViewSuccesfulTest() {
     String authorization = "Bearer "+userToken;
 
     when(viewService.findByIdAndUserId(eq(1), eq(3))).thenAnswer(i -> {
@@ -192,21 +168,20 @@ public class ViewControllerTest {
     });
       //attenzione a passare in questo test una view che appartine allo user sotto test!
     ResponseEntity<View> rsp = viewController.selectOneView(authorization, 1);
-    assertTrue(rsp.getStatusCode() == HttpStatus.OK);
-    assertTrue(rsp.getBody() != null);
+    assertSame(HttpStatus.OK, rsp.getStatusCode());
+    assertNotNull(rsp.getBody());
   }
 
   //@GetMapping(value = {"/views/{viewId:.+}"}) test
   @Test
-  public void selectOneViewWithNotExistent() throws Exception{
+  public void selectOneViewWithNotExistent() {
     String authorization = "Bearer "+userToken;
 
     when(viewService.findByIdAndUserId(eq(4), eq(3))).thenReturn(null);
 
     ResponseEntity<View> rsp  = viewController.selectOneView(authorization, 4);
-    assertTrue(rsp.getStatusCode() == HttpStatus.BAD_REQUEST);
+    assertSame(HttpStatus.BAD_REQUEST, rsp.getStatusCode());
   }
-
 
   //@PostMapping(value = "/views/create")
   @Test
@@ -216,8 +191,8 @@ public class ViewControllerTest {
     jsonViewToCreate.addProperty("name", "myView");
     String rawViewToCreate = jsonViewToCreate.toString();
     ResponseEntity<View> rsp  = viewController.createView(authorization, rawViewToCreate);
-    assertTrue(rsp.getStatusCode() == HttpStatus.OK);
-    assertTrue(rsp.getBody() != null);
+    assertSame(HttpStatus.OK, rsp.getStatusCode());
+    assertNotNull(rsp.getBody());
   }
 
   //@PostMapping(value = "/views/create")
@@ -227,7 +202,7 @@ public class ViewControllerTest {
     JsonObject jsonViewToCreate = new JsonObject(); // empty json
     String rawViewToCreate = jsonViewToCreate.toString();
     ResponseEntity<View> rsp  = viewController.createView(authorization, rawViewToCreate);
-    assertTrue(rsp.getStatusCode() == HttpStatus.BAD_REQUEST);
+    assertSame(HttpStatus.BAD_REQUEST, rsp.getStatusCode());
   }
 
   //@PostMapping(value = "/views/create")
@@ -239,9 +214,8 @@ public class ViewControllerTest {
     jsonViewToCreate.addProperty("surname", "mySurname");
     String rawViewToCreate = jsonViewToCreate.toString();
     ResponseEntity<View> rsp  = viewController.createView(authorization, rawViewToCreate);
-    assertTrue(rsp.getStatusCode() == HttpStatus.BAD_REQUEST);
+    assertSame(HttpStatus.BAD_REQUEST, rsp.getStatusCode());
   }
-
 
   //@DeleteMapping(value = "/views/delete/{viewId:.+}")
   @Test
@@ -249,10 +223,8 @@ public class ViewControllerTest {
     String authorization = "Bearer "+userToken;
     int viewToDeleteId = 1;
     ResponseEntity<?> rsp = viewController.deleteView(authorization, viewToDeleteId);
-    assertTrue(rsp.getStatusCode() == HttpStatus.OK);
-
+    assertSame(HttpStatus.OK, rsp.getStatusCode());
   }
-
 
   //@DeleteMapping(value = "/views/delete/{viewId:.+}")
   @Test
@@ -260,9 +232,8 @@ public class ViewControllerTest {
     String authorization = "Bearer "+userToken;
     int viewToDeleteId = 3;
     ResponseEntity<?> rsp = viewController.deleteView(authorization, viewToDeleteId);
-    assertTrue(rsp.getStatusCode() == HttpStatus.FORBIDDEN);
+    assertSame(HttpStatus.FORBIDDEN, rsp.getStatusCode());
   }
-
 
   //@DeleteMapping(value = "/views/delete/{viewId:.+}")
   @Test
@@ -270,6 +241,6 @@ public class ViewControllerTest {
     String authorization = "Bearer "+userToken;
     int viewToDeleteId = 4;
     ResponseEntity<?> rsp = viewController.deleteView(authorization, viewToDeleteId);
-    assertTrue(rsp.getStatusCode() == HttpStatus.BAD_REQUEST);
+    assertSame(HttpStatus.BAD_REQUEST, rsp.getStatusCode());
   }
 }

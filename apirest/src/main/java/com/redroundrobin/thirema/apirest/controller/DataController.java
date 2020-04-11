@@ -2,7 +2,10 @@ package com.redroundrobin.thirema.apirest.controller;
 
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.timescale.Sensor;
+import com.redroundrobin.thirema.apirest.service.postgres.UserService;
+import com.redroundrobin.thirema.apirest.service.timescale.LogService;
 import com.redroundrobin.thirema.apirest.service.timescale.SensorService;
+import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -21,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value = "/data")
 public class DataController extends CoreController {
 
-  private SensorService timescaleSensorService;
+  private final SensorService timescaleSensorService;
 
   private Map<Integer,List<Sensor>> getSensorsValuesByAdmin(Integer[] sensorIds, Integer limit,
                                                             Integer entityId) {
@@ -70,7 +73,9 @@ public class DataController extends CoreController {
   }
 
   @Autowired
-  public DataController(@Qualifier("timescaleSensorService") SensorService timescaleSensorService) {
+  public DataController(@Qualifier("timescaleSensorService") SensorService timescaleSensorService,
+                        JwtUtil jwtUtil, LogService logService, UserService userService) {
+    super(jwtUtil, logService, userService);
     this.timescaleSensorService = timescaleSensorService;
   }
 

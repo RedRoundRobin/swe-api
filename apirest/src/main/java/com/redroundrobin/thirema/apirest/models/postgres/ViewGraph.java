@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIdentityReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import java.io.Serializable;
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -16,7 +17,7 @@ import javax.persistence.Table;
 
 @javax.persistence.Entity
 @Table(name = "views_graphs")
-public class ViewGraph {
+public class ViewGraph implements Serializable {
 
   public enum Correlation {
     NULL, COVARIANCE, PEARSON, SPEARMAN;
@@ -37,11 +38,11 @@ public class ViewGraph {
   }
 
   @Id
-  @GeneratedValue(generator = "view_graphs_graph_id_seq", strategy = GenerationType.SEQUENCE)
+  @GeneratedValue(generator = "views_graphs_graph_id_seq", strategy = GenerationType.SEQUENCE)
   @SequenceGenerator(
-      name = "view_graphs_graph_id_seq",
-      sequenceName = "view_graphs_graph_id_seq",
-      allocationSize = 50
+      name = "views_graphs_graph_id_seq",
+      sequenceName = "views_graphs_graph_id_seq",
+      allocationSize = 25
   )
   @Column(name = "graph_id")
   private int graphId;
@@ -65,13 +66,22 @@ public class ViewGraph {
   @JsonIdentityReference(alwaysAsId = true)
   private Sensor sensor2;
 
+  public ViewGraph() {
+    // default constructor
+  }
+
+  public ViewGraph(Correlation correlation) {
+    this.correlation = correlation;
+  }
+
+  public ViewGraph(int graphId, Correlation correlation) {
+    this.graphId = graphId;
+    this.correlation = correlation;
+  }
+
   @JsonProperty(value = "viewGraphId")
   public int getId() {
     return graphId;
-  }
-
-  public void setId(int graphId) {
-    this.graphId = graphId;
   }
 
   public Correlation getCorrelation() {

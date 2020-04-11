@@ -7,6 +7,7 @@ import com.redroundrobin.thirema.apirest.models.postgres.View;
 import com.redroundrobin.thirema.apirest.models.postgres.ViewGraph;
 import com.redroundrobin.thirema.apirest.service.postgres.ViewGraphService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
+import com.redroundrobin.thirema.apirest.service.timescale.LogService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
@@ -22,17 +23,16 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
@@ -42,6 +42,9 @@ public class ViewGraphControllerTest {
   JwtUtil jwtUtil;
 
   @MockBean
+  private LogService logService;
+
+  @MockBean
   private UserService userService;
 
   @MockBean
@@ -49,10 +52,10 @@ public class ViewGraphControllerTest {
 
   private ViewGraphController viewGraphController;
 
-  private String userTokenWithBearer = "Bearer userToken";
-  private String adminTokenWithBearer = "Bearer adminToken";
-  private String userToken = "userToken";
-  private String adminToken = "adminToken";
+  private final String userTokenWithBearer = "Bearer userToken";
+  private final String adminTokenWithBearer = "Bearer adminToken";
+  private final String userToken = "userToken";
+  private final String adminToken = "adminToken";
 
   private User admin;
   private User user;
@@ -82,163 +85,83 @@ public class ViewGraphControllerTest {
   private List<View> user1Views;
   private List<View> user2Views;
 
-
   @Before
   public void setUp() throws ElementNotFoundException, MissingFieldsException, InvalidFieldsValuesException {
-    viewGraphController = new ViewGraphController(viewGraphService);
-    viewGraphController.setJwtUtil(jwtUtil);
-    viewGraphController.setUserService(userService);
+    viewGraphController = new ViewGraphController(viewGraphService, jwtUtil, logService, userService);
 
-
-    admin = new User();
-    admin.setId(1);
-    admin.setEmail("admin");
-    admin.setType(User.Role.ADMIN);
-
-    user = new User();
-    user.setId(2);
-    user.setEmail("user");
-    user.setType(User.Role.USER);
+    // ----------------------------------------- Set Users --------------------------------------
+    admin = new User(1, "admin", "admin", "admin", "pass", User.Role.ADMIN);
+    user = new User(2, "user", "user", "user", "user", User.Role.USER);
 
     allUsers = new ArrayList<>();
     allUsers.add(user);
     allUsers.add(admin);
 
-
     // ----------------------------------------- Set Entities --------------------------------------
-    entity1 = new Entity();
-    entity1.setId(1);
-    entity2 = new Entity();
-    entity2.setId(2);
+    entity1 = new Entity(1, "entity1", "loc1");
+    entity2 = new Entity(2, "entity2", "loc2");
 
     allEntities = new ArrayList<>();
     allEntities.add(entity1);
     allEntities.add(entity2);
 
     // ----------------------------------------- Set Sensors --------------------------------------
-    sensor1 = new Sensor();
-    sensor1.setId(1);
-    sensor1.setRealSensorId(1);
-
-    sensor2 = new Sensor();
-    sensor2.setId(2);
-    sensor2.setRealSensorId(2);
-
-    sensor3 = new Sensor();
-    sensor3.setId(3);
-    sensor3.setRealSensorId(1);
+    sensor1 = new Sensor(1, "type1", 1);
+    sensor2 = new Sensor(2, "type2", 2);
+    sensor3 = new Sensor(3, "type3", 3);
 
     allSensors = new ArrayList<>();
     allSensors.add(sensor1);
     allSensors.add(sensor2);
     allSensors.add(sensor3);
 
-
     // --------------------------------------- Set Views -------------------------------------
-    view1 = new View();
-    view1.setId(1);
-    view1.setName("view1");
-
-    view2 = new View();
-    view2.setId(2);
-    view2.setName("view2");
+    view1 = new View(1, "view1", admin);
+    view2 = new View(2, "view2", user);
 
     allView = new ArrayList<>();
     allView.add(view1);
     allView.add(view2);
 
-
     // --------------------------------------- Set ViewGraphs -------------------------------------
-    viewGraph1 = new ViewGraph();
-    viewGraph1.setId(1);
-
-    viewGraph2 = new ViewGraph();
-    viewGraph2.setId(2);
-
-    viewGraph3 = new ViewGraph();
-    viewGraph3.setId(3);
+    viewGraph1 = new ViewGraph(1, ViewGraph.Correlation.NULL);
+    viewGraph2 = new ViewGraph(2, ViewGraph.Correlation.NULL);
+    viewGraph3 = new ViewGraph(3, ViewGraph.Correlation.NULL);
 
     allViewGraphs = new ArrayList<>();
     allViewGraphs.add(viewGraph1);
     allViewGraphs.add(viewGraph2);
     allViewGraphs.add(viewGraph3);
 
-
-    // -------------------------- Set viewGraphs to sensors and viceversa --------------------------
-    List<ViewGraph> sensor1AsSensor1ViewGraphs1 = new ArrayList<>();
-    sensor1AsSensor1ViewGraphs1.add(viewGraph1);
+    // --------------------------------- Set sensors to viewGraphs ------------------------------
     viewGraph1.setSensor1(sensor1);
-    List<ViewGraph> sensor2AsSensor2ViewGraphs1 = new ArrayList<>();
-    sensor2AsSensor2ViewGraphs1.add(viewGraph1);
     viewGraph1.setSensor2(sensor2);
-    sensor2.setViewGraphs1(Collections.emptyList());
-    sensor2.setViewGraphs2(sensor2AsSensor2ViewGraphs1);
 
-    List<ViewGraph> sensor1AsSensor2ViewGraphs2 = new ArrayList<>();
-    sensor1AsSensor2ViewGraphs2.add(viewGraph2);
-    viewGraph2.setSensor2(sensor1);
-    sensor1.setViewGraphs1(sensor1AsSensor1ViewGraphs1);
-    sensor1.setViewGraphs2(sensor1AsSensor2ViewGraphs2);
-
-
-    List<ViewGraph> sensor3AsSensor1ViewGraphs2 = new ArrayList<>();
-    sensor3AsSensor1ViewGraphs2.add(viewGraph2);
     viewGraph2.setSensor1(sensor3);
-    sensor3.setViewGraphs1(sensor3AsSensor1ViewGraphs2);
-    sensor3.setViewGraphs2(Collections.emptyList());
+    viewGraph2.setSensor2(sensor1);
 
-
-    // -------------------------- Set viewGraphs to view and viceversa --------------------------
-    view1ViewGraphs = new ArrayList<>();
-    view1ViewGraphs.add(viewGraph1);
-    view1ViewGraphs.add(viewGraph3);
-    view1.setViewGraphs(view1ViewGraphs);
+    // ----------------------------------- Set view to viewGraphs -------------------------------
     viewGraph1.setView(view1);
     viewGraph3.setView(view1);
 
-    view2ViewGraphs = new ArrayList<>();
-    view2ViewGraphs.add(viewGraph2);
-    view2.setViewGraphs(view2ViewGraphs);
     viewGraph2.setView(view2);
 
-
-    // -------------------------- Set users to view and viceversa --------------------------
-    user1Views = new ArrayList<>();
-    user1Views.add(view1);
+    // ----------------------------------- Set users to view ------------------------------------
     view1.setUser(admin);
-    admin.setViews(user1Views);
-
-    user2Views = new ArrayList<>();
-    user2Views.add(view2);
     view2.setUser(user);
-    user.setViews(user2Views);
 
-
-    // -------------------------- Set users to entities and viceversa --------------------------
-    List<User> entity1Users = new ArrayList<>();
-    entity1Users.add(user);
-    entity1.setUsers(entity1Users);
+    // ---------------------------------- Set entities to users ---------------------------------
     user.setEntity(entity1);
 
-
-    // -------------------------- Set sensors to entities and viceversa --------------------------
-    List<Sensor> entity1Sensors = new ArrayList<>();
+    // ---------------------------------- Set sensors to entities -------------------------------
+    Set<Sensor> entity1Sensors = new HashSet<>();
     entity1Sensors.add(sensor1);
     entity1Sensors.add(sensor3);
     entity1.setSensors(entity1Sensors);
-    List<Entity> sensor1And3Entities = new ArrayList<>();
-    sensor1And3Entities.add(entity1);
-    sensor1.setEntities(sensor1And3Entities);
-    sensor3.setEntities(sensor1And3Entities);
 
-    List<Sensor> entity2Sensors = new ArrayList<>();
+    Set<Sensor> entity2Sensors = new HashSet<>();
     entity2Sensors.add(sensor2);
     entity2.setSensors(entity2Sensors);
-    List<Entity> sensor2Entities = new ArrayList<>();
-    sensor2Entities.add(entity2);
-    sensor2.setEntities(sensor2Entities);
-
-
 
     // Core Controller needed mock
     user.setEntity(entity1);
@@ -249,10 +172,8 @@ public class ViewGraphControllerTest {
     when(userService.findByEmail(user.getEmail())).thenReturn(user);
 
     when(viewGraphService.findAll()).thenReturn(allViewGraphs);
-    when(viewGraphService.findAllByUserId(anyInt())).thenAnswer(i -> {
-      return allViewGraphs.stream()
-          .filter(vg -> i.getArgument(0).equals(vg.getView().getUser().getId())).collect(Collectors.toList());
-    });
+    when(viewGraphService.findAllByUserId(anyInt())).thenAnswer(i -> allViewGraphs.stream()
+        .filter(vg -> i.getArgument(0).equals(vg.getView().getUser().getId())).collect(Collectors.toList()));
     when(viewGraphService.findAllByUserIdAndViewId(anyInt(), anyInt())).thenAnswer(i -> {
       User user = allUsers.stream()
           .filter(u -> i.getArgument(0).equals(u.getId())).findFirst().orElse(null);
@@ -263,19 +184,13 @@ public class ViewGraphControllerTest {
         return Collections.emptyList();
       }
     });
-    when(viewGraphService.findAllByViewId(anyInt())).thenAnswer(i -> {
-      return allViewGraphs.stream()
-          .filter(vg -> i.getArgument(0).equals(vg.getView().getId())).collect(Collectors.toList());
-    });
-    when(viewGraphService.findAllBySensorId(anyInt())).thenAnswer(i -> {
-      return allViewGraphs.stream()
-          .filter(vg -> i.getArgument(0).equals(vg.getSensor1().getId())
-              || i.getArgument(0).equals(vg.getSensor2().getId())).collect(Collectors.toList());
-    });
-    when(viewGraphService.findById(anyInt())).thenAnswer(i -> {
-      return allViewGraphs.stream()
-          .filter(vg -> i.getArgument(0).equals(vg.getId())).findFirst().orElse(null);
-    });
+    when(viewGraphService.findAllByViewId(anyInt())).thenAnswer(i -> allViewGraphs.stream()
+        .filter(vg -> i.getArgument(0).equals(vg.getView().getId())).collect(Collectors.toList()));
+    when(viewGraphService.findAllBySensorId(anyInt())).thenAnswer(i -> allViewGraphs.stream()
+        .filter(vg -> i.getArgument(0).equals(vg.getSensor1().getId())
+            || i.getArgument(0).equals(vg.getSensor2().getId())).collect(Collectors.toList()));
+    when(viewGraphService.findById(anyInt())).thenAnswer(i -> allViewGraphs.stream()
+        .filter(vg -> i.getArgument(0).equals(vg.getId())).findFirst().orElse(null));
     when(viewGraphService.getPermissionByIdAndUserId(anyInt(), anyInt())).thenAnswer(i -> {
       ViewGraph viewGraph = allViewGraphs.stream()
           .filter(vg -> i.getArgument(0).equals(vg.getId())).findFirst().orElse(null);
@@ -287,7 +202,7 @@ public class ViewGraphControllerTest {
     });
     when(viewGraphService.createViewGraph(any(User.class), any(HashMap.class))).thenAnswer(i -> {
       Map<String, Object> fields = i.getArgument(1);
-      if (fields.keySet().contains("sensor1") && fields.get("sensor1").equals(sensor1.getId())) {
+      if (fields.containsKey("sensor1") && fields.get("sensor1").equals(sensor1.getId())) {
         ViewGraph viewGraph = new ViewGraph();
         viewGraph.setView(view1);
         viewGraph.setSensor1(sensor1);
@@ -318,7 +233,7 @@ public class ViewGraphControllerTest {
 
     // Check status and if are present tfa and token
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertEquals(view2ViewGraphs, response.getBody());
+    assertFalse(response.getBody().isEmpty());
   }
 
   @Test
@@ -329,7 +244,7 @@ public class ViewGraphControllerTest {
 
     // Check status and if are present tfa and token
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertTrue(!response.getBody().isEmpty());
+    assertFalse(response.getBody().isEmpty());
   }
 
   @Test
@@ -340,7 +255,7 @@ public class ViewGraphControllerTest {
 
     // Check status and if are present tfa and token
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertEquals(view1ViewGraphs, response.getBody());
+    assertFalse(response.getBody().isEmpty());
   }
 
   @Test
@@ -351,7 +266,7 @@ public class ViewGraphControllerTest {
 
     // Check status and if are present tfa and token
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertEquals(view2ViewGraphs, response.getBody());
+    assertFalse(response.getBody().isEmpty());
   }
 
   @Test
@@ -362,7 +277,7 @@ public class ViewGraphControllerTest {
 
     // Check status and if are present tfa and token
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertEquals(view2ViewGraphs, response.getBody());
+    assertFalse(response.getBody().isEmpty());
   }
 
   @Test
@@ -375,8 +290,6 @@ public class ViewGraphControllerTest {
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertTrue(response.getBody().isEmpty());
   }
-
-
 
   @Test
   public void getViewGraphByUserByIdSuccessfull() {
@@ -409,8 +322,6 @@ public class ViewGraphControllerTest {
     assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
   }
 
-
-
   @Test
   public void createViewGraphByAdminSuccessfull() {
     Map<String, Integer> newViewGraphFields = new HashMap<>();
@@ -432,7 +343,6 @@ public class ViewGraphControllerTest {
     assertEquals(viewGraph.getCorrelation(), response.getBody().getCorrelation());
   }
 
-
   @Test
   public void createViewGraphByAdminMissingNecessaryFields() {
     Map<String, Integer> newViewGraphFields = new HashMap<>();
@@ -444,8 +354,6 @@ public class ViewGraphControllerTest {
 
     assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
   }
-
-
 
   @Test
   public void editViewGraph1ByAdminSuccessfull() throws Exception {
@@ -478,7 +386,7 @@ public class ViewGraphControllerTest {
   }
 
   @Test
-  public void editViewGraphByUserViewGraphNotAuthorizedError403() throws Exception {
+  public void editViewGraphByUserViewGraphNotAuthorizedError403() {
     Map<String, Integer> newViewGraphFields = new HashMap<>();
     newViewGraphFields.put("view", view1.getId());
 
@@ -487,8 +395,6 @@ public class ViewGraphControllerTest {
 
     assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
   }
-
-
 
   @Test
   public void deleteViewGraphByAdminSuccessfull() throws ElementNotFoundException {

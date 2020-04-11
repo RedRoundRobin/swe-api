@@ -2,34 +2,53 @@ package com.redroundrobin.thirema.apirest.models.postgres;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIdentityReference;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
-import java.util.List;
+import java.io.Serializable;
+import java.sql.Timestamp;
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 @javax.persistence.Entity
 @Table(name = "alerts")
-public class Alert {
+public class Alert implements Serializable {
+
+  public enum Type {
+    GREATER, LOWER, EQUAL;
+
+    @JsonValue
+    public int toValue() {
+      return ordinal();
+    }
+
+    public static boolean isValid(int type) {
+      for (int i = 0; i < ViewGraph.Correlation.values().length; ++i) {
+        if (type == i) {
+          return true;
+        }
+      }
+      return false;
+    }
+  }
+
   @Id
   @GeneratedValue(generator = "alerts_alert_id_seq", strategy = GenerationType.SEQUENCE)
   @SequenceGenerator(
       name = "alerts_alert_id_seq",
       sequenceName = "alerts_alert_id_seq",
-      allocationSize = 50
+      allocationSize = 25
   )
   @Column(name = "alert_id")
   private int alertId;
   private double threshold;
-  private int type;
+  private Type type;
   private boolean deleted;
 
   @ManyToOne
@@ -44,17 +63,30 @@ public class Alert {
   @JsonIdentityReference(alwaysAsId = true)
   private Sensor sensor;
 
-  @JsonIgnore
-  @ManyToMany(mappedBy = "disabledAlerts")
-  private List<User> users;
+  @Column(name = "last_sent")
+  private Timestamp lastSent;
 
+  public Alert() {
+    // default constructor
+  }
 
-  public void setAlertId(int alertId) {
+  public Alert(int alertId, double threshold, Type type, Entity entity, Sensor sensor) {
     this.alertId = alertId;
+    this.threshold = threshold;
+    this.type = type;
+    this.entity = entity;
+    this.sensor = sensor;
+  }
+
+  public Alert(double threshold, Type type, Entity entity, Sensor sensor) {
+    this.threshold = threshold;
+    this.type = type;
+    this.entity = entity;
+    this.sensor = sensor;
   }
 
   @JsonProperty(value = "alertId")
-  public int getAlertId() {
+  public int getId() {
     return alertId;
   }
 
@@ -66,11 +98,11 @@ public class Alert {
     return threshold;
   }
 
-  public void setType(int type) {
+  public void setType(Type type) {
     this.type = type;
   }
 
-  public int getType() {
+  public Type getType() {
     return type;
   }
 
@@ -78,7 +110,7 @@ public class Alert {
     this.deleted = deleted;
   }
 
-  public boolean getDeleted() {
+  public boolean isDeleted() {
     return this.deleted;
   }
 
@@ -98,11 +130,11 @@ public class Alert {
     return entity;
   }
 
-  public List<User> getUsers() {
-    return users;
+  public Timestamp getLastSent() {
+    return lastSent;
   }
 
-  public void setUsers(List<User> users) {
-    this.users = users;
+  public void setLastSent(Timestamp lastSent) {
+    this.lastSent = lastSent;
   }
 }

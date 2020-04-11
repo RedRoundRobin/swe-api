@@ -7,6 +7,9 @@ import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.DeviceService;
 import com.redroundrobin.thirema.apirest.service.postgres.GatewayService;
 import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
+import com.redroundrobin.thirema.apirest.service.postgres.UserService;
+import com.redroundrobin.thirema.apirest.service.timescale.LogService;
+import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,15 +26,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value = {"/gateways"})
 public class GatewayController extends CoreController {
 
-  private GatewayService gatewayService;
+  private final GatewayService gatewayService;
 
-  private DeviceService deviceService;
+  private final DeviceService deviceService;
 
-  private SensorService sensorService;
+  private final SensorService sensorService;
 
   @Autowired
   public GatewayController(GatewayService gatewayService, DeviceService deviceService,
-                           SensorService sensorService) {
+                           SensorService sensorService, JwtUtil jwtUtil, LogService logService,
+                           UserService userService) {
+    super(jwtUtil, logService, userService);
     this.gatewayService = gatewayService;
     this.deviceService = deviceService;
     this.sensorService = sensorService;
@@ -43,17 +48,27 @@ public class GatewayController extends CoreController {
       @RequestHeader(value = "Authorization") String authorization,
       @RequestParam(name = "deviceId", required = false) Integer deviceId) {
     User user = this.getUserFromAuthorization(authorization);
-    if (user.getType() == User.Role.ADMIN && deviceId != null) {
+    if (user.getType() == User.Role.ADMIN) {
+      if (deviceId != null) {
+        List<Gateway> gateways = new ArrayList<>();
+        Gateway gateway = gatewayService.findByDeviceId(deviceId);
+        if (gateway != null) {
+          gateways.add(gateway);
+        }
+        return ResponseEntity.ok(gateways);
+      } else {
+        return ResponseEntity.ok(gatewayService.findAll());
+      }
+    } else if (deviceId != null) {
       List<Gateway> gateways = new ArrayList<>();
-      Gateway gateway = gatewayService.findByDeviceId(deviceId);
+      Gateway gateway = gatewayService.findByDeviceIdAndEntityId(deviceId,
+          user.getEntity().getId());
       if (gateway != null) {
         gateways.add(gateway);
       }
       return ResponseEntity.ok(gateways);
-    } else if (user.getType() == User.Role.ADMIN) {
-      return ResponseEntity.ok(gatewayService.findAll());
     } else {
-      return new ResponseEntity(HttpStatus.FORBIDDEN);
+      return ResponseEntity.ok(gatewayService.findAllByEntityId(user.getEntity().getId()));
     }
   }
 
@@ -66,7 +81,8 @@ public class GatewayController extends CoreController {
     if (user.getType() == User.Role.ADMIN) {
       return ResponseEntity.ok(gatewayService.findById(gatewayId));
     } else {
-      return new ResponseEntity(HttpStatus.FORBIDDEN);
+      return ResponseEntity.ok(gatewayService.findByIdAndEntityId(gatewayId,
+          user.getEntity().getId()));
     }
   }
 
@@ -77,7 +93,7 @@ public class GatewayController extends CoreController {
                                                      @PathVariable("gatewayId") int gatewayid) {
     User user = this.getUserFromAuthorization(authorization);
     if (user.getType() == User.Role.ADMIN) {
-      return ResponseEntity.ok(gatewayService.findById(gatewayid).getDevices());
+      return ResponseEntity.ok(deviceService.findAllByGatewayId(gatewayid));
     } else {
       return new ResponseEntity(HttpStatus.FORBIDDEN);
     }

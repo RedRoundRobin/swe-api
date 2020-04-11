@@ -1,7 +1,7 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
-import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
+import com.redroundrobin.thirema.apirest.repository.postgres.DeviceRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.GatewayRepository;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,34 +10,38 @@ import org.springframework.stereotype.Service;
 @Service
 public class GatewayService {
 
-  private GatewayRepository repo;
+  private final GatewayRepository gatewayRepo;
 
-  private DeviceService deviceService;
-
-  @Autowired
-  public GatewayService(GatewayRepository gatewayRepository) {
-    this.repo = gatewayRepository;
-  }
+  private final DeviceRepository deviceRepo;
 
   @Autowired
-  public void setDeviceService(DeviceService deviceService) {
-    this.deviceService = deviceService;
+  public GatewayService(GatewayRepository gatewayRepository, DeviceRepository deviceRepository) {
+    this.gatewayRepo = gatewayRepository;
+    this.deviceRepo = deviceRepository;
   }
 
   public List<Gateway> findAll() {
-    return (List<Gateway>) repo.findAll();
+    return (List<Gateway>) gatewayRepo.findAll();
   }
 
-  public Gateway findById(int gatewayId) {
-    return repo.findById(gatewayId).orElse(null);
+  public List<Gateway> findAllByEntityId(int entityId) {
+    return (List<Gateway>) gatewayRepo.findAllByEntityId(entityId);
   }
 
   public Gateway findByDeviceId(int deviceId) {
-    Device device = deviceService.findById(deviceId);
-    if (device != null) {
-      return repo.findByDevices(device);
-    } else {
-      return null;
-    }
+    return gatewayRepo.findByDevice(deviceId);
   }
+
+  public Gateway findByDeviceIdAndEntityId(int deviceId, int entityId) {
+    return gatewayRepo.findByDeviceIdAndEntityId(deviceId, entityId);
+  }
+
+  public Gateway findById(int id) {
+    return gatewayRepo.findById(id).orElse(null);
+  }
+
+  public Gateway findByIdAndEntityId(int id, int entityId) {
+    return gatewayRepo.findByIdAndEntityId(id, entityId);
+  }
+
 }

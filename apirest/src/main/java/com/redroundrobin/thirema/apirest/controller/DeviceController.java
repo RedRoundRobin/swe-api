@@ -5,6 +5,9 @@ import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.DeviceService;
 import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
+import com.redroundrobin.thirema.apirest.service.postgres.UserService;
+import com.redroundrobin.thirema.apirest.service.timescale.LogService;
+import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import java.util.Collections;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,12 +23,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value = {"/devices"})
 public class DeviceController extends CoreController {
 
-  private DeviceService deviceService;
+  private final DeviceService deviceService;
 
-  private SensorService sensorService;
+  private final SensorService sensorService;
 
   @Autowired
-  public DeviceController(DeviceService deviceService, SensorService sensorService) {
+  public DeviceController(DeviceService deviceService, SensorService sensorService, JwtUtil jwtUtil,
+                          LogService logService, UserService userService) {
+    super(jwtUtil, logService, userService);
     this.deviceService = deviceService;
     this.sensorService = sensorService;
   }
@@ -34,16 +39,24 @@ public class DeviceController extends CoreController {
   @GetMapping(value = {""})
   public ResponseEntity<List<Device>> getDevices(
       @RequestHeader("Authorization") String authorization,
-      @RequestParam(value = "entity", required = false) Integer entityId) {
+      @RequestParam(value = "entity", required = false) Integer entityId,
+      @RequestParam(value = "gatewayId", required = false) Integer gatewayId) {
     User user = this.getUserFromAuthorization(authorization);
     if (user.getType() == User.Role.ADMIN) {
-      if (entityId != null) {
+      if (entityId != null && gatewayId != null) {
+        return ResponseEntity.ok(deviceService.findAllByEntityIdAndGatewayId(entityId, gatewayId));
+      } else if (gatewayId != null) {
+        return ResponseEntity.ok(deviceService.findAllByGatewayId(gatewayId));
+      } else if (entityId != null) {
         return ResponseEntity.ok(deviceService.findAllByEntityId(entityId));
       } else {
         return ResponseEntity.ok(deviceService.findAll());
       }
     } else {
-      if (entityId == null || user.getEntity().getId() == entityId) {
+      if (gatewayId != null && (entityId == null || user.getEntity().getId() == entityId)) {
+        return ResponseEntity.ok(deviceService.findAllByEntityIdAndGatewayId(
+            user.getEntity().getId(), gatewayId));
+      } else if (entityId == null || user.getEntity().getId() == entityId) {
         return ResponseEntity.ok(deviceService.findAllByEntityId(user.getEntity().getId()));
       } else {
         return ResponseEntity.ok(Collections.emptyList());
@@ -79,7 +92,7 @@ public class DeviceController extends CoreController {
   }
 
   // Get sensor by deviceId and realSensorId
-  @GetMapping(value = {"/{deviceId:.+}/sensor/{realSensorId:.+}"})
+  @GetMapping(value = {"/{deviceId:.+}/sensors/{realSensorId:.+}"})
   public ResponseEntity<Sensor> getSensorByDevice(
       @RequestHeader("Authorization") String authorization,
       @PathVariable("deviceId") int deviceId,

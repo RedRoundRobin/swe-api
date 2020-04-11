@@ -3,6 +3,9 @@ package com.redroundrobin.thirema.apirest.controller;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
+import com.redroundrobin.thirema.apirest.service.postgres.UserService;
+import com.redroundrobin.thirema.apirest.service.timescale.LogService;
+import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import java.util.Collections;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -18,9 +21,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/entities")
 public class EntityController extends CoreController {
 
-  private EntityService entityService;
+  private final EntityService entityService;
 
-  public EntityController(EntityService entityService) {
+  public EntityController(EntityService entityService, JwtUtil jwtUtil, LogService logService,
+                          UserService userService) {
+    super(jwtUtil, logService, userService);
     this.entityService = entityService;
   }
 

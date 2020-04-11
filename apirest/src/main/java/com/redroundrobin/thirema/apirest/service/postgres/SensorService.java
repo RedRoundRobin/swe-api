@@ -5,7 +5,11 @@ import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.ViewGraph;
+import com.redroundrobin.thirema.apirest.repository.postgres.AlertRepository;
+import com.redroundrobin.thirema.apirest.repository.postgres.DeviceRepository;
+import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
+import com.redroundrobin.thirema.apirest.repository.postgres.ViewGraphRepository;
 import java.util.Collections;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,112 +18,85 @@ import org.springframework.stereotype.Service;
 @Service
 public class SensorService {
 
-  private SensorRepository repo;
+  private final SensorRepository sensorRepo;
 
-  private AlertService alertService;
+  private final AlertRepository alertRepo;
 
-  private DeviceService deviceService;
+  private final DeviceRepository deviceRepo;
 
-  private EntityService entityService;
+  private final EntityRepository entityRepo;
 
-  private ViewGraphService viewGraphService;
-
-  @Autowired
-  public SensorService(SensorRepository repo) {
-    this.repo = repo;
-  }
+  private final ViewGraphRepository viewGraphRepo;
 
   @Autowired
-  public void setAlertService(AlertService alertService) {
-    this.alertService = alertService;
-  }
-
-  @Autowired
-  public void setDeviceService(DeviceService deviceService) {
-    this.deviceService = deviceService;
-  }
-
-  @Autowired
-  public void setEntityService(EntityService entityService) {
-    this.entityService = entityService;
-  }
-
-  @Autowired
-  public void setViewGraphService(ViewGraphService viewGraphService) {
-    this.viewGraphService = viewGraphService;
+  public SensorService(SensorRepository sensorRepository, AlertRepository alertRepository,
+                       DeviceRepository deviceRepository, EntityRepository entityRepository,
+                       ViewGraphRepository viewGraphRepository) {
+    this.sensorRepo = sensorRepository;
+    this.alertRepo = alertRepository;
+    this.deviceRepo = deviceRepository;
+    this.entityRepo = entityRepository;
+    this.viewGraphRepo = viewGraphRepository;
   }
 
   public List<Sensor> findAll() {
-    return (List<Sensor>) repo.findAll();
+    return (List<Sensor>) sensorRepo.findAll();
   }
 
   public List<Sensor> findAllByDeviceId(int deviceId) {
-    Device device = deviceService.findById(deviceId);
+    Device device = deviceRepo.findById(deviceId).orElse(null);
     if (device != null) {
-      return (List<Sensor>) repo.findAllByDevice(device);
+      return (List<Sensor>) sensorRepo.findAllByDevice(device);
     } else {
       return Collections.emptyList();
     }
   }
 
   public List<Sensor> findAllByDeviceIdAndEntityId(int deviceId, int entityId) {
-    Device device = deviceService.findById(deviceId);
-    Entity entity = entityService.findById(entityId);
+    Device device = deviceRepo.findById(deviceId).orElse(null);
+    Entity entity = entityRepo.findById(entityId).orElse(null);
     if (device != null && entity != null) {
-      return (List<Sensor>) repo.findAllByDeviceAndEntities(device, entity);
+      return (List<Sensor>) sensorRepo.findAllByDeviceAndEntities(device, entity);
     } else {
       return Collections.emptyList();
     }
   }
 
   public List<Sensor> findAllByEntityId(int entityId) {
-    Entity entity = entityService.findById(entityId);
+    Entity entity = entityRepo.findById(entityId).orElse(null);
     if (entity != null) {
-      return (List<Sensor>) repo.findAllByEntities(entity);
-    } else {
-      return Collections.emptyList();
-    }
-  }
-
-  public List<Sensor> findAllByViewGraphId(int viewGraphId) {
-    ViewGraph viewGraph = viewGraphService.findById(viewGraphId);
-    if (viewGraph != null) {
-      return (List<Sensor>) repo.findAllByViewGraphs1OrViewGraphs2(viewGraph, viewGraph);
+      return (List<Sensor>) sensorRepo.findAllByEntities(entity);
     } else {
       return Collections.emptyList();
     }
   }
 
   public List<Sensor> findAllByGatewayIdAndRealDeviceId(int gatewayId, int realDeviceId) {
-    return (List<Sensor>) repo.findAllByGatewayIdAndRealDeviceId(gatewayId, realDeviceId);
+    return (List<Sensor>) sensorRepo.findAllByGatewayIdAndRealDeviceId(gatewayId, realDeviceId);
   }
 
-  public Sensor findById(int sensorId) {
-    return repo.findById(sensorId).orElse(null);
-  }
-
-  public Sensor findByIdAndEntityId(int sensorId, int entityId) {
-    Entity entity = entityService.findById(entityId);
-    if (entity != null) {
-      return repo.findBySensorIdAndEntities(sensorId, entity);
+  public List<Sensor> findAllByViewGraphId(int viewGraphId) {
+    ViewGraph viewGraph = viewGraphRepo.findById(viewGraphId).orElse(null);
+    if (viewGraph != null) {
+      return (List<Sensor>) sensorRepo.findAllByViewGraphs1OrViewGraphs2(viewGraph, viewGraph);
     } else {
-      return null;
+      return Collections.emptyList();
     }
   }
 
   public Sensor findByAlertId(int alertId) {
-    Alert alert = alertService.findById(alertId);
+    Alert alert = alertRepo.findById(alertId).orElse(null);
     if (alert != null) {
-      return repo.findByAlerts(alert);
+      return sensorRepo.findByAlerts(alert);
     } else {
       return null;
     }
   }
 
   public Sensor findByDeviceIdAndRealSensorId(int deviceId, int realSensorId) {
-    Device device = deviceService.findById(deviceId);
+    Device device = deviceRepo.findById(deviceId).orElse(null);
     if (device != null) {
-      return repo.findByDeviceAndRealSensorId(device, realSensorId);
+      return sensorRepo.findByDeviceAndRealSensorId(device, realSensorId);
     } else {
       return null;
     }
@@ -127,10 +104,10 @@ public class SensorService {
 
   public Sensor findByDeviceIdAndRealSensorIdAndEntityId(int deviceId, int realSensorId,
                                                          int entityId) {
-    Device device = deviceService.findById(deviceId);
-    Entity entity = entityService.findById(entityId);
+    Device device = deviceRepo.findById(deviceId).orElse(null);
+    Entity entity = entityRepo.findById(entityId).orElse(null);
     if (device != null && entity != null) {
-      return repo.findByDeviceAndRealSensorIdAndEntities(device, realSensorId, entity);
+      return sensorRepo.findByDeviceAndRealSensorIdAndEntities(device, realSensorId, entity);
     } else {
       return null;
     }
@@ -138,6 +115,20 @@ public class SensorService {
 
   public Sensor findByGatewayIdAndRealDeviceIdAndRealSensorId(int gatewayId, int realDeviceId,
                                                               int realSensorId) {
-    return repo.findByGatewayIdAndRealDeviceIdAndRealSensorId(gatewayId,realDeviceId,realSensorId);
+    return sensorRepo.findByGatewayIdAndRealDeviceIdAndRealSensorId(gatewayId,realDeviceId,
+        realSensorId);
+  }
+
+  public Sensor findById(int id) {
+    return sensorRepo.findById(id).orElse(null);
+  }
+
+  public Sensor findByIdAndEntityId(int id, int entityId) {
+    Entity entity = entityRepo.findById(entityId).orElse(null);
+    if (entity != null) {
+      return sensorRepo.findBySensorIdAndEntities(id, entity);
+    } else {
+      return null;
+    }
   }
 }

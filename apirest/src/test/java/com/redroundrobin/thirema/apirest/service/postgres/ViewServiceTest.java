@@ -1,7 +1,9 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
+
 import com.google.gson.JsonObject;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.postgres.View;
+import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.ViewRepository;
 import com.redroundrobin.thirema.apirest.utils.exception.*;
 import org.junit.Before;
@@ -11,7 +13,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringRunner;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -21,13 +22,13 @@ import static org.mockito.Mockito.when;
 @RunWith(SpringRunner.class)
 public class ViewServiceTest {
 
+  private ViewService viewService;
+
   @MockBean
   private ViewRepository viewRepo;
 
   @MockBean
-  private UserService userService;
-
-  private ViewService viewService;
+  private UserRepository userRepo;
 
   private User admin1;
   private User mod1;
@@ -40,63 +41,23 @@ public class ViewServiceTest {
   @Before
   public void setUp() {
 
-    viewService = new ViewService(viewRepo);
-    viewService.setUserService(userService);
+    viewService = new ViewService(viewRepo, userRepo);
 
-    admin1 = new User(); //utente a cui non ho dato alcuna vista
-    admin1.setId(1);
-    admin1.setName("admin1");
-    admin1.setSurname("admin1");
-    admin1.setEmail("admin1");
-    admin1.setTelegramName("TNAdmin1");
-    admin1.setPassword("password");
-    admin1.setType(User.Role.ADMIN);
-
-    mod1 = new User();
-    mod1.setId(3);
-    mod1.setName("mod1");
-    mod1.setSurname("mod1");
-    mod1.setEmail("mod1");
-    mod1.setTelegramName("TNmod1");
-    mod1.setPassword("password");
-    mod1.setType(User.Role.MOD);
-
-    user1 = new User();
-    user1.setId(5);
-    user1.setName("user1");
-    user1.setSurname("user1");
-    user1.setEmail("user1");
-    user1.setTelegramName("TNuser1");
-    user1.setPassword("password");
-    user1.setType(User.Role.USER);
+    // ----------------------------------------- Set Users ---------------------------------------
+    admin1 = new User(1, "admin1", "admin1", "admin1", "pass", User.Role.ADMIN);
+    mod1 = new User(3, "mod1", "mod1", "mod1", "pass", User.Role.MOD);
+    user1 = new User(5, "user1", "user1", "user1", "pass", User.Role.USER);
 
     List<User> allUsers = new ArrayList<>();
     allUsers.add(user1);
     allUsers.add(mod1);
     allUsers.add(admin1);
 
-    view1= new View();
-    view1.setUser(user1);
-    view1.setId(1);
-    view1.setName("view1");
-    List<View> user1Views = new ArrayList<>();
-    user1Views.add(view1);
-    user1.setViews(user1Views);
-
-    view2= new View();
-    view2.setUser(user1);
-    view2.setId(2);
-    view2.setName("view2");
-
-    view3= new View();
-    view3.setUser(mod1);
-    view3.setId(3);
-    view3.setName("view3");
-
-    view4= new View();
-    view4.setUser(mod1);
-    view4.setId(4);
-    view4.setName("view4");
+    // ----------------------------------------- Set Views ---------------------------------------
+    view1 = new View(1,"view1", user1);
+    view2 = new View(2,"view2", user1);
+    view3 = new View(3,"view3", mod1);
+    view4 = new View(4,"view4", mod1);
 
     List<View> allViews = new ArrayList<>();
     allViews.add(view1);
@@ -106,29 +67,21 @@ public class ViewServiceTest {
 
     when(viewRepo.findById(anyInt())).thenAnswer(i -> {
       int id = i.getArgument(0);
-      Optional<View> viewFound = allViews.stream()
+      return allViews.stream()
           .filter(view -> view.getId() == id)
           .findFirst();
-      return viewFound;
     });
-
     when(viewRepo.findAllByUser(any(User.class))).thenAnswer(i -> {
       User user = i.getArgument(0);
-      List<View> views = allViews.stream()
-          .filter(view -> view.getUser() == user).collect(Collectors.toList());
-      return views;
-    });
-
-    when(viewRepo.findByViewIdAndUser(anyInt(), any(User.class))).thenAnswer(i -> {
       return allViews.stream()
-          .filter(v -> i.getArgument(0).equals(v.getId())
-              && i.getArgument(1).equals(v.getUser())).findFirst().orElse(null);
+          .filter(view -> view.getUser() == user).collect(Collectors.toList());
     });
+    when(viewRepo.findByViewIdAndUser(anyInt(), any(User.class))).thenAnswer(i -> allViews.stream()
+        .filter(v -> i.getArgument(0).equals(v.getId())
+            && i.getArgument(1).equals(v.getUser())).findFirst().orElse(null));
 
-    when(userService.findById(anyInt())).thenAnswer(i -> {
-      return allUsers.stream()
-        .filter(u -> i.getArgument(0).equals(u.getId())).findFirst().orElse(null);
-    });
+    when(userRepo.findById(anyInt())).thenAnswer(i -> allUsers.stream()
+      .filter(u -> i.getArgument(0).equals(u.getId())).findFirst());
   }
 
   @Test
@@ -140,10 +93,8 @@ public class ViewServiceTest {
   @Test
   public void findAllByUserTest() {
     List<View> views = viewService.findAllByUser(user1);
-    assertTrue(!views.isEmpty() && views.size() == 2);
+    assertEquals(2, views.size());
   }
-
-
 
   @Test
   public void findViewByIdAndUserId() {
@@ -159,8 +110,6 @@ public class ViewServiceTest {
     assertNull(view);
   }
 
-
-
   @Test
   public void serializeViewSuccesfulTest() {
     JsonObject rawViewToInsert = new JsonObject();
@@ -170,11 +119,8 @@ public class ViewServiceTest {
       viewService.serializeView(rawViewToInsert, user1);
       assertTrue(true);
     }
-    catch(KeysNotFoundException e) {
-      assertTrue(false);
-    }
-    catch(MissingFieldsException e) {
-      assertTrue(false);
+    catch(KeysNotFoundException | MissingFieldsException e) {
+      fail();
     }
   }
 
@@ -186,13 +132,13 @@ public class ViewServiceTest {
 
     try {
       viewService.serializeView(rawViewToInsert, user1);
-      assertTrue(false);
+      fail();
     }
     catch(KeysNotFoundException e) {
       assertTrue(true);
     }
     catch(MissingFieldsException e) {
-      assertTrue(false);
+      fail();
     }
   }
 
@@ -203,10 +149,10 @@ public class ViewServiceTest {
 
     try {
       viewService.serializeView(rawViewToInsert, user1);
-      assertTrue(false);
+      fail();
     }
     catch(KeysNotFoundException e) {
-      assertTrue(false);
+      fail();
     }
     catch(MissingFieldsException e) {
       assertTrue(true);
@@ -219,11 +165,8 @@ public class ViewServiceTest {
       viewService.deleteView(user1, 1);
       assertTrue(true);
     }
-    catch(NotAuthorizedException e) {
-      assertTrue(false);
-    }
-    catch(InvalidFieldsValuesException e) {
-      assertTrue(false);
+    catch(NotAuthorizedException | InvalidFieldsValuesException e) {
+      fail();
     }
   }
 
@@ -231,13 +174,13 @@ public class ViewServiceTest {
   public void deleteViewNotAuthorizedToDeleteUserExceptionTest() {
     try {
       viewService.deleteView(user1, 3);
-      assertTrue(false);
+      fail();
     }
     catch(NotAuthorizedException e) {
       assertTrue(true);
     }
     catch(InvalidFieldsValuesException e) {
-      assertTrue(false);
+      fail();
     }
   }
 
@@ -245,10 +188,10 @@ public class ViewServiceTest {
   public void deleteViewValuesNotAllowedExceptionTest() {
     try {
       viewService.deleteView(user1, 8);
-      assertTrue(false);
+      fail();
     }
     catch(NotAuthorizedException e) {
-      assertTrue(false);
+      fail();
     }
     catch(InvalidFieldsValuesException e) {
       assertTrue(true);
@@ -256,4 +199,3 @@ public class ViewServiceTest {
   }
 
 }
-

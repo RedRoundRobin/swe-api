@@ -15,3 +15,16 @@
 ![Repository Checker](https://github.com/RedRoundRobin/swe-api/workflows/Repository%20Checker/badge.svg)
 
 ![Docker Checker](https://github.com/RedRoundRobin/swe-api/workflows/Docker%20Checker/badge.svg)
+
+
+
+### Live API
+
+API buildate in automatico dal branch `develop`
+
+- [core.host.redroundrobin.site:9999](http://core.host.redroundrobin.site:9999)
+
+
+### Documentazione API
+
+- [api.docs.redroundrobin.site](https://api.docs.redroundrobin.site)
