@@ -47,12 +47,6 @@ public class UserController extends CoreController {
     super(jwtUtil, logService, userService);
   }
 
-  private boolean canEditMod(User editingUser, User userToEdit) {
-    return editingUser.getId() == userToEdit.getId()
-        || (userToEdit.getType() == User.Role.USER
-        && editingUser.getEntity().equals(userToEdit.getEntity()));
-  }
-
   // Get all users
   @GetMapping(value = {""})
   public ResponseEntity<List<User>> getUsers(
@@ -95,7 +89,7 @@ public class UserController extends CoreController {
 
     JsonObject jsonUser = JsonParser.parseString(jsonStringUser).getAsJsonObject();
     try {
-      User createdUser = userService.serializeUser(jsonUser, user);
+      User createdUser = userService.addUser(jsonUser, user);
       logService.createLog(user.getId(), ip, "user.created",
           Integer.toString(createdUser.getId()));
       return ResponseEntity.ok(createdUser);
@@ -171,25 +165,7 @@ public class UserController extends CoreController {
 
       User user;
       try {
-        if (editingUser.getType() == User.Role.ADMIN && (userToEdit.getType() != User.Role.ADMIN
-            || editingUser.getId() == userToEdit.getId())) {
-          user = userService.editByAdministrator(userToEdit, fieldsToEdit,
-              editingUser.getId() == userToEdit.getId());
-
-        } else if (editingUser.getType() == User.Role.MOD && canEditMod(editingUser, userToEdit)) {
-          user = userService.editByModerator(userToEdit, fieldsToEdit,
-              editingUser.getId() == userToEdit.getId());
-
-        } else if (editingUser.getType() == User.Role.USER
-            && editingUser.getId() == userToEdit.getId()) {
-          user = userService.editByUser(userToEdit, fieldsToEdit);
-
-        } else {
-          logger.debug("RESPONSE STATUS: FORBIDDEN. User " + editingUser.getId() + " (is not an "
-              + "administrator or is trying to edit another administrator) or (is mod and can't "
-              + "edit) or user is trying to edit another user");
-          return new ResponseEntity(HttpStatus.FORBIDDEN);
-        }
+        user = userService.editUser(editingUser, userToEdit, fieldsToEdit);
 
         if (editingUser.getId() == userToEdit.getId()) {
           if (fieldsToEdit.containsKey("password")) {

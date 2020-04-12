@@ -109,7 +109,7 @@ public class ViewControllerTest {
         return null;
       }
     });
-    when(viewService.serializeView(any(JsonObject.class), any(User.class))).thenAnswer(i -> {
+    when(viewService.addView(any(JsonObject.class), any(User.class))).thenAnswer(i -> {
       JsonObject jsonViewToCreate = i.getArgument(0);
       User user = i.getArgument(1);
       if(jsonViewToCreate.has("name") &&

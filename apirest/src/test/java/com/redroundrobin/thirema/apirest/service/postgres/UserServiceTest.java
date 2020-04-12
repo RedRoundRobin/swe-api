@@ -363,7 +363,7 @@ public class UserServiceTest {
     fieldsToCreate.addProperty("entityId", entityId);
 
     try {
-      userService.serializeUser(fieldsToCreate, mod1);
+      userService.addUser(fieldsToCreate, mod1);
       assertTrue(true);
     } catch (Exception e) {
       fail();
@@ -387,7 +387,7 @@ public class UserServiceTest {
     fieldsToCreate.addProperty("entityId", entityId);
 
     try {
-      userService.serializeUser(fieldsToCreate, admin1);
+      userService.addUser(fieldsToCreate, admin1);
       assertTrue(true);
     } catch (Exception e) {
       fail();
@@ -411,7 +411,7 @@ public class UserServiceTest {
     fieldsToCreate.addProperty("entityId", entityId);
 
     try {
-      userService.serializeUser(fieldsToCreate, admin1);
+      userService.addUser(fieldsToCreate, admin1);
       assertTrue(true);
     } catch (Exception e) {
       fail();
@@ -435,7 +435,7 @@ public class UserServiceTest {
     fieldsToCreate.addProperty("entityId", entityId);
 
     try {
-      userService.serializeUser(fieldsToCreate, user1);
+      userService.addUser(fieldsToCreate, user1);
       fail();
     } catch (Exception e) {
       assertTrue(true);
@@ -459,7 +459,7 @@ public class UserServiceTest {
     fieldsToCreate.addProperty("entityId", entityId);
 
     try {
-      userService.serializeUser(fieldsToCreate, user1);
+      userService.addUser(fieldsToCreate, user1);
       fail();
     } catch (Exception e) {
       assertTrue(true);
@@ -483,7 +483,7 @@ public class UserServiceTest {
     fieldsToCreate.addProperty("entityId", entityId);
 
     try {
-      userService.serializeUser(fieldsToCreate, admin1);
+      userService.addUser(fieldsToCreate, admin1);
       fail();
     } catch (Exception e) {
       assertTrue(true);
@@ -506,7 +506,7 @@ public class UserServiceTest {
     editedUser.setTelegramChat(null);
 
     try {
-      User user = userService.editByAdministrator(admin1, fieldsToEdit, true);
+      User user = userService.editUser(admin1, admin1, fieldsToEdit);
 
       assertNotNull(user);
       assertEquals(editedUser.getTelegramName(), user.getTelegramName());
@@ -551,7 +551,7 @@ public class UserServiceTest {
     when(entityRepo.findById(newEntityId)).thenReturn(Optional.of(entity2));
 
     try {
-      User user = userService.editByAdministrator(user1, fieldsToEdit, false);
+      User user = userService.editUser(admin1, user1, fieldsToEdit);
 
       assertNotNull(user);
       assertEquals(editedUser.getName(), user.getName());
@@ -574,7 +574,7 @@ public class UserServiceTest {
     fieldsToEdit.put("type",3);
 
     try {
-      userService.editByAdministrator(user1, fieldsToEdit, false);
+      userService.editUser(admin1, user2, fieldsToEdit);
       fail();
     } catch (InvalidFieldsValuesException urnfe) {
       assertTrue(urnfe.getMessage().contains("role"));
@@ -594,7 +594,7 @@ public class UserServiceTest {
     when(entityRepo.findById(3)).thenReturn(Optional.empty());
 
     try {
-      userService.editByAdministrator(mod1, fieldsToEdit, false);
+      userService.editUser(admin1, mod1, fieldsToEdit);
       fail();
     } catch (InvalidFieldsValuesException urnfe) {
       assertTrue(urnfe.getMessage().contains("entity"));
@@ -613,7 +613,7 @@ public class UserServiceTest {
     fieldsToEdit.put("type",1);
 
     try {
-      userService.editByAdministrator(admin2, fieldsToEdit, false);
+      userService.editUser(admin1, admin2, fieldsToEdit);
 
       fail();
     } catch (NotAuthorizedException e) {
@@ -625,7 +625,7 @@ public class UserServiceTest {
 
   // editByModerator method tests
   @Test
-  public void editUser2ByMod1Successfull() {
+  public void editUser1ByMod1Successfull() {
     // modificare name, surname, email, deleted
 
     String newName = "newName";
@@ -637,13 +637,13 @@ public class UserServiceTest {
     fieldsToEdit.put("surname",newSurname);
     fieldsToEdit.put("email",newEmail);
 
-    User editedUser = cloneUser(user2);
+    User editedUser = cloneUser(user1);
     editedUser.setName(newName);
     editedUser.setSurname(newSurname);
     editedUser.setEmail(newEmail);
 
     try {
-      User user = userService.editByModerator(user2, fieldsToEdit, false);
+      User user = userService.editUser(mod1, user1, fieldsToEdit);
 
       assertNotNull(user);
       assertEquals(editedUser.getName(), user.getName());
@@ -671,7 +671,7 @@ public class UserServiceTest {
     editedUser.setTfa(true);
 
     try {
-      User user = userService.editByModerator(mod11, fieldsToEdit, true);
+      User user = userService.editUser(mod11, mod11, fieldsToEdit);
 
       assertNotNull(user);
       assertEquals(editedUser.getName(), user.getName());
@@ -689,7 +689,7 @@ public class UserServiceTest {
     fieldsToEdit.put("entityId",2);
 
     try {
-      userService.editByModerator(mod11, fieldsToEdit, true);
+      userService.editUser(mod11, mod11, fieldsToEdit);
 
       fail();
     } catch (NotAuthorizedException e) {
@@ -709,7 +709,7 @@ public class UserServiceTest {
     fieldsToEdit.put("name",newName);
 
     try {
-      userService.editByUser(user1, fieldsToEdit);
+      userService.editUser(user1, user1, fieldsToEdit);
 
       fail();
     } catch (NotAuthorizedException natde) {
@@ -730,7 +730,7 @@ public class UserServiceTest {
     fieldsToEdit.put("tfa", true);
 
     try {
-      userService.editByUser(user1, fieldsToEdit);
+      userService.editUser(user2, user2, fieldsToEdit);
 
       fail();
     } catch (ConflictException ce) {
@@ -751,7 +751,7 @@ public class UserServiceTest {
     fieldsToEdit.put("tfaa", true);
 
     try {
-      userService.editByUser(user1, fieldsToEdit);
+      userService.editUser(user2, user2, fieldsToEdit);
 
       fail();
     } catch (MissingFieldsException mfe) {
