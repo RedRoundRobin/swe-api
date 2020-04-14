@@ -13,6 +13,7 @@ import org.junit.runner.RunWith;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.ArrayList;
@@ -41,6 +42,9 @@ public class GatewayControllerTest {
 
   @MockBean
   private GatewayService gatewayService;
+
+  @MockBean
+  private KafkaTemplate<String, String> kafkaTemplate;
 
   @MockBean
   private DeviceService deviceService;
@@ -74,7 +78,7 @@ public class GatewayControllerTest {
 
   @Before
   public void setUp() {
-    gatewayController = new GatewayController(gatewayService, deviceService, sensorService, jwtUtil, logService, userService);
+    gatewayController = new GatewayController(gatewayService, deviceService, kafkaTemplate, sensorService, jwtUtil, logService, userService);
 
     // ----------------------------------------- Set Users --------------------------------------
     admin = new User(1, "admin", "admin", "admin", "pass", User.Role.ADMIN);
