@@ -172,7 +172,7 @@ public class AlertService {
     }
   }
 
-  public Alert createAlert(User user, Map<String, Object> newAlertFields)
+  public Alert addAlert(User user, Map<String, Object> newAlertFields)
       throws InvalidFieldsValuesException, MissingFieldsException {
     if (this.checkFields(newAlertFields, false)) {
       return this.addEditAlert(user, null, newAlertFields);

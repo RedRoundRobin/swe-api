@@ -320,7 +320,7 @@ public class AlertServiceTest {
     newAlertFields.put("entity", entity1.getId());
 
     try {
-      Alert alert = alertService.createAlert(user1, newAlertFields);
+      Alert alert = alertService.addAlert(user1, newAlertFields);
 
       assertNotNull(alert);
     } catch (Exception e) {
@@ -338,7 +338,7 @@ public class AlertServiceTest {
     newAlertFields.put("entity", entity1.getId());
 
     try {
-      alertService.createAlert(admin1, newAlertFields);
+      alertService.addAlert(admin1, newAlertFields);
 
       fail();
     } catch (InvalidFieldsValuesException e) {
@@ -358,7 +358,7 @@ public class AlertServiceTest {
     newAlertFields.put("sensor", sensor1.getId());
 
     try {
-      alertService.createAlert(user1, newAlertFields);
+      alertService.addAlert(user1, newAlertFields);
 
       fail();
     } catch (MissingFieldsException e) {
@@ -378,7 +378,7 @@ public class AlertServiceTest {
     newAlertFields.put("entity", entity2.getId());
 
     try {
-      alertService.createAlert(user1, newAlertFields);
+      alertService.addAlert(user1, newAlertFields);
 
       fail();
     } catch (InvalidFieldsValuesException e) {
@@ -399,7 +399,7 @@ public class AlertServiceTest {
     newAlertFields.put("entity", entity1.getId());
 
     try {
-      alertService.createAlert(user1, newAlertFields);
+      alertService.addAlert(user1, newAlertFields);
 
       fail();
     } catch (InvalidFieldsValuesException e) {

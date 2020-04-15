@@ -187,7 +187,7 @@ public class UserControllerTest {
       userToDelete.setDeleted(true);
       return userToDelete;
   });
-    when(userService.serializeUser(any(JsonObject.class), any(User.class))).thenAnswer(i -> {
+    when(userService.addUser(any(JsonObject.class), any(User.class))).thenAnswer(i -> {
       JsonObject rawUserToInsert = i.getArgument(0);
       User insertingUser = i.getArgument(1);
       Set<String> creatable = new HashSet<>();
@@ -272,10 +272,12 @@ public class UserControllerTest {
   }
 
   @Test
-  public void editAdmin2ByAdmin1EditNotAllowedError403() {
+  public void editAdmin2ByAdmin1EditNotAllowedError403() throws MissingFieldsException, NotAuthorizedException, InvalidFieldsValuesException, ConflictException {
 
     HashMap<String, Object> request = new HashMap<>();
     request.put("email", "newemail");
+
+    when(userService.editUser(admin1, admin2, request)).thenThrow(new NotAuthorizedException(""));
 
     ResponseEntity response = userController.editUser("Bearer " + admin1Token,
         request, admin2.getId(),httpRequest);
@@ -312,14 +314,12 @@ public class UserControllerTest {
     editedUser1.setEmail(newEmail);
     editedUser1.setPassword(newPassword);
 
-    when(jwtUtil.extractExpiration(user1Token)).thenReturn(new Date());
-
-    when(userService.editByUser(eq(user1), any(HashMap.class))).thenReturn(editedUser1);
-
-    when(userService.loadUserByEmail(editedUser1.getEmail())).thenThrow(new UsernameNotFoundException(""));
-
     HashMap<String, Object> request = new HashMap<>();
     request.put("password", "newpassword");
+
+    when(jwtUtil.extractExpiration(user1Token)).thenReturn(new Date());
+    when(userService.editUser(user1, user1, request)).thenReturn(editedUser1);
+    when(userService.loadUserByEmail(editedUser1.getEmail())).thenThrow(new UsernameNotFoundException(""));
 
     ResponseEntity response = userController.editUser("Bearer " + user1Token,
         request, user1.getId(), httpRequest);
@@ -333,7 +333,7 @@ public class UserControllerTest {
   @Test
   public void editUser1ByAdmin1EditNotAllowedError403() throws Exception {
 
-    when(userService.editByAdministrator(eq(user1), any(HashMap.class), eq(false))).thenThrow(
+    when(userService.editUser(eq(admin1),eq(user1), any(HashMap.class))).thenThrow(
         new NotAuthorizedException("fields furnished not allowed"));
 
     HashMap<String, Object> request = new HashMap<>();
@@ -355,7 +355,7 @@ public class UserControllerTest {
     User editedUser1 = cloneUser(user1);
     editedUser1.setEmail(newEmail);
 
-    when(userService.editByAdministrator(eq(user1), any(HashMap.class), eq(false))).thenReturn(editedUser1);
+    when(userService.editUser(eq(admin1),eq(user1), any(HashMap.class))).thenReturn(editedUser1);
 
     HashMap<String, Object> request = new HashMap<>();
     request.put("email", newEmail);
@@ -380,7 +380,7 @@ public class UserControllerTest {
 
     when(jwtUtil.extractExpiration(user1Token)).thenReturn(new Date());
 
-    when(userService.editByUser(eq(user1), any(HashMap.class))).thenReturn(editedUser1);
+    when(userService.editUser(eq(user1),eq(user1), any(HashMap.class))).thenReturn(editedUser1);
 
     String newToken = "newToken";
 
@@ -407,10 +407,14 @@ public class UserControllerTest {
   }
 
   @Test
-  public void editUser2ByUser1NotAllowedError403() {
+  public void editUser2ByUser1NotAllowedError403() throws MissingFieldsException,
+      NotAuthorizedException, InvalidFieldsValuesException, ConflictException {
 
     HashMap<String, Object> request = new HashMap<>();
     request.put("email", "newEmail");
+
+    when(userService.editUser(eq(user1),eq(user2), any(HashMap.class)))
+        .thenThrow(new NotAuthorizedException(""));
 
     ResponseEntity response = userController.editUser("Bearer " + user1Token,
         request, user2.getId(), httpRequest);
@@ -428,7 +432,7 @@ public class UserControllerTest {
     User editedUser1 = cloneUser(user1);
     editedUser1.setEmail(newEmail);
 
-    when(userService.editByModerator(eq(user1), any(HashMap.class), eq(false))).thenReturn(editedUser1);
+    when(userService.editUser(eq(mod1),eq(user1), any(HashMap.class))).thenReturn(editedUser1);
 
     HashMap<String, Object> request = new HashMap<>();
     request.put("email", newEmail);
@@ -449,7 +453,7 @@ public class UserControllerTest {
 
     String newTelegramName = "newEmail";
 
-    when(userService.editByUser(eq(user2), any(HashMap.class))).thenThrow(
+    when(userService.editUser(eq(user2),eq(user2), any(HashMap.class))).thenThrow(
         new DataIntegrityViolationException(
             "ERROR: duplicate key value violates unique constraint \"unique_telegram_name\"\n"
             + "  Dettaglio: Key (telegram_name)=(newEmail) already exists."));
@@ -472,7 +476,7 @@ public class UserControllerTest {
 
     String newTelegramName = "newEmail";
 
-    when(userService.editByUser(eq(user2), any(HashMap.class))).thenThrow(
+    when(userService.editUser(eq(user2),eq(user2), any(HashMap.class))).thenThrow(
         new DataIntegrityViolationException(
             "ERROR: duplicate key value violates unique constraint \"unique_telegram_name\"\n"
                 + "  Dettaglio: something"));
@@ -495,7 +499,7 @@ public class UserControllerTest {
 
     String newTelegramName = "newEmail";
 
-    when(userService.editByUser(eq(user2), any(HashMap.class))).thenThrow(
+    when(userService.editUser(eq(user2),eq(user2), any(HashMap.class))).thenThrow(
         new DataIntegrityViolationException("ERROR: value too long for type character varying(32)"));
 
     HashMap<String, Object> request = new HashMap<>();
@@ -515,7 +519,7 @@ public class UserControllerTest {
 
     String newTelegramName = "newEmail";
 
-    when(userService.editByUser(eq(user2), any(HashMap.class))).thenThrow(
+    when(userService.editUser(eq(user2),eq(user2), any(HashMap.class))).thenThrow(
         new MissingFieldsException("There aren't fields that can be edited"));
 
     HashMap<String, Object> request = new HashMap<>();
@@ -537,7 +541,7 @@ public class UserControllerTest {
 
     String tfaError = "TFA can't be edited because either telegram_name is "
         + "in the request or telegram chat not present";
-    when(userService.editByModerator(eq(mod1), any(HashMap.class), eq(true))).thenThrow(
+    when(userService.editUser(eq(mod1),eq(mod1), any(HashMap.class))).thenThrow(
         new ConflictException(tfaError));
 
     HashMap<String, Object> request = new HashMap<>();
@@ -557,7 +561,7 @@ public class UserControllerTest {
 
     String newEmail = "newEmail";
 
-    when(userService.editByModerator(eq(mod11), any(HashMap.class), eq(false))).thenThrow(
+    when(userService.editUser(eq(mod1),eq(mod11), any(HashMap.class))).thenThrow(
         new NotAuthorizedException(""));
 
     HashMap<String, Object> request = new HashMap<>();

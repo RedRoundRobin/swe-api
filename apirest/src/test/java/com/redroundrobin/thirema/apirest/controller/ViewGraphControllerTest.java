@@ -200,7 +200,7 @@ public class ViewGraphControllerTest {
         throw new ElementNotFoundException("not found");
       }
     });
-    when(viewGraphService.createViewGraph(any(User.class), any(HashMap.class))).thenAnswer(i -> {
+    when(viewGraphService.addViewGraph(any(User.class), any(HashMap.class))).thenAnswer(i -> {
       Map<String, Object> fields = i.getArgument(1);
       if (fields.containsKey("sensor1") && fields.get("sensor1").equals(sensor1.getId())) {
         ViewGraph viewGraph = new ViewGraph();

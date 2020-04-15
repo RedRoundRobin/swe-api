@@ -116,7 +116,7 @@ public class ViewServiceTest {
     rawViewToInsert.addProperty("name", "myView");
 
     try {
-      viewService.serializeView(rawViewToInsert, user1);
+      viewService.addView(rawViewToInsert, user1);
       assertTrue(true);
     }
     catch(KeysNotFoundException | MissingFieldsException e) {
@@ -131,7 +131,7 @@ public class ViewServiceTest {
     rawViewToInsert.addProperty("id", 7);
 
     try {
-      viewService.serializeView(rawViewToInsert, user1);
+      viewService.addView(rawViewToInsert, user1);
       fail();
     }
     catch(KeysNotFoundException e) {
@@ -148,7 +148,7 @@ public class ViewServiceTest {
     JsonObject rawViewToInsert = new JsonObject(); // empty json: {}
 
     try {
-      viewService.serializeView(rawViewToInsert, user1);
+      viewService.addView(rawViewToInsert, user1);
       fail();
     }
     catch(KeysNotFoundException e) {

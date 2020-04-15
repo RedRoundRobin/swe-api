@@ -110,7 +110,7 @@ public class ViewGraphService {
     }
   }
 
-  public ViewGraph createViewGraph(User user, Map<String, Integer> newViewGraphFields)
+  public ViewGraph addViewGraph(User user, Map<String, Integer> newViewGraphFields)
       throws InvalidFieldsValuesException, MissingFieldsException {
     if (this.checkFields(false, newViewGraphFields)) {
       return this.addEditViewGraph(user, null, newViewGraphFields);

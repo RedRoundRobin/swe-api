@@ -136,7 +136,7 @@ public class AlertController extends CoreController {
     User user = this.getUserFromAuthorization(authorization);
     if (user.getType() == User.Role.ADMIN || user.getType() == User.Role.MOD) {
       try {
-        Alert alert = alertService.createAlert(user, newAlertFields);
+        Alert alert = alertService.addAlert(user, newAlertFields);
         logService.createLog(user.getId(), getIpAddress(httpRequest), "alert.created",
             Integer.toString(alert.getId()));
         return ResponseEntity.ok(alert);
