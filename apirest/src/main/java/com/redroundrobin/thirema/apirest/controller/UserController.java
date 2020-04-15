@@ -11,6 +11,7 @@ import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesExce
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
 import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,10 +60,20 @@ public class UserController extends CoreController {
       @RequestHeader("Authorization") String authorization,
       @RequestParam(value = "entity", required = false) Integer entity,
       @RequestParam(value = "disabledAlert", required = false) Integer disabledAlert,
-      @RequestParam(value = "view", required = false) Integer view) {
-    String token = authorization.substring(7);
-    User user = userService.findByEmail(jwtUtil.extractUsername(token));
-    if (user.getType() == User.Role.ADMIN) {
+      @RequestParam(value = "view", required = false) Integer view,
+      @RequestParam(value = "telegramName", required = false) String telegramName) {
+    User user = getUserFromAuthorization(authorization);
+    if (telegramName != null) {
+      if (user.getTelegramName().equals(telegramName)) {
+        List<User> userList = new ArrayList<>();
+        userList.add(userService.findByTelegramName(telegramName));
+        return ResponseEntity.ok(userList);
+      } else {
+        logger.debug("RESPONSE STATUS: BAD_REQUEST. Request with telegramName different from "
+            + "logged user telegram name");
+        return new ResponseEntity(HttpStatus.BAD_REQUEST);
+      }
+    } else if (user.getType() == User.Role.ADMIN) {
       if (entity != null) {
         return ResponseEntity.ok(userService.findAllByEntityId(entity));
       } else if (disabledAlert != null) {
