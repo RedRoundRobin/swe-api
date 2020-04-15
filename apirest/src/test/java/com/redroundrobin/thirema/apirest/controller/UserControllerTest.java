@@ -578,7 +578,7 @@ public class UserControllerTest {
   public void getAllUsersByAdmin1Successfull() {
     String authorization = "Bearer "+admin1Token;
 
-    ResponseEntity<List<User>> response = userController.getUsers(authorization,null, null, null);
+    ResponseEntity<List<User>> response = userController.getUsers(authorization,null, null, null, null);
 
     assertSame(HttpStatus.OK, response.getStatusCode());
     assertFalse(response.getBody().isEmpty());
@@ -588,7 +588,7 @@ public class UserControllerTest {
   public void getAllEntity1UsersByAdmin2Successfull() {
     String authorization = "Bearer "+admin2Token;
 
-    ResponseEntity<List<User>> response = userController.getUsers(authorization,1, null, null);
+    ResponseEntity<List<User>> response = userController.getUsers(authorization,1, null, null, null);
 
     assertSame(HttpStatus.OK, response.getStatusCode());
     assertFalse(response.getBody().isEmpty());
@@ -598,7 +598,7 @@ public class UserControllerTest {
   public void getAllUsersByAdmin1NotExistentEntityEmptyList() {
     String authorization = "Bearer "+admin1Token;
 
-    ResponseEntity<List<User>> response = userController.getUsers(authorization,3, null, null);
+    ResponseEntity<List<User>> response = userController.getUsers(authorization,3, null, null, null);
 
     assertSame(HttpStatus.OK, response.getStatusCode());
     assertTrue(response.getBody().isEmpty());
@@ -608,12 +608,12 @@ public class UserControllerTest {
   public void getAllUsersByMod1Successfull() {
     String authorization = "Bearer "+mod1Token;
 
-    ResponseEntity<List<User>> response = userController.getUsers(authorization,null, null, null);
+    ResponseEntity<List<User>> response = userController.getUsers(authorization,null, null, null, null);
 
     assertSame(HttpStatus.OK, response.getStatusCode());
     assertFalse(response.getBody().isEmpty());
 
-    ResponseEntity<List<User>> response1 = userController.getUsers(authorization,1, null, null);
+    ResponseEntity<List<User>> response1 = userController.getUsers(authorization,1, null, null, null);
 
     assertSame(HttpStatus.OK, response1.getStatusCode());
     assertFalse(response1.getBody().isEmpty());
@@ -624,7 +624,7 @@ public class UserControllerTest {
   public void getAllAlertUsersByMod1NoPermissionError403() {
     String authorization = "Bearer "+mod1Token;
 
-    ResponseEntity<List<User>> response = userController.getUsers(authorization,null, 1, null);
+    ResponseEntity<List<User>> response = userController.getUsers(authorization,null, 1, null, null);
 
     assertSame(HttpStatus.FORBIDDEN, response.getStatusCode());
   }
@@ -633,7 +633,7 @@ public class UserControllerTest {
   public void getAllDisabledAlertUsersByAdmin1Error400() {
     String authorization = "Bearer "+admin1Token;
 
-    ResponseEntity<List<User>> response = userController.getUsers(authorization,null, 1, null);
+    ResponseEntity<List<User>> response = userController.getUsers(authorization,null, 1, null, null);
 
     assertSame(HttpStatus.BAD_REQUEST, response.getStatusCode());
   }
@@ -642,7 +642,7 @@ public class UserControllerTest {
   public void getAllViewUsersByAdmin1Error400() {
     String authorization = "Bearer "+admin1Token;
 
-    ResponseEntity<List<User>> response = userController.getUsers(authorization,null, null, 1);
+    ResponseEntity<List<User>> response = userController.getUsers(authorization,null, null, 1, null);
 
     assertSame(HttpStatus.BAD_REQUEST, response.getStatusCode());
   }
