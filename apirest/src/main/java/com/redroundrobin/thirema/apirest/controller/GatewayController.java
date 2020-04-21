@@ -12,18 +12,28 @@ import com.redroundrobin.thirema.apirest.service.timescale.LogService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
+import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
+import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping(value = {"/gateways"})
@@ -154,6 +164,81 @@ public class GatewayController extends CoreController {
     } else {
       logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId()
           + " is not an administrator");
+      return new ResponseEntity(HttpStatus.FORBIDDEN);
+    }
+  }
+
+  @PostMapping(value = {""})
+  public ResponseEntity<Gateway> addGateway(@RequestHeader("Authorization") String authorization,
+                                         @RequestBody Map<String, String> newGatewayFields,
+                                         HttpServletRequest httpRequest) {
+    String ip = getIpAddress(httpRequest);
+    User user = getUserFromAuthorization(authorization);
+
+    if (user.getType() == User.Role.ADMIN) {
+      try {
+        Gateway gateway = gatewayService.addGateway(newGatewayFields);
+        logService.createLog(user.getId(),ip,"gateway.created",
+            Integer.toString(gateway.getId()));
+        return ResponseEntity.ok(gateway);
+      } catch (MissingFieldsException | InvalidFieldsValuesException e) {
+        logger.debug(e.toString());
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+      }
+    } else {
+      logger.debug("RESPONSE STATUS: FORBIDDEN. User is not an admin");
+      return new ResponseEntity(HttpStatus.FORBIDDEN);
+    }
+  }
+
+  @PutMapping(value = {"/{gatewayId:.+}"})
+  public ResponseEntity<Gateway> editGateway(@RequestHeader("Authorization") String authorization,
+                                            @PathVariable(value = "gatewayId") int gatewayId,
+                                            @RequestBody Map<String, String> newGatewayFields,
+                                            HttpServletRequest httpRequest) {
+    String ip = getIpAddress(httpRequest);
+    User user = getUserFromAuthorization(authorization);
+
+    if (user.getType() == User.Role.ADMIN) {
+      try {
+        Gateway gateway = gatewayService.editGateway(gatewayId, newGatewayFields);
+        logService.createLog(user.getId(),ip,"gateway.edit",
+            Integer.toString(gatewayId));
+        return ResponseEntity.ok(gateway);
+      } catch (MissingFieldsException | InvalidFieldsValuesException e) {
+        logger.debug(e.toString());
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+      }
+    } else {
+      logger.debug("RESPONSE STATUS: FORBIDDEN. User is not an admin");
+      return new ResponseEntity(HttpStatus.FORBIDDEN);
+    }
+  }
+
+  @DeleteMapping(value = {"/{gatewayId:.+}"})
+  public ResponseEntity deleteGateway(@RequestHeader("Authorization") String authorization,
+                                             @PathVariable(value = "gatewayId") int gatewayId,
+                                             HttpServletRequest httpRequest) {
+    String ip = getIpAddress(httpRequest);
+    User user = getUserFromAuthorization(authorization);
+
+    if (user.getType() == User.Role.ADMIN) {
+      try {
+        if (gatewayService.deleteGateway(gatewayId)) {
+          logService.createLog(user.getId(),ip,"gateway.delete",
+              Integer.toString(gatewayId));
+          return new ResponseEntity(HttpStatus.OK);
+        } else {
+          logger.debug("RESPONSE STATUS: CONFLICT. There was a db error during the deletion of "
+              + "the gateway");
+          return new ResponseEntity(HttpStatus.CONFLICT);
+        }
+      } catch (ElementNotFoundException e) {
+        logger.debug(e.toString());
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+      }
+    } else {
+      logger.debug("RESPONSE STATUS: FORBIDDEN. User is not an admin");
       return new ResponseEntity(HttpStatus.FORBIDDEN);
     }
   }
