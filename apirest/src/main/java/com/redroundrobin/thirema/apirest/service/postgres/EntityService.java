@@ -3,6 +3,7 @@ package com.redroundrobin.thirema.apirest.service.postgres;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
+import com.redroundrobin.thirema.apirest.repository.postgres.AlertRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
@@ -23,6 +24,8 @@ public class EntityService {
 
   private final EntityRepository entityRepo;
 
+  private AlertRepository alertRepo;
+
   private final SensorRepository sensorRepo;
 
   private final UserRepository userRepo;
@@ -40,9 +43,10 @@ public class EntityService {
   }
 
   @Autowired
-  public EntityService(EntityRepository entityRepository, SensorRepository sensorRepository,
-                       UserRepository userRepository) {
+  public EntityService(EntityRepository entityRepository, AlertRepository alertRepository,
+                       SensorRepository sensorRepository, UserRepository userRepository) {
     this.entityRepo = entityRepository;
+    this.alertRepo = alertRepository;
     this.sensorRepo = sensorRepository;
     this.userRepo = userRepository;
   }
@@ -116,6 +120,8 @@ public class EntityService {
     if (entity != null) {
       entity.setDeleted(true);
       if (entityRepo.save(entity).isDeleted()) {
+        userRepo.setDeletedByEntity(entity);
+        alertRepo.setDeletedByEntity(entity);
         return true;
       } else {
         return false;
