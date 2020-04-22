@@ -44,9 +44,6 @@ public class GatewayControllerTest {
   private GatewayService gatewayService;
 
   @MockBean
-  private KafkaTemplate<String, String> kafkaTemplate;
-
-  @MockBean
   private DeviceService deviceService;
 
   @MockBean
@@ -78,7 +75,7 @@ public class GatewayControllerTest {
 
   @Before
   public void setUp() {
-    gatewayController = new GatewayController(gatewayService, deviceService, kafkaTemplate, sensorService, jwtUtil, logService, userService);
+    gatewayController = new GatewayController(gatewayService, deviceService, sensorService, jwtUtil, logService, userService);
 
     // ----------------------------------------- Set Users --------------------------------------
     admin = new User(1, "admin", "admin", "admin", "pass", User.Role.ADMIN);

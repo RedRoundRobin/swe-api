@@ -5,6 +5,8 @@ import com.redroundrobin.thirema.apirest.repository.postgres.DeviceRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.GatewayRepository;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -14,10 +16,18 @@ public class GatewayService {
 
   private final DeviceRepository deviceRepo;
 
+  private final KafkaTemplate<String, String> kafkaTemplate;
+
+  @Value("${kafka.topic.gatewayConfig}")
+  private String gatewayConfigTopic;
+
   @Autowired
-  public GatewayService(GatewayRepository gatewayRepository, DeviceRepository deviceRepository) {
+  public GatewayService(GatewayRepository gatewayRepository,
+                        DeviceRepository deviceRepository,
+                        KafkaTemplate<String, String> kafkaTemplate) {
     this.gatewayRepo = gatewayRepository;
     this.deviceRepo = deviceRepository;
+    this.kafkaTemplate = kafkaTemplate;
   }
 
   public List<Gateway> findAll() {
@@ -44,4 +54,7 @@ public class GatewayService {
     return gatewayRepo.findByIdAndEntityId(id, entityId);
   }
 
+  public void sendGatewayConfigToKafka(String gatewayConfig) {
+    kafkaTemplate.send(gatewayConfigTopic, gatewayConfig);
+  }
 }
