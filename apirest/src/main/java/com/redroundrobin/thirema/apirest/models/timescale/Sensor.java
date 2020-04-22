@@ -25,20 +25,23 @@ public class Sensor {
   @Column(name = "real_sensor_id", nullable = false)
   private int realSensorId;
 
+  @Column(name = "req_time", nullable = false)
+  private Timestamp reqTime;
+
   private double value;
 
   public Sensor() {
   }
 
   public Sensor(String gatewayName, int realDeviceId, int realSensorId) {
-    this.time = Timestamp.from(Instant.now());
+    this.reqTime = this.time = Timestamp.from(Instant.now());
     this.gatewayName = gatewayName;
     this.realDeviceId = realDeviceId;
     this.realSensorId = realSensorId;
   }
 
   public Timestamp getTime() {
-    return time;
+    return reqTime;
   }
 
   public String getGatewayName() {
