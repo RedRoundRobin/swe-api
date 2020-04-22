@@ -12,6 +12,9 @@ import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +32,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping(value = {"/viewGraphs"})
 public class ViewGraphController extends CoreController {
+
+  protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
   private final ViewGraphService viewGraphService;
 
@@ -75,9 +80,13 @@ public class ViewGraphController extends CoreController {
           || viewGraphService.getPermissionByIdAndUserId(viewGraphId, user.getId())) {
         return ResponseEntity.ok(viewGraphService.findById(viewGraphId));
       } else {
+        logger.debug("RESPONSE STATUS: FORBIDDEN. User is not an admin and is not a "
+            + "moderator of the user who have the viewGraph or is not the one who have the "
+            + "viewGraph");
         return new ResponseEntity(HttpStatus.FORBIDDEN);
       }
     } catch (ElementNotFoundException nfe) {
+      logger.debug(nfe.toString());
       return new ResponseEntity(HttpStatus.BAD_REQUEST);
     }
   }
@@ -88,8 +97,9 @@ public class ViewGraphController extends CoreController {
       @RequestBody Map<String, Integer> newViewGraphFields) {
     User user = this.getUserFromAuthorization(authorization);
     try {
-      return ResponseEntity.ok(viewGraphService.createViewGraph(user, newViewGraphFields));
+      return ResponseEntity.ok(viewGraphService.addViewGraph(user, newViewGraphFields));
     } catch (MissingFieldsException | InvalidFieldsValuesException fe) {
+      logger.debug(fe.toString());
       return new ResponseEntity(HttpStatus.BAD_REQUEST);
     }
   }
@@ -106,9 +116,13 @@ public class ViewGraphController extends CoreController {
         return ResponseEntity.ok(viewGraphService.editViewGraph(user, viewGraphId,
             newViewGraphFields));
       } else {
+        logger.debug("RESPONSE STATUS: FORBIDDEN. User is not an admin and is not a "
+            + "moderator of the user who have the viewGraph or is not the one who have the "
+            + "viewGraph");
         return new ResponseEntity(HttpStatus.FORBIDDEN);
       }
     } catch (ElementNotFoundException | MissingFieldsException | InvalidFieldsValuesException fe) {
+      logger.debug(fe.toString());
       return new ResponseEntity(HttpStatus.BAD_REQUEST);
     }
   }
@@ -124,12 +138,18 @@ public class ViewGraphController extends CoreController {
         if (viewGraphService.deleteViewGraph(viewGraphId)) {
           return new ResponseEntity(HttpStatus.OK);
         } else {
+          logger.debug("RESPONSE STATUS: CONFLICT. There was a db error during the deletion of "
+              + "the viewGraph");
           return new ResponseEntity(HttpStatus.CONFLICT);
         }
       } else {
+        logger.debug("RESPONSE STATUS: FORBIDDEN. User is not an admin and is not a "
+            + "moderator of the user who have the viewGraph or is not the one who have the "
+            + "viewGraph");
         return new ResponseEntity(HttpStatus.FORBIDDEN);
       }
     } catch (ElementNotFoundException nfe) {
+      logger.debug(nfe.toString());
       return new ResponseEntity(HttpStatus.BAD_REQUEST);
     }
   }

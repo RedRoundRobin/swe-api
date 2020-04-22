@@ -291,7 +291,7 @@ public class ViewGraphServiceTest {
     newViewGraphFields.put("sensor2", sensor1.getId());
 
     try {
-      ViewGraph viewGraph = viewGraphService.createViewGraph(user1, newViewGraphFields);
+      ViewGraph viewGraph = viewGraphService.addViewGraph(user1, newViewGraphFields);
 
       assertNotNull(viewGraph);
     } catch (Exception e) {
@@ -307,7 +307,7 @@ public class ViewGraphServiceTest {
     newViewGraphFields.put("sensor1", sensor1.getId());
 
     try {
-      viewGraphService.createViewGraph(user1, newViewGraphFields);
+      viewGraphService.addViewGraph(user1, newViewGraphFields);
 
       fail();
     } catch (MissingFieldsException e) {
@@ -326,7 +326,7 @@ public class ViewGraphServiceTest {
     newViewGraphFields.put("sensor1", sensor1.getId());
 
     try {
-      viewGraphService.createViewGraph(user1, newViewGraphFields);
+      viewGraphService.addViewGraph(user1, newViewGraphFields);
 
       fail();
     } catch (InvalidFieldsValuesException e) {
@@ -345,7 +345,7 @@ public class ViewGraphServiceTest {
     newViewGraphFields.put("sensor2", 9);
 
     try {
-      viewGraphService.createViewGraph(user1, newViewGraphFields);
+      viewGraphService.addViewGraph(user1, newViewGraphFields);
 
       fail();
     } catch (InvalidFieldsValuesException e) {

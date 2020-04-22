@@ -151,7 +151,7 @@ public class AlertControllerTest {
     when(alertService.findAllByEntityIdAndSensorId(anyInt(),anyInt())).thenAnswer(i -> allAlerts.stream().filter(a -> i.getArgument(0).equals(a.getEntity().getId())
         && i.getArgument(1).equals(a.getSensor().getId()))
         .collect(Collectors.toList()));
-    when(alertService.createAlert(any(User.class), any(HashMap.class))).thenAnswer(i -> {
+    when(alertService.addAlert(any(User.class), any(HashMap.class))).thenAnswer(i -> {
       Map<String, Object> fields = i.getArgument(1);
       if (fields.containsKey("sensor") && fields.get("sensor").equals(sensor1.getId())) {
         Alert alert = new Alert();

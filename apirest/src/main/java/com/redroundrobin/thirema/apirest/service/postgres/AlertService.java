@@ -39,8 +39,7 @@ public class AlertService {
     allowedFields.add("entity");
 
     if (!edit) {
-      return fields.containsKey("threshold") && fields.containsKey("type")
-          && (fields.containsKey("sensor") && fields.containsKey("entity"));
+      return allowedFields.stream().allMatch(fields::containsKey);
     } else {
       return fields.keySet().stream().anyMatch(allowedFields::contains);
     }
@@ -55,7 +54,11 @@ public class AlertService {
     for (Map.Entry<String, Object> entry : fields.entrySet()) {
       switch (entry.getKey()) {
         case "threshold":
-          alert.setThreshold((double) entry.getValue());
+          try {
+            alert.setThreshold(Double.parseDouble(entry.getValue().toString()));
+          } catch (NumberFormatException nfe) {
+            throw new InvalidFieldsValuesException("The threshould provided is not valid");
+          }
           break;
         case "type":
           if (Alert.Type.isValid((int) entry.getValue())) {
@@ -169,7 +172,7 @@ public class AlertService {
     }
   }
 
-  public Alert createAlert(User user, Map<String, Object> newAlertFields)
+  public Alert addAlert(User user, Map<String, Object> newAlertFields)
       throws InvalidFieldsValuesException, MissingFieldsException {
     if (this.checkFields(newAlertFields, false)) {
       return this.addEditAlert(user, null, newAlertFields);

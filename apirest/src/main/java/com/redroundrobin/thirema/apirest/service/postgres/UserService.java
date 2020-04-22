@@ -74,7 +74,7 @@ public class UserService implements UserDetailsService {
     userFields.put("password", true);
     userFields.put("type", true);
     userFields.put("telegramName", true);
-    userFields.put("twoFactorAuthentication", true);
+    userFields.put("tfa", true);
     userFields.put("entityId", true);
     userFields.put("deleted", true);
 
@@ -91,7 +91,7 @@ public class UserService implements UserDetailsService {
         if (!itself) {
           userFields.replace("password", false);
           userFields.replace("telegramName", false);
-          userFields.replace("twoFactorAuthentication", false);
+          userFields.replace("tfa", false);
         } else {
           userFields.replace("deleted", false);
         }
@@ -129,10 +129,10 @@ public class UserService implements UserDetailsService {
 
   private User editAndSave(User userToEdit, Map<String, Object> fieldsToEdit)
       throws ConflictException, InvalidFieldsValuesException {
-    if (fieldsToEdit.containsKey("twoFactorAuthentication")
-        && (boolean)fieldsToEdit.get("twoFactorAuthentication")
+    if (fieldsToEdit.containsKey("tfa")
+        && (boolean)fieldsToEdit.get("tfa")
         && (fieldsToEdit.containsKey("telegramName")
-        || userToEdit.getTelegramChat().isEmpty())) {
+        || userToEdit.getTelegramChat() == null || userToEdit.getTelegramChat().isEmpty())) {
       throw new ConflictException("TFA can't be edited because either telegramName is "
           + "in the request or telegram chat not present");
     }
@@ -171,7 +171,7 @@ public class UserService implements UserDetailsService {
           userToEdit.setTfa(false);
           userToEdit.setTelegramChat(null);
           break;
-        case "twoFactorAuthentication":
+        case "tfa":
           userToEdit.setTfa((boolean) value);
           if (!(boolean) value) {
             userToEdit.setTelegramChat(null);
@@ -208,7 +208,7 @@ public class UserService implements UserDetailsService {
     return userRepo.save(userToDelete);
   }
 
-  public User editByAdministrator(User userToEdit, Map<String, Object> fieldsToEdit, boolean itself)
+  private User editByAdministrator(User userToEdit, Map<String, Object> fieldsToEdit, boolean itself)
       throws InvalidFieldsValuesException, MissingFieldsException, NotAuthorizedException,
       ConflictException {
 
@@ -222,7 +222,7 @@ public class UserService implements UserDetailsService {
     }
   }
 
-  public User editByModerator(User userToEdit, Map<String, Object> fieldsToEdit, boolean itself)
+  private User editByModerator(User userToEdit, Map<String, Object> fieldsToEdit, boolean itself)
       throws InvalidFieldsValuesException, MissingFieldsException, NotAuthorizedException,
       ConflictException {
 
@@ -235,7 +235,7 @@ public class UserService implements UserDetailsService {
     }
   }
 
-  public User editByUser(User userToEdit, Map<String, Object> fieldsToEdit)
+  private User editByUser(User userToEdit, Map<String, Object> fieldsToEdit)
       throws InvalidFieldsValuesException, MissingFieldsException, NotAuthorizedException,
       ConflictException  {
 
@@ -244,6 +244,28 @@ public class UserService implements UserDetailsService {
           "You are not allowed to edit some of the specified fields");
     } else {
       return this.editAndSave(userToEdit, fieldsToEdit);
+    }
+  }
+
+  public User editUser(User editingUser, User userToEdit, Map<String, Object> fieldsToEdit)
+      throws NotAuthorizedException, MissingFieldsException, InvalidFieldsValuesException,
+      ConflictException {
+    boolean itself = editingUser.getId() == userToEdit.getId();
+    if (editingUser.getType() == User.Role.ADMIN && (userToEdit.getType() != User.Role.ADMIN
+        || itself)) {
+      return editByAdministrator(userToEdit, fieldsToEdit, itself);
+
+    } else if (editingUser.getType() == User.Role.MOD
+        && (editingUser.getEntity().equals(userToEdit.getEntity()))) {
+      return editByModerator(userToEdit, fieldsToEdit, itself);
+
+    } else if (editingUser.getType() == User.Role.USER && itself) {
+      return editByUser(userToEdit, fieldsToEdit);
+
+    } else {
+      throw new NotAuthorizedException("User " + editingUser.getId() + " (is an administrator "
+          + "and is trying to edit another administrator) or (is mod and the user is trying to edit"
+          + " is not in the same entity) or user is trying to edit another user");
     }
   }
 
@@ -370,7 +392,7 @@ public class UserService implements UserDetailsService {
         user.getEmail(), user.getPassword(), grantedAuthorities);
   }
 
-  public User serializeUser(JsonObject rawUserToInsert, User insertingUser)
+  public User addUser(JsonObject rawUserToInsert, User insertingUser)
       throws MissingFieldsException, InvalidFieldsValuesException,
       ConflictException, NotAuthorizedException {
     if (!checkCreatableFields(rawUserToInsert.keySet())) {

@@ -2,7 +2,7 @@
 
 # API Restful - ThiReMa
 
-:fire: Versione componente: `v0.1.0-dev` 
+:fire: Versione componente: `v0.3.0-rc` 
 
 :pushpin: Main repo: [swe-thirema](https://github.com/RedRoundRobin/swe-thirema)
 
@@ -28,3 +28,8 @@ API buildate in automatico dal branch `develop`
 ### Documentazione API
 
 - [api.docs.redroundrobin.site](https://api.docs.redroundrobin.site)
+
+
+### Comandi per i test
+
+`mvn clean package`

@@ -18,6 +18,10 @@ public interface LogRepository extends CrudRepository<Log, Timestamp> {
 
   Iterable<Log> findAllByUserIdInOrderByTimeDesc(List<Integer> userIds);
 
+  Iterable<Log> findAllByTimeAfterAndOperationAndDataInOrderByTimeDesc(Timestamp time,
+                                                                       String operation,
+                                                                       String[] data);
+
   @Query(value = "SELECT * FROM logs WHERE user_id IN :userIds ORDER BY time DESC LIMIT :limit",
       nativeQuery = true)
   Iterable<Log> findTopNByUserIdIn(int limit, List<Integer> userIds);

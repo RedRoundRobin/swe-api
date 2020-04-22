@@ -6,6 +6,8 @@ import com.redroundrobin.thirema.apirest.models.timescale.Log;
 import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 import com.redroundrobin.thirema.apirest.repository.timescale.LogRepository;
+
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,6 +72,11 @@ public class LogService {
 
   public List<Log> findTopNByEntityId(int limit, int entityId) {
     return findTopNByOptEntityId(limit, entityId);
+  }
+
+  public List<Log> findAllLoginsByTimeAfter(Timestamp time) {
+    return (List<Log>) logRepo.findAllByTimeAfterAndOperationAndDataInOrderByTimeDesc(time,
+        "auth.login", new String[]{"webapp","tfa confirmed"});
   }
 
   public void createLog(int userId, String ip, String operation, String data) {

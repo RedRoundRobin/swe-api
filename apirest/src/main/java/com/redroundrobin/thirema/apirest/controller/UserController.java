@@ -11,12 +11,16 @@ import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesExce
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
 import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -37,15 +41,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value = "/users")
 public class UserController extends CoreController {
 
+  protected Logger logger = LoggerFactory.getLogger(this.getClass());
+
   @Autowired
   public UserController(JwtUtil jwtUtil, LogService logService, UserService userService) {
     super(jwtUtil, logService, userService);
-  }
-
-  private boolean canEditMod(User editingUser, User userToEdit) {
-    return editingUser.getId() == userToEdit.getId()
-        || (userToEdit.getType() == User.Role.USER
-        && editingUser.getEntity().equals(userToEdit.getEntity()));
   }
 
   // Get all users
@@ -54,23 +54,38 @@ public class UserController extends CoreController {
       @RequestHeader("Authorization") String authorization,
       @RequestParam(value = "entity", required = false) Integer entity,
       @RequestParam(value = "disabledAlert", required = false) Integer disabledAlert,
-      @RequestParam(value = "view", required = false) Integer view) {
-    String token = authorization.substring(7);
-    User user = userService.findByEmail(jwtUtil.extractUsername(token));
-    if (user.getType() == User.Role.ADMIN) {
+      @RequestParam(value = "view", required = false) Integer view,
+      @RequestParam(value = "telegramName", required = false) String telegramName) {
+    User user = getUserFromAuthorization(authorization);
+    if (telegramName != null) {
+      if (user.getTelegramName().equals(telegramName)) {
+        List<User> userList = new ArrayList<>();
+        userList.add(userService.findByTelegramName(telegramName));
+        return ResponseEntity.ok(userList);
+      } else {
+        logger.debug("RESPONSE STATUS: BAD_REQUEST. Request with telegramName different from "
+            + "logged user telegram name");
+        return new ResponseEntity(HttpStatus.BAD_REQUEST);
+      }
+    } else if (user.getType() == User.Role.ADMIN) {
       if (entity != null) {
         return ResponseEntity.ok(userService.findAllByEntityId(entity));
       } else if (disabledAlert != null) {
+        logger.debug("RESPONSE STATUS: BAD_REQUEST. disableAlert != null");
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
       } else if (view != null) {
+        logger.debug("RESPONSE STATUS: BAD_REQUEST. view != null");
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
       } else {
         return ResponseEntity.ok(userService.findAll());
       }
     } else if (user.getType() == User.Role.MOD
-        && (entity == null && disabledAlert == null && view == null)
-        || (entity != null && user.getEntity().getId() == entity)) {
+        && disabledAlert == null && view == null
+        && (entity == null || user.getEntity().getId() == entity)) {
       return ResponseEntity.ok(userService.findAllByEntityId(user.getEntity().getId()));
+    } else {
+      logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId() + " is not an administrator "
+          + "and (disabledAlert != null or view != null or user entity is different from entity");
     }
     return new ResponseEntity(HttpStatus.FORBIDDEN);
   }
@@ -85,15 +100,18 @@ public class UserController extends CoreController {
 
     JsonObject jsonUser = JsonParser.parseString(jsonStringUser).getAsJsonObject();
     try {
-      User createdUser = userService.serializeUser(jsonUser, user);
+      User createdUser = userService.addUser(jsonUser, user);
       logService.createLog(user.getId(), ip, "user.created",
           Integer.toString(createdUser.getId()));
       return ResponseEntity.ok(createdUser);
     } catch (MissingFieldsException | InvalidFieldsValuesException e) {
+      logger.debug(e.toString());
       return new ResponseEntity(HttpStatus.BAD_REQUEST);
     } catch (ConflictException e) {
+      logger.debug(e.toString());
       return new ResponseEntity(HttpStatus.CONFLICT);
     } catch (NotAuthorizedException e) {
+      logger.debug(e.toString());
       return new ResponseEntity(HttpStatus.FORBIDDEN);
     }
   }
@@ -111,8 +129,10 @@ public class UserController extends CoreController {
           Integer.toString(deletedUser.getId()));
       return ResponseEntity.ok(deletedUser);
     } catch (NotAuthorizedException e) {
+      logger.debug(e.toString());
       return new ResponseEntity(e.getMessage(), HttpStatus.FORBIDDEN);
     } catch (InvalidFieldsValuesException e) {
+      logger.debug(e.toString());
       return new ResponseEntity(e.getMessage(), HttpStatus.BAD_REQUEST);
     }
   }
@@ -131,6 +151,9 @@ public class UserController extends CoreController {
       }
     } else if (user.getId() == userId) {
       return ResponseEntity.ok(user);
+    } else {
+      logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId() + " is not an administrator "
+          + "and is not a moderator and user id is different from userId");
     }
     return new ResponseEntity(HttpStatus.FORBIDDEN);
   }
@@ -153,22 +176,7 @@ public class UserController extends CoreController {
 
       User user;
       try {
-        if (editingUser.getType() == User.Role.ADMIN && (userToEdit.getType() != User.Role.ADMIN
-            || editingUser.getId() == userToEdit.getId())) {
-          user = userService.editByAdministrator(userToEdit, fieldsToEdit,
-              editingUser.getId() == userToEdit.getId());
-
-        } else if (editingUser.getType() == User.Role.MOD && canEditMod(editingUser, userToEdit)) {
-          user = userService.editByModerator(userToEdit, fieldsToEdit,
-              editingUser.getId() == userToEdit.getId());
-
-        } else if (editingUser.getType() == User.Role.USER
-            && editingUser.getId() == userToEdit.getId()) {
-          user = userService.editByUser(userToEdit, fieldsToEdit);
-
-        } else {
-          return new ResponseEntity(HttpStatus.FORBIDDEN);
-        }
+        user = userService.editUser(editingUser, userToEdit, fieldsToEdit);
 
         if (editingUser.getId() == userToEdit.getId()) {
           if (fieldsToEdit.containsKey("password")) {
@@ -202,12 +210,16 @@ public class UserController extends CoreController {
         return ResponseEntity.ok(response);
 
       } catch (UsernameNotFoundException unfe) {
+        logger.debug(unfe.toString());
         return new ResponseEntity(HttpStatus.UNAUTHORIZED);
       } catch (NotAuthorizedException | UserDisabledException natef) {
+        logger.debug(natef.toString());
         return new ResponseEntity(HttpStatus.FORBIDDEN);
       } catch (ConflictException ce) {
+        logger.debug(ce.toString());
         return new ResponseEntity(ce.getMessage(),HttpStatus.CONFLICT);
       } catch (DataIntegrityViolationException dive) {
+        logger.debug(dive.toString());
         if (dive.getMostSpecificCause().getMessage()
             .startsWith("ERROR: duplicate key value violates unique constraint")) {
 
@@ -222,8 +234,11 @@ public class UserController extends CoreController {
           return new ResponseEntity(errorMessage,HttpStatus.CONFLICT);
         }
       } catch (MissingFieldsException | InvalidFieldsValuesException nf) {
+        logger.debug(nf.toString());
         // go to return BAD_REQUEST
       }
+    } else {
+      logger.debug("RESPONSE STATUS: BAD_REQUEST. User " + userId + " does not exist");
     }
     // when db error is not for duplicate unique or when userToEdit with id furnished is not found
     // or there are missing edit fields or invalid values

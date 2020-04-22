@@ -35,7 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/alerts")
 public class AlertController extends CoreController {
 
-  Logger logger = LoggerFactory.getLogger(AlertController.class);
+  protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
   private final AlertService alertService;
 
@@ -58,9 +58,11 @@ public class AlertController extends CoreController {
             "alerts with sensorId = " + sensorId);
         return new ResponseEntity(HttpStatus.OK);
       } catch (ElementNotFoundException e) {
+        logger.debug(e.toString());
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
       }
     } else {
+      logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId() + " is not an Administrator.");
       return new ResponseEntity(HttpStatus.FORBIDDEN);
     }
   }
@@ -120,7 +122,7 @@ public class AlertController extends CoreController {
         return ResponseEntity.ok(alertService.findByIdAndEntityId(alertId,
             user.getEntity().getId()));
       } catch (NotAuthorizedException nae) {
-        logger.trace(nae.toString());
+        logger.debug(nae.toString());
         return new ResponseEntity(HttpStatus.FORBIDDEN);
       }
     }
@@ -134,14 +136,17 @@ public class AlertController extends CoreController {
     User user = this.getUserFromAuthorization(authorization);
     if (user.getType() == User.Role.ADMIN || user.getType() == User.Role.MOD) {
       try {
-        Alert alert = alertService.createAlert(user, newAlertFields);
+        Alert alert = alertService.addAlert(user, newAlertFields);
         logService.createLog(user.getId(), getIpAddress(httpRequest), "alert.created",
             Integer.toString(alert.getId()));
         return ResponseEntity.ok(alert);
       } catch (MissingFieldsException | InvalidFieldsValuesException fe) {
+        logger.debug(fe.toString());
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
       }
     } else {
+      logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId()
+          + " is not an Administrator or Moderator.");
       return new ResponseEntity(HttpStatus.FORBIDDEN);
     }
   }
@@ -160,12 +165,15 @@ public class AlertController extends CoreController {
             Integer.toString(alertId));
         return ResponseEntity.ok(alert);
       } catch (MissingFieldsException | InvalidFieldsValuesException | ElementNotFoundException e) {
-        logger.trace(e.toString());
+        logger.debug(e.toString());
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
       } catch (NotAuthorizedException e) {
-        logger.trace(e.toString());
+        logger.debug(e.toString());
         // go to return FORBIDDEN
       }
+    } else {
+      logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId()
+          + " is not an Administrator or Moderator.");
     }
     return new ResponseEntity(HttpStatus.FORBIDDEN);
   }
@@ -182,13 +190,20 @@ public class AlertController extends CoreController {
               Integer.toString(alertId));
           return new ResponseEntity(HttpStatus.OK);
         } else {
+          logger.debug("RESPONSE STATUS: INTERNAL_SERVER_ERROR. Alert " + alertId
+              + " is not been deleted due to a database error");
           return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
         }
       } catch (ElementNotFoundException e) {
+        logger.debug(e.toString());
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
       } catch (NotAuthorizedException e) {
+        logger.debug(e.toString());
         // go to return FORBIDDEN
       }
+    } else {
+      logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId()
+          + " is not an Administrator or Moderator.");
     }
     return new ResponseEntity(HttpStatus.FORBIDDEN);
   }
@@ -201,8 +216,7 @@ public class AlertController extends CoreController {
       @RequestParam(value = "enable") boolean enable) {
     User user = this.getUserFromAuthorization(authorization);
     User userToEdit = userService.findById(userId);
-    if ((user.getType() == User.Role.ADMIN
-        && (userToEdit.getType() != User.Role.ADMIN || userToEdit.getId() == user.getId()))
+    if (user.getType() == User.Role.ADMIN
         || (user.getType() == User.Role.MOD && user.getEntity() == userToEdit.getEntity())
         || user.getId() == userToEdit.getId()) {
       try {
@@ -212,12 +226,16 @@ public class AlertController extends CoreController {
           return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
         }
       } catch (ElementNotFoundException enfe) {
-        logger.trace(enfe.toString());
+        logger.debug(enfe.toString());
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
       } catch (NotAuthorizedException nae) {
-        logger.trace(nae.toString());
+        logger.debug(nae.toString());
         // go to return FORBIDDEN
       }
+    } else {
+      logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId()
+          + " is a Moderator and the userToEdit is not in the same entity or editing user is "
+          + "different from user to edit.");
     }
     return new ResponseEntity(HttpStatus.FORBIDDEN);
   }

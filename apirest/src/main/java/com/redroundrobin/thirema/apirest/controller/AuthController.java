@@ -13,6 +13,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import javax.servlet.http.HttpServletRequest;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +31,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class AuthController extends CoreController {
+
+  protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
   private final CustomAuthenticationManager authenticationManager;
 
@@ -56,6 +61,7 @@ public class AuthController extends CoreController {
     String password = (String) request.get("password");
 
     if (email == null || password == null) {
+      logger.debug("email and/or password are null");
       return new ResponseEntity(HttpStatus.BAD_REQUEST);  // Bad Request
     }
 
@@ -68,8 +74,10 @@ public class AuthController extends CoreController {
       userDetails = userService
           .loadUserByEmail(email);
     } catch (BadCredentialsException bce) {
+      logger.debug(bce.toString());
       return new ResponseEntity(HttpStatus.UNAUTHORIZED);  // Unauthenticated
     } catch (DisabledException | UserDisabledException de) {
+      logger.debug(de.toString());
       return new ResponseEntity(HttpStatus.FORBIDDEN);  // Unauthorized
     }
 
@@ -87,6 +95,8 @@ public class AuthController extends CoreController {
         telegramRequest.put("chatId", user.getTelegramChat());
 
         if (!telegramService.sendTfa(telegramRequest)) {
+          logger.debug("ERROR: INTERNAL_SERVER_ERROR. There is a problem with the connection to "
+              + "telegram");
           return  new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
@@ -94,8 +104,10 @@ public class AuthController extends CoreController {
 
         token = jwtUtil.generateTfaToken("tfa", userDetails, String.valueOf(sixDigitsCode));
 
-        logService.createLog(user.getId(), ip, "login", "sent tfa code");
+        logService.createLog(user.getId(), ip, "auth.tfa", "sent tfa code");
       } else {
+        logger.debug("ERROR: INTERNAL_SERVER_ERROR. User " + user.getId() + " telegram chat is null"
+            + " or empty");
         return  new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
       }
     } else {
@@ -103,7 +115,7 @@ public class AuthController extends CoreController {
 
       token = jwtUtil.generateToken("webapp", userDetails);
 
-      logService.createLog(user.getId(), ip, "login", "webapp");
+      logService.createLog(user.getId(), ip, "auth.login", "webapp");
     }
 
     response.put("token", token);
@@ -118,6 +130,7 @@ public class AuthController extends CoreController {
       HttpServletRequest httpRequest) {
     String ip = getIpAddress(httpRequest);
     if (!request.containsKey("authCode") || ((String) request.get("authCode")).equals("")) {
+      logger.debug("ERROR: BAD_REQUEST. The request not contain authCode or is empty");
       return new ResponseEntity(HttpStatus.BAD_REQUEST);
     }
 
@@ -125,6 +138,7 @@ public class AuthController extends CoreController {
     String tfaToken = authorization.substring(7);
 
     if (!jwtUtil.isTfa(tfaToken)) {
+      logger.debug("ERROR: BAD_REQUEST. The token furnished is not a tfa token");
       return new ResponseEntity(HttpStatus.BAD_REQUEST);
     }
 
@@ -142,9 +156,11 @@ public class AuthController extends CoreController {
         userDetails = userService
             .loadUserByEmail(user.getEmail());
       } catch (UsernameNotFoundException unfe) {
-        return ResponseEntity.status(401).build();
+        logger.debug(unfe.toString());
+        return new ResponseEntity(HttpStatus.UNAUTHORIZED);
       } catch (UserDisabledException ude) {
-        return ResponseEntity.status(403).build();
+        logger.debug(ude.toString());
+        return new ResponseEntity(HttpStatus.FORBIDDEN);
       }
 
       final String token = jwtUtil.generateToken("webapp", userDetails);
@@ -153,11 +169,13 @@ public class AuthController extends CoreController {
       response.put("token", token);
       response.put("user", user);
 
-      logService.createLog(user.getId(), ip, "login", "tfa confirmed");
+      logService.createLog(user.getId(), ip, "auth.login", "tfa confirmed");
 
       return ResponseEntity.ok(response);
     } else {
-      return ResponseEntity.status(401).build();
+      logger.debug("ERROR: UNAUTHORIZED. The authCode furnished from the client is different from "
+          + "the one coded in the token");
+      return new ResponseEntity(HttpStatus.UNAUTHORIZED);
     }
   }
 
@@ -174,6 +192,7 @@ public class AuthController extends CoreController {
     User user = userService.findByTelegramName(telegramName);
 
     if (telegramName == null || intChatId == null)  {
+      logger.debug("ERROR: BAD_REQUEST. TelegramName and/or intChatId are null");
       return new ResponseEntity(HttpStatus.BAD_REQUEST);
     }
 
@@ -196,9 +215,10 @@ public class AuthController extends CoreController {
 
         token = jwtUtil.generateToken("telegram", userDetails);
 
-        logService.createLog(user.getId(), ip, "login", "telegram");
+        logService.createLog(user.getId(), ip, "auth.login", "telegram");
       }
     } catch (UsernameNotFoundException | UserDisabledException | TelegramChatNotFoundException ue) {
+      logger.debug(ue.toString());
       code = 0;
     }
 
