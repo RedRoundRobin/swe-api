@@ -28,3 +28,8 @@ API buildate in automatico dal branch `develop`
 ### Documentazione API
 
 - [api.docs.redroundrobin.site](https://api.docs.redroundrobin.site)
+
+
+### Comandi per i test
+
+`mvn clean package`
