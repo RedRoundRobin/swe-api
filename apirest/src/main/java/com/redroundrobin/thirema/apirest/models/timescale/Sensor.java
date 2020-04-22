@@ -1,5 +1,8 @@
 package com.redroundrobin.thirema.apirest.models.timescale;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.sql.Timestamp;
 import java.time.Instant;
 import javax.persistence.Column;
@@ -14,6 +17,7 @@ public class Sensor {
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
+  @JsonIgnore
   private Timestamp time;
 
   @Column(name = "gateway_name", nullable = false)
@@ -41,6 +45,11 @@ public class Sensor {
   }
 
   public Timestamp getTime() {
+    return time;
+  }
+
+  @JsonProperty(value = "time")
+  public Timestamp getReqTime() {
     return reqTime;
   }
 
