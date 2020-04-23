@@ -58,7 +58,7 @@ public class ViewController extends CoreController {
     User user = userService.findByEmail(jwtUtil.extractUsername(token));
     JsonObject jsonNewView = JsonParser.parseString(rawNewView).getAsJsonObject();
     try {
-      return ResponseEntity.ok(viewService.serializeView(jsonNewView, user));
+      return ResponseEntity.ok(viewService.addView(jsonNewView, user));
     } catch (KeysNotFoundException | MissingFieldsException e) {
       logger.debug(e.toString());
       return new ResponseEntity(e, HttpStatus.BAD_REQUEST);

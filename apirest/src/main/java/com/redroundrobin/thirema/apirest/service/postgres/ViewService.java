@@ -75,7 +75,7 @@ public class ViewService {
     }
   }
 
-  public View serializeView(JsonObject rawViewToInsert, User insertingUser)
+  public View addView(JsonObject rawViewToInsert, User insertingUser)
       throws KeysNotFoundException, MissingFieldsException {
     if (!checkCreatableFields(rawViewToInsert.keySet())) {
       throw new MissingFieldsException("Some necessary fields are missing: cannot create view");

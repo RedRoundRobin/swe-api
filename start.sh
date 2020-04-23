@@ -1,7 +1,7 @@
 #!/bin/sh
 cd apirest
 
-mvn clean package
+mvn clean package > logs_belle.txt
 
 mv ./target/apirest-*.jar ../../apirest.jar
 cd ../..

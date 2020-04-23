@@ -97,7 +97,7 @@ public class ViewGraphController extends CoreController {
       @RequestBody Map<String, Integer> newViewGraphFields) {
     User user = this.getUserFromAuthorization(authorization);
     try {
-      return ResponseEntity.ok(viewGraphService.createViewGraph(user, newViewGraphFields));
+      return ResponseEntity.ok(viewGraphService.addViewGraph(user, newViewGraphFields));
     } catch (MissingFieldsException | InvalidFieldsValuesException fe) {
       logger.debug(fe.toString());
       return new ResponseEntity(HttpStatus.BAD_REQUEST);
