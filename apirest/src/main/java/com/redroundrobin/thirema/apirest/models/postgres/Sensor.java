@@ -32,6 +32,9 @@ public class Sensor implements Serializable {
   @Column(name = "real_sensor_id")
   private int realSensorId;
 
+  @JoinColumn(name = "cmd_enabled")
+  private boolean cmdEnabled;
+
   @ManyToOne
   @JoinColumn(name = "device_id")
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "deviceId")
@@ -86,5 +89,13 @@ public class Sensor implements Serializable {
 
   public void setDevice(Device device) {
     this.device = device;
+  }
+
+  public boolean getCmdEnabled() {
+    return cmdEnabled;
+  }
+
+  public void setCmdEnabled(boolean cmdEnabled) {
+    this.cmdEnabled = cmdEnabled;
   }
 }
