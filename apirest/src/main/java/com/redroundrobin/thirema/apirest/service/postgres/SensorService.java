@@ -10,8 +10,14 @@ import com.redroundrobin.thirema.apirest.repository.postgres.DeviceRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.ViewGraphRepository;
+
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+
+import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
+import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +33,67 @@ public class SensorService {
   private final EntityRepository entityRepo;
 
   private final ViewGraphRepository viewGraphRepo;
+
+  private boolean checkAddEditFieldsSensor(boolean edit, Map<String, Object> fields) {
+    String[] editableOrCreatableFields = {"realSensorId", "deviceId", "cmdEnabled", "type"};
+    List<String> allowedFields = new ArrayList<>();
+    for(int i=0; i<editableOrCreatableFields.length; i++) {
+      allowedFields.add(editableOrCreatableFields[i]);
+    }
+
+    if (edit) {
+      return fields.keySet().stream().anyMatch(allowedFields::contains);
+    } else {
+      boolean flag = false;
+      for(int i=0; i<editableOrCreatableFields.length && !flag; i++) {
+        if(!fields.containsKey(editableOrCreatableFields[i])) {
+          flag = true;
+        }
+      }
+      return !flag && fields.keySet().size() == editableOrCreatableFields.length;
+    }
+  }
+
+  private Sensor addEditSensor(Sensor sensor, Map<String, Object> fields)
+      throws InvalidFieldsValuesException {
+    if (sensor == null) {
+      sensor = new Sensor();
+    }
+
+    for (Map.Entry<String, Object> entry : fields.entrySet()) {
+      switch (entry.getKey()) {
+        case "realSensorId":
+          sensor.setRealSensorId((int) entry.getValue());
+          break;
+        case "deviceId":
+          Device device = deviceRepo.findById((int) entry.getValue()).orElse(null);
+          if (device != null) {
+            sensor.setDevice(device);
+          } else {
+            throw new InvalidFieldsValuesException("The device with the provided id is not found");
+          }
+          break;
+        case "type":
+          sensor.setType((String) entry.getValue());
+          break;
+        case "cmdEnabled":
+          sensor.setCmdEnabled((boolean) entry.getValue());
+          break;
+        default:
+      }
+    }
+
+    Sensor sensorWithSameDeviceAndRealSensorId = sensorRepo
+        .findByDeviceAndRealSensorId(sensor.getDevice(), sensor.getRealSensorId());
+    if (sensorWithSameDeviceAndRealSensorId != null
+        && !sensorWithSameDeviceAndRealSensorId.equals(sensor)) { //mi sembra ridondante 2^ parte controllo...
+      throw new InvalidFieldsValuesException("The sensor with provided device and realSensorId "
+          + "already exists");
+    }
+
+    return sensorRepo.save(sensor);
+  }
+
 
   @Autowired
   public SensorService(SensorRepository sensorRepository, AlertRepository alertRepository,
@@ -131,4 +198,14 @@ public class SensorService {
       return null;
     }
   }
+
+  public Sensor addSensor(Map<String, Object> newSensorFields) throws MissingFieldsException,
+      InvalidFieldsValuesException {
+    if (checkAddEditFieldsSensor(false, newSensorFields)) {
+      return addEditSensor(null, newSensorFields);
+    } else {
+      throw MissingFieldsException.defaultMessage();
+    }
+  }
+
 }
