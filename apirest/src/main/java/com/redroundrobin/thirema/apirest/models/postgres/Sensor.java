@@ -32,7 +32,7 @@ public class Sensor implements Serializable {
   @Column(name = "real_sensor_id")
   private int realSensorId;
 
-  @JoinColumn(name = "cmd_enabled")
+  @Column(name = "cmd_enabled")
   private boolean cmdEnabled;
 
   @ManyToOne
