@@ -199,6 +199,32 @@ public class DeviceController extends CoreController {
     }
   }
 
+  @PutMapping(value = {"/{deviceId:.+}/sensors/{realSensorId:.+}"})
+  public ResponseEntity<Sensor> editSensor(
+      @RequestHeader("authorization") String authorization,
+      @RequestBody Map<String, Object> fieldsToEdit,
+      @PathVariable("deviceId") int deviceId,
+      @PathVariable("realSensorId") int realSensorId,
+      HttpServletRequest httpRequest) {
+    User user = this.getUserFromAuthorization(authorization);
+
+    if (user.getType() == User.Role.ADMIN) {
+      try {
+        Sensor sensor = sensorService.editSensor(realSensorId, deviceId, fieldsToEdit);
+        logService.createLog(user.getId(), getIpAddress(httpRequest), "sensor.edit",
+            Integer.toString(realSensorId));
+        return ResponseEntity.ok(sensor);
+      } catch (MissingFieldsException | InvalidFieldsValuesException | ElementNotFoundException e) {
+        logger.debug(e.toString());
+        return new ResponseEntity(HttpStatus.BAD_REQUEST);
+      }
+    } else {
+      logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId()
+          + " is not an Administrator.");
+      return new ResponseEntity(HttpStatus.FORBIDDEN);
+    }
+  }
+
   @DeleteMapping(value = {"/{deviceId:.+}"})
   public ResponseEntity deleteDevice(@RequestHeader("authorization") String authorization,
                                     @PathVariable("deviceId") int deviceId,

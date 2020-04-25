@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +35,7 @@ public class SensorService {
 
   private final ViewGraphRepository viewGraphRepo;
 
-  private boolean checkAddEditFieldsSensor(boolean edit, Map<String, Object> fields) {
+  private boolean checkAddEditFields(boolean edit, Map<String, Object> fields) {
     String[] editableOrCreatableFields = {"realSensorId", "deviceId", "cmdEnabled", "type"};
     List<String> allowedFields = new ArrayList<>();
     for(int i=0; i<editableOrCreatableFields.length; i++) {
@@ -201,8 +202,25 @@ public class SensorService {
 
   public Sensor addSensor(Map<String, Object> newSensorFields) throws MissingFieldsException,
       InvalidFieldsValuesException {
-    if (checkAddEditFieldsSensor(false, newSensorFields)) {
+    if (checkAddEditFields(false, newSensorFields)) {
       return addEditSensor(null, newSensorFields);
+    } else {
+      throw MissingFieldsException.defaultMessage();
+    }
+  }
+
+  public Sensor editSensor(int realSensorId, int deviceId, Map<String, Object> newSensorFields)
+      throws MissingFieldsException, InvalidFieldsValuesException, ElementNotFoundException {
+    Device device = deviceRepo.findById(deviceId).orElse(null);
+    if (device == null) {
+      throw ElementNotFoundException.notFoundMessage("device");
+    }
+    Sensor sensor = sensorRepo.findByDeviceAndRealSensorId(device, realSensorId);/*.orElse(null);!!*/
+    if (sensor == null) {
+      throw ElementNotFoundException.notFoundMessage("sensor");
+    }
+    if (checkAddEditFields(true, newSensorFields)) {
+      return addEditSensor(sensor, newSensorFields);
     } else {
       throw MissingFieldsException.defaultMessage();
     }
