@@ -10,6 +10,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -26,6 +27,9 @@ public class GatewayServiceTest {
   @MockBean
   private DeviceRepository deviceRepo;
 
+  @MockBean
+  private KafkaTemplate<String, String> kafkaTemplate;
+
   private Device device1;
   private Device device2;
   private Device device3;
@@ -35,7 +39,7 @@ public class GatewayServiceTest {
 
   @Before
   public void setUp() {
-    gatewayService = new GatewayService(gatewayRepo, deviceRepo);
+    gatewayService = new GatewayService(gatewayRepo, deviceRepo, kafkaTemplate);
 
     // -------------------------------------- Set Devices ----------------------------------------
     device1 = new Device(1, "name1", 1, 1);
