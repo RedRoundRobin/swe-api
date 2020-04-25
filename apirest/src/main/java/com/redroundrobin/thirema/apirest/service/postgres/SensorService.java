@@ -226,4 +226,17 @@ public class SensorService {
     }
   }
 
+  public boolean deleteSensor(int deviceId, int realSensorId) throws ElementNotFoundException {
+  Device device = deviceRepo.findById(deviceId).orElse(null);
+  if (device == null) {
+    throw ElementNotFoundException.notFoundMessage("device");
+  }
+  Sensor sensor = sensorRepo.findByDeviceAndRealSensorId(device, realSensorId);/*.orElse(null);!!*/
+  if (sensor == null) {
+    throw ElementNotFoundException.notFoundMessage("sensor");
+  }
+  int sensorId = sensor.getId();
+  sensorRepo.delete(sensor);
+  return !sensorRepo.existsById(sensorId);
+  }
 }

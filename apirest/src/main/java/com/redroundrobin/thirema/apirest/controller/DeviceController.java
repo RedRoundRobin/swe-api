@@ -252,4 +252,33 @@ public class DeviceController extends CoreController {
       return new ResponseEntity<>(HttpStatus.FORBIDDEN);
     }
   }
+
+  @DeleteMapping(value = {"/{deviceId:.+}/sensors/{realSensorId:.+}"})
+  public ResponseEntity deleteSensor(@RequestHeader("authorization") String authorization,
+                                     @PathVariable("deviceId") int deviceId,
+                                     @PathVariable("realSensorId") int realSensorId,
+                                     HttpServletRequest httpRequest) {
+    User user = getUserFromAuthorization(authorization);
+
+    if (user.getType() == User.Role.ADMIN) {
+      try {
+        if (sensorService.deleteSensor(deviceId, realSensorId)) {
+          logService.createLog(user.getId(), getIpAddress(httpRequest), "sensor.deleted",
+              Integer.toString(realSensorId));
+          return new ResponseEntity<>(HttpStatus.OK);
+        } else {
+          logger.debug("RESPONSE STATUS: INTERNAL_SERVER_ERROR. Alert " + realSensorId
+              + " is not been deleted due to a database error");
+          return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
+      } catch (ElementNotFoundException e) {
+        logger.debug(e.toString());
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+      }
+    } else {
+      logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId()
+          + " is not an Administrator.");
+      return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+    }
+  }
 }
