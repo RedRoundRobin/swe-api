@@ -12,6 +12,8 @@ public interface GatewayRepository extends CrudRepository<Gateway, Integer> {
       + "WHERE E.entityId = :entityId")
   Iterable<Gateway> findAllByEntityId(int entityId);
 
+  Gateway findByName(String name);
+
   @Query("SELECT G FROM Device D JOIN D.gateway G WHERE D.deviceId = :deviceId")
   Gateway findByDevice(int deviceId);
 

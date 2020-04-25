@@ -7,22 +7,26 @@ import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
 import com.redroundrobin.thirema.apirest.repository.postgres.DeviceRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.GatewayRepository;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+
+
+
+import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
-import org.springframework.util.concurrent.ListenableFuture;
 
 @Service
 public class GatewayService {
@@ -118,11 +122,69 @@ public class GatewayService {
     return gatewayRepo.findByIdAndEntityId(id, entityId);
   }
 
-  public ListenableFuture<SendResult<String, String>> sendGatewayConfigToKafka(String gatewayConfig)
+  public void sendGatewayConfigToKafka(String gatewayConfig)
       throws MissingFieldsException, JsonProcessingException {
     if(!checkConfigFields(gatewayConfig)) {
       throw new MissingFieldsException("");
     }
-    return kafkaTemplate.send(gatewayConfigTopic, gatewayConfig);
+    kafkaTemplate.send(gatewayConfigTopic, gatewayConfig);
+  }
+
+  public Gateway addGateway(Map<String, String> newGatewayFields) throws MissingFieldsException,
+      InvalidFieldsValuesException {
+    if (checkAddEditFields(false, newGatewayFields)) {
+      if (gatewayRepo.findByName(newGatewayFields.get("name")) == null) {
+        Gateway gateway = new Gateway(newGatewayFields.get("name"));
+        return gatewayRepo.save(gateway);
+      } else {
+        throw new InvalidFieldsValuesException("The gateway with provided name already exists");
+      }
+    } else {
+      throw MissingFieldsException.defaultMessage();
+    }
+  }
+
+  public Gateway editGateway(int gatewayId, Map<String, String> fieldsToEdit) throws MissingFieldsException,
+      InvalidFieldsValuesException {
+    Gateway gateway = gatewayRepo.findById(gatewayId).orElse(null);
+    if (gateway == null) {
+      throw new InvalidFieldsValuesException("The gateway with provided id is not found");
+    } else {
+      if (checkAddEditFields(true, fieldsToEdit)) {
+        if (gatewayRepo.findByName(fieldsToEdit.get("name")) == null) {
+          gateway.setName(fieldsToEdit.get("name"));
+          return gatewayRepo.save(gateway);
+        } else {
+          throw new InvalidFieldsValuesException("The gateway with provided name already exists");
+        }
+      } else {
+        throw MissingFieldsException.defaultMessage();
+      }
+    }
+  }
+
+  public boolean deleteGateway(int gatewayId) throws ElementNotFoundException {
+    Gateway gateway = gatewayRepo.findById(gatewayId).orElse(null);
+    if (gateway != null) {
+      gatewayRepo.delete(gateway);
+      if (!gatewayRepo.existsById(gatewayId)) {
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      throw ElementNotFoundException.notFoundMessage("gateway");
+    }
+  }
+
+  private boolean checkAddEditFields(boolean edit, Map<String, String> fields) {
+    List<String> allowedFields = new ArrayList<>();
+    allowedFields.add("name");
+
+    if (edit) {
+      return fields.keySet().stream().anyMatch(allowedFields::contains);
+    } else {
+      return fields.containsKey("name");
+    }
   }
 }
