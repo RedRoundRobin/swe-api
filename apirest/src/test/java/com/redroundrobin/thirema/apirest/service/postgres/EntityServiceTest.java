@@ -3,6 +3,7 @@ package com.redroundrobin.thirema.apirest.service.postgres;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
+import com.redroundrobin.thirema.apirest.repository.postgres.AlertRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
@@ -30,6 +31,9 @@ public class EntityServiceTest {
   private EntityRepository entityRepo;
 
   @MockBean
+  private AlertRepository alertRepo;
+
+  @MockBean
   private SensorRepository sensorRepo;
 
   @MockBean
@@ -52,7 +56,7 @@ public class EntityServiceTest {
 
   @Before
   public void setUp() {
-    entityService = new EntityService(entityRepo, sensorRepo, userRepo);
+    entityService = new EntityService(entityRepo, alertRepo, sensorRepo, userRepo);
 
     // ----------------------------------------- Set sensors --------------------------------------
     sensor1 = new Sensor(1, "type1", 1);

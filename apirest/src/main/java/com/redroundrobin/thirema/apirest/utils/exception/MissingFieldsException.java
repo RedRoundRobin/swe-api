@@ -8,4 +8,9 @@ public class MissingFieldsException extends Exception {
   public MissingFieldsException(String reason) {
     super(reason);
   }
+
+  public static MissingFieldsException defaultMessage() {
+    return new MissingFieldsException("One or more needed fields are missing");
+  }
 }
+
