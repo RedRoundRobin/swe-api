@@ -133,7 +133,6 @@ public class EntityController extends CoreController {
   public ResponseEntity deleteEntity(
       @RequestHeader(value = "Authorization") String authorization,
       @PathVariable(value = "entityId") int entityId,
-      @RequestBody Map<String, String> fieldsToEdit,
       HttpServletRequest httpRequest) {
     String ip = getIpAddress(httpRequest);
     User user = getUserFromAuthorization(authorization);
