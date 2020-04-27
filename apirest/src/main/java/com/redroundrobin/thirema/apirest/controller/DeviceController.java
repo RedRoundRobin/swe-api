@@ -240,6 +240,22 @@ public class DeviceController extends CoreController {
     }
   }
 
+  @GetMapping(value = {"/{deviceId:.+}/sensors/cmdEnabled/{cmdEnabled:.+}"})
+  public ResponseEntity<List<Sensor>> getDevicesWithAtLeastOneCmdEnabled(
+      @RequestHeader("authorization") String authorization,
+      @PathVariable("deviceId") int deviceId,
+      @PathVariable("cmdEnabled") boolean cmdEnabled,
+      HttpServletRequest httpRequest) {
+    User user = this.getUserFromAuthorization(authorization);
+    if (user.getType() == User.Role.ADMIN) {
+      return ResponseEntity.ok(deviceService.getEnabledSensorsDevice(cmdEnabled, deviceId));
+    } else {
+      logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId()
+          + " is not an Administrator.");
+      return new ResponseEntity(HttpStatus.FORBIDDEN);
+    }
+  }
+
   @DeleteMapping(value = {"/{deviceId:.+}"})
   public ResponseEntity deleteDevice(@RequestHeader("authorization") String authorization,
                                     @PathVariable("deviceId") int deviceId,
