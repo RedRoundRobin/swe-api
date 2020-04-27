@@ -195,4 +195,8 @@ public class DeviceService {
   public List<Device> getEnabled(boolean cmdEnabled) {
     return (List<Device>)deviceRepo.findBySensorsCmdEnabledField(cmdEnabled);
   }
+
+  public List<Sensor> getEnabledSensorsDevice(boolean cmdEnabled, int deviceId) {
+    return (List<Sensor>)deviceRepo.findByCmdEnabledAndDeviceId(cmdEnabled, deviceId);
+  }
 }
