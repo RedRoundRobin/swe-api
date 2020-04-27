@@ -9,6 +9,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import org.springframework.beans.factory.annotation.Value;
 
 @javax.persistence.Entity
 @Table(name = "gateways")
@@ -60,4 +61,5 @@ public class Gateway implements Serializable {
   public void setLastSent(Timestamp lastSent) {
     this.lastSent = lastSent;
   }
+
 }
