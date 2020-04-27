@@ -15,6 +15,14 @@ public interface DeviceRepository extends CrudRepository<Device, Integer> {
       + "JOIN E.sensors S JOIN S.device D WHERE E.entityId = ?1")
   Iterable<Device> findAllByEntityId(int entityId);
 
+  @Query("SELECT DISTINCT D FROM Device D "
+      + "JOIN D.gateway G WHERE G.gatewayId = :gatewayId AND D.gateway.gatewayId = :gatewayId")
+  Iterable<Device> findAllByGatewayId(int gatewayId);
+
+  @Query("SELECT DISTINCT S FROM Sensor S "
+      + "JOIN S.device D WHERE D.deviceId = :deviceId AND S.device.deviceId = :deviceId")
+  Iterable<Sensor> findAllByDeviceId(int deviceId);
+
   @Query("SELECT DISTINCT D FROM Entity E "
       + "JOIN E.sensors S JOIN S.device D WHERE E.entityId = :entityId AND D.gateway = :gateway")
   Iterable<Device> findAllByEntityIdAndGateway(int entityId, Gateway gateway);
