@@ -1,11 +1,10 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-
+import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
 import com.redroundrobin.thirema.apirest.repository.postgres.DeviceRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.GatewayRepository;
+import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -35,10 +34,16 @@ public class GatewayService {
 
   private final DeviceRepository deviceRepo;
 
+  private final SensorRepository sensorRepo;
+
   private final KafkaTemplate<String, String> kafkaTemplate;
 
   @Value("${kafka.topic.gatewayConfig}")
   private String gatewayConfigTopic;
+
+  @Value("${gateways.topic.telegram.prefix}")
+  private String gatewayCommandsPrefix;
+
 
   private boolean checkConfigFields(String gatewayConfig)
       throws JsonProcessingException { //eccezione di ObjectMapper()
@@ -89,12 +94,29 @@ public class GatewayService {
     return !flag;
   }
 
+  private boolean checkTelegramCommandFields(Set<String> keys)
+      throws MissingFieldsException {
+    Set<String> commandFields = new HashSet<>();
+    commandFields.add("realSensorId");
+    commandFields.add("realDeviceId");
+    commandFields.add("data");
+    if (!commandFields.containsAll(keys)) {
+      throw new MissingFieldsException("Some necessary fields are missing");
+    }
+    if(commandFields.size() != keys.size()) {
+      return false;
+    }
+    return true;
+  }
+
   @Autowired
   public GatewayService(GatewayRepository gatewayRepository,
                         DeviceRepository deviceRepository,
+                        SensorRepository sensorRepository,
                         KafkaTemplate<String, String> kafkaTemplate) {
     this.gatewayRepo = gatewayRepository;
     this.deviceRepo = deviceRepository;
+    this.sensorRepo = sensorRepository;
     this.kafkaTemplate = kafkaTemplate;
   }
 
@@ -186,5 +208,32 @@ public class GatewayService {
     } else {
       return fields.containsKey("name");
     }
+  }
+
+  public String sendTelegramCommandToSensor(int gatewayId, Map<String,Object> keys)
+      throws MissingFieldsException, ElementNotFoundException {
+    if(!gatewayRepo.existsById(gatewayId)) {
+      throw new ElementNotFoundException("The given gatewayId doesn't match "
+          + "any gateway in the database");
+    }
+    if(!checkTelegramCommandFields(keys.keySet())) {
+      throw new ElementNotFoundException("You sent some unknown fields");
+    }
+    Gateway gateway = gatewayRepo.findById(gatewayId).get();
+    Device device = null;
+    if((device = deviceRepo.findByGatewayAndRealDeviceId(
+        gateway, (int)keys.get("realDeviceId"))) == null
+        || sensorRepo.findByDeviceAndRealSensorId(
+            device, (int)keys.get("realSensorId")) == null
+        || (int)keys.get("data") < 0 || (int)keys.get("data") > 1) {
+      throw new ElementNotFoundException(" The device with the realDeviceId sent"
+          + " or the sensor with the RealSensorId sent doesn't exist" + " or"
+          + "the data value is not correct");
+    }
+    String gatewayCooomandTopic =
+        gatewayCommandsPrefix + gatewayRepo.findById(gatewayId).get().getName();
+    String gatewayCommand = keys.toString();
+    kafkaTemplate.send(gatewayConfigTopic, gatewayCommand);
+    return gatewayCommand;
   }
 }
