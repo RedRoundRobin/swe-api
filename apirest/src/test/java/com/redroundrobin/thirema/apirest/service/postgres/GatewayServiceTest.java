@@ -4,6 +4,7 @@ import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
 import com.redroundrobin.thirema.apirest.repository.postgres.DeviceRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.GatewayRepository;
+import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.Before;
@@ -28,6 +29,9 @@ public class GatewayServiceTest {
   private DeviceRepository deviceRepo;
 
   @MockBean
+  private SensorRepository sensorRepo;
+
+  @MockBean
   private KafkaTemplate<String, String> kafkaTemplate;
 
   private Device device1;
@@ -39,7 +43,7 @@ public class GatewayServiceTest {
 
   @Before
   public void setUp() {
-    gatewayService = new GatewayService(gatewayRepo, deviceRepo, kafkaTemplate);
+    gatewayService = new GatewayService(gatewayRepo, deviceRepo, sensorRepo, kafkaTemplate);
 
     // -------------------------------------- Set Devices ----------------------------------------
     device1 = new Device(1, "name1", 1, 1);
