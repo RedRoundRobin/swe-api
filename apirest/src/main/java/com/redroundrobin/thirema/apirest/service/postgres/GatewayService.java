@@ -23,8 +23,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -53,7 +51,7 @@ public class GatewayService {
     if(!gatewayRepo.existsById(gatewayId)) {
       return null;
     } else {
-      Gateway gateway = (Gateway)gatewayRepo.findById(gatewayId).get();
+      Gateway gateway = gatewayRepo.findById(gatewayId).get();
       String gatewayConfigTopic = gateway.getName();
       ObjectMapper objectMapper = new ObjectMapper();
       ObjectNode jsonGatewayConfig = objectMapper.createObjectNode();
@@ -65,7 +63,6 @@ public class GatewayService {
         ObjectNode completeDevice = objectMapper.createObjectNode();
         completeDevice.put("deviceId", device.getId());
         completeDevice.put("frequency", device.getFrequency());
-       // ArrayNode sensorsConfig = completeDevice.putArray("sensors");
         ArrayNode sensorsConfig = objectMapper.createArrayNode();
         List<Sensor> sensors = (List<Sensor>)deviceRepo.findAllByDeviceId(device.getId());
         for(Sensor sensor: sensors) {
@@ -78,8 +75,7 @@ public class GatewayService {
         devicesConfig.add(completeDevice);
       }
       kafkaTemplate.send(gatewayConfigTopic, jsonGatewayConfig.toString());
-      String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString((JsonNode)jsonGatewayConfig);
-      return json;
+      return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString((JsonNode)jsonGatewayConfig);
     }
   }
 
