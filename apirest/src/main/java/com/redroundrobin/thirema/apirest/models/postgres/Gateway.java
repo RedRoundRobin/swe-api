@@ -60,4 +60,5 @@ public class Gateway implements Serializable {
   public void setLastSent(Timestamp lastSent) {
     this.lastSent = lastSent;
   }
+
 }

@@ -1,5 +1,6 @@
 package com.redroundrobin.thirema.apirest.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
@@ -169,19 +170,17 @@ public class GatewayController extends CoreController {
     }
   }
 
-  /*probabilmente mi si deve passare anche il nome del topic! Al momento ce un solo gateway e
-  * sto usando il suo topic per le configurazioni: va generalizzata la cosa!*/
-  @PutMapping(value = {"/config"})
-  public ResponseEntity sendGatewayConfigToKafka(@RequestHeader(value = "Authorization") String authorization,
-                                                               @RequestBody String gatewayConfig) {
+  @PutMapping(value = {"/config/{gatewayId:.+}"})
+  public ResponseEntity<String> sendGatewayConfigToKafka(
+      @RequestHeader(value = "Authorization") String authorization,
+      @PathVariable("gatewayId") int gatewayId) {
     User user = this.getUserFromAuthorization(authorization);
     if (user.getType() == User.Role.ADMIN) {
       try {
-        gatewayService.sendGatewayConfigToKafka(gatewayConfig);
-        return new ResponseEntity(HttpStatus.OK);
-      } catch(Exception e) {
-        logger.debug("RESPONSE STATUS: FORBIDDEN. The gateway configuration given "
-            + "is not well formed");
+        return ResponseEntity.ok(gatewayService.sendGatewayConfigToKafka(gatewayId));
+      } catch(InvalidFieldsValuesException | JsonProcessingException e) {
+        logger.debug("RESPONSE STATUS: FORBIDDEN. The gateway with the given Id "
+            + "doesn't exist");
         return new ResponseEntity(HttpStatus.FORBIDDEN);
       }
     } else {
