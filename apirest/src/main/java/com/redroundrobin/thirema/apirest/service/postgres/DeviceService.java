@@ -191,4 +191,8 @@ public class DeviceService {
       throw ElementNotFoundException.notFoundMessage("device");
     }
   }
+
+  public List<Device> getEnabled(boolean cmdEnabled) {
+    return (List<Device>)deviceRepo.findBySensorsCmdEnabledField(cmdEnabled);
+  }
 }
