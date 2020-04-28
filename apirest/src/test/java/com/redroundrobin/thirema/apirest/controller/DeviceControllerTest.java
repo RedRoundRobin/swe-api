@@ -172,49 +172,49 @@ public class DeviceControllerTest {
 
   @Test
   public void getAllDevicesByAdmin() {
-    ResponseEntity<List<Device>> response = deviceController.getDevices(adminTokenWithBearer, null, null);
+    ResponseEntity<List<Device>> response = deviceController.getDevices(adminTokenWithBearer, null, null, null);
 
     assertEquals(allDevices, response.getBody());
   }
 
   @Test
   public void getEntity1DevicesByAdmin() {
-    ResponseEntity<List<Device>> response = deviceController.getDevices(adminTokenWithBearer, 1, null);
+    ResponseEntity<List<Device>> response = deviceController.getDevices(adminTokenWithBearer, 1, null, null);
 
     assertEquals(entity1Devices, response.getBody());
   }
 
   @Test
   public void getEntity1AndGateway1DevicesByAdmin() {
-    ResponseEntity<List<Device>> response = deviceController.getDevices(adminTokenWithBearer, 1, 1);
+    ResponseEntity<List<Device>> response = deviceController.getDevices(adminTokenWithBearer, 1, 1, null);
 
     assertFalse(response.getBody().isEmpty());
   }
 
   @Test
   public void getGateway1DevicesByAdmin() {
-    ResponseEntity<List<Device>> response = deviceController.getDevices(adminTokenWithBearer, null, 1);
+    ResponseEntity<List<Device>> response = deviceController.getDevices(adminTokenWithBearer, null, 1, null);
 
     assertFalse(response.getBody().isEmpty());
   }
 
   @Test
   public void getEntity2DevicesByUserEmptyList() {
-    ResponseEntity<List<Device>> response = deviceController.getDevices(userTokenWithBearer, 2, null);
+    ResponseEntity<List<Device>> response = deviceController.getDevices(userTokenWithBearer, 2, null, null);
 
     assertEquals(Collections.emptyList(), response.getBody());
   }
 
   @Test
   public void getGateway1DevicesByUser() {
-    ResponseEntity<List<Device>> response = deviceController.getDevices(userTokenWithBearer, null, 1);
+    ResponseEntity<List<Device>> response = deviceController.getDevices(userTokenWithBearer, null, 1, null);
 
     assertFalse(response.getBody().isEmpty());
   }
 
   @Test
   public void getAllDevicesByUser() {
-    ResponseEntity<List<Device>> response = deviceController.getDevices(userTokenWithBearer, null, null);
+    ResponseEntity<List<Device>> response = deviceController.getDevices(userTokenWithBearer, null, null, null);
 
     assertEquals(entity1Devices, response.getBody());
   }
@@ -238,7 +238,7 @@ public class DeviceControllerTest {
   @Test
   public void getSensorsByDeviceIdByAdmin() {
     ResponseEntity<List<Sensor>> response = deviceController.getSensorsByDevice(
-        adminTokenWithBearer, device1.getId());
+        adminTokenWithBearer, device1.getId(), null);
 
     assertEquals(device1Sensors, response.getBody());
   }
@@ -246,7 +246,7 @@ public class DeviceControllerTest {
   @Test
   public void getSensorsByDeviceIdByUser() {
     ResponseEntity<List<Sensor>> response = deviceController.getSensorsByDevice(userTokenWithBearer,
-        device1.getId());
+        device1.getId(), null);
 
     assertEquals(device1Sensors, response.getBody());
   }

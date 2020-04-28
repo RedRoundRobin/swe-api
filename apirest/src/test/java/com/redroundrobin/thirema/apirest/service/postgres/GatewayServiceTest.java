@@ -29,9 +29,6 @@ public class GatewayServiceTest {
   private DeviceRepository deviceRepo;
 
   @MockBean
-  private SensorRepository sensorRepo;
-
-  @MockBean
   private KafkaTemplate<String, String> kafkaTemplate;
 
   private Device device1;
@@ -43,7 +40,7 @@ public class GatewayServiceTest {
 
   @Before
   public void setUp() {
-    gatewayService = new GatewayService(gatewayRepo, deviceRepo, sensorRepo, kafkaTemplate);
+    gatewayService = new GatewayService(gatewayRepo, deviceRepo, kafkaTemplate);
 
     // -------------------------------------- Set Devices ----------------------------------------
     device1 = new Device(1, "name1", 1, 1);
