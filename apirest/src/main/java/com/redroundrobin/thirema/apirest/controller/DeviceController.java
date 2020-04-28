@@ -57,10 +57,23 @@ public class DeviceController extends CoreController {
   @GetMapping(value = {""})
   public ResponseEntity<List<Device>> getDevices(
       @RequestHeader("Authorization") String authorization,
-      @RequestParam(value = "entity", required = false) Integer entityId,
-      @RequestParam(value = "gatewayId", required = false) Integer gatewayId) {
+      @RequestParam(value = "entityId", required = false) Integer entityId,
+      @RequestParam(value = "gatewayId", required = false) Integer gatewayId,
+      @RequestParam(value = "cmdEnabled", required = false) Boolean cmdEnabled) {
     User user = this.getUserFromAuthorization(authorization);
+    if(cmdEnabled != null && user.getType() != User.Role.ADMIN) {
+      logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId()
+          + " is not an Administrator.");
+      return new ResponseEntity(HttpStatus.FORBIDDEN);
+    }
+    // (cmdEnabled == null || user.getType() == User.Role.ADMIN) = true
     if (user.getType() == User.Role.ADMIN) {
+      if(cmdEnabled != null && (entityId != null || gatewayId != null)) {
+        return new ResponseEntity(HttpStatus.NOT_FOUND);
+      }
+      if(cmdEnabled != null) {
+        return ResponseEntity.ok(deviceService.getEnabled(cmdEnabled));
+      }
       if (entityId != null && gatewayId != null) {
         return ResponseEntity.ok(deviceService.findAllByEntityIdAndGatewayId(entityId, gatewayId));
       } else if (gatewayId != null) {
@@ -82,6 +95,7 @@ public class DeviceController extends CoreController {
     }
   }
 
+  
   // Get device by deviceId
   @GetMapping(value = {"/{deviceId:.+}"})
   public ResponseEntity<Device> getDevice(@RequestHeader("Authorization") String authorization,
@@ -99,15 +113,42 @@ public class DeviceController extends CoreController {
   @GetMapping(value = {"/{deviceId:.+}/sensors"})
   public ResponseEntity<List<Sensor>> getSensorsByDevice(
       @RequestHeader("Authorization") String authorization,
-      @PathVariable("deviceId") int deviceId) {
+      @PathVariable("deviceId") int deviceId,
+      @RequestParam(value = "cmdEnabled", required = false) Boolean cmdEnabled) {
     User user = this.getUserFromAuthorization(authorization);
+    if(cmdEnabled != null && user.getType() != User.Role.ADMIN) {
+      logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId()
+          + " is not an Administrator.");
+      return new ResponseEntity(HttpStatus.FORBIDDEN);
+    }
     if (user.getType() == User.Role.ADMIN) {
+      if(cmdEnabled != null) {
+        return ResponseEntity.ok(deviceService.getEnabledSensorsDevice(cmdEnabled, deviceId));
+      }
       return ResponseEntity.ok(sensorService.findAllByDeviceId(deviceId));
     } else {
       return ResponseEntity.ok(
           sensorService.findAllByDeviceIdAndEntityId(deviceId, user.getEntity().getId()));
     }
   }
+
+  /*
+  *   @GetMapping(value = {"/{deviceId:.+}/sensors/cmdEnabled/{cmdEnabled:.+}"})
+  public ResponseEntity<List<Sensor>> getDevicesWithAtLeastOneCmdEnabled(
+      @RequestHeader("authorization") String authorization,
+      @PathVariable("deviceId") int deviceId,
+      @PathVariable("cmdEnabled") boolean cmdEnabled,
+      HttpServletRequest httpRequest) {
+    User user = this.getUserFromAuthorization(authorization);
+    if (user.getType() == User.Role.ADMIN) {
+      return ResponseEntity.ok(deviceService.getEnabledSensorsDevice(cmdEnabled, deviceId));
+    } else {
+      logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId()
+          + " is not an Administrator.");
+      return new ResponseEntity(HttpStatus.FORBIDDEN);
+    }
+  }
+  * */
 
   // Get sensor by deviceId and realSensorId
   @GetMapping(value = {"/{deviceId:.+}/sensors/{realSensorId:.+}"})
@@ -218,37 +259,6 @@ public class DeviceController extends CoreController {
         logger.debug(e.toString());
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
       }
-    } else {
-      logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId()
-          + " is not an Administrator.");
-      return new ResponseEntity(HttpStatus.FORBIDDEN);
-    }
-  }
-
-  @GetMapping(value = {"/cmdEnabled/{cmdEnabled:.+}"})
-  public ResponseEntity<List<Device>> getDevicesWithAtLeastOneCmdEnabled(
-      @RequestHeader("authorization") String authorization,
-      @PathVariable("cmdEnabled") boolean cmdEnabled,
-      HttpServletRequest httpRequest) {
-    User user = this.getUserFromAuthorization(authorization);
-    if (user.getType() == User.Role.ADMIN) {
-      return ResponseEntity.ok(deviceService.getEnabled(cmdEnabled));
-    } else {
-      logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId()
-          + " is not an Administrator.");
-      return new ResponseEntity(HttpStatus.FORBIDDEN);
-    }
-  }
-
-  @GetMapping(value = {"/{deviceId:.+}/sensors/cmdEnabled/{cmdEnabled:.+}"})
-  public ResponseEntity<List<Sensor>> getDevicesWithAtLeastOneCmdEnabled(
-      @RequestHeader("authorization") String authorization,
-      @PathVariable("deviceId") int deviceId,
-      @PathVariable("cmdEnabled") boolean cmdEnabled,
-      HttpServletRequest httpRequest) {
-    User user = this.getUserFromAuthorization(authorization);
-    if (user.getType() == User.Role.ADMIN) {
-      return ResponseEntity.ok(deviceService.getEnabledSensorsDevice(cmdEnabled, deviceId));
     } else {
       logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId()
           + " is not an Administrator.");
