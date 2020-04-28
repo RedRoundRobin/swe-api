@@ -60,7 +60,7 @@ public class GatewayService {
       ObjectMapper objectMapper = new ObjectMapper();
       ObjectNode jsonGatewayConfig = objectMapper.createObjectNode();
       jsonGatewayConfig.put("maxStoredPackets", getMaxStoredPackets());
-      jsonGatewayConfig.put("getMaxStoringTime", getMaxStoringTime());
+      jsonGatewayConfig.put("maxStoringTime", getMaxStoringTime());
       ArrayNode devicesConfig = jsonGatewayConfig.putArray("devices");
       List<Device> devices = (List<Device>)deviceRepo.findAllByGatewayId(gatewayId);
       for(Device device: devices) {
