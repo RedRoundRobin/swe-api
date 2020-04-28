@@ -190,26 +190,6 @@ public class GatewayController extends CoreController {
     }
   }
 
-  @PutMapping(value = {"/command/{gatewayId:.+}"})
-  public ResponseEntity<String> sendGatewayConfigToKafka(@RequestHeader(value = "Authorization") String authorization,
-                                                 @PathVariable("gatewayId") int gatewayId,
-                                                 @RequestBody Map<String, Object> commandFields) {
-    User user = this.getUserFromAuthorization(authorization);
-    if (user.getType() == User.Role.ADMIN) {
-      try {
-        return ResponseEntity.ok(
-            gatewayService.sendTelegramCommandToSensor(gatewayId, commandFields));
-      } catch(ElementNotFoundException | MissingFieldsException e) {
-        logger.debug("RESPONSE STATUS: FORBIDDEN." + e.getMessage());
-        return new ResponseEntity(HttpStatus.FORBIDDEN);
-      }
-    } else {
-      logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId()
-          + " is not an administrator");
-      return new ResponseEntity(HttpStatus.FORBIDDEN);
-    }
-  }
-
   @PostMapping(value = {""})
   public ResponseEntity<Gateway> addGateway(@RequestHeader("Authorization") String authorization,
                                          @RequestBody Map<String, String> newGatewayFields,

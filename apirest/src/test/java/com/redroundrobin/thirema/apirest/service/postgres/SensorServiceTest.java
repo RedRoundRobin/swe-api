@@ -20,6 +20,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -44,6 +45,9 @@ public class SensorServiceTest {
 
   @MockBean
   private ViewGraphRepository viewGraphRepo;
+
+  @MockBean
+  KafkaTemplate<String, String> kafkaTemplate;
 
   private SensorService sensorService;
 
@@ -70,7 +74,7 @@ public class SensorServiceTest {
 
   @Before
   public void setUp() {
-    sensorService = new SensorService(sensorRepo, alertRepo, deviceRepo, entityRepo, viewGraphRepo);
+    sensorService = new SensorService(sensorRepo, alertRepo, deviceRepo, entityRepo, viewGraphRepo, kafkaTemplate);
 
     // ----------------------------------------- Set Entities --------------------------------------
     entity1 = new Entity(1, "entity1", "location1");
