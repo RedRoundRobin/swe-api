@@ -65,13 +65,13 @@ public class GatewayService {
       List<Device> devices = (List<Device>)deviceRepo.findAllByGatewayId(gatewayId);
       for(Device device: devices) {
         ObjectNode completeDevice = objectMapper.createObjectNode();
-        completeDevice.put("deviceId", device.getId());
+        completeDevice.put("deviceId", device.getRealDeviceId());
         completeDevice.put("frequency", device.getFrequency());
         ArrayNode sensorsConfig = objectMapper.createArrayNode();
         List<Sensor> sensors = (List<Sensor>)deviceRepo.findAllByDeviceId(device.getId());
         for(Sensor sensor: sensors) {
           ObjectNode completeSensor = objectMapper.createObjectNode();
-          completeSensor.put("sensorId", sensor.getId());
+          completeSensor.put("sensorId", sensor.getRealSensorId());
           completeSensor.put("cmdEnabled", sensor.getCmdEnabled());
           sensorsConfig.add(completeSensor);
         }
