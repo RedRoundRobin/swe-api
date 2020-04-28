@@ -135,11 +135,11 @@ public class GatewayService {
     return jsonGatewayConfig;
   }
 
-  public Gateway addGateway(Map<String, String> newGatewayFields) throws MissingFieldsException,
+  public Gateway addGateway(Map<String, Object> newGatewayFields) throws MissingFieldsException,
       InvalidFieldsValuesException {
     if (checkAddEditFields(false, newGatewayFields)) {
-      if (gatewayRepo.findByName(newGatewayFields.get("name")) == null) {
-        Gateway gateway = new Gateway(newGatewayFields.get("name"));
+      if (gatewayRepo.findByName((String)newGatewayFields.get("name")) == null) {
+        Gateway gateway = new Gateway((String)newGatewayFields.get("name"));
         return gatewayRepo.save(gateway);
       } else {
         throw new InvalidFieldsValuesException("The gateway with provided name already exists");
@@ -149,15 +149,15 @@ public class GatewayService {
     }
   }
 
-  public Gateway editGateway(int gatewayId, Map<String, String> fieldsToEdit) throws MissingFieldsException,
+  public Gateway editGateway(int gatewayId, Map<String, Object> fieldsToEdit) throws MissingFieldsException,
       InvalidFieldsValuesException {
     Gateway gateway = gatewayRepo.findById(gatewayId).orElse(null);
     if (gateway == null) {
       throw new InvalidFieldsValuesException("The gateway with provided id is not found");
     } else {
       if (checkAddEditFields(true, fieldsToEdit)) {
-        if (gatewayRepo.findByName(fieldsToEdit.get("name")) == null) {
-          gateway.setName(fieldsToEdit.get("name"));
+        if (gatewayRepo.findByName((String)fieldsToEdit.get("name")) == null) {
+          gateway.setName((String)fieldsToEdit.get("name"));
           return gatewayRepo.save(gateway);
         } else {
           throw new InvalidFieldsValuesException("The gateway with provided name already exists");
@@ -182,7 +182,7 @@ public class GatewayService {
     }
   }
 
-  private boolean checkAddEditFields(boolean edit, Map<String, String> fields) {
+  private boolean checkAddEditFields(boolean edit, Map<String, Object> fields) {
     List<String> allowedFields = new ArrayList<>();
     allowedFields.add("name");
 

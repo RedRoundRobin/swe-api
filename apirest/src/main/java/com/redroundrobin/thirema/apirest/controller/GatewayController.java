@@ -170,29 +170,9 @@ public class GatewayController extends CoreController {
     }
   }
 
-  @PutMapping(value = {"/config/{gatewayId:.+}"})
-  public ResponseEntity<String> sendGatewayConfigToKafka(
-      @RequestHeader(value = "Authorization") String authorization,
-      @PathVariable("gatewayId") int gatewayId) {
-    User user = this.getUserFromAuthorization(authorization);
-    if (user.getType() == User.Role.ADMIN) {
-      try {
-        return ResponseEntity.ok(gatewayService.sendGatewayConfigToKafka(gatewayId));
-      } catch(InvalidFieldsValuesException | JsonProcessingException e) {
-        logger.debug("RESPONSE STATUS: FORBIDDEN. The gateway with the given Id "
-            + "doesn't exist");
-        return new ResponseEntity(HttpStatus.FORBIDDEN);
-      }
-    } else {
-      logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId()
-          + " is not an administrator");
-      return new ResponseEntity(HttpStatus.FORBIDDEN);
-    }
-  }
-
   @PostMapping(value = {""})
   public ResponseEntity<Gateway> addGateway(@RequestHeader("Authorization") String authorization,
-                                         @RequestBody Map<String, String> newGatewayFields,
+                                         @RequestBody Map<String, Object> newGatewayFields,
                                          HttpServletRequest httpRequest) {
     String ip = getIpAddress(httpRequest);
     User user = getUserFromAuthorization(authorization);
@@ -214,20 +194,26 @@ public class GatewayController extends CoreController {
   }
 
   @PutMapping(value = {"/{gatewayId:.+}"})
-  public ResponseEntity<Gateway> editGateway(@RequestHeader("Authorization") String authorization,
+  public ResponseEntity<Object> editGateway(@RequestHeader("Authorization") String authorization,
                                             @PathVariable(value = "gatewayId") int gatewayId,
-                                            @RequestBody Map<String, String> newGatewayFields,
+                                            @RequestBody Map<String, Object> newGatewayFields,
                                             HttpServletRequest httpRequest) {
     String ip = getIpAddress(httpRequest);
     User user = getUserFromAuthorization(authorization);
 
     if (user.getType() == User.Role.ADMIN) {
       try {
-        Gateway gateway = gatewayService.editGateway(gatewayId, newGatewayFields);
-        logService.createLog(user.getId(),ip,"gateway.edit",
-            Integer.toString(gatewayId));
-        return ResponseEntity.ok(gateway);
-      } catch (MissingFieldsException | InvalidFieldsValuesException e) {
+        if(newGatewayFields.containsKey("reconfig")
+            && ((boolean)newGatewayFields.get("reconfig"))) {
+          return ResponseEntity.ok(gatewayService.sendGatewayConfigToKafka(gatewayId));
+        } else {
+          Gateway gateway = gatewayService.editGateway(gatewayId, newGatewayFields);
+          logService.createLog(user.getId(),ip,"gateway.edit",
+              Integer.toString(gatewayId));
+          return ResponseEntity.ok(gateway);
+        }
+      } catch (MissingFieldsException | InvalidFieldsValuesException
+          | JsonProcessingException e) {
         logger.debug(e.toString());
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
       }
@@ -236,6 +222,27 @@ public class GatewayController extends CoreController {
       return new ResponseEntity(HttpStatus.FORBIDDEN);
     }
   }
+
+  /*
+  @PutMapping(value = {"/{gatewayId:.+}"})
+  public ResponseEntity<String> sendGatewayConfigToKafka(
+      @RequestHeader(value = "Authorization") String authorization,
+      @PathVariable("gatewayId") int gatewayId) {
+    User user = this.getUserFromAuthorization(authorization);
+    if (user.getType() == User.Role.ADMIN) {
+      try {
+        return ResponseEntity.ok(gatewayService.sendGatewayConfigToKafka(gatewayId));
+      } catch(InvalidFieldsValuesException | JsonProcessingException e) {
+        logger.debug("RESPONSE STATUS: FORBIDDEN. The gateway with the given Id "
+            + "doesn't exist");
+        return new ResponseEntity(HttpStatus.FORBIDDEN);
+      }
+    } else {
+      logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId()
+          + " is not an administrator");
+      return new ResponseEntity(HttpStatus.FORBIDDEN);
+    }
+  }*/
 
   @DeleteMapping(value = {"/{gatewayId:.+}"})
   public ResponseEntity deleteGateway(@RequestHeader("Authorization") String authorization,
