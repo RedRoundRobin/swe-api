@@ -13,8 +13,10 @@ if [ ! -f /usr/src/api/apirest.jar ]; then
 fi
 
 java -jar /usr/src/api/apirest.jar \
---server.port=9999 --spring.postgres.url=jdbc:postgresql://core.host.redroundrobin.site:6543/postgre \
---spring.timescale.url=jdbc:postgresql://core.host.redroundrobin.site:3456/timescale \
---telegram.url=http://core.host.redroundrobin.site:3000/
+--server.port=9999 \
+--spring.postgres.url=jdbc:postgresql://db-postgre:5432/postgre \
+--spring.timescale.url=jdbc:postgresql://db-timescale:5432/timescale \
+--telegram.url=http://thirema-telegram-bot:3000/ \
+--kafka.bootstrapAddress=kafka-core:29092
 
 echo "API started..."
