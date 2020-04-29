@@ -14,6 +14,8 @@ import com.redroundrobin.thirema.apirest.repository.postgres.DeviceRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.ViewGraphRepository;
+import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,6 +27,7 @@ import java.util.Set;
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
+import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -262,7 +265,7 @@ public class SensorService {
   }
 
   public String sendTelegramCommandToSensor(int sensorId, Map<String,Object> keys)
-      throws ElementNotFoundException {
+      throws ElementNotFoundException, NotAuthorizedException {
     if(!checkTelegramCommandFields(keys.keySet()) ||
         (int)keys.get("data") < 0 || (int)keys.get("data") > 1) {
       throw new ElementNotFoundException("The data field is missing, its not the only field given"
@@ -275,6 +278,10 @@ public class SensorService {
     }
 
     Sensor sensor = sensorRepo.findById(sensorId).get();
+    if(!sensor.getCmdEnabled()) {
+      throw new NotAuthorizedException("The sensor with the sensorId given"
+          + "is not allowed to receive commands");
+    }
     Device device = null;
     Gateway gateway = null;
     if((device = deviceRepo.findBySensors(sensor)) == null

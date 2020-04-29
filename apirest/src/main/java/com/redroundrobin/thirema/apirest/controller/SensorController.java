@@ -12,6 +12,7 @@ import java.util.Map;
 
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
+import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,15 +78,16 @@ public class SensorController extends CoreController {
   }
 
   @PutMapping(value = {"/{sensorId:.+}"})
-  public ResponseEntity<String> sendGatewayConfigToKafka(@RequestHeader(value = "Authorization") String authorization,
-                                                         @PathVariable("sensorId") int sensorId,
-                                                         @RequestBody Map<String, Object> commandFields) {
+  public ResponseEntity<String> sendCommandToSensorToGAtewayThroughToKafka(
+      @RequestHeader(value = "Authorization") String authorization,
+      @PathVariable("sensorId") int sensorId,
+      @RequestBody Map<String, Object> commandFields) {
     User user = this.getUserFromAuthorization(authorization);
     if (user.getType() == User.Role.ADMIN) {
       try {
         return ResponseEntity.ok(
             sensorService.sendTelegramCommandToSensor(sensorId, commandFields));
-      } catch(ElementNotFoundException e) {
+      } catch(ElementNotFoundException | NotAuthorizedException e) {
         logger.debug("RESPONSE STATUS: FORBIDDEN." + e.getMessage());
         return new ResponseEntity(HttpStatus.FORBIDDEN);
       }

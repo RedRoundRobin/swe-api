@@ -13,6 +13,8 @@ import java.util.Map;
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
+import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -66,6 +68,22 @@ public class EntityController extends CoreController {
     }
   }
 
+  @GetMapping(value = {"/{entityId:.+}/sensors"})
+  public ResponseEntity<List<Sensors>> getSensorsEnabledForEntity(
+      @RequestHeader(value = "Authorization") String authorization,
+      @RequestParam(name = "sensor", required = false) Integer sensorId,
+      @RequestParam(name = "user", required = false) Integer userId) {
+    User user = this.getUserFromAuthorization(authorization);
+    User user = this.getUserFromAuthorization(authorization);
+    if (user.getType() == User.Role.ADMIN || user.getEntity().getId() == entityId) {
+      return ResponseEntity.ok(entityService.findById(entityId));
+    } else {
+      logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId()
+          + " is not an administrator or the entity Id is not the same as the user entity");
+      return new ResponseEntity(HttpStatus.FORBIDDEN);
+    }
+  }
+
   @GetMapping(value = {"/{entityId:.+}"})
   public ResponseEntity<Entity> getEntity(
       @RequestHeader(value = "Authorization") String authorization,
@@ -99,6 +117,29 @@ public class EntityController extends CoreController {
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
       }
     } else {
+      logger.debug("RESPONSE STATUS: FORBIDDEN. User is not an admin");
+      return new ResponseEntity(HttpStatus.FORBIDDEN);
+    }
+  }
+
+  @PutMapping("/{entityId:.+}")
+  public ResponseEntity enableOrDisableSensorToEntity(
+      @RequestHeader("authorization") String authorization,
+      @PathVariable("entityId") int entityId,
+      @RequestBody String sensorsToEnableOrDisable) {
+    User user = this.getUserFromAuthorization(authorization);
+    if (user.getType() == User.Role.ADMIN) {
+      try {
+        if (entityService.enableOrDisableSensorToEntity(entityId, sensorsToEnableOrDisable)) {
+          return new ResponseEntity(HttpStatus.OK);
+        } else {
+          return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+      } catch (ElementNotFoundException | JsonProcessingException enfe) { //mettere l'eccezione Json in punto giusto!!
+        logger.debug(enfe.toString());
+        return new ResponseEntity(HttpStatus.BAD_REQUEST);
+      }
+    }  else {
       logger.debug("RESPONSE STATUS: FORBIDDEN. User is not an admin");
       return new ResponseEntity(HttpStatus.FORBIDDEN);
     }

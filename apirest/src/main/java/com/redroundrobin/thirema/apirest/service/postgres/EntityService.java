@@ -1,5 +1,6 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
+import com.redroundrobin.thirema.apirest.models.postgres.Alert;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
@@ -12,10 +13,17 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
+import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -130,4 +138,64 @@ public class EntityService {
       throw ElementNotFoundException.notFoundMessage("entity");
     }
   }
+
+  public boolean enableOrDisableSensorToEntity(int entityId, String SensorsToEnableOrDisable)
+      throws ElementNotFoundException, JsonProcessingException {
+    Entity entityToEdit = null;
+    if(entityRepo.existsById(entityId)) {
+      entityToEdit = entityRepo.findById(entityId).orElse(null);
+    } else {
+      throw ElementNotFoundException.notFoundMessage("entity");
+    }
+
+    ObjectMapper objectMapper = new ObjectMapper();
+    JsonNode jsonSensorsToEnableOrDisable =
+        objectMapper.readTree(SensorsToEnableOrDisable);
+
+    ArrayNode sensorsToInsert = (ArrayNode)jsonSensorsToEnableOrDisable.get("toInsert");
+    boolean flag = false;
+    Set<Sensor> sensorsEnabled = entityToEdit.getSensors();
+    for(int i=0; i < sensorsToInsert.size() && !flag; i++) {
+      int sensorToInsertId = sensorsToInsert.get(i).asInt();
+      Sensor sensorToInsert = null;
+      if(!sensorRepo.existsById(sensorToInsertId)
+          || sensorsEnabled.contains(
+              sensorToInsert = sensorRepo.findById(sensorToInsertId).orElse(null))) {
+        flag= true;
+      } else {
+        sensorsEnabled.add(sensorToInsert);
+      }
+    } if(!flag) {
+      throw new ElementNotFoundException("sensor not found or "
+          + "already inserted in the given entity");
+    }
+
+    ArrayNode sensorsToDelete = (ArrayNode)jsonSensorsToEnableOrDisable.get("toDelete");
+    for(int i=0; i < sensorsToDelete.size() && !flag; i++) {
+      int sensorsToDeleteId = sensorsToDelete.get(i).asInt();
+      Sensor sensorToDelete = null;
+      if(!sensorRepo.existsById(sensorsToDeleteId)
+          || sensorsEnabled.contains(
+          sensorToDelete = sensorRepo.findById(sensorsToDeleteId).orElse(null))) {
+        flag = false;
+      } else {
+        sensorsEnabled.remove(sensorToDelete);
+      }
+    } if(!flag) {
+      throw ElementNotFoundException.notFoundMessage("sensor not found or "
+          + "already not present in the given entity");
+    }
+
+    entityToEdit.setSensors(sensorsEnabled);
+    entityRepo.save(entityToEdit);
+    return true;
+     /* userToEdit.setDisabledAlerts(userDisabledAlerts);
+      User newUser = userRepo.save(userToEdit);
+      return (enable && !newUser.getDisabledAlerts().containsAll(alert))
+          || (!enable && newUser.getDisabledAlerts().contains(alert));
+    } else {
+      throw NotAuthorizedException.notAuthorizedMessage("alert");
+    }*/
+  }
+
 }
