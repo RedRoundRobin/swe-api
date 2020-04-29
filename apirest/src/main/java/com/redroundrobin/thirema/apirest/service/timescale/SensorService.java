@@ -46,7 +46,7 @@ public class SensorService {
 
       if (sensor != null) {
         String gatewayName = sensor.getDevice().getGateway().getName();
-        int realDeviceId = sensor.getDevice().getId();
+        int realDeviceId = sensor.getDevice().getRealDeviceId();
         int realSensorId = sensor.getRealSensorId();
 
         if (limit != null) {
