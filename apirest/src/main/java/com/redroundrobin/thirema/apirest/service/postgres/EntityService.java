@@ -154,11 +154,9 @@ public class EntityService {
     } else {
       throw ElementNotFoundException.notFoundMessage("entity");
     }
-
-    logger.debug("SIZE" + SensorsToEnableOrDisable.size());
+    
     LinkedHashMap<String, Object> sensorsToInsert =
         (LinkedHashMap<String, Object>)SensorsToEnableOrDisable.get("toInsert");
-    logger.debug("SIZE_2" + sensorsToInsert.size());
     boolean flag = false;
     Set<Sensor> sensorsEnabled = entityToEdit.getSensors();
     for(int i=0; i < sensorsToInsert.size() && !flag; i++) {
@@ -190,7 +188,7 @@ public class EntityService {
         sensorsEnabled.remove(sensorToDelete);
       }
     } if(flag) {
-      throw ElementNotFoundException.notFoundMessage("sensor not found or "
+      throw new ElementNotFoundException("sensor not found or "
           + "already not present in the given entity");
     }
 
