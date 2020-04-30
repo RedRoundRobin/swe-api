@@ -223,27 +223,6 @@ public class GatewayController extends CoreController {
     }
   }
 
-  /*
-  @PutMapping(value = {"/{gatewayId:.+}"})
-  public ResponseEntity<String> sendGatewayConfigToKafka(
-      @RequestHeader(value = "Authorization") String authorization,
-      @PathVariable("gatewayId") int gatewayId) {
-    User user = this.getUserFromAuthorization(authorization);
-    if (user.getType() == User.Role.ADMIN) {
-      try {
-        return ResponseEntity.ok(gatewayService.sendGatewayConfigToKafka(gatewayId));
-      } catch(InvalidFieldsValuesException | JsonProcessingException e) {
-        logger.debug("RESPONSE STATUS: FORBIDDEN. The gateway with the given Id "
-            + "doesn't exist");
-        return new ResponseEntity(HttpStatus.FORBIDDEN);
-      }
-    } else {
-      logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId()
-          + " is not an administrator");
-      return new ResponseEntity(HttpStatus.FORBIDDEN);
-    }
-  }*/
-
   @DeleteMapping(value = {"/{gatewayId:.+}"})
   public ResponseEntity deleteGateway(@RequestHeader("Authorization") String authorization,
                                              @PathVariable(value = "gatewayId") int gatewayId,

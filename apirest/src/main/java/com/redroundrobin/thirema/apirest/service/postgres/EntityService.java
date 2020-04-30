@@ -1,5 +1,6 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
+import com.redroundrobin.thirema.apirest.models.postgres.Alert;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
@@ -10,12 +11,23 @@ import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
+import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -30,7 +42,9 @@ public class EntityService {
 
   private final UserRepository userRepo;
 
-  private boolean checkAddEditFields(boolean edit, Map<String, String> fields) {
+  protected Logger logger = LoggerFactory.getLogger(this.getClass());
+
+  private boolean checkAddEditFields(boolean edit, Map<String, Object> fields) {
     List<String> allowedFields = new ArrayList<>();
     allowedFields.add("name");
     allowedFields.add("location");
@@ -87,26 +101,26 @@ public class EntityService {
     return entityRepo.findById(id).orElse(null);
   }
 
-  public Entity addEntity(Map<String, String> newEntityFields) throws MissingFieldsException {
+  public Entity addEntity(Map<String, Object> newEntityFields) throws MissingFieldsException {
     if (checkAddEditFields(false, newEntityFields)) {
-      Entity entity = new Entity(newEntityFields.get("name"), newEntityFields.get("location"));
+      Entity entity = new Entity((String)newEntityFields.get("name"), (String)newEntityFields.get("location"));
       return entityRepo.save(entity);
     } else {
       throw MissingFieldsException.defaultMessage();
     }
   }
 
-  public Entity editEntity(int entityId, Map<String, String> fieldsToEdit) throws MissingFieldsException, InvalidFieldsValuesException {
+  public Entity editEntity(int entityId, Map<String, Object> fieldsToEdit) throws MissingFieldsException, InvalidFieldsValuesException {
     Entity entity = entityRepo.findById(entityId).orElse(null);
     if (entity == null) {
       throw new InvalidFieldsValuesException("The entity with provided id is not found");
     } else if (checkAddEditFields(true, fieldsToEdit)) {
       if (fieldsToEdit.containsKey("name")) {
-        entity.setName(fieldsToEdit.get("name"));
+        entity.setName((String)fieldsToEdit.get("name"));
       }
 
       if (fieldsToEdit.containsKey("location")) {
-        entity.setLocation(fieldsToEdit.get("location"));
+        entity.setLocation((String)fieldsToEdit.get("location"));
       }
 
       return entityRepo.save(entity);
@@ -130,4 +144,69 @@ public class EntityService {
       throw ElementNotFoundException.notFoundMessage("entity");
     }
   }
+
+  public boolean enableOrDisableSensorToEntity(int entityId, Map<String, Object> SensorsToEnableOrDisable)
+      throws ElementNotFoundException, JsonProcessingException {
+    Entity entityToEdit = null;
+    if(entityRepo.existsById(entityId)) {
+      entityToEdit = entityRepo.findById(entityId).orElse(null);
+    } else {
+      throw ElementNotFoundException.notFoundMessage("entity");
+    }
+    
+    List<Object> sensorsToInsert =
+        (ArrayList<Object>)SensorsToEnableOrDisable.get("toInsert");
+    boolean flag = false;
+    Set<Sensor> sensorsEnabled = entityToEdit.getSensors();
+    for(int i=0; i < sensorsToInsert.size() && !flag; i++) {
+      LinkedHashMap<String, Integer> aux =
+          (LinkedHashMap<String, Integer>)sensorsToInsert.get(i);
+      int sensorToInsertId = aux.get("sensorId");
+      Sensor sensorToInsert = null;
+      if(!sensorRepo.existsById(sensorToInsertId)
+          || sensorsEnabled.contains(
+          sensorToInsert = sensorRepo.findById(sensorToInsertId).orElse(null))) {
+        flag= true;
+      } else {
+        sensorsEnabled.add(sensorToInsert);
+      }
+    } if(flag) {
+      throw new ElementNotFoundException("sensor not found or "
+          + "already inserted in the given entity");
+    }
+
+    List<Object> sensorsToDelete =
+        (ArrayList<Object>)SensorsToEnableOrDisable.get("toDelete");
+    for(int i=0; i < sensorsToDelete.size() && !flag; i++) {
+      LinkedHashMap<String, Integer> aux =
+          (LinkedHashMap<String, Integer>)sensorsToDelete.get(i);
+      int sensorsToDeleteId = aux.get("sensorId");
+      Sensor sensorToDelete = null;
+      if(!sensorRepo.existsById(sensorsToDeleteId)
+          || !sensorsEnabled.contains(
+          sensorToDelete = sensorRepo.findById(sensorsToDeleteId).orElse(null))) {
+        flag = true;
+      } else {
+        sensorsEnabled.remove(sensorToDelete);
+      }
+    } if(flag) {
+      throw ElementNotFoundException.notFoundMessage("sensor not found or "
+          + "already not present in the given entity");
+    }
+
+
+    entityToEdit.setSensors(sensorsEnabled);
+    entityRepo.save(entityToEdit);
+    return true;
+  }
+
+  public List<Sensor> getEntitySensorsEnabled(int entityId)
+      throws ElementNotFoundException {
+    if(!entityRepo.existsById(entityId))
+      throw ElementNotFoundException.notFoundMessage("entity");
+    List<Sensor> sensorsList = new ArrayList();
+    sensorsList.addAll(entityRepo.findById(entityId).get().getSensors());
+    return sensorsList;
+  }
+
 }
