@@ -154,14 +154,15 @@ public class EntityService {
     } else {
       throw ElementNotFoundException.notFoundMessage("entity");
     }
-    List<Object> sensorsToInsert =
-        (ArrayList<Object>)SensorsToEnableOrDisable.get("toInsert");
-    LinkedHashMap<String, Object> auxInsert =
-        (LinkedHashMap<String, Object>)sensorsToInsert.get(0);
+
+    logger.debug("SIZE" + SensorsToEnableOrDisable.size());
+    LinkedHashMap<String, Object> sensorsToInsert =
+        (LinkedHashMap<String, Object>)SensorsToEnableOrDisable.get("toInsert");
+    logger.debug("SIZE_2" + sensorsToInsert.size());
     boolean flag = false;
     Set<Sensor> sensorsEnabled = entityToEdit.getSensors();
-    for(int i=0; i < auxInsert.size() && !flag; i++) {
-      int sensorToInsertId = (Integer)auxInsert.get("Id"+(i+1));
+    for(int i=0; i < sensorsToInsert.size() && !flag; i++) {
+      int sensorToInsertId = (Integer)sensorsToInsert.get("Id"+(i+1));
       Sensor sensorToInsert = null;
       if(!sensorRepo.existsById(sensorToInsertId)
           || sensorsEnabled.contains(
@@ -175,18 +176,15 @@ public class EntityService {
           + "already inserted in the given entity");
     }
 
-    List<Object> sensorsToDelete =
-        (ArrayList<Object>)SensorsToEnableOrDisable.get("toDelete");
-    LinkedHashMap<String, Object> auxDelete =
-        (LinkedHashMap<String, Object>)sensorsToDelete.get(0);
-    for(int i=0; i < auxDelete.size() && !flag; i++) {
-      int sensorsToDeleteId = (Integer)auxDelete.get("Id"+(i+1));
+    LinkedHashMap<String, Object> sensorsToDelete =
+        (LinkedHashMap<String, Object>)SensorsToEnableOrDisable.get("toDelete");
+    for(int i=0; i < sensorsToDelete.size() && !flag; i++) {
+      int sensorsToDeleteId = (Integer)sensorsToDelete.get("Id"+(i+1));
       Sensor sensorToDelete = null;
       if(!sensorRepo.existsById(sensorsToDeleteId)) {
         flag= true;
       } else if(!sensorsEnabled.contains(
           sensorToDelete = sensorRepo.findById(sensorsToDeleteId).orElse(null))) {
-        logger.debug("DIO BRIGANTE");
         flag = true;
       } else {
         sensorsEnabled.remove(sensorToDelete);
