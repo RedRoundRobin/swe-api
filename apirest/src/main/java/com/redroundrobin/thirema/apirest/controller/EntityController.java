@@ -69,7 +69,7 @@ public class EntityController extends CoreController {
     }
   }
 
-  @GetMapping(value = {"/{entityId:.+}/sensors"})
+ /* @GetMapping(value = {"/{entityId:.+}/sensors"})
   public ResponseEntity<List<Sensor>> getSensorsEnabledForEntity(
       @RequestHeader(value = "Authorization") String authorization,
       @PathVariable(name = "entityId") Integer entityId) {
@@ -87,7 +87,7 @@ public class EntityController extends CoreController {
           + " is not an administrator or the entity Id is not the same as the user entity");
       return new ResponseEntity(HttpStatus.FORBIDDEN);
     }
-  }
+  }*/
 
   @GetMapping(value = {"/{entityId:.+}"})
   public ResponseEntity<Entity> getEntity(
@@ -126,30 +126,7 @@ public class EntityController extends CoreController {
       return new ResponseEntity(HttpStatus.FORBIDDEN);
     }
   }
-/*
-  @PutMapping("/{entityId:.+}")
-  public ResponseEntity enableOrDisableSensorToEntity(
-      @RequestHeader("authorization") String authorization,
-      @PathVariable("entityId") int entityId,
-      @RequestBody String sensorsToEnableOrDisable) {
-    User user = this.getUserFromAuthorization(authorization);
-    if (user.getType() == User.Role.ADMIN) {
-      try {
-        if (entityService.enableOrDisableSensorToEntity(entityId, sensorsToEnableOrDisable)) {
-          return new ResponseEntity(HttpStatus.OK);
-        } else {
-          return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-      } catch (ElementNotFoundException | JsonProcessingException enfe) { //mettere l'eccezione Json in punto giusto!!
-        logger.debug(enfe.toString());
-        return new ResponseEntity(HttpStatus.BAD_REQUEST);
-      }
-    }  else {
-      logger.debug("RESPONSE STATUS: FORBIDDEN. User is not an admin");
-      return new ResponseEntity(HttpStatus.FORBIDDEN);
-    }
-  }
-*/
+
   @PutMapping(value = {"/{entityId:.+}"})
   public ResponseEntity<Entity> editEntity(
       @RequestHeader(value = "Authorization") String authorization,
