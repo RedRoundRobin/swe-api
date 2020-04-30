@@ -11,6 +11,8 @@ import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -24,6 +26,8 @@ import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundExceptio
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -38,7 +42,9 @@ public class EntityService {
 
   private final UserRepository userRepo;
 
-  private boolean checkAddEditFields(boolean edit, Map<String, String> fields) {
+  protected Logger logger = LoggerFactory.getLogger(this.getClass());
+
+  private boolean checkAddEditFields(boolean edit, Map<String, Object> fields) {
     List<String> allowedFields = new ArrayList<>();
     allowedFields.add("name");
     allowedFields.add("location");
@@ -95,26 +101,26 @@ public class EntityService {
     return entityRepo.findById(id).orElse(null);
   }
 
-  public Entity addEntity(Map<String, String> newEntityFields) throws MissingFieldsException {
+  public Entity addEntity(Map<String, Object> newEntityFields) throws MissingFieldsException {
     if (checkAddEditFields(false, newEntityFields)) {
-      Entity entity = new Entity(newEntityFields.get("name"), newEntityFields.get("location"));
+      Entity entity = new Entity((String)newEntityFields.get("name"), (String)newEntityFields.get("location"));
       return entityRepo.save(entity);
     } else {
       throw MissingFieldsException.defaultMessage();
     }
   }
 
-  public Entity editEntity(int entityId, Map<String, String> fieldsToEdit) throws MissingFieldsException, InvalidFieldsValuesException {
+  public Entity editEntity(int entityId, Map<String, Object> fieldsToEdit) throws MissingFieldsException, InvalidFieldsValuesException {
     Entity entity = entityRepo.findById(entityId).orElse(null);
     if (entity == null) {
       throw new InvalidFieldsValuesException("The entity with provided id is not found");
     } else if (checkAddEditFields(true, fieldsToEdit)) {
       if (fieldsToEdit.containsKey("name")) {
-        entity.setName(fieldsToEdit.get("name"));
+        entity.setName((String)fieldsToEdit.get("name"));
       }
 
       if (fieldsToEdit.containsKey("location")) {
-        entity.setLocation(fieldsToEdit.get("location"));
+        entity.setLocation((String)fieldsToEdit.get("location"));
       }
 
       return entityRepo.save(entity);
@@ -139,7 +145,7 @@ public class EntityService {
     }
   }
 
-  public boolean enableOrDisableSensorToEntity(int entityId, String SensorsToEnableOrDisable)
+  public boolean enableOrDisableSensorToEntity(int entityId, Map<String, Object> SensorsToEnableOrDisable)
       throws ElementNotFoundException, JsonProcessingException {
     Entity entityToEdit = null;
     if(entityRepo.existsById(entityId)) {
@@ -147,55 +153,60 @@ public class EntityService {
     } else {
       throw ElementNotFoundException.notFoundMessage("entity");
     }
-
-    ObjectMapper objectMapper = new ObjectMapper();
-    JsonNode jsonSensorsToEnableOrDisable =
-        objectMapper.readTree(SensorsToEnableOrDisable);
-
-    ArrayNode sensorsToInsert = (ArrayNode)jsonSensorsToEnableOrDisable.get("toInsert");
+    
+    List<Object> sensorsToInsert =
+        (ArrayList<Object>)SensorsToEnableOrDisable.get("toInsert");
     boolean flag = false;
     Set<Sensor> sensorsEnabled = entityToEdit.getSensors();
     for(int i=0; i < sensorsToInsert.size() && !flag; i++) {
-      int sensorToInsertId = sensorsToInsert.get(i).asInt();
+      LinkedHashMap<String, Integer> aux =
+          (LinkedHashMap<String, Integer>)sensorsToInsert.get(i);
+      int sensorToInsertId = aux.get("sensorId");
       Sensor sensorToInsert = null;
       if(!sensorRepo.existsById(sensorToInsertId)
           || sensorsEnabled.contains(
-              sensorToInsert = sensorRepo.findById(sensorToInsertId).orElse(null))) {
+          sensorToInsert = sensorRepo.findById(sensorToInsertId).orElse(null))) {
         flag= true;
       } else {
         sensorsEnabled.add(sensorToInsert);
       }
-    } if(!flag) {
+    } if(flag) {
       throw new ElementNotFoundException("sensor not found or "
           + "already inserted in the given entity");
     }
 
-    ArrayNode sensorsToDelete = (ArrayNode)jsonSensorsToEnableOrDisable.get("toDelete");
+    List<Object> sensorsToDelete =
+        (ArrayList<Object>)SensorsToEnableOrDisable.get("toDelete");
     for(int i=0; i < sensorsToDelete.size() && !flag; i++) {
-      int sensorsToDeleteId = sensorsToDelete.get(i).asInt();
+      LinkedHashMap<String, Integer> aux =
+          (LinkedHashMap<String, Integer>)sensorsToDelete.get(i);
+      int sensorsToDeleteId = aux.get("sensorId");
       Sensor sensorToDelete = null;
       if(!sensorRepo.existsById(sensorsToDeleteId)
-          || sensorsEnabled.contains(
+          || !sensorsEnabled.contains(
           sensorToDelete = sensorRepo.findById(sensorsToDeleteId).orElse(null))) {
-        flag = false;
+        flag = true;
       } else {
         sensorsEnabled.remove(sensorToDelete);
       }
-    } if(!flag) {
+    } if(flag) {
       throw ElementNotFoundException.notFoundMessage("sensor not found or "
           + "already not present in the given entity");
     }
 
+
     entityToEdit.setSensors(sensorsEnabled);
     entityRepo.save(entityToEdit);
     return true;
-     /* userToEdit.setDisabledAlerts(userDisabledAlerts);
-      User newUser = userRepo.save(userToEdit);
-      return (enable && !newUser.getDisabledAlerts().containsAll(alert))
-          || (!enable && newUser.getDisabledAlerts().contains(alert));
-    } else {
-      throw NotAuthorizedException.notAuthorizedMessage("alert");
-    }*/
+  }
+
+  public List<Sensor> getEntitySensorsEnabled(int entityId)
+      throws ElementNotFoundException {
+    if(!entityRepo.existsById(entityId))
+      throw ElementNotFoundException.notFoundMessage("entity");
+    List<Sensor> sensorsList = new ArrayList();
+    sensorsList.addAll(entityRepo.findById(entityId).get().getSensors());
+    return sensorsList;
   }
 
 }

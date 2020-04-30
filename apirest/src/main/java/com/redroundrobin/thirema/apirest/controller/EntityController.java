@@ -1,6 +1,7 @@
 package com.redroundrobin.thirema.apirest.controller;
 
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
+import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
@@ -69,14 +70,18 @@ public class EntityController extends CoreController {
   }
 
   @GetMapping(value = {"/{entityId:.+}/sensors"})
-  public ResponseEntity<List<Sensors>> getSensorsEnabledForEntity(
+  public ResponseEntity<List<Sensor>> getSensorsEnabledForEntity(
       @RequestHeader(value = "Authorization") String authorization,
-      @RequestParam(name = "sensor", required = false) Integer sensorId,
-      @RequestParam(name = "user", required = false) Integer userId) {
+      @PathVariable(name = "entityId") Integer entityId) {
     User user = this.getUserFromAuthorization(authorization);
-    User user = this.getUserFromAuthorization(authorization);
-    if (user.getType() == User.Role.ADMIN || user.getEntity().getId() == entityId) {
-      return ResponseEntity.ok(entityService.findById(entityId));
+    if (user.getType() == User.Role.ADMIN) {
+      try {
+        return ResponseEntity.ok(entityService.getEntitySensorsEnabled(entityId));
+      } catch(ElementNotFoundException enfe) {
+        logger.debug("RESPONSE STATUS: BAD_REQUEST. The given entityId"
+            + " doen't match any entity in the database");
+        return new ResponseEntity(HttpStatus.BAD_REQUEST);
+      }
     } else {
       logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId()
           + " is not an administrator or the entity Id is not the same as the user entity");
@@ -101,7 +106,7 @@ public class EntityController extends CoreController {
   @PostMapping(value = {""})
   public ResponseEntity<Entity> addEntity(
       @RequestHeader(value = "Authorization") String authorization,
-      @RequestBody Map<String, String> newEntityFields,
+      @RequestBody Map<String, Object> newEntityFields,
       HttpServletRequest httpRequest) {
     String ip = getIpAddress(httpRequest);
     User user = getUserFromAuthorization(authorization);
@@ -121,7 +126,7 @@ public class EntityController extends CoreController {
       return new ResponseEntity(HttpStatus.FORBIDDEN);
     }
   }
-
+/*
   @PutMapping("/{entityId:.+}")
   public ResponseEntity enableOrDisableSensorToEntity(
       @RequestHeader("authorization") String authorization,
@@ -144,24 +149,39 @@ public class EntityController extends CoreController {
       return new ResponseEntity(HttpStatus.FORBIDDEN);
     }
   }
-
+*/
   @PutMapping(value = {"/{entityId:.+}"})
   public ResponseEntity<Entity> editEntity(
       @RequestHeader(value = "Authorization") String authorization,
       @PathVariable(value = "entityId") int entityId,
-      @RequestBody Map<String, String> fieldsToEdit,
+      @RequestBody Map<String, Object> fieldsToEditOrsensorsToEnableOrDisable,
       HttpServletRequest httpRequest) {
     String ip = getIpAddress(httpRequest);
     User user = getUserFromAuthorization(authorization);
-
-    if (user.getType() == User.Role.ADMIN) {
+    if (user.getType() == User.Role.ADMIN
+        && !(boolean)fieldsToEditOrsensorsToEnableOrDisable.get("enableOrDisableSensors")) {
       try {
-        Entity entity = entityService.editEntity(entityId, fieldsToEdit);
+        Entity entity = entityService.editEntity(
+            entityId, fieldsToEditOrsensorsToEnableOrDisable);
         logService.createLog(user.getId(),ip,"entity.edit",
             Integer.toString(entity.getId()));
         return ResponseEntity.ok(entity);
       } catch (MissingFieldsException | InvalidFieldsValuesException e) {
         logger.debug(e.toString());
+        return new ResponseEntity(HttpStatus.BAD_REQUEST);
+      }
+    } else if(user.getType() == User.Role.ADMIN
+        && (boolean)fieldsToEditOrsensorsToEnableOrDisable.get("enableOrDisableSensors")) {
+      try {
+        fieldsToEditOrsensorsToEnableOrDisable.remove("enableOrDisableSensors");
+        if (entityService.enableOrDisableSensorToEntity(entityId,
+            fieldsToEditOrsensorsToEnableOrDisable)) {
+          return new ResponseEntity(HttpStatus.OK);
+        } else {
+          return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+      } catch (Exception /*| ElementNotFoundException | JsonProcessingException*/ enfe) { //mettere l'eccezione Json in punto giusto!!
+        logger.debug(enfe.toString());
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
       }
     } else {
