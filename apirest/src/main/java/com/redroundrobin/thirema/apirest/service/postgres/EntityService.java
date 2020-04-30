@@ -12,6 +12,7 @@ import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -153,15 +154,14 @@ public class EntityService {
     } else {
       throw ElementNotFoundException.notFoundMessage("entity");
     }
-    
     List<Object> sensorsToInsert =
         (ArrayList<Object>)SensorsToEnableOrDisable.get("toInsert");
+    LinkedHashMap<String, Object> auxInsert =
+        (LinkedHashMap<String, Object>)sensorsToInsert.get(0);
     boolean flag = false;
     Set<Sensor> sensorsEnabled = entityToEdit.getSensors();
-    for(int i=0; i < sensorsToInsert.size() && !flag; i++) {
-      LinkedHashMap<String, Integer> aux =
-          (LinkedHashMap<String, Integer>)sensorsToInsert.get(i);
-      int sensorToInsertId = aux.get("sensorId");
+    for(int i=0; i < auxInsert.size() && !flag; i++) {
+      int sensorToInsertId = (Integer)auxInsert.get("Id"+(i+1));
       Sensor sensorToInsert = null;
       if(!sensorRepo.existsById(sensorToInsertId)
           || sensorsEnabled.contains(
@@ -177,14 +177,16 @@ public class EntityService {
 
     List<Object> sensorsToDelete =
         (ArrayList<Object>)SensorsToEnableOrDisable.get("toDelete");
-    for(int i=0; i < sensorsToDelete.size() && !flag; i++) {
-      LinkedHashMap<String, Integer> aux =
-          (LinkedHashMap<String, Integer>)sensorsToDelete.get(i);
-      int sensorsToDeleteId = aux.get("sensorId");
+    LinkedHashMap<String, Object> auxDelete =
+        (LinkedHashMap<String, Object>)sensorsToDelete.get(0);
+    for(int i=0; i < auxDelete.size() && !flag; i++) {
+      int sensorsToDeleteId = (Integer)auxDelete.get("Id"+(i+1));
       Sensor sensorToDelete = null;
-      if(!sensorRepo.existsById(sensorsToDeleteId)
-          || !sensorsEnabled.contains(
+      if(!sensorRepo.existsById(sensorsToDeleteId)) {
+        flag= true;
+      } else if(!sensorsEnabled.contains(
           sensorToDelete = sensorRepo.findById(sensorsToDeleteId).orElse(null))) {
+        logger.debug("DIO BRIGANTE");
         flag = true;
       } else {
         sensorsEnabled.remove(sensorToDelete);
