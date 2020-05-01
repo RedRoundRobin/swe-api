@@ -205,6 +205,8 @@ public class GatewayController extends CoreController {
       try {
         if(newGatewayFields.containsKey("reconfig")
             && ((boolean)newGatewayFields.get("reconfig"))) {
+          logService.createLog(user.getId(),ip,"gateway.reconfig",
+              Integer.toString(gatewayId));
           return ResponseEntity.ok(gatewayService.sendGatewayConfigToKafka(gatewayId));
         } else {
           Gateway gateway = gatewayService.editGateway(gatewayId, newGatewayFields);
