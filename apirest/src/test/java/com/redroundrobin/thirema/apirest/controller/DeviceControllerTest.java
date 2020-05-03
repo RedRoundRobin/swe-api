@@ -1,5 +1,7 @@
 package com.redroundrobin.thirema.apirest.controller;
 
+
+
 import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
@@ -9,20 +11,28 @@ import com.redroundrobin.thirema.apirest.service.postgres.DeviceService;
 import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.service.timescale.LogService;
+import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
+import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -46,6 +56,8 @@ public class DeviceControllerTest {
 
   @MockBean
   private SensorService sensorService;
+
+  MockHttpServletRequest httpRequest;
 
   private final String userTokenWithBearer = "Bearer userToken";
   private final String adminTokenWithBearer = "Bearer adminToken";
@@ -72,14 +84,22 @@ public class DeviceControllerTest {
 
   private Sensor sensor1;
   private Sensor sensor2;
+  private Sensor sensor3;
 
   List<Sensor> device1Sensors;
+  List<Sensor> device1EnabledSensorsCmd;
+  List<Sensor> device1NotEnabledSensorsCmd;
 
   private List<Device> allDevices;
   private List<Device> entity1Devices;
+  private List<Device> devicesEnabledForCommands;
+  private List<Device> devicesNotEnabledForCommands;
 
   @Before
   public void setUp() {
+    httpRequest = new MockHttpServletRequest();
+    httpRequest.setRemoteAddr("localhost");
+
     deviceController = new DeviceController(deviceService, sensorService, jwtUtil, logService, userService);
 
     admin = new User(1, "admin", "admin", "admin", "pass", User.Role.ADMIN);
@@ -118,10 +138,27 @@ public class DeviceControllerTest {
     // ---------------------------------------- Set sensors ---------------------------------------
     sensor1 = new Sensor(1, "type1", 1);
     sensor2 = new Sensor(2, "type2", 2);
-
+    sensor3 = new Sensor(3, "type3", 3);
     // --------------------------------- Set devices to sensors ----------------------------------
     sensor1.setDevice(device1);
     sensor2.setDevice(device1);
+    sensor3.setDevice(device2);
+
+    // ---------------------------------- Set cmdEnabled to sensors ------------------------------
+    sensor1.setCmdEnabled(true);
+    sensor2.setCmdEnabled(false);
+    sensor3.setCmdEnabled(false);
+
+    device1EnabledSensorsCmd = new ArrayList();
+    device1EnabledSensorsCmd.add(sensor1);
+
+    device1NotEnabledSensorsCmd = new ArrayList();
+    device1NotEnabledSensorsCmd.add(sensor2);
+
+    devicesEnabledForCommands = new ArrayList<>();
+    devicesEnabledForCommands.add(device1);
+    devicesNotEnabledForCommands = new ArrayList<>();
+    devicesNotEnabledForCommands.add(device2);
 
     // ---------------------------------- Set gateways to devices -------------------------------
     device1.setGateway(gateway1);
@@ -159,6 +196,10 @@ public class DeviceControllerTest {
     });
     when(deviceService.findById(device1.getId())).thenReturn(device1);
     when(deviceService.findByIdAndEntityId(device6.getId(), entity1.getId())).thenReturn(null);
+    when(deviceService.getEnabled(true)).thenReturn(devicesEnabledForCommands);
+    when(deviceService.getEnabled(false)).thenReturn(devicesNotEnabledForCommands);
+    when(deviceService.getEnabledSensorsDevice(true, device1.getId())).thenReturn(device1EnabledSensorsCmd);
+    when(deviceService.getEnabledSensorsDevice(false, device1.getId())).thenReturn(device1NotEnabledSensorsCmd);
 
     when(sensorService.findAllByDeviceId(device1.getId())).thenReturn(device1Sensors);
     when(sensorService.findAllByDeviceIdAndEntityId(device1.getId(), entity1.getId()))
@@ -170,12 +211,48 @@ public class DeviceControllerTest {
         sensor1.getRealSensorId(),entity1.getId())).thenReturn(sensor1);
   }
 
+  private Device cloneDevice(Device device) {
+    Device clone = new Device(device.getName(), device.getFrequency(), device.getRealDeviceId());
+    clone.setGateway(device.getGateway());
+
+    return clone;
+  }
+
   @Test
   public void getAllDevicesByAdmin() {
     ResponseEntity<List<Device>> response = deviceController.getDevices(adminTokenWithBearer, null, null, null);
 
     assertEquals(allDevices, response.getBody());
   }
+
+  @Test
+  public void getAllDevicesByAdminNotFound1() {
+    ResponseEntity<List<Device>> response = deviceController.getDevices(adminTokenWithBearer, null, 1, true);
+
+    assertEquals(new ResponseEntity(HttpStatus.NOT_FOUND), response);
+  }
+
+  @Test
+  public void getAllDevicesByAdminNotFound2() {
+    ResponseEntity<List<Device>> response = deviceController.getDevices(adminTokenWithBearer, 1, 1, true);
+
+    assertEquals(new ResponseEntity(HttpStatus.NOT_FOUND), response);
+  }
+
+  @Test
+  public void getAllDevicesEnabledForCommandsByAdmin() {
+    ResponseEntity<List<Device>> response = deviceController.getDevices(adminTokenWithBearer, null, null, true);
+
+    assertEquals(ResponseEntity.ok(devicesEnabledForCommands), response);
+  }
+
+  @Test
+  public void getAllDevicesNotEnabledForCommandsByAdmin() {
+    ResponseEntity<List<Device>> response = deviceController.getDevices(adminTokenWithBearer, null, null, false);
+
+    assertEquals(ResponseEntity.ok(devicesNotEnabledForCommands), response);
+  }
+
 
   @Test
   public void getEntity1DevicesByAdmin() {
@@ -203,6 +280,13 @@ public class DeviceControllerTest {
     ResponseEntity<List<Device>> response = deviceController.getDevices(userTokenWithBearer, 2, null, null);
 
     assertEquals(Collections.emptyList(), response.getBody());
+  }
+
+  @Test
+  public void getAllDevicesEnabledForCommandsByAUser() {
+    ResponseEntity<List<Device>> response = deviceController.getDevices(userTokenWithBearer, null, null, false);
+
+    assertEquals(new ResponseEntity(HttpStatus.FORBIDDEN), response);
   }
 
   @Test
@@ -244,11 +328,35 @@ public class DeviceControllerTest {
   }
 
   @Test
+  public void getAllEnabledForCommandsSensorsByDeviceIdByAdmin() {
+    ResponseEntity<List<Sensor>> response = deviceController.getSensorsByDevice(
+        adminTokenWithBearer, device1.getId(), true);
+
+    assertEquals(device1EnabledSensorsCmd, response.getBody());
+  }
+
+  @Test
+  public void getAllNotEnabledForCommandsSensorsByDeviceIdByAdmin() {
+    ResponseEntity<List<Sensor>> response = deviceController.getSensorsByDevice(
+        adminTokenWithBearer, device1.getId(), false);
+
+    assertEquals(device1NotEnabledSensorsCmd, response.getBody());
+  }
+
+  @Test
   public void getSensorsByDeviceIdByUser() {
     ResponseEntity<List<Sensor>> response = deviceController.getSensorsByDevice(userTokenWithBearer,
         device1.getId(), null);
 
     assertEquals(device1Sensors, response.getBody());
+  }
+
+  @Test
+  public void getAllSensorsByDeviceIdEnabledForCommandsByUser() {
+    ResponseEntity<List<Sensor>> response = deviceController.getSensorsByDevice(
+        userTokenWithBearer,  device1.getId(), false);
+
+    assertEquals(new ResponseEntity(HttpStatus.FORBIDDEN), response);
   }
 
   @Test
@@ -266,4 +374,78 @@ public class DeviceControllerTest {
 
     assertEquals(sensor1, response.getBody());
   }
+
+  @Test
+  public void createDeviceByAdminSuccessful()
+      throws MissingFieldsException, InvalidFieldsValuesException {
+    Map<String, Object> newDeviceFields = new HashMap<>();
+    newDeviceFields.put("name", "devTest");
+    newDeviceFields.put("realDeviceId", 2);
+    newDeviceFields.put("frequency", 1);
+    newDeviceFields.put("gatewayId", 3);
+
+    Device expectedDevice = new Device((String)newDeviceFields.get("name"),
+        (int)newDeviceFields.get("frequency"), (int)newDeviceFields.get("realDeviceId"));
+    expectedDevice.setGateway(gateway3);
+
+    when(deviceService.addDevice(any(Map.class))).thenReturn(expectedDevice);
+
+    ResponseEntity<Device> response = deviceController.createDevice(adminTokenWithBearer,
+        newDeviceFields  , httpRequest);
+
+    assertEquals(expectedDevice, response.getBody());
+  }
+
+  @Test
+  public void createDeviceByAdminMissingFieldsException()
+      throws MissingFieldsException, InvalidFieldsValuesException {
+    Map<String, Object> newDeviceFields = new HashMap<>();
+    newDeviceFields.put("name", "devTest");
+    newDeviceFields.put("realDeviceId", 2);
+    newDeviceFields.put("gatewayId", 3);
+    //manca la frequency (basta manci un solo field per lanciare l'eccezione MissingFieldsException)
+
+    when(deviceService.addDevice(any(Map.class))).thenThrow(new MissingFieldsException(""));
+
+    ResponseEntity<Device> response = deviceController.createDevice(adminTokenWithBearer,
+        newDeviceFields  , httpRequest);
+
+    assertEquals(new ResponseEntity(HttpStatus.BAD_REQUEST) , response);
+  }
+
+  @Test
+  public void createDeviceByAdminInvalidFieldsValuesException()
+      throws MissingFieldsException, InvalidFieldsValuesException {
+    Map<String, Object> newDeviceFields = new HashMap<>();
+    newDeviceFields.put("name", "devTest");
+    newDeviceFields.put("realDeviceId", 2);
+    newDeviceFields.put("gatewayId", 4);
+    //questo gatewayId non esiste
+
+    when(deviceService.addDevice(any(Map.class))).thenThrow(new InvalidFieldsValuesException(""));
+
+    ResponseEntity<Device> response = deviceController.createDevice(adminTokenWithBearer,
+        newDeviceFields  , httpRequest);
+
+    assertEquals(new ResponseEntity(HttpStatus.BAD_REQUEST) , response);
+  }
+
+  @Test
+  public void createDeviceByUserInvalidFieldsValuesException()
+      throws MissingFieldsException, InvalidFieldsValuesException {
+    Map<String, Object> newDeviceFields = new HashMap<>();
+    newDeviceFields.put("name", "devTest");
+    newDeviceFields.put("realDeviceId", 2);
+    newDeviceFields.put("frequency", 1);
+    newDeviceFields.put("gatewayId", 3);
+
+    ResponseEntity<Device> response = deviceController.createDevice(userTokenWithBearer,
+        newDeviceFields  , httpRequest);
+
+    assertEquals(new ResponseEntity(HttpStatus.FORBIDDEN) , response);
+  }
+
+
+
+
 }
