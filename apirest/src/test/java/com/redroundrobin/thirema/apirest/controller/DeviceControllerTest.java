@@ -144,7 +144,7 @@ public class DeviceControllerTest {
     sensor2.setDevice(device1);
     sensor3.setDevice(device2);
 
-    // ---------------------------------- Set cmdEnabled to sensors ------------------------------
+    // ---------------------------------- Set lists devices (not)enabled for commands -------------
     sensor1.setCmdEnabled(true);
     sensor2.setCmdEnabled(false);
     sensor3.setCmdEnabled(false);
@@ -431,7 +431,7 @@ public class DeviceControllerTest {
   }
 
   @Test
-  public void createDeviceByUserInvalidFieldsValuesException()
+  public void createDeviceByUserErro403()
       throws MissingFieldsException, InvalidFieldsValuesException {
     Map<String, Object> newDeviceFields = new HashMap<>();
     newDeviceFields.put("name", "devTest");
@@ -441,6 +441,101 @@ public class DeviceControllerTest {
 
     ResponseEntity<Device> response = deviceController.createDevice(userTokenWithBearer,
         newDeviceFields  , httpRequest);
+
+    assertEquals(new ResponseEntity(HttpStatus.FORBIDDEN) , response);
+  }
+
+  @Test
+  public void createSensorByAdminSuccessful()
+      throws MissingFieldsException, InvalidFieldsValuesException {
+    Map<String, Object> newSensorFields = new HashMap<>();
+    newSensorFields.put("type", "description");
+    newSensorFields.put("realSensorId", 3);
+    newSensorFields.put("deviceId", device1.getId());
+    newSensorFields.put("cmdEnabled", false);
+
+    Sensor expectedSensor = new Sensor((int)newSensorFields.get("deviceId"),
+        (String)newSensorFields.get("type"), (int)newSensorFields.get("realSensorId"));
+
+    expectedSensor.setCmdEnabled((boolean)newSensorFields.get("cmdEnabled"));
+    expectedSensor.setDevice(deviceService.findById((int)newSensorFields.get("deviceId")));
+
+    when(sensorService.addSensor(any(Map.class))).thenReturn(expectedSensor);
+
+    ResponseEntity<Sensor> response = deviceController.createSensor(adminTokenWithBearer,
+        newSensorFields  , device1.getId(), httpRequest);
+
+    assertEquals(expectedSensor, response.getBody());
+  }
+
+  @Test
+  public void createSensorByAdminSuccessfulWithoutSpecifiyingCmdEnabled()
+      throws MissingFieldsException, InvalidFieldsValuesException {
+    Map<String, Object> newSensorFields = new HashMap<>();
+    newSensorFields.put("type", "description");
+    newSensorFields.put("realSensorId", 3);
+    newSensorFields.put("deviceId", device1.getId());
+
+    Sensor expectedSensor = new Sensor((int)newSensorFields.get("deviceId"),
+        (String)newSensorFields.get("type"), (int)newSensorFields.get("realSensorId"));
+
+    expectedSensor.setDevice(deviceService.findById((int)newSensorFields.get("deviceId")));
+
+    when(sensorService.addSensor(any(Map.class))).thenReturn(expectedSensor);
+
+    ResponseEntity<Sensor> response = deviceController.createSensor(adminTokenWithBearer,
+        newSensorFields, device1.getId(), httpRequest);
+
+    assertEquals(expectedSensor, response.getBody());
+  }
+
+  @Test
+  public void createSensorByAdminMissingFieldsException()
+      throws MissingFieldsException, InvalidFieldsValuesException {
+    Map<String, Object> newSensorFields = new HashMap<>();
+    newSensorFields.put("realSensorId", 3);
+    newSensorFields.put("deviceId", device1.getId());
+    newSensorFields.put("cmdEnabled", false);
+    //manca il type (basta manchi un solo field che non sia cmdEnabled per lanciare l'eccezione MissingFieldsException)
+
+    when(sensorService.addSensor(any(Map.class))).thenThrow(new MissingFieldsException(""));
+
+    ResponseEntity<Sensor> response = deviceController.createSensor(adminTokenWithBearer,
+        newSensorFields , device1.getId(), httpRequest);
+
+    assertEquals(new ResponseEntity(HttpStatus.BAD_REQUEST) , response);
+  }
+
+
+  @Test
+  public void createSensorByAdminInvalidFieldsValuesException()
+      throws MissingFieldsException, InvalidFieldsValuesException {
+    Map<String, Object> newSensorFields = new HashMap<>();
+    newSensorFields.put("realSensorId", 3);
+    newSensorFields.put("type", "description");
+    newSensorFields.put("deviceId", 8); //id non esistente
+    newSensorFields.put("cmdEnabled", false);
+
+    when(sensorService.addSensor(any(Map.class))).thenThrow(new InvalidFieldsValuesException(""));
+
+    ResponseEntity<Sensor> response = deviceController.createSensor(adminTokenWithBearer,
+        newSensorFields , 8, httpRequest);
+
+    assertEquals(new ResponseEntity(HttpStatus.BAD_REQUEST) , response);
+  }
+
+
+  @Test
+  public void createSensorByUserError403()
+      throws MissingFieldsException, InvalidFieldsValuesException {
+    Map<String, Object> newSensorFields = new HashMap<>();
+    newSensorFields.put("realSensorId", 3);
+    newSensorFields.put("type", "description");
+    newSensorFields.put("deviceId", 1); //id non esistente
+    newSensorFields.put("cmdEnabled", false);
+
+    ResponseEntity<Sensor> response = deviceController.createSensor(userTokenWithBearer,
+        newSensorFields, 1 , httpRequest);
 
     assertEquals(new ResponseEntity(HttpStatus.FORBIDDEN) , response);
   }
