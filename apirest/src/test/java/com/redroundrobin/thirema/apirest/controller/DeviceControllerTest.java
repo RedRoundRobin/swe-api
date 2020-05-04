@@ -35,6 +35,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
@@ -143,6 +144,11 @@ public class DeviceControllerTest {
     sensor1.setDevice(device1);
     sensor2.setDevice(device1);
     sensor3.setDevice(device2);
+
+    device1Sensors = new ArrayList<>();
+    device1Sensors.add(sensor1);
+    device1Sensors.add(sensor2);
+
 
     // ---------------------------------- Set lists devices (not)enabled for commands -------------
     sensor1.setCmdEnabled(true);
@@ -584,5 +590,166 @@ public class DeviceControllerTest {
     assertEquals(new ResponseEntity(HttpStatus.FORBIDDEN), response);
   }
 
+
+  @Test
+  public void editSensor1Device1ByAdminSuccesful()
+      throws MissingFieldsException, InvalidFieldsValuesException, ElementNotFoundException {
+    Map<String, Object> editSensorFields = new HashMap<>();
+    editSensorFields.put("type", "devTest2");
+
+    sensor1.setType((String)editSensorFields.get("type"));
+    when(sensorService.editSensor(anyInt(), anyInt(), any(Map.class))).thenReturn(sensor1);
+
+    ResponseEntity<Sensor> response = deviceController.editSensor(adminTokenWithBearer,
+        editSensorFields, device1.getId(), sensor1.getRealSensorId(), httpRequest);
+
+    ResponseEntity<Sensor> expected = ResponseEntity.ok(sensor1);
+
+    assertEquals(sensor1.getType(), (String)editSensorFields.get("type"));
+    assertEquals(expected, response);
+  }
+
+  /*in th next test, none of the map filds given exist in a Sensor object!*/
+  @Test
+  public void editSensor1ByAdminMissingFieldsException()
+      throws MissingFieldsException, InvalidFieldsValuesException, ElementNotFoundException {
+    Map<String, Object> editSensorFields = new HashMap<>();
+    editSensorFields.put("notExistingField", "devTest2");
+
+    when(sensorService.editSensor(eq(device1.getId()), eq(sensor1.getRealSensorId()), any(Map.class)))
+        .thenThrow(new MissingFieldsException(""));
+
+    ResponseEntity<Sensor> response = deviceController.editSensor(adminTokenWithBearer,
+        editSensorFields, device1.getId(), sensor1.getRealSensorId(), httpRequest);
+
+    assertEquals(new ResponseEntity(HttpStatus.BAD_REQUEST), response);
+  }
+
+  @Test
+  public void editSensor1Device1ByUser403Error()
+      throws MissingFieldsException, InvalidFieldsValuesException, ElementNotFoundException {
+    Map<String, Object> editSensorFields = new HashMap<>();
+    editSensorFields.put("type", "senTest2");
+
+    ResponseEntity<Sensor> response = deviceController.editSensor(userTokenWithBearer,
+        editSensorFields, device1.getId(), sensor1.getRealSensorId(), httpRequest);
+
+    assertEquals(new ResponseEntity(HttpStatus.FORBIDDEN), response);
+  }
+
+  @Test
+  public void deleteDevice1ByAdminSuccesful()
+      throws ElementNotFoundException {
+
+    assertTrue(allDevices.remove(device1));
+
+    when(deviceService.deleteDevice(eq(device1.getId())))
+        .thenReturn(true);
+
+    ResponseEntity response = deviceController.deleteDevice(adminTokenWithBearer,
+        device1.getId(), httpRequest);
+
+    assertEquals(new ResponseEntity(HttpStatus.OK), response);
+  }
+
+  @Test
+  public void deleteDevice1ByAdminConflictError409()
+      throws ElementNotFoundException {
+
+    assertTrue(allDevices.remove(device1));
+
+    when(deviceService.deleteDevice(eq(device1.getId())))
+        .thenReturn(false); //errore a db: device selezionato dall'admin cè ma non viene cancellato!
+
+    ResponseEntity response = deviceController.deleteDevice(adminTokenWithBearer,
+        device1.getId(), httpRequest);
+
+    assertEquals(new ResponseEntity(HttpStatus.CONFLICT), response);
+  }
+
+  @Test
+  public void deleteNotExistingDeviceByAdminElementNotFoundException()
+      throws  ElementNotFoundException {
+
+    Device deviceNotPresentInMock = new Device(8, "dev8", 1, 1);
+
+    assertFalse(allDevices.remove(deviceNotPresentInMock));
+
+    when(deviceService.deleteDevice(eq(deviceNotPresentInMock.getId())))
+        .thenThrow(new ElementNotFoundException(""));
+
+    ResponseEntity response = deviceController.deleteDevice(adminTokenWithBearer,
+        deviceNotPresentInMock.getId(), httpRequest);
+
+    assertEquals(new ResponseEntity<>(HttpStatus.BAD_REQUEST), response);
+  }
+
+  @Test
+  public void deleteDevice1ByUserError403Forbidden()
+      throws  ElementNotFoundException {
+
+    ResponseEntity response = deviceController.deleteDevice(userTokenWithBearer,
+        device1.getId(), httpRequest);
+
+    assertEquals(new ResponseEntity(HttpStatus.FORBIDDEN), response);
+  }
+
+  @Test
+  public void deleteSensor1Device1ByAdminSuccesful()
+      throws ElementNotFoundException {
+
+    assertTrue(device1Sensors.remove(sensor1));
+
+    when(sensorService.deleteSensor(eq(device1.getId()), eq(sensor1.getRealSensorId())))
+        .thenReturn(true);
+
+    ResponseEntity response = deviceController.deleteSensor(adminTokenWithBearer,
+        device1.getId(), sensor1.getRealSensorId(), httpRequest);
+
+    assertEquals(new ResponseEntity(HttpStatus.OK), response);
+  }
+
+  @Test
+  public void deleteSensor1Device1ByAdminConflictError409()
+      throws ElementNotFoundException {
+
+    assertTrue(device1Sensors.remove(sensor1));
+
+    when(sensorService.deleteSensor(eq(device1.getId()), eq(sensor1.getRealSensorId())))
+        .thenReturn(false);
+
+    ResponseEntity response = deviceController.deleteSensor(adminTokenWithBearer,
+        device1.getId(), sensor1.getRealSensorId(), httpRequest);
+
+    assertEquals(new ResponseEntity(HttpStatus.CONFLICT), response);
+  }
+
+  @Test
+  public void deleteNotExistingSensorInDevice1ByAdminElementNotFoundException()
+      throws  ElementNotFoundException {
+
+    Sensor sensorNotPresentInMock = new Sensor(10, "type1", 10);
+
+    assertFalse(device1Sensors.remove(sensorNotPresentInMock));
+
+    when(sensorService.deleteSensor(eq(device1.getId()),
+        eq(sensorNotPresentInMock.getRealSensorId())))
+        .thenThrow(new ElementNotFoundException(""));
+
+    ResponseEntity response = deviceController.deleteSensor(adminTokenWithBearer,
+        device1.getId(), sensorNotPresentInMock.getRealSensorId(), httpRequest);
+
+    assertEquals(new ResponseEntity<>(HttpStatus.BAD_REQUEST), response);
+  }
+
+  @Test
+  public void deleteSensor1Device1ByUserError403Forbidden()
+      throws  ElementNotFoundException {
+
+    ResponseEntity response = deviceController.deleteSensor(userTokenWithBearer,
+        device1.getId(),  sensor1.getRealSensorId(), httpRequest);
+
+    assertEquals(new ResponseEntity(HttpStatus.FORBIDDEN), response);
+  }
 
 }
