@@ -540,7 +540,49 @@ public class DeviceControllerTest {
     assertEquals(new ResponseEntity(HttpStatus.FORBIDDEN) , response);
   }
 
+  @Test
+  public void editDevice1ByAdminSuccesful()
+      throws MissingFieldsException, InvalidFieldsValuesException, ElementNotFoundException {
+    Map<String, Object> editDeviceFields = new HashMap<>();
+    editDeviceFields.put("name", "devTest2");
 
+    device1.setName((String)editDeviceFields.get("name"));
+    when(deviceService.editDevice(anyInt(), any(Map.class))).thenReturn(device1);
+
+    ResponseEntity<Device> response = deviceController.editDevice(adminTokenWithBearer,
+        editDeviceFields, device1.getId(), httpRequest);
+
+    assertEquals(device1.getName(), (String)editDeviceFields.get("name"));
+    assertEquals(device1, response.getBody());
+  }
+
+  /*in th next test, none of the map filds given exist in a Device object!*/
+  @Test
+  public void editDevice1ByAdminSuccesfulMissingFieldsException()
+      throws MissingFieldsException, InvalidFieldsValuesException, ElementNotFoundException {
+    Map<String, Object> editDeviceFields = new HashMap<>();
+    editDeviceFields.put("notExistingField", "devTest2");
+
+    when(deviceService.editDevice(anyInt(), any(Map.class))).thenThrow(new MissingFieldsException(""));
+
+    ResponseEntity<Device> response = deviceController.editDevice(adminTokenWithBearer,
+        editDeviceFields, device1.getId(), httpRequest);
+
+    assertEquals(new ResponseEntity(HttpStatus.BAD_REQUEST), response);
+  }
+
+
+  @Test
+  public void editDevice1ByUser403Error()
+      throws MissingFieldsException, InvalidFieldsValuesException, ElementNotFoundException {
+    Map<String, Object> editDeviceFields = new HashMap<>();
+    editDeviceFields.put("name", "devTest2");
+
+    ResponseEntity<Device> response = deviceController.editDevice(userTokenWithBearer,
+        editDeviceFields, device1.getId(), httpRequest);
+
+    assertEquals(new ResponseEntity(HttpStatus.FORBIDDEN), response);
+  }
 
 
 }
