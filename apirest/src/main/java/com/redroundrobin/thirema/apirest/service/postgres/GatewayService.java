@@ -1,11 +1,11 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-
+import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
+import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.repository.postgres.DeviceRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.GatewayRepository;
+import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -17,6 +17,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 
 
@@ -37,56 +38,49 @@ public class GatewayService {
 
   private final KafkaTemplate<String, String> kafkaTemplate;
 
-  @Value("${kafka.topic.gatewayConfig}")
-  private String gatewayConfigTopic;
+  @Value(value = "${gateways.maxStoredPackets}")
+  private int maxStoredPackets;
 
-  private boolean checkConfigFields(String gatewayConfig)
+  @Value(value = "${gateways.topic.telegram.prefix}")
+  private String gatewayCommandsPrefix;
+
+  @Value(value = "${gateways.maxStoringTime}")
+  private int maxStoringTime;
+
+  @Value(value = "${gateways.topic.prefix}")
+  private String prefix;
+
+  private String sentConfig(int gatewayId)
       throws JsonProcessingException { //eccezione di ObjectMapper()
-    ObjectMapper objectMapper = new ObjectMapper();
-    JsonNode jsonGatewayConfig = objectMapper.readTree(gatewayConfig);
-    String[] firstLevelConfigFields = {"address", "port", "name",
-        "maxStoredPackets", "maxStoringTime", "devices"};
-    if(firstLevelConfigFields.length != jsonGatewayConfig.size()) { //jsonNode.size() figli 1° livello in teoria
-      return false;
-    }
-
-    boolean flag = false;
-    for(int i=0; i<firstLevelConfigFields.length && !flag; i++) {
-      if(!jsonGatewayConfig.has(firstLevelConfigFields[i]))
-        flag = true;
-    }
-    //versione in cui non controllo che siano dispositivi censiti..ok?
-    if(flag || !jsonGatewayConfig.get("devices").isArray()) {
-      return false;
-    }
-
-    ArrayNode devices = (ArrayNode)jsonGatewayConfig.get("devices");
-    for(int i=0; i<devices.size() && !flag; i++) {
-      JsonNode device = devices.get(i);
-      String[] secondLevelConfigFields = {
-          "deviceId", "frequency", "sensors"};
-      if(secondLevelConfigFields.length != device.size()) { //jsonNode.size() figli 2° livello in teoria
-        flag = true;
-      }
-      for(i=0; i<secondLevelConfigFields.length && !flag; i++) {
-        if(!device.has(secondLevelConfigFields[i]))
-          flag = true;
-      }
-      if(!flag) {
-        if(!device.get("sensors").isArray()) {
-          flag = true;
-        } else {
-          ArrayNode sensors = (ArrayNode)device.get("sensors");
-          for(i=0; i<sensors.size() && !flag; i++) {
-            JsonNode sensor = sensors.get(i);
-            if(sensor.size() != 1 || !sensor.has("sensorId")) {
-              flag = true;
-            }
-          }
+    if(!gatewayRepo.existsById(gatewayId)) {
+      return null;
+    } else {
+      Gateway gateway = gatewayRepo.findById(gatewayId).get();
+      String gatewayConfigTopic = prefix + gateway.getName();
+      ObjectMapper objectMapper = new ObjectMapper();
+      ObjectNode jsonGatewayConfig = objectMapper.createObjectNode();
+      jsonGatewayConfig.put("maxStoredPackets", getMaxStoredPackets());
+      jsonGatewayConfig.put("maxStoringTime", getMaxStoringTime());
+      ArrayNode devicesConfig = jsonGatewayConfig.putArray("devices");
+      List<Device> devices = (List<Device>)deviceRepo.findAllByGatewayId(gatewayId);
+      for(Device device: devices) {
+        ObjectNode completeDevice = objectMapper.createObjectNode();
+        completeDevice.put("deviceId", device.getRealDeviceId());
+        completeDevice.put("frequency", device.getFrequency());
+        ArrayNode sensorsConfig = objectMapper.createArrayNode();
+        List<Sensor> sensors = (List<Sensor>)deviceRepo.findAllByDeviceId(device.getId());
+        for(Sensor sensor: sensors) {
+          ObjectNode completeSensor = objectMapper.createObjectNode();
+          completeSensor.put("sensorId", sensor.getRealSensorId());
+          completeSensor.put("cmdEnabled", sensor.getCmdEnabled());
+          sensorsConfig.add(completeSensor);
         }
+        completeDevice.set("sensors", sensorsConfig);
+        devicesConfig.add(completeDevice);
       }
+      kafkaTemplate.send(gatewayConfigTopic, jsonGatewayConfig.toString());
+      return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString((JsonNode)jsonGatewayConfig);
     }
-    return !flag;
   }
 
   @Autowired
@@ -122,19 +116,30 @@ public class GatewayService {
     return gatewayRepo.findByIdAndEntityId(id, entityId);
   }
 
-  public void sendGatewayConfigToKafka(String gatewayConfig)
-      throws MissingFieldsException, JsonProcessingException {
-    if(!checkConfigFields(gatewayConfig)) {
-      throw new MissingFieldsException("");
-    }
-    kafkaTemplate.send(gatewayConfigTopic, gatewayConfig);
+  public int getMaxStoredPackets() {
+    return maxStoredPackets;
   }
 
-  public Gateway addGateway(Map<String, String> newGatewayFields) throws MissingFieldsException,
+  public int getMaxStoringTime() {
+    return maxStoringTime;
+  }
+
+  public String getPrefix() { return prefix; }
+
+  public String sendGatewayConfigToKafka(int gatewayId)
+      throws InvalidFieldsValuesException, JsonProcessingException {
+    String jsonGatewayConfig = sentConfig(gatewayId);
+    if(jsonGatewayConfig == null) {
+      throw new InvalidFieldsValuesException("");
+    }
+    return jsonGatewayConfig;
+  }
+
+  public Gateway addGateway(Map<String, Object> newGatewayFields) throws MissingFieldsException,
       InvalidFieldsValuesException {
     if (checkAddEditFields(false, newGatewayFields)) {
-      if (gatewayRepo.findByName(newGatewayFields.get("name")) == null) {
-        Gateway gateway = new Gateway(newGatewayFields.get("name"));
+      if (gatewayRepo.findByName((String)newGatewayFields.get("name")) == null) {
+        Gateway gateway = new Gateway((String)newGatewayFields.get("name"));
         return gatewayRepo.save(gateway);
       } else {
         throw new InvalidFieldsValuesException("The gateway with provided name already exists");
@@ -144,15 +149,15 @@ public class GatewayService {
     }
   }
 
-  public Gateway editGateway(int gatewayId, Map<String, String> fieldsToEdit) throws MissingFieldsException,
+  public Gateway editGateway(int gatewayId, Map<String, Object> fieldsToEdit) throws MissingFieldsException,
       InvalidFieldsValuesException {
     Gateway gateway = gatewayRepo.findById(gatewayId).orElse(null);
     if (gateway == null) {
       throw new InvalidFieldsValuesException("The gateway with provided id is not found");
     } else {
       if (checkAddEditFields(true, fieldsToEdit)) {
-        if (gatewayRepo.findByName(fieldsToEdit.get("name")) == null) {
-          gateway.setName(fieldsToEdit.get("name"));
+        if (gatewayRepo.findByName((String)fieldsToEdit.get("name")) == null) {
+          gateway.setName((String)fieldsToEdit.get("name"));
           return gatewayRepo.save(gateway);
         } else {
           throw new InvalidFieldsValuesException("The gateway with provided name already exists");
@@ -177,7 +182,7 @@ public class GatewayService {
     }
   }
 
-  private boolean checkAddEditFields(boolean edit, Map<String, String> fields) {
+  private boolean checkAddEditFields(boolean edit, Map<String, Object> fields) {
     List<String> allowedFields = new ArrayList<>();
     allowedFields.add("name");
 

@@ -40,7 +40,7 @@ public abstract class CoreController {
   }
 
   protected final String getIpAddress(HttpServletRequest http) {
-    if (http.getHeader("X-Forwarded-For") == null) {
+    if (http.getHeader("X-Forwarded-For") != null) {
       return http.getHeader("X-Forwarded-For");
     } else {
       return  http.getRemoteAddr();

@@ -1,5 +1,6 @@
 package com.redroundrobin.thirema.apirest.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
@@ -169,31 +170,9 @@ public class GatewayController extends CoreController {
     }
   }
 
-  /*probabilmente mi si deve passare anche il nome del topic! Al momento ce un solo gateway e
-  * sto usando il suo topic per le configurazioni: va generalizzata la cosa!*/
-  @PutMapping(value = {"/config"})
-  public ResponseEntity sendGatewayConfigToKafka(@RequestHeader(value = "Authorization") String authorization,
-                                                               @RequestBody String gatewayConfig) {
-    User user = this.getUserFromAuthorization(authorization);
-    if (user.getType() == User.Role.ADMIN) {
-      try {
-        gatewayService.sendGatewayConfigToKafka(gatewayConfig);
-        return new ResponseEntity(HttpStatus.OK);
-      } catch(Exception e) {
-        logger.debug("RESPONSE STATUS: FORBIDDEN. The gateway configuration given "
-            + "is not well formed");
-        return new ResponseEntity(HttpStatus.FORBIDDEN);
-      }
-    } else {
-      logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId()
-          + " is not an administrator");
-      return new ResponseEntity(HttpStatus.FORBIDDEN);
-    }
-  }
-
   @PostMapping(value = {""})
   public ResponseEntity<Gateway> addGateway(@RequestHeader("Authorization") String authorization,
-                                         @RequestBody Map<String, String> newGatewayFields,
+                                         @RequestBody Map<String, Object> newGatewayFields,
                                          HttpServletRequest httpRequest) {
     String ip = getIpAddress(httpRequest);
     User user = getUserFromAuthorization(authorization);
@@ -215,20 +194,28 @@ public class GatewayController extends CoreController {
   }
 
   @PutMapping(value = {"/{gatewayId:.+}"})
-  public ResponseEntity<Gateway> editGateway(@RequestHeader("Authorization") String authorization,
+  public ResponseEntity<Object> editGateway(@RequestHeader("Authorization") String authorization,
                                             @PathVariable(value = "gatewayId") int gatewayId,
-                                            @RequestBody Map<String, String> newGatewayFields,
+                                            @RequestBody Map<String, Object> newGatewayFields,
                                             HttpServletRequest httpRequest) {
     String ip = getIpAddress(httpRequest);
     User user = getUserFromAuthorization(authorization);
 
     if (user.getType() == User.Role.ADMIN) {
       try {
-        Gateway gateway = gatewayService.editGateway(gatewayId, newGatewayFields);
-        logService.createLog(user.getId(),ip,"gateway.edit",
-            Integer.toString(gatewayId));
-        return ResponseEntity.ok(gateway);
-      } catch (MissingFieldsException | InvalidFieldsValuesException e) {
+        if(newGatewayFields.containsKey("reconfig")
+            && ((boolean)newGatewayFields.get("reconfig"))) {
+          logService.createLog(user.getId(),ip,"gateway.reconfig",
+              Integer.toString(gatewayId));
+          return ResponseEntity.ok(gatewayService.sendGatewayConfigToKafka(gatewayId));
+        } else {
+          Gateway gateway = gatewayService.editGateway(gatewayId, newGatewayFields);
+          logService.createLog(user.getId(),ip,"gateway.edit",
+              Integer.toString(gatewayId));
+          return ResponseEntity.ok(gateway);
+        }
+      } catch (MissingFieldsException | InvalidFieldsValuesException
+          | JsonProcessingException e) {
         logger.debug(e.toString());
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
       }
@@ -265,4 +252,7 @@ public class GatewayController extends CoreController {
       return new ResponseEntity(HttpStatus.FORBIDDEN);
     }
   }
+
+
+
 }

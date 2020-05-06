@@ -1,8 +1,12 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.redroundrobin.thirema.apirest.models.postgres.Alert;
 import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
+import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.ViewGraph;
 import com.redroundrobin.thirema.apirest.repository.postgres.AlertRepository;
@@ -10,16 +14,23 @@ import com.redroundrobin.thirema.apirest.repository.postgres.DeviceRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.ViewGraphRepository;
+import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
+import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -34,6 +45,11 @@ public class SensorService {
   private final EntityRepository entityRepo;
 
   private final ViewGraphRepository viewGraphRepo;
+
+  private final KafkaTemplate<String, String> kafkaTemplate;
+
+  @Value(value = "${gateways.topic.telegram.prefix}")
+  private String gatewayCommandsPrefix;
 
   private boolean checkAddEditFields(boolean edit, Map<String, Object> fields) {
     String[] editableOrCreatableFields = {"realSensorId", "deviceId", "cmdEnabled", "type"};
@@ -99,12 +115,14 @@ public class SensorService {
   @Autowired
   public SensorService(SensorRepository sensorRepository, AlertRepository alertRepository,
                        DeviceRepository deviceRepository, EntityRepository entityRepository,
-                       ViewGraphRepository viewGraphRepository) {
+                       ViewGraphRepository viewGraphRepository,
+                       KafkaTemplate<String, String> kafkaTemplate) {
     this.sensorRepo = sensorRepository;
     this.alertRepo = alertRepository;
     this.deviceRepo = deviceRepository;
     this.entityRepo = entityRepository;
     this.viewGraphRepo = viewGraphRepository;
+    this.kafkaTemplate = kafkaTemplate;
   }
 
   public List<Sensor> findAll() {
@@ -239,4 +257,49 @@ public class SensorService {
   sensorRepo.delete(sensor);
   return !sensorRepo.existsById(sensorId);
   }
+
+  private boolean checkTelegramCommandFields(Set<String> keys) {
+    Set<String> commandFields = new HashSet<>();
+    commandFields.add("data");
+    return commandFields.containsAll(keys);
+  }
+
+  public String sendTelegramCommandToSensor(int sensorId, Map<String,Object> keys)
+      throws ElementNotFoundException, NotAuthorizedException {
+    if(!checkTelegramCommandFields(keys.keySet()) ||
+        (int)keys.get("data") < 0 || (int)keys.get("data") > 1) {
+      throw new ElementNotFoundException("The data field is missing, its not the only field given"
+          + "or it's value is not correct");
+    }
+
+    if(!sensorRepo.existsById(sensorId)) {
+      throw new ElementNotFoundException("The given sensorId doesn't match "
+          + "any sensor in the database");
+    }
+
+    Sensor sensor = sensorRepo.findById(sensorId).get();
+    if(!sensor.getCmdEnabled()) {
+      throw new NotAuthorizedException("The sensor with the sensorId given"
+          + "is not allowed to receive commands");
+    }
+    Device device = null;
+    Gateway gateway = null;
+    if((device = deviceRepo.findBySensors(sensor)) == null
+        || (gateway = device.getGateway()) == null) {
+      throw new ElementNotFoundException(" The sensor given is "
+          + "not connected to a device or it's device "
+          + "is not connected to a gateway");
+    }
+
+    String gatewayConfigTopic =
+        gatewayCommandsPrefix + gateway.getName();
+    ObjectMapper objectMapper = new ObjectMapper();
+    ObjectNode jsonSensorCommand = objectMapper.createObjectNode();
+    jsonSensorCommand.put("realSensorId", sensor.getRealSensorId());
+    jsonSensorCommand.put("realDeviceId", device.getRealDeviceId());
+    jsonSensorCommand.put("data", (int)keys.get("data"));
+    kafkaTemplate.send(gatewayConfigTopic, jsonSensorCommand.toString());
+    return jsonSensorCommand.toString();
+  }
+
 }
