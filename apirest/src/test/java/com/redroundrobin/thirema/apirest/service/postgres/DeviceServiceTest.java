@@ -8,6 +8,7 @@ import com.redroundrobin.thirema.apirest.repository.postgres.DeviceRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.GatewayRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
+import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -24,9 +25,15 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
+//import        org.mockito.invocation.InvocationOnMock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.mock;
+import        org.mockito.stubbing.Answer;
+
 
 @RunWith(SpringRunner.class)
 public class DeviceServiceTest {
@@ -60,8 +67,11 @@ public class DeviceServiceTest {
   private Sensor sensor4;
   private Sensor sensor5;
 
+  private List<Device> allDevices;
+  private List<Sensor> allSensors;
+
   @Before
-  public void setUp() {
+  public void setUp() throws Exception {
     deviceService = new DeviceService(deviceRepo, entityRepo, gatewayRepo, sensorRepo);
 
     // ----------------------------------------- Set Devices --------------------------------------
@@ -69,7 +79,7 @@ public class DeviceServiceTest {
     device2 = new Device(2, "dev2", 2, 2);
     device3 = new Device(3, "dev3", 3, 3);
 
-    List<Device> allDevices = new ArrayList<>();
+    allDevices = new ArrayList<>();
     allDevices.add(device1);
     allDevices.add(device2);
     allDevices.add(device3);
@@ -87,12 +97,14 @@ public class DeviceServiceTest {
 
     // ----------------------------------------- Set Sensors --------------------------------------
     sensor1 = new Sensor(1, "type1", 1);
+    sensor1.setCmdEnabled(true);
     sensor2 = new Sensor(2, "type2", 2);
     sensor3 = new Sensor(3, "type3", 3);
     sensor4 = new Sensor(4, "type4", 4);
+    sensor4.setCmdEnabled(true);
     sensor5 = new Sensor(5, "type5", 5);
 
-    List<Sensor> allSensors = new ArrayList<>();
+    allSensors = new ArrayList<>();
     allSensors.add(sensor1);
     allSensors.add(sensor2);
     allSensors.add(sensor3);
@@ -122,6 +134,34 @@ public class DeviceServiceTest {
     entity1Devices.add(device1);
     entity1Devices.add(device2);
 
+    when(deviceRepo.findById(anyInt())).thenAnswer(i -> allDevices.stream().filter(d -> i.getArgument(0).equals(d.getId()))
+        .findFirst());
+    when(deviceService.deleteDevice(anyInt())).thenAnswer(i -> {
+      Device dev =
+          allDevices.stream().filter(d -> i.getArgument(0).equals(d.getId()))
+          .findFirst().orElse(null);
+      if (dev != null) {
+        //deviceRepo.delete(device); done because couldn't find a way to mock a nested void method (delete)
+        for(Sensor s : allSensors) {
+          if(s.getDevice().getId() == dev.getId()) {
+            s.setDevice(null);
+          }
+        }
+        allDevices.remove(dev);
+        if (!deviceRepo.existsById((int)i.getArgument(0))) {
+          return true;
+        } else {
+          return false;
+        }
+      } else {
+        throw new ElementNotFoundException("");
+      }
+    });
+    when(deviceRepo.existsById(anyInt())).thenAnswer(i -> {
+      Device dev =
+          allDevices.stream().filter(d -> i.getArgument(0).equals(d.getId())).findFirst().orElse(null);
+      return (dev != null);
+    });
     when(deviceRepo.findAll()).thenReturn(allDevices);
     when(deviceRepo.findAllByGateway(any(Gateway.class))).thenAnswer(i -> {
       Gateway gateway = i.getArgument(0);
@@ -143,8 +183,7 @@ public class DeviceServiceTest {
         return Collections.emptyList();
       }
     });
-    when(deviceRepo.findById(anyInt())).thenAnswer(i -> allDevices.stream().filter(d -> i.getArgument(0).equals(d.getId()))
-        .findFirst());
+
     when(deviceRepo.findByIdAndEntityId(anyInt(), eq(entity1.getId()))).thenAnswer(i -> entity1Devices.stream().filter(d -> i.getArgument(0).equals(d.getId()))
         .findFirst().orElse(null));
     when(deviceRepo.findBySensors(any(Sensor.class))).thenAnswer(i -> {
@@ -155,6 +194,20 @@ public class DeviceServiceTest {
     when(deviceRepo.findByGatewayAndRealDeviceId(any(Gateway.class), anyInt())).thenAnswer(i -> allDevices.stream().filter(d -> d.getGateway().equals(i.getArgument(0))
         && i.getArgument(1).equals(d.getRealDeviceId()))
         .findFirst().orElse(null));
+    when(deviceRepo.findByCmdEnabledAndDeviceId(anyBoolean(), anyInt())).thenAnswer(
+        i -> allSensors.stream().filter(s -> i.getArgument(1).equals(s.getDevice().getId())
+        && i.getArgument(0).equals(s.getCmdEnabled())).collect(Collectors.toList()));
+    when(deviceRepo.findAllByDeviceId(anyInt())).thenAnswer(
+        i -> allSensors.stream().filter(s -> i.getArgument(0).equals(s.getDevice().getId())));
+    when(deviceRepo.findBySensorsCmdEnabledField(anyBoolean())).thenAnswer(i -> {
+      List<Device> d = new ArrayList<>();
+      for(int j=0; j<allSensors.size(); j++) {
+        if(i.getArgument(0).equals(allSensors.get(j).getCmdEnabled())) {
+          d.add(allSensors.get(j).getDevice());
+        }
+      }
+      return d;
+    });
 
     when(entityRepo.findById(anyInt())).thenAnswer(i -> {
       if (i.getArgument(0).equals(entity1.getId())) {
@@ -268,5 +321,50 @@ public class DeviceServiceTest {
     Device device = deviceService.findByGatewayIdAndRealDeviceId(8, 1);
 
     assertNull(device);
+  }
+
+  @Test
+  public void getEnabled() {
+    List<Device> enabledDevices =
+        deviceService.getEnabled(true);
+    assertTrue(enabledDevices.size() == 2
+        && enabledDevices.contains(device1)
+        && enabledDevices.contains(device2));
+  }
+
+  @Test
+  public void getNotEnabled() {
+    List<Device> enabledDevices =
+        deviceService.getEnabled(false);
+    assertTrue(enabledDevices.size() == 1
+        && enabledDevices.contains(device3));
+  }
+
+  @Test
+  public void getEnabledSensorsDevice1() {
+    List<Sensor> enabledSensors =
+        deviceService.getEnabledSensorsDevice(true, device1.getId());
+    assertTrue(enabledSensors.size() == 1
+        && enabledSensors.contains(sensor1));
+  }
+
+  @Test
+  public void getNotEnabledSensorsDevice1() {
+    List<Sensor> notEnabledSensors =
+        deviceService.getEnabledSensorsDevice(false, device1.getId());
+    assertTrue(notEnabledSensors.size() == 1
+        && notEnabledSensors.contains(sensor2));
+  }
+
+  @Test
+  public void deleteDevice1Succesful()
+      throws ElementNotFoundException {
+    try {
+      int diocane = device1.getId();
+      deviceService.deleteDevice(diocane);
+      assertFalse(allDevices.contains(device1));
+    } catch (Exception e) {
+      assertTrue(false);
+    }
   }
 }
