@@ -4,11 +4,14 @@ import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
+import com.redroundrobin.thirema.apirest.models.postgres.ViewGraph;
 import com.redroundrobin.thirema.apirest.repository.postgres.DeviceRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.GatewayRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
+import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -18,7 +21,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -30,6 +35,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 //import        org.mockito.invocation.InvocationOnMock;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.mock;
 import        org.mockito.stubbing.Answer;
@@ -136,10 +142,29 @@ public class DeviceServiceTest {
 
     when(deviceRepo.findById(anyInt())).thenAnswer(i -> allDevices.stream().filter(d -> i.getArgument(0).equals(d.getId()))
         .findFirst());
-    when(deviceService.deleteDevice(anyInt())).thenAnswer(i -> {
+  /*  when(deviceRepo.existsById(anyInt())).thenAnswer(i -> {
+      Device dev =
+          allDevices.stream().filter(d -> i.getArgument(0).equals(d.getId())).findFirst().orElse(null);
+      return (dev != null);
+    });*/
+    doNothing().when(deviceRepo).delete(any(Device.class));
+    /* PROBLEMA delete  RESTITUISCE VOID...
+    when(deviceRepo.delete(any(Device.class))).thenAnswer(i -> {
+      Device dev = i.getArgument(0);
+      if (dev != null) {
+        for(Sensor s : allSensors) {
+          if(s.getDevice().getId() == dev.getId()) {
+            s.setDevice(null);
+          }
+        }
+        allDevices.remove(dev);
+      }
+    });*/
+    /*perche la soluzione sotto non è okay??*/
+  /*  when(deviceService.deleteDevice(anyInt())).thenAnswer(i -> {
       Device dev =
           allDevices.stream().filter(d -> i.getArgument(0).equals(d.getId()))
-          .findFirst().orElse(null);
+              .findFirst().orElse(null);
       if (dev != null) {
         //deviceRepo.delete(device); done because couldn't find a way to mock a nested void method (delete)
         for(Sensor s : allSensors) {
@@ -156,12 +181,7 @@ public class DeviceServiceTest {
       } else {
         throw new ElementNotFoundException("");
       }
-    });
-    when(deviceRepo.existsById(anyInt())).thenAnswer(i -> {
-      Device dev =
-          allDevices.stream().filter(d -> i.getArgument(0).equals(d.getId())).findFirst().orElse(null);
-      return (dev != null);
-    });
+    });*/
     when(deviceRepo.findAll()).thenReturn(allDevices);
     when(deviceRepo.findAllByGateway(any(Gateway.class))).thenAnswer(i -> {
       Gateway gateway = i.getArgument(0);
@@ -208,7 +228,7 @@ public class DeviceServiceTest {
       }
       return d;
     });
-
+    when(deviceRepo.save(any(Device.class))).thenAnswer(i -> i.getArgument(0));
     when(entityRepo.findById(anyInt())).thenAnswer(i -> {
       if (i.getArgument(0).equals(entity1.getId())) {
         return Optional.of(entity1);
@@ -333,11 +353,13 @@ public class DeviceServiceTest {
   }
 
   @Test
-  public void getNotEnabled() {
+  public void getDevicesWithAtLeastOneSensorNotEnabledNotEnabled() {
     List<Device> enabledDevices =
         deviceService.getEnabled(false);
-    assertTrue(enabledDevices.size() == 1
-        && enabledDevices.contains(device3));
+    assertTrue(enabledDevices.size() == 3
+        && enabledDevices.contains(device3)
+        && enabledDevices.contains(device2)
+        && enabledDevices.contains(device1));
   }
 
   @Test
@@ -357,14 +379,163 @@ public class DeviceServiceTest {
   }
 
   @Test
-  public void deleteDevice1Succesful()
-      throws ElementNotFoundException {
+  public void addDeviceSuccesful()
+      throws MissingFieldsException, InvalidFieldsValuesException {
+    Map<String, Object> newDeviceFields = new HashMap<>();
+    newDeviceFields.put("gatewayId", 1);
+    newDeviceFields.put("frequency", 1);
+    newDeviceFields.put("name", "newDevice");
+    newDeviceFields.put("realDeviceId", 4);
     try {
-      int diocane = device1.getId();
-      deviceService.deleteDevice(diocane);
-      assertFalse(allDevices.contains(device1));
-    } catch (Exception e) {
-      assertTrue(false);
+      Device addedDevice = deviceService.addDevice(newDeviceFields);
+      assertTrue(addedDevice.getGateway().getId()
+          == (int)newDeviceFields.get("gatewayId")
+          && addedDevice.getFrequency()
+          == (int)newDeviceFields.get("frequency")
+          && (String)newDeviceFields.get("name")
+          == addedDevice.getName()
+          && (int)newDeviceFields.get("realDeviceId")
+          == addedDevice.getRealDeviceId());
+    } catch(MissingFieldsException  | InvalidFieldsValuesException e) {
+      fail();
     }
   }
+
+  @Test
+  public void addDeviceFrequencyInvalidFieldsValuesException()
+      throws MissingFieldsException, InvalidFieldsValuesException {
+    Map<String, Object> newDeviceFields = new HashMap<>();
+    newDeviceFields.put("gatewayId", 1);
+    newDeviceFields.put("frequency", "1 ");
+    newDeviceFields.put("name", "newDevice");
+    newDeviceFields.put("realDeviceId", 4);
+    try {
+      Device addedDevice = deviceService.addDevice(newDeviceFields);
+      fail();
+    } catch(InvalidFieldsValuesException e) {
+      assertTrue(true);
+    }
+  }
+
+  @Test
+  public void addDeviceGatewayNotExistingInvalidFieldsValuesException()
+      throws MissingFieldsException, InvalidFieldsValuesException {
+    Map<String, Object> newDeviceFields = new HashMap<>();
+    newDeviceFields.put("gatewayId", 4);
+    newDeviceFields.put("frequency", 1);
+    newDeviceFields.put("name", "newDevice");
+    newDeviceFields.put("realDeviceId", 4);
+    try {
+      Device addedDevice = deviceService.addDevice(newDeviceFields);
+      fail();
+    } catch(InvalidFieldsValuesException e) {
+      assertTrue(true);
+    }
+  }
+
+  @Test
+  public void addDifferentDeviceWithALreadyExistingRealDeviceIdAndGatewayIdException()
+      throws MissingFieldsException, InvalidFieldsValuesException {
+    Map<String, Object> newDeviceFields = new HashMap<>();
+    newDeviceFields.put("gatewayId", 1);
+    newDeviceFields.put("frequency", 1);
+    newDeviceFields.put("name", "newDevice");
+    newDeviceFields.put("realDeviceId", 1);
+    try {
+      Device addedDevice = deviceService.addDevice(newDeviceFields);
+      fail();
+    } catch(InvalidFieldsValuesException e) {
+      assertTrue(true);
+    }
+  }
+
+  @Test
+  public void addDeviceMissingFieldsException()
+      throws MissingFieldsException, InvalidFieldsValuesException {
+    Map<String, Object> newDeviceFields = new HashMap<>();
+    newDeviceFields.put("gatewayId", 1);
+    newDeviceFields.put("frequency", 1);
+    newDeviceFields.put("name", "newDevice");
+    try {
+      Device addedDevice = deviceService.addDevice(newDeviceFields);
+      fail();
+    } catch(MissingFieldsException e) {
+      assertTrue(true);
+    }
+  }
+
+  @Test
+  public void editDevice1Succesful()
+      throws MissingFieldsException, InvalidFieldsValuesException, ElementNotFoundException {
+    Map<String, Object> newDeviceFields = new HashMap<>();
+    newDeviceFields.put("gatewayId", 2);
+    newDeviceFields.put("frequency", 2);
+    newDeviceFields.put("name", "Device1Edited");
+    newDeviceFields.put("realDeviceId", 5);
+    try {
+      Device editedDevice = deviceService.editDevice(device1.getId(), newDeviceFields);
+      assertTrue(editedDevice.getGateway().getId()
+          == (int)newDeviceFields.get("gatewayId")
+          && editedDevice.getFrequency()
+          == (int)newDeviceFields.get("frequency")
+          && (String)newDeviceFields.get("name")
+          == editedDevice.getName()
+          && (int)newDeviceFields.get("realDeviceId")
+          == editedDevice.getRealDeviceId());
+    } catch(MissingFieldsException  | InvalidFieldsValuesException e) {
+      fail();
+    }
+  }
+
+  @Test
+  public void editDevice1MissingFieldsException()
+      throws MissingFieldsException, InvalidFieldsValuesException, ElementNotFoundException {
+    Map<String, Object> newDeviceFields = new HashMap<>();
+    try {
+      Device editedDevice = deviceService.editDevice(device1.getId(), newDeviceFields);
+      fail();
+    } catch(MissingFieldsException e) {
+      assertTrue(true);
+    }
+  }
+
+  @Test
+  public void editNotExistingDeviceElementNotFoundException()
+      throws MissingFieldsException, InvalidFieldsValuesException, ElementNotFoundException {
+    Map<String, Object> newDeviceFields = new HashMap<>();
+    try {
+      Device editedDevice = deviceService.editDevice(10, newDeviceFields);
+      fail();
+    } catch(ElementNotFoundException e) {
+      assertTrue(true);
+    }
+  }
+
+  @Test
+  public void deleteDevice1Succesful() //don't like the way I've done it
+      throws ElementNotFoundException {
+    try {
+      when(deviceRepo.existsById(anyInt())).thenReturn(false); //why twice?
+      boolean deleted = deviceService.deleteDevice(device1.getId());
+     // assertFalse(allDevices.contains(device1)); couldn't do it like this...
+      assertTrue(deleted);
+    } catch (Exception e) {
+      fail();
+    }
+  }
+
+  @Test
+  public void deleteNotExistingDeviceNotSuccesful() //don't like the way I've done it
+      throws ElementNotFoundException {
+    try {
+      int notExistingId=10;
+      when(deviceRepo.existsById(anyInt())).thenReturn(false); //why twice?
+      boolean deleted = deviceService.deleteDevice(notExistingId);
+      // assertFalse(allDevices.contains(device1)); couldn't do it like this...
+      fail();
+    } catch (Exception e) {
+      assertTrue(true);
+    }
+  }
+
 }

@@ -61,7 +61,7 @@ public class DeviceService {
         case "frequency":
           try {
             device.setFrequency((int) entry.getValue());
-          } catch (NumberFormatException nfe) {
+          } catch (ClassCastException nfe) {
             throw new InvalidFieldsValuesException("The frequency provided is not valid");
           }
           break;
