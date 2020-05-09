@@ -135,8 +135,7 @@ public class EntityController extends CoreController {
       HttpServletRequest httpRequest) {
     String ip = getIpAddress(httpRequest);
     User user = getUserFromAuthorization(authorization);
-    if (user.getType() == User.Role.ADMIN
-        && !(boolean)fieldsToEditOrsensorsToEnableOrDisable.get("enableOrDisableSensors")) {
+    if (user.getType() == User.Role.ADMIN) { //tolto necessità mettere enableOrDisableSensors
       try {
         Entity entity = entityService.editEntity(
             entityId, fieldsToEditOrsensorsToEnableOrDisable);
