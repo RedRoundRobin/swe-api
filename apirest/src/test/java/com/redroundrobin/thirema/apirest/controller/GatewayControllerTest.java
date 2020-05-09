@@ -228,6 +228,14 @@ public class GatewayControllerTest {
   }
 
   @Test
+  public void getGatewayGivenUserAndDeviceId() {
+    ResponseEntity<List<Gateway>> response = gatewayController.getGateways(userTokenWithBearer, 1);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertTrue(response.getBody().isEmpty());
+  }
+
+  @Test
   public void getGatewayByIdByAdmin() {
     ResponseEntity<Gateway> response = gatewayController.getGateway(
         adminTokenWithBearer, gateway1.getId());
