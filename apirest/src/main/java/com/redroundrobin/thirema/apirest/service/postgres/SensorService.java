@@ -63,7 +63,8 @@ public class SensorService {
     } else {
       boolean flag = false;
       for(int i=0; i<editableOrCreatableFields.length && !flag; i++) {
-        if(!fields.containsKey(editableOrCreatableFields[i])) {
+        if(!fields.containsKey(editableOrCreatableFields[i])
+            && editableOrCreatableFields[i] != "cmdEnabled") {
           flag = true;
         }
       }
