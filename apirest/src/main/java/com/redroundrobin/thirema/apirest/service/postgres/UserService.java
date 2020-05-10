@@ -47,7 +47,7 @@ public class UserService implements UserDetailsService {
   }
 
   private boolean checkCreatableFields(Set<String> keys)
-      throws InvalidFieldsValuesException {
+      throws MissingFieldsException {
     Set<String> creatable = new HashSet<>();
     creatable.add("name");
     creatable.add("surname");
@@ -59,7 +59,7 @@ public class UserService implements UserDetailsService {
     boolean onlyCreatableKeys = creatable.containsAll(keys);
 
     if (!onlyCreatableKeys) {
-      throw new InvalidFieldsValuesException("");
+      throw MissingFieldsException.defaultMessage();
     }
 
     return creatable.size() == keys.size();
@@ -406,33 +406,32 @@ public class UserService implements UserDetailsService {
     }
 
     int userToInsertType;
-    if ((userToInsertType = rawUserToInsert.get("type").getAsInt()) == 2
-        || userToInsertType != 1 && userToInsertType != 0) {
+    if ((userToInsertType = rawUserToInsert.get("type").getAsInt()) != 2
+        && userToInsertType != 1 && userToInsertType != 0) {
       throw new InvalidFieldsValuesException("");
     }
 
     //qui so che entity_id dato esiste && so il tipo dello user che si vuole inserire
-    if (insertingUser.getType() == User.Role.USER
+    if ((userToInsertType = rawUserToInsert.get("type").getAsInt()) == 2 ||
+        insertingUser.getType() == User.Role.USER
         || (insertingUser.getType() == User.Role.MOD
         && userToInsertEntity.getId() != insertingUser.getEntity().getId())) {
       throw new NotAuthorizedException("");
     }
-
-    User newUser;
-
+    
     String email = rawUserToInsert.get("email").getAsString();
-    if (rawUserToInsert.get("name").getAsString() != null
-        || rawUserToInsert.get("surname").getAsString() != null
-        || rawUserToInsert.get("password").getAsString() != null
-        || email != null && userRepo.findByEmail(email) == null) {
-      newUser = new User(rawUserToInsert.get("name").getAsString(),
-          rawUserToInsert.get("surname").getAsString(), email,
-          rawUserToInsert.get("password").getAsString(), User.Role.values()[userToInsertType]);
-    } else if (email != null && userRepo.findByEmail(email) != null) {
-      throw new ConflictException("");
-    } else {
+    if (rawUserToInsert.get("name").getAsString() == null
+        || rawUserToInsert.get("surname").getAsString() == null
+        || rawUserToInsert.get("password").getAsString() == null
+        || email == null) {
       throw new InvalidFieldsValuesException("");
+    } else if(userRepo.findByEmail(email) != null) {
+      throw new ConflictException("");
     }
+
+    User newUser = new User(rawUserToInsert.get("name").getAsString(),
+        rawUserToInsert.get("surname").getAsString(), email,
+        rawUserToInsert.get("password").getAsString(), User.Role.values()[userToInsertType]);
 
     newUser.setEntity(userToInsertEntity);
 
