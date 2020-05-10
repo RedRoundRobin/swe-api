@@ -418,7 +418,7 @@ public class UserService implements UserDetailsService {
         && userToInsertEntity.getId() != insertingUser.getEntity().getId())) {
       throw new NotAuthorizedException("");
     }
-    
+
     String email = rawUserToInsert.get("email").getAsString();
     if (rawUserToInsert.get("name").getAsString() == null
         || rawUserToInsert.get("surname").getAsString() == null

@@ -7,6 +7,8 @@ import com.redroundrobin.thirema.apirest.repository.postgres.DeviceRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.GatewayRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -79,6 +81,8 @@ public class GatewayService {
         devicesConfig.add(completeDevice);
       }
       kafkaTemplate.send(gatewayConfigTopic, jsonGatewayConfig.toString());
+      gateway.setLastSent(Timestamp.from(Instant.now()));
+      gatewayRepo.save(gateway);
       return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString((JsonNode)jsonGatewayConfig);
     }
   }
