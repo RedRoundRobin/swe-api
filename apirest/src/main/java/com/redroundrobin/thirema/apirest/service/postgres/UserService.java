@@ -1,5 +1,6 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import com.google.gson.JsonObject;
 import com.redroundrobin.thirema.apirest.models.postgres.Alert;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
@@ -43,11 +44,11 @@ public class UserService implements UserDetailsService {
 
   @Autowired
   public UserService(UserRepository userRepository, AlertRepository alertRepository,
-                     EntityRepository entityRepository, ViewRepository viewRepo) {
+                     EntityRepository entityRepository, ViewRepository viewRepository) {
     this.userRepo = userRepository;
     this.alertRepo = alertRepository;
     this.entityRepo = entityRepository;
-    this.viewRepo = viewRepo;
+    this.viewRepo = viewRepository;
   }
 
   private boolean checkCreatableFields(Set<String> keys)
@@ -133,6 +134,7 @@ public class UserService implements UserDetailsService {
 
   private User editAndSave(User userToEdit, Map<String, Object> fieldsToEdit)
       throws ConflictException, InvalidFieldsValuesException {
+
     if (fieldsToEdit.containsKey("tfa")
         && (boolean)fieldsToEdit.get("tfa")
         && (fieldsToEdit.containsKey("telegramName")
@@ -185,8 +187,8 @@ public class UserService implements UserDetailsService {
           if(userToEdit.getEntity().getId() != (int)fieldsToEdit.get("entityId")) {
             userToEdit.setDisabledAlerts(null);
             viewRepo.deleteByUser(userToEdit);
+            userToEdit.setEntity(entityRepo.findById((int)fieldsToEdit.get("entityId")).orElse(null));
           }
-          userToEdit.setEntity(entityRepo.findById((int)fieldsToEdit.get("entityId")).orElse(null));
           break;
         case "deleted":
           userToEdit.setDeleted((boolean) value);
