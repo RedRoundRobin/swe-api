@@ -70,26 +70,31 @@ public class JwtRequestFilter extends OncePerRequestFilter {
           response.setStatus(419);
           return;
         }
-      }
 
-      // check if request with normal token or request to "/auth/tfa" with tfa token
-      // block all calls to api if no token provided and permit only "/auth/tfa" with tfa token
-      if (username != null && SecurityContextHolder.getContext().getAuthentication() == null
-          && (!jwtUtil.isTfa(jwt) || request.getRequestURI().equals("/auth/tfa"))) {
+        // check if request with normal token or request to "/auth/tfa" with tfa token
+        // block all calls to api if no token provided and permit only "/auth/tfa" with tfa token
+        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null
+            && (!jwtUtil.isTfa(jwt) || request.getRequestURI().equals("/auth/tfa"))) {
 
-        UserDetails userDetails = getUserDetailsByType(type, username);
+          UserDetails userDetails = getUserDetailsByType(type, username);
 
-        if (userDetails != null && jwtUtil.validateToken(jwt, userDetails)) {
+          if (userDetails != null && jwtUtil.validateToken(jwt, userDetails)) {
 
-          UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
-              new UsernamePasswordAuthenticationToken(userDetails, null,
-                  userDetails.getAuthorities());
-          usernamePasswordAuthenticationToken
-              .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-          SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+            UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
+                new UsernamePasswordAuthenticationToken(userDetails, null,
+                    userDetails.getAuthorities());
+            usernamePasswordAuthenticationToken
+                .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+
+            chain.doFilter(request, response);
+            return;
+          }
         }
       }
+      response.setStatus(401);
+    } else {
+      chain.doFilter(request, response);
     }
-    chain.doFilter(request, response);
   }
 }
