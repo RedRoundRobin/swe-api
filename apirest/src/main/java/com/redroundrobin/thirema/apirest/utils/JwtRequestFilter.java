@@ -42,6 +42,48 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     }
   }
 
+  private int authorizedRequest(HttpServletRequest request) {
+    final String authorizationHeader = request.getHeader("Authorization");
+
+    if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+
+      String jwt;
+      String type;
+      String username;
+
+      try {
+        jwt = authorizationHeader.substring(7);
+        type = jwtUtil.extractType(jwt);
+        username = jwtUtil.extractUsername(jwt);
+
+      } catch (ExpiredJwtException eje) {
+        return 419;
+      }
+
+      // check if request with normal token or request to "/auth/tfa" with tfa token
+      // block all calls to api if no token provided and permit only "/auth/tfa" with tfa token
+      if (username != null
+          && SecurityContextHolder.getContext().getAuthentication() == null
+          && (!jwtUtil.isTfa(jwt) || request.getRequestURI().equals("/auth/tfa"))) {
+
+        UserDetails userDetails = getUserDetailsByType(type, username);
+
+        if (userDetails != null && jwtUtil.validateToken(jwt, userDetails)) {
+
+          UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
+              new UsernamePasswordAuthenticationToken(userDetails, null,
+                  userDetails.getAuthorities());
+          usernamePasswordAuthenticationToken
+              .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+          SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+
+          return 200;
+        }
+      }
+    }
+    return 401;
+  }
+
   public JwtRequestFilter(JwtUtil jwtUtil, UserService userService, Set<String> publicRequests) {
     this.jwtUtil = jwtUtil;
     this.userService = userService;
@@ -53,48 +95,15 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                                   FilterChain chain)
       throws ServletException, IOException {
     // if it is a request that needs authentication then check jwt, else jump jwt check
-    if (publicRequests.stream().noneMatch(request.getRequestURI()::equals)) {
-      final String authorizationHeader = request.getHeader("Authorization");
-
-      String username = null;
-      String type = null;
-      String jwt = null;
-
-      if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-        try {
-          jwt = authorizationHeader.substring(7);
-          type = jwtUtil.extractType(jwt);
-          username = jwtUtil.extractUsername(jwt);
-
-        } catch (ExpiredJwtException eje) {
-          response.setStatus(419);
-          return;
-        }
-
-        // check if request with normal token or request to "/auth/tfa" with tfa token
-        // block all calls to api if no token provided and permit only "/auth/tfa" with tfa token
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null
-            && (!jwtUtil.isTfa(jwt) || request.getRequestURI().equals("/auth/tfa"))) {
-
-          UserDetails userDetails = getUserDetailsByType(type, username);
-
-          if (userDetails != null && jwtUtil.validateToken(jwt, userDetails)) {
-
-            UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
-                new UsernamePasswordAuthenticationToken(userDetails, null,
-                    userDetails.getAuthorities());
-            usernamePasswordAuthenticationToken
-                .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
-
-            chain.doFilter(request, response);
-            return;
-          }
-        }
-      }
-      response.setStatus(401);
-    } else {
+    if (publicRequests.stream().anyMatch(request.getRequestURI()::equals)) {
       chain.doFilter(request, response);
+    } else {
+      int status = authorizedRequest(request);
+      if (status == 200) {
+        chain.doFilter(request, response);
+      } else {
+        response.setStatus(status);
+      }
     }
   }
 }
