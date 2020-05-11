@@ -6,6 +6,7 @@ import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.repository.postgres.AlertRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
+import com.redroundrobin.thirema.apirest.repository.postgres.ViewRepository;
 import com.redroundrobin.thirema.apirest.utils.exception.*;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,6 +39,9 @@ public class UserServiceTest {
   @MockBean
   private UserRepository userRepo;
 
+  @MockBean
+  private ViewRepository viewRepo;
+
   private User admin1;
   private User admin2;
   private User mod1;
@@ -52,7 +56,7 @@ public class UserServiceTest {
   @Before
   public void setUp() {
 
-    userService = new UserService(userRepo, alertRepo, entityRepo);
+    userService = new UserService(userRepo, alertRepo, entityRepo, viewRepo);
 
     // ----------------------------------------- Set Users ---------------------------------------
     admin1 = new User(1, "admin1", "admin1", "admin1", "pass", User.Role.ADMIN);
