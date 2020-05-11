@@ -132,7 +132,7 @@ public class UserService implements UserDetailsService {
     }
   }
 
-  private User editAndSave(User userToEdit, Map<String, Object> fieldsToEdit)
+  private User editAndSave(User userToEdit, Map<String, Object> fieldsToEdit, boolean itself)
       throws ConflictException, InvalidFieldsValuesException {
 
     if (fieldsToEdit.containsKey("tfa")
@@ -179,7 +179,7 @@ public class UserService implements UserDetailsService {
           break;
         case "tfa":
           userToEdit.setTfa((boolean) value);
-          if (!(boolean) value) {
+          if (!itself && !(boolean) value) {
             userToEdit.setTelegramChat(null);
           }
           break;
@@ -229,7 +229,7 @@ public class UserService implements UserDetailsService {
       throw new NotAuthorizedException(
           "You are not allowed to edit some of the specified fields");
     } else {
-      return this.editAndSave(userToEdit, fieldsToEdit);
+      return this.editAndSave(userToEdit, fieldsToEdit, itself);
     }
   }
 
@@ -242,7 +242,7 @@ public class UserService implements UserDetailsService {
       throw new NotAuthorizedException(
           "You are not allowed to edit some of the specified fields");
     } else {
-      return this.editAndSave(userToEdit, fieldsToEdit);
+      return this.editAndSave(userToEdit, fieldsToEdit, itself);
     }
   }
 
@@ -254,7 +254,7 @@ public class UserService implements UserDetailsService {
       throw new NotAuthorizedException(
           "You are not allowed to edit some of the specified fields");
     } else {
-      return this.editAndSave(userToEdit, fieldsToEdit);
+      return this.editAndSave(userToEdit, fieldsToEdit, true);
     }
   }
 

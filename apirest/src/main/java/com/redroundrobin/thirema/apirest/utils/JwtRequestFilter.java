@@ -42,39 +42,28 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     }
   }
 
-  public JwtRequestFilter(JwtUtil jwtUtil, UserService userService, Set<String> publicRequests) {
-    this.jwtUtil = jwtUtil;
-    this.userService = userService;
-    this.publicRequests = publicRequests;
-  }
+  private int authorizedRequest(HttpServletRequest request) {
+    final String authorizationHeader = request.getHeader("Authorization");
 
-  @Override
-  protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-                                  FilterChain chain)
-      throws ServletException, IOException {
-    // if it is a request that needs authentication then check jwt, else jump jwt check
-    if (publicRequests.stream().noneMatch(request.getRequestURI()::equals)) {
-      final String authorizationHeader = request.getHeader("Authorization");
+    if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
 
-      String username = null;
-      String type = null;
-      String jwt = null;
+      String jwt;
+      String type;
+      String username;
 
-      if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-        try {
-          jwt = authorizationHeader.substring(7);
-          type = jwtUtil.extractType(jwt);
-          username = jwtUtil.extractUsername(jwt);
+      try {
+        jwt = authorizationHeader.substring(7);
+        type = jwtUtil.extractType(jwt);
+        username = jwtUtil.extractUsername(jwt);
 
-        } catch (ExpiredJwtException eje) {
-          response.setStatus(419);
-          return;
-        }
+      } catch (ExpiredJwtException eje) {
+        return 419;
       }
 
       // check if request with normal token or request to "/auth/tfa" with tfa token
       // block all calls to api if no token provided and permit only "/auth/tfa" with tfa token
-      if (username != null && SecurityContextHolder.getContext().getAuthentication() == null
+      if (username != null
+          && SecurityContextHolder.getContext().getAuthentication() == null
           && (!jwtUtil.isTfa(jwt) || request.getRequestURI().equals("/auth/tfa"))) {
 
         UserDetails userDetails = getUserDetailsByType(type, username);
@@ -87,9 +76,34 @@ public class JwtRequestFilter extends OncePerRequestFilter {
           usernamePasswordAuthenticationToken
               .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
           SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+
+          return 200;
         }
       }
     }
-    chain.doFilter(request, response);
+    return 401;
+  }
+
+  public JwtRequestFilter(JwtUtil jwtUtil, UserService userService, Set<String> publicRequests) {
+    this.jwtUtil = jwtUtil;
+    this.userService = userService;
+    this.publicRequests = publicRequests;
+  }
+
+  @Override
+  protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+                                  FilterChain chain)
+      throws ServletException, IOException {
+    // if it is a request that needs authentication then check jwt, else jump jwt check
+    if (publicRequests.stream().anyMatch(request.getRequestURI()::equals)) {
+      chain.doFilter(request, response);
+    } else {
+      int status = authorizedRequest(request);
+      if (status == 200) {
+        chain.doFilter(request, response);
+      } else {
+        response.setStatus(status);
+      }
+    }
   }
 }
