@@ -1,6 +1,5 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.redroundrobin.thirema.apirest.models.postgres.Alert;
@@ -16,18 +15,14 @@ import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.ViewGraphRepository;
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
-
+import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
+import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
-import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
-import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
-import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -64,7 +59,7 @@ public class SensorService {
       boolean flag = false;
       for(int i=0; i<editableOrCreatableFields.length && !flag; i++) {
         if(!fields.containsKey(editableOrCreatableFields[i])
-            && editableOrCreatableFields[i] != "cmdEnabled") {
+            && !editableOrCreatableFields[i].equals("cmdEnabled")) {
           flag = true;
         }
       }
@@ -273,12 +268,12 @@ public class SensorService {
           + "or it's value is not correct");
     }
 
-    if(!sensorRepo.existsById(sensorId)) {
+    Sensor sensor = sensorRepo.findById(sensorId).orElse(null);
+    if(sensor == null) {
       throw new ElementNotFoundException("The given sensorId doesn't match "
           + "any sensor in the database");
     }
 
-    Sensor sensor = sensorRepo.findById(sensorId).get();
     if(!sensor.getCmdEnabled()) {
       throw new NotAuthorizedException("The sensor with the sensorId given"
           + "is not allowed to receive commands");

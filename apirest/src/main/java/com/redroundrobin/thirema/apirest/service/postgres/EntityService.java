@@ -148,10 +148,8 @@ public class EntityService {
 
   public boolean enableOrDisableSensorToEntity(int entityId, Map<String, Object> SensorsToEnableOrDisable)
       throws ElementNotFoundException, JsonProcessingException {
-    Entity entityToEdit = null;
-    if(entityRepo.existsById(entityId)) {
-      entityToEdit = entityRepo.findById(entityId).orElse(null);
-    } else {
+    Entity entityToEdit = entityRepo.findById(entityId).orElse(null);
+    if(entityToEdit == null) {
       throw ElementNotFoundException.notFoundMessage("entity");
     }
     
@@ -200,10 +198,11 @@ public class EntityService {
 
   public List<Sensor> getEntitySensorsEnabled(int entityId)
       throws ElementNotFoundException {
-    if(!entityRepo.existsById(entityId))
+    Entity entity = entityRepo.findById(entityId).orElse(null);
+    if(entity == null)
       throw ElementNotFoundException.notFoundMessage("entity");
     List<Sensor> sensorsList = new ArrayList();
-    sensorsList.addAll(entityRepo.findById(entityId).get().getSensors());
+    sensorsList.addAll(entity.getSensors());
     return sensorsList;
   }
 
