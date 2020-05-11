@@ -7,6 +7,7 @@ import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.repository.postgres.AlertRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
+import com.redroundrobin.thirema.apirest.repository.postgres.ViewRepository;
 import com.redroundrobin.thirema.apirest.utils.exception.ConflictException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
@@ -38,12 +39,15 @@ public class UserService implements UserDetailsService {
 
   private final EntityRepository entityRepo;
 
+  private final ViewRepository viewRepo;
+
   @Autowired
   public UserService(UserRepository userRepository, AlertRepository alertRepository,
-                     EntityRepository entityRepository) {
+                     EntityRepository entityRepository, ViewRepository viewRepo) {
     this.userRepo = userRepository;
     this.alertRepo = alertRepository;
     this.entityRepo = entityRepository;
+    this.viewRepo = viewRepo;
   }
 
   private boolean checkCreatableFields(Set<String> keys)
@@ -178,6 +182,10 @@ public class UserService implements UserDetailsService {
           }
           break;
         case "entityId":
+          if(userToEdit.getEntity().getId() != (int)fieldsToEdit.get("entityId")) {
+            userToEdit.setDisabledAlerts(null);
+            viewRepo.deleteByUser(userToEdit);
+          }
           userToEdit.setEntity(entityRepo.findById((int)fieldsToEdit.get("entityId")).orElse(null));
           break;
         case "deleted":
@@ -265,7 +273,7 @@ public class UserService implements UserDetailsService {
     } else {
       throw new NotAuthorizedException("User " + editingUser.getId() + " (is an administrator "
           + "and is trying to edit another administrator) or (is mod and the user is trying to edit"
-          + " is not in the same entity) or user is trying to edit another user");
+          + " is not in the same entity or user is trying to edit another user");
     }
   }
 

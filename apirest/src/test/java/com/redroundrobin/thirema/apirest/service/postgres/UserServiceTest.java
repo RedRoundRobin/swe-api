@@ -52,7 +52,7 @@ public class UserServiceTest {
   @Before
   public void setUp() {
 
-    userService = new UserService(userRepo, alertRepo, entityRepo);
+    userService = new UserService(userRepo, alertRepo, entityRepo, null); //viewRepo
 
     // ----------------------------------------- Set Users ---------------------------------------
     admin1 = new User(1, "admin1", "admin1", "admin1", "pass", User.Role.ADMIN);

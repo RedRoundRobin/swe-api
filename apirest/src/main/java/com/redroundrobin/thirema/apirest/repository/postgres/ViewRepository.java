@@ -9,5 +9,6 @@ import org.springframework.stereotype.Repository;
 public interface ViewRepository extends CrudRepository<View, Integer> {
   Iterable<View> findAllByUser(User user);
 
+  void deleteByUser(User user);
   View findByViewIdAndUser(int viewId, User user);
 }
