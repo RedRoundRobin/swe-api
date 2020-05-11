@@ -50,8 +50,8 @@ public class EntityController extends CoreController {
   @GetMapping(value = {""})
   public ResponseEntity<List<Entity>> getEntities(
       @RequestHeader(value = "Authorization") String authorization,
-      @RequestParam(name = "sensor", required = false) Integer sensorId,
-      @RequestParam(name = "user", required = false) Integer userId) {
+      @RequestParam(name = "sensorId", required = false) Integer sensorId,
+      @RequestParam(name = "userId", required = false) Integer userId) {
     User user = this.getUserFromAuthorization(authorization);
     if (user.getType() == User.Role.ADMIN && sensorId == null && userId == null) {
       return ResponseEntity.ok(entityService.findAll());

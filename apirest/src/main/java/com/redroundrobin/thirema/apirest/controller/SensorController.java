@@ -46,7 +46,7 @@ public class SensorController extends CoreController {
   @GetMapping(value = {""})
   public ResponseEntity<List<Sensor>> getSensors(
       @RequestHeader(value = "Authorization") String authorization,
-      @RequestParam(value = "entity", required = false) Integer entityId) {
+      @RequestParam(value = "entityId", required = false) Integer entityId) {
     User user = this.getUserFromAuthorization(authorization);
     if (user.getType() == User.Role.ADMIN) {
       if (entityId != null) {

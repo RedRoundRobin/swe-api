@@ -52,9 +52,9 @@ public class UserController extends CoreController {
   @GetMapping(value = {""})
   public ResponseEntity<List<User>> getUsers(
       @RequestHeader("Authorization") String authorization,
-      @RequestParam(value = "entity", required = false) Integer entity,
+      @RequestParam(value = "entityId", required = false) Integer entity,
       @RequestParam(value = "disabledAlert", required = false) Integer disabledAlert,
-      @RequestParam(value = "view", required = false) Integer view,
+      @RequestParam(value = "viewId", required = false) Integer view,
       @RequestParam(value = "telegramName", required = false) String telegramName) {
     User user = getUserFromAuthorization(authorization);
     if (telegramName != null) {
