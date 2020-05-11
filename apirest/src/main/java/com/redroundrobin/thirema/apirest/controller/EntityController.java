@@ -69,26 +69,6 @@ public class EntityController extends CoreController {
     }
   }
 
- /* @GetMapping(value = {"/{entityId:.+}/sensors"})
-  public ResponseEntity<List<Sensor>> getSensorsEnabledForEntity(
-      @RequestHeader(value = "Authorization") String authorization,
-      @PathVariable(name = "entityId") Integer entityId) {
-    User user = this.getUserFromAuthorization(authorization);
-    if (user.getType() == User.Role.ADMIN) {
-      try {
-        return ResponseEntity.ok(entityService.getEntitySensorsEnabled(entityId));
-      } catch(ElementNotFoundException enfe) {
-        logger.debug("RESPONSE STATUS: BAD_REQUEST. The given entityId"
-            + " doen't match any entity in the database");
-        return new ResponseEntity(HttpStatus.BAD_REQUEST);
-      }
-    } else {
-      logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId()
-          + " is not an administrator or the entity Id is not the same as the user entity");
-      return new ResponseEntity(HttpStatus.FORBIDDEN);
-    }
-  }*/
-
   @GetMapping(value = {"/{entityId:.+}"})
   public ResponseEntity<Entity> getEntity(
       @RequestHeader(value = "Authorization") String authorization,
@@ -135,18 +115,7 @@ public class EntityController extends CoreController {
       HttpServletRequest httpRequest) {
     String ip = getIpAddress(httpRequest);
     User user = getUserFromAuthorization(authorization);
-    if (user.getType() == User.Role.ADMIN) { //tolto necessità mettere enableOrDisableSensors
-      try {
-        Entity entity = entityService.editEntity(
-            entityId, fieldsToEditOrsensorsToEnableOrDisable);
-        logService.createLog(user.getId(),ip,"entity.edit",
-            Integer.toString(entity.getId()));
-        return ResponseEntity.ok(entity);
-      } catch (MissingFieldsException | InvalidFieldsValuesException e) {
-        logger.debug(e.toString());
-        return new ResponseEntity(HttpStatus.BAD_REQUEST);
-      }
-    } else if(user.getType() == User.Role.ADMIN
+    if (user.getType() == User.Role.ADMIN
         && (boolean)fieldsToEditOrsensorsToEnableOrDisable.get("enableOrDisableSensors")) {
       try {
         fieldsToEditOrsensorsToEnableOrDisable.remove("enableOrDisableSensors");
@@ -156,8 +125,19 @@ public class EntityController extends CoreController {
         } else {
           return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
         }
-      } catch (Exception /*| ElementNotFoundException | JsonProcessingException*/ enfe) { //mettere l'eccezione Json in punto giusto!!
+      } catch (Exception enfe) {
         logger.debug(enfe.toString());
+        return new ResponseEntity(HttpStatus.BAD_REQUEST);
+      }
+    } else if(user.getType() == User.Role.ADMIN) {
+      try {
+        Entity entity = entityService.editEntity(
+            entityId, fieldsToEditOrsensorsToEnableOrDisable);
+        logService.createLog(user.getId(),ip,"entity.edit",
+            Integer.toString(entity.getId()));
+        return ResponseEntity.ok(entity);
+      } catch (MissingFieldsException | InvalidFieldsValuesException e) {
+        logger.debug(e.toString());
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
       }
     } else {
