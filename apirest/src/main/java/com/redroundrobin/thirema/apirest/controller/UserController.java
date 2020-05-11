@@ -52,9 +52,9 @@ public class UserController extends CoreController {
   @GetMapping(value = {""})
   public ResponseEntity<List<User>> getUsers(
       @RequestHeader("Authorization") String authorization,
-      @RequestParam(value = "entityId", required = false) Integer entity,
-      @RequestParam(value = "disabledAlert", required = false) Integer disabledAlert,
-      @RequestParam(value = "viewId", required = false) Integer view,
+      @RequestParam(value = "entityId", required = false) Integer entityId,
+      @RequestParam(value = "disabledAlert", required = false) Integer disabledAlertId,
+      @RequestParam(value = "viewId", required = false) Integer viewId,
       @RequestParam(value = "telegramName", required = false) String telegramName) {
     User user = getUserFromAuthorization(authorization);
     if (telegramName != null) {
@@ -68,20 +68,20 @@ public class UserController extends CoreController {
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
       }
     } else if (user.getType() == User.Role.ADMIN) {
-      if (entity != null) {
-        return ResponseEntity.ok(userService.findAllByEntityId(entity));
-      } else if (disabledAlert != null) {
+      if (entityId != null) {
+        return ResponseEntity.ok(userService.findAllByEntityId(entityId));
+      } else if (disabledAlertId != null) {
         logger.debug("RESPONSE STATUS: BAD_REQUEST. disableAlert != null");
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
-      } else if (view != null) {
+      } else if (viewId != null) {
         logger.debug("RESPONSE STATUS: BAD_REQUEST. view != null");
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
       } else {
         return ResponseEntity.ok(userService.findAll());
       }
     } else if (user.getType() == User.Role.MOD
-        && disabledAlert == null && view == null
-        && (entity == null || user.getEntity().getId() == entity)) {
+        && disabledAlertId == null && viewId == null
+        && (entityId == null || user.getEntity().getId() == entityId)) {
       return ResponseEntity.ok(userService.findAllByEntityId(user.getEntity().getId()));
     } else {
       logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId() + " is not an administrator "
