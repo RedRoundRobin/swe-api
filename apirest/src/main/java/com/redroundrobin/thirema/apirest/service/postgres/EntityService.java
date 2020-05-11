@@ -152,46 +152,30 @@ public class EntityService {
     if(entityToEdit == null) {
       throw ElementNotFoundException.notFoundMessage("entity");
     }
-    
-    LinkedHashMap<String, Object> sensorsToInsert =
-        (LinkedHashMap<String, Object>)SensorsToEnableOrDisable.get("toInsert");
-    boolean flag = false;
-    Set<Sensor> sensorsEnabled = entityToEdit.getSensors();
-    for(int i=0; i < sensorsToInsert.size() && !flag; i++) {
-      int sensorToInsertId = (Integer)sensorsToInsert.get("Id"+(i+1));
-      Sensor sensorToInsert = null;
-      if(!sensorRepo.existsById(sensorToInsertId)
-          || sensorsEnabled.contains(
-          sensorToInsert = sensorRepo.findById(sensorToInsertId).orElse(null))) {
-        flag= true;
-      } else {
-        sensorsEnabled.add(sensorToInsert);
+
+    Set<Sensor> entitySensors = entityToEdit.getSensors();
+    logger.debug("EntityID: " + entityId);
+    logger.debug("SIZE: " + entitySensors.size());
+    List<Integer> sensorsToInsert = (ArrayList<Integer>)SensorsToEnableOrDisable.get("toInsert");
+    for(Integer sensorId : sensorsToInsert) {
+      logger.debug("AGGIUNTO: " + sensorId);
+      Sensor sensorToInsert = sensorRepo.findById(sensorId).orElse(null);
+      if (sensorToInsert != null && !entitySensors.contains(sensorToInsert)) {
+        entitySensors.add(sensorToInsert);
       }
-    } if(flag) {
-      throw new ElementNotFoundException("sensor not found or "
-          + "already inserted in the given entity");
     }
 
-    LinkedHashMap<String, Object> sensorsToDelete =
-        (LinkedHashMap<String, Object>)SensorsToEnableOrDisable.get("toDelete");
-    for(int i=0; i < sensorsToDelete.size() && !flag; i++) {
-      int sensorsToDeleteId = (Integer)sensorsToDelete.get("Id"+(i+1));
-      Sensor sensorToDelete = null;
-      if(!sensorRepo.existsById(sensorsToDeleteId)) {
-        flag= true;
-      } else if(!sensorsEnabled.contains(
-          sensorToDelete = sensorRepo.findById(sensorsToDeleteId).orElse(null))) {
-        flag = true;
-      } else {
-        sensorsEnabled.remove(sensorToDelete);
+    List<Integer> sensorsToDelete = (ArrayList<Integer>)SensorsToEnableOrDisable.get("toDelete");
+    for(Integer sensorId : sensorsToDelete) {
+      Sensor sensorToDelete = sensorRepo.findById(sensorId).orElse(null);
+      if(sensorToDelete != null && entitySensors.contains(sensorToDelete)) {
+        entitySensors.remove(sensorToDelete);
+        logger.debug("RIMOSSO: " + sensorId);
       }
-    } if(flag) {
-      throw new ElementNotFoundException("sensor not found or "
-          + "already not present in the given entity");
     }
 
-
-    entityToEdit.setSensors(sensorsEnabled);
+    logger.debug("SIZE: " + entitySensors.size());
+    entityToEdit.setSensors(entitySensors);
     entityRepo.save(entityToEdit);
     return true;
   }
