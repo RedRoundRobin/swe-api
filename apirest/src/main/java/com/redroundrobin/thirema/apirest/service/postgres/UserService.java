@@ -1,11 +1,13 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import com.redroundrobin.thirema.apirest.models.postgres.Alert;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.repository.postgres.AlertRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
+import com.redroundrobin.thirema.apirest.repository.postgres.ViewRepository;
 import com.redroundrobin.thirema.apirest.utils.exception.ConflictException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
@@ -37,12 +39,26 @@ public class UserService implements UserDetailsService {
 
   private final EntityRepository entityRepo;
 
+  private final ViewRepository viewRepo;
+
   @Autowired
   public UserService(UserRepository userRepository, AlertRepository alertRepository,
-                     EntityRepository entityRepository) {
+                     EntityRepository entityRepository, ViewRepository viewRepository) {
     this.userRepo = userRepository;
     this.alertRepo = alertRepository;
     this.entityRepo = entityRepository;
+    this.viewRepo = viewRepository;
+  }
+
+  private boolean editableTfa(User userToEdit, Map<String, Object> fieldsToEdit) {
+    if (fieldsToEdit.containsKey("tfa") && (boolean)fieldsToEdit.get("tfa")) {
+      return ((fieldsToEdit.containsKey("telegramName")
+          && userToEdit.getTelegramName() != null && !userToEdit.getTelegramName().isEmpty()
+          && !userToEdit.getTelegramName().equals(fieldsToEdit.get("telegramName")))
+          || userToEdit.getTelegramChat() == null || userToEdit.getTelegramChat().isEmpty());
+    } else {
+      return false;
+    }
   }
 
   private boolean checkCreatableFields(Set<String> keys)
@@ -126,14 +142,13 @@ public class UserService implements UserDetailsService {
     }
   }
 
-  private User editAndSave(User userToEdit, Map<String, Object> fieldsToEdit)
+  private User editAndSave(User userToEdit, Map<String, Object> fieldsToEdit, boolean itself)
       throws ConflictException, InvalidFieldsValuesException {
-    if (fieldsToEdit.containsKey("tfa")
-        && (boolean)fieldsToEdit.get("tfa")
-        && (fieldsToEdit.containsKey("telegramName")
-        || userToEdit.getTelegramChat() == null || userToEdit.getTelegramChat().isEmpty())) {
+
+    if (editableTfa(userToEdit, fieldsToEdit)) {
       throw new ConflictException("TFA can't be edited because either telegramName is "
-          + "in the request or telegram chat not present");
+          + "in the request and different from the current telegramName or telegram chat is not "
+          + "present");
     }
 
     if (fieldsToEdit.containsKey("entityId")
@@ -172,12 +187,17 @@ public class UserService implements UserDetailsService {
           break;
         case "tfa":
           userToEdit.setTfa((boolean) value);
-          if (!(boolean) value) {
+          if (!itself && !(boolean) value) {
             userToEdit.setTelegramChat(null);
           }
           break;
         case "entityId":
-          userToEdit.setEntity(entityRepo.findById((int)fieldsToEdit.get("entityId")).orElse(null));
+          if (userToEdit.getEntity().getId() != (int)fieldsToEdit.get("entityId")) {
+            userToEdit.setDisabledAlerts(Collections.emptySet());
+            viewRepo.deleteAllByUserId(userToEdit.getId());
+            userToEdit.setEntity(entityRepo.findById((int) fieldsToEdit.get("entityId"))
+                .orElse(null));
+          }
           break;
         case "deleted":
           userToEdit.setDeleted((boolean) value);
@@ -217,7 +237,7 @@ public class UserService implements UserDetailsService {
       throw new NotAuthorizedException(
           "You are not allowed to edit some of the specified fields");
     } else {
-      return this.editAndSave(userToEdit, fieldsToEdit);
+      return this.editAndSave(userToEdit, fieldsToEdit, itself);
     }
   }
 
@@ -230,7 +250,7 @@ public class UserService implements UserDetailsService {
       throw new NotAuthorizedException(
           "You are not allowed to edit some of the specified fields");
     } else {
-      return this.editAndSave(userToEdit, fieldsToEdit);
+      return this.editAndSave(userToEdit, fieldsToEdit, itself);
     }
   }
 
@@ -242,7 +262,7 @@ public class UserService implements UserDetailsService {
       throw new NotAuthorizedException(
           "You are not allowed to edit some of the specified fields");
     } else {
-      return this.editAndSave(userToEdit, fieldsToEdit);
+      return this.editAndSave(userToEdit, fieldsToEdit, true);
     }
   }
 

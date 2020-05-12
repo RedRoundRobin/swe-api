@@ -463,11 +463,8 @@ public class UserControllerTest {
     ResponseEntity response = userController.editUser("Bearer " + user2Token,
         request, user2.getId(), httpRequest);
 
-    String expectedBody = "The value of telegram_name already exists";
-    ResponseEntity expected = new ResponseEntity(expectedBody, HttpStatus.CONFLICT);
-
     // Check status and if are present tfa and token
-    assertEquals(expected, response);
+    assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
   }
 
   @Test
@@ -486,11 +483,8 @@ public class UserControllerTest {
     ResponseEntity response = userController.editUser("Bearer " + user2Token,
         request, user2.getId(), httpRequest);
 
-    String expectedBody = "";
-    ResponseEntity expected = new ResponseEntity(expectedBody, HttpStatus.CONFLICT);
-
     // Check status and if are present tfa and token
-    assertEquals(expected, response);
+    assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
   }
 
   @Test
@@ -549,10 +543,8 @@ public class UserControllerTest {
     ResponseEntity response = userController.editUser("Bearer " + mod1Token,
         request, mod1.getId(), httpRequest);
 
-    ResponseEntity expected = new ResponseEntity(tfaError, HttpStatus.CONFLICT);
-
     // Check status and if are present tfa and token
-    assertEquals(expected, response);
+    assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
   }
 
   @Test

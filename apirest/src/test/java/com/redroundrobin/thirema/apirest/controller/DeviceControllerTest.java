@@ -11,6 +11,7 @@ import com.redroundrobin.thirema.apirest.service.postgres.DeviceService;
 import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.service.timescale.LogService;
+import com.redroundrobin.thirema.apirest.utils.exception.ConflictException;
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
@@ -383,7 +384,7 @@ public class DeviceControllerTest {
 
   @Test
   public void createDeviceByAdminSuccessful()
-      throws MissingFieldsException, InvalidFieldsValuesException {
+      throws MissingFieldsException, InvalidFieldsValuesException, ConflictException {
     Map<String, Object> newDeviceFields = new HashMap<>();
     newDeviceFields.put("name", "devTest");
     newDeviceFields.put("realDeviceId", 2);
@@ -404,7 +405,7 @@ public class DeviceControllerTest {
 
   @Test
   public void createDeviceByAdminMissingFieldsException()
-      throws MissingFieldsException, InvalidFieldsValuesException {
+      throws MissingFieldsException, InvalidFieldsValuesException, ConflictException {
     Map<String, Object> newDeviceFields = new HashMap<>();
     newDeviceFields.put("name", "devTest");
     newDeviceFields.put("realDeviceId", 2);
@@ -421,7 +422,7 @@ public class DeviceControllerTest {
 
   @Test
   public void createDeviceByAdminInvalidFieldsValuesException()
-      throws MissingFieldsException, InvalidFieldsValuesException {
+      throws MissingFieldsException, InvalidFieldsValuesException, ConflictException {
     Map<String, Object> newDeviceFields = new HashMap<>();
     newDeviceFields.put("name", "devTest");
     newDeviceFields.put("realDeviceId", 2);
@@ -453,7 +454,7 @@ public class DeviceControllerTest {
 
   @Test
   public void createSensorByAdminSuccessful()
-      throws MissingFieldsException, InvalidFieldsValuesException {
+      throws MissingFieldsException, InvalidFieldsValuesException, ConflictException {
     Map<String, Object> newSensorFields = new HashMap<>();
     newSensorFields.put("type", "description");
     newSensorFields.put("realSensorId", 3);
@@ -476,7 +477,7 @@ public class DeviceControllerTest {
 
   @Test
   public void createSensorByAdminSuccessfulWithoutSpecifiyingCmdEnabled()
-      throws MissingFieldsException, InvalidFieldsValuesException {
+      throws MissingFieldsException, InvalidFieldsValuesException, ConflictException {
     Map<String, Object> newSensorFields = new HashMap<>();
     newSensorFields.put("type", "description");
     newSensorFields.put("realSensorId", 3);
@@ -497,7 +498,7 @@ public class DeviceControllerTest {
 
   @Test
   public void createSensorByAdminMissingFieldsException()
-      throws MissingFieldsException, InvalidFieldsValuesException {
+      throws MissingFieldsException, InvalidFieldsValuesException, ConflictException {
     Map<String, Object> newSensorFields = new HashMap<>();
     newSensorFields.put("realSensorId", 3);
     newSensorFields.put("deviceId", device1.getId());
@@ -515,7 +516,7 @@ public class DeviceControllerTest {
 
   @Test
   public void createSensorByAdminInvalidFieldsValuesException()
-      throws MissingFieldsException, InvalidFieldsValuesException {
+      throws MissingFieldsException, InvalidFieldsValuesException, ConflictException {
     Map<String, Object> newSensorFields = new HashMap<>();
     newSensorFields.put("realSensorId", 3);
     newSensorFields.put("type", "description");
@@ -548,7 +549,7 @@ public class DeviceControllerTest {
 
   @Test
   public void editDevice1ByAdminSuccesful()
-      throws MissingFieldsException, InvalidFieldsValuesException, ElementNotFoundException {
+      throws MissingFieldsException, InvalidFieldsValuesException, ElementNotFoundException, ConflictException {
     Map<String, Object> editDeviceFields = new HashMap<>();
     editDeviceFields.put("name", "devTest2");
 
@@ -565,7 +566,7 @@ public class DeviceControllerTest {
   /*in th next test, none of the map filds given exist in a Device object!*/
   @Test
   public void editDevice1ByAdminSuccesfulMissingFieldsException()
-      throws MissingFieldsException, InvalidFieldsValuesException, ElementNotFoundException {
+      throws MissingFieldsException, InvalidFieldsValuesException, ElementNotFoundException, ConflictException {
     Map<String, Object> editDeviceFields = new HashMap<>();
     editDeviceFields.put("notExistingField", "devTest2");
 
@@ -593,7 +594,7 @@ public class DeviceControllerTest {
 
   @Test
   public void editSensor1Device1ByAdminSuccesful()
-      throws MissingFieldsException, InvalidFieldsValuesException, ElementNotFoundException {
+      throws MissingFieldsException, InvalidFieldsValuesException, ElementNotFoundException, ConflictException {
     Map<String, Object> editSensorFields = new HashMap<>();
     editSensorFields.put("type", "devTest2");
 
@@ -612,7 +613,7 @@ public class DeviceControllerTest {
   /*in th next test, none of the map filds given exist in a Sensor object!*/
   @Test
   public void editSensor1ByAdminMissingFieldsException()
-      throws MissingFieldsException, InvalidFieldsValuesException, ElementNotFoundException {
+      throws MissingFieldsException, InvalidFieldsValuesException, ElementNotFoundException, ConflictException {
     Map<String, Object> editSensorFields = new HashMap<>();
     editSensorFields.put("notExistingField", "devTest2");
 

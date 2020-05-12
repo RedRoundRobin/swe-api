@@ -27,6 +27,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
+
 @RestController
 @RequestMapping(value = {"/sensors"})
 public class SensorController extends CoreController {
@@ -46,7 +48,7 @@ public class SensorController extends CoreController {
   @GetMapping(value = {""})
   public ResponseEntity<List<Sensor>> getSensors(
       @RequestHeader(value = "Authorization") String authorization,
-      @RequestParam(value = "entity", required = false) Integer entityId) {
+      @RequestParam(value = "entityId", required = false) Integer entityId) {
     User user = this.getUserFromAuthorization(authorization);
     if (user.getType() == User.Role.ADMIN) {
       if (entityId != null) {
@@ -81,12 +83,16 @@ public class SensorController extends CoreController {
   public ResponseEntity<String> sendCommandToSensorToGAtewayThroughToKafka(
       @RequestHeader(value = "Authorization") String authorization,
       @PathVariable("sensorId") int sensorId,
-      @RequestBody Map<String, Object> commandFields) {
+      @RequestBody Map<String, Object> commandFields,
+      HttpServletRequest httpRequest) {
+    String ip = this.getIpAddress(httpRequest);
     User user = this.getUserFromAuthorization(authorization);
     if (user.getType() == User.Role.ADMIN) {
       try {
-        return ResponseEntity.ok(
-            sensorService.sendTelegramCommandToSensor(sensorId, commandFields));
+        String cmd = sensorService.sendTelegramCommandToSensor(sensorId, commandFields);
+        logService.createLog(user.getId(), ip, "sensor.input",
+            Integer.toString(sensorId));
+        return ResponseEntity.ok(cmd);
       } catch(ElementNotFoundException | NotAuthorizedException e) {
         logger.debug("RESPONSE STATUS: FORBIDDEN." + e.getMessage());
         return new ResponseEntity(HttpStatus.FORBIDDEN);

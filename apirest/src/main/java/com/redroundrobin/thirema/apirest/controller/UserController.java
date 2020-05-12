@@ -50,9 +50,9 @@ public class UserController extends CoreController {
   @GetMapping(value = {""})
   public ResponseEntity<List<User>> getUsers(
       @RequestHeader("Authorization") String authorization,
-      @RequestParam(value = "entity", required = false) Integer entity,
-      @RequestParam(value = "disabledAlert", required = false) Integer disabledAlert,
-      @RequestParam(value = "view", required = false) Integer view,
+      @RequestParam(value = "entityId", required = false) Integer entityId,
+      @RequestParam(value = "disabledAlert", required = false) Integer disabledAlertId,
+      @RequestParam(value = "viewId", required = false) Integer viewId,
       @RequestParam(value = "telegramName", required = false) String telegramName) {
     User user = getUserFromAuthorization(authorization);
     if (telegramName != null) {
@@ -66,20 +66,20 @@ public class UserController extends CoreController {
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
       }
     } else if (user.getType() == User.Role.ADMIN) {
-      if (entity != null) {
-        return ResponseEntity.ok(userService.findAllByEntityId(entity));
-      } else if (disabledAlert != null) {
+      if (entityId != null) {
+        return ResponseEntity.ok(userService.findAllByEntityId(entityId));
+      } else if (disabledAlertId != null) {
         logger.debug("RESPONSE STATUS: BAD_REQUEST. disableAlert != null");
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
-      } else if (view != null) {
+      } else if (viewId != null) {
         logger.debug("RESPONSE STATUS: BAD_REQUEST. view != null");
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
       } else {
         return ResponseEntity.ok(userService.findAll());
       }
     } else if (user.getType() == User.Role.MOD
-        && disabledAlert == null && view == null
-        && (entity == null || user.getEntity().getId() == entity)) {
+        && disabledAlertId == null && viewId == null
+        && (entityId == null || user.getEntity().getId() == entityId)) {
       return ResponseEntity.ok(userService.findAllByEntityId(user.getEntity().getId()));
     } else {
       logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId() + " is not an administrator "
@@ -170,6 +170,7 @@ public class UserController extends CoreController {
     User userToEdit = userService.findById(userId);
 
     if (userToEdit != null) {
+      boolean deleted = userToEdit.isDeleted();
 
       User user;
       try {
@@ -187,7 +188,13 @@ public class UserController extends CoreController {
             logService.createLog(editingUser.getId(), ip, "user.password_reset",
                 Integer.toString(userId));
           }
-          if (fieldsToEdit.keySet().stream().anyMatch(k -> !k.equals("password"))) {
+          if (fieldsToEdit.entrySet().stream().anyMatch(e -> e.getKey().equals("deleted")
+              && (boolean)e.getValue()) && !deleted) {
+            logService.createLog(editingUser.getId(), ip, "user.deleted",
+                Integer.toString(userId));
+          }
+          if (fieldsToEdit.entrySet().stream().anyMatch(e -> !e.getKey().equals("password")
+              && !(e.getKey().equals("deleted") && !deleted))) {
             logService.createLog(editingUser.getId(), ip, "user.edit",
                 Integer.toString(userId));
           }
@@ -214,7 +221,7 @@ public class UserController extends CoreController {
         return new ResponseEntity(HttpStatus.FORBIDDEN);
       } catch (ConflictException ce) {
         logger.debug(ce.toString());
-        return new ResponseEntity(ce.getMessage(),HttpStatus.CONFLICT);
+        return new ResponseEntity(HttpStatus.CONFLICT);
       } catch (DataIntegrityViolationException dive) {
         logger.debug(dive.toString());
         if (dive.getMostSpecificCause().getMessage()
@@ -228,7 +235,7 @@ public class UserController extends CoreController {
             errorMessage = "The value of " + matcher.group(1) + " already exists";
           }
 
-          return new ResponseEntity(errorMessage,HttpStatus.CONFLICT);
+          return new ResponseEntity(HttpStatus.CONFLICT);
         }
       } catch (MissingFieldsException | InvalidFieldsValuesException nf) {
         logger.debug(nf.toString());

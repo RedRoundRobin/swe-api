@@ -48,8 +48,8 @@ public class ViewGraphController extends CoreController {
   @GetMapping(value = {""})
   public ResponseEntity<List<ViewGraph>> getViewGraphs(
       @RequestHeader("authorization") String authorization,
-      @RequestParam(value = "user", required = false) Integer userId,
-      @RequestParam(value = "view", required = false) Integer viewId) {
+      @RequestParam(value = "userId", required = false) Integer userId,
+      @RequestParam(value = "viewId", required = false) Integer viewId) {
     User user = this.getUserFromAuthorization(authorization);
     if (user.getType() == User.Role.ADMIN) {
       if (userId != null && viewId != null) {

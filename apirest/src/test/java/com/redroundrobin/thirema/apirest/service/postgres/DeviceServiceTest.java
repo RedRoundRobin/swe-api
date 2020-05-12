@@ -9,6 +9,7 @@ import com.redroundrobin.thirema.apirest.repository.postgres.DeviceRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.GatewayRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
+import com.redroundrobin.thirema.apirest.utils.exception.ConflictException;
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
@@ -340,8 +341,7 @@ public class DeviceServiceTest {
   }
 
   @Test
-  public void addDeviceSuccesful()
-      throws MissingFieldsException, InvalidFieldsValuesException {
+  public void addDeviceSuccesful() {
     Map<String, Object> newDeviceFields = new HashMap<>();
     newDeviceFields.put("gatewayId", 1);
     newDeviceFields.put("frequency", 1);
@@ -357,14 +357,13 @@ public class DeviceServiceTest {
           == addedDevice.getName()
           && (int)newDeviceFields.get("realDeviceId")
           == addedDevice.getRealDeviceId());
-    } catch(MissingFieldsException  | InvalidFieldsValuesException e) {
+    } catch(MissingFieldsException | InvalidFieldsValuesException | ConflictException e) {
       fail();
     }
   }
 
   @Test
-  public void addDeviceFrequencyInvalidFieldsValuesException()
-      throws MissingFieldsException, InvalidFieldsValuesException {
+  public void addDeviceFrequencyInvalidFieldsValuesException() {
     Map<String, Object> newDeviceFields = new HashMap<>();
     newDeviceFields.put("gatewayId", 1);
     newDeviceFields.put("frequency", "1 ");
@@ -375,12 +374,14 @@ public class DeviceServiceTest {
       fail();
     } catch(InvalidFieldsValuesException e) {
       assertTrue(true);
+    } catch (ConflictException | MissingFieldsException e) {
+      e.printStackTrace();
+      assertTrue(false);
     }
   }
 
   @Test
-  public void addDeviceGatewayNotExistingInvalidFieldsValuesException()
-      throws MissingFieldsException, InvalidFieldsValuesException {
+  public void addDeviceGatewayNotExistingInvalidFieldsValuesException() {
     Map<String, Object> newDeviceFields = new HashMap<>();
     newDeviceFields.put("gatewayId", 4);
     newDeviceFields.put("frequency", 1);
@@ -391,12 +392,14 @@ public class DeviceServiceTest {
       fail();
     } catch(InvalidFieldsValuesException e) {
       assertTrue(true);
+    } catch (ConflictException | MissingFieldsException e) {
+      e.printStackTrace();
+      assertTrue(false);
     }
   }
 
   @Test
-  public void addDifferentDeviceWithALreadyExistingRealDeviceIdAndGatewayIdException()
-      throws MissingFieldsException, InvalidFieldsValuesException {
+  public void addDifferentDeviceWithALreadyExistingRealDeviceIdAndGatewayIdException() {
     Map<String, Object> newDeviceFields = new HashMap<>();
     newDeviceFields.put("gatewayId", 1);
     newDeviceFields.put("frequency", 1);
@@ -405,14 +408,16 @@ public class DeviceServiceTest {
     try {
       Device addedDevice = deviceService.addDevice(newDeviceFields);
       fail();
-    } catch(InvalidFieldsValuesException e) {
+    } catch(InvalidFieldsValuesException | MissingFieldsException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    } catch (ConflictException ce) {
       assertTrue(true);
     }
   }
 
   @Test
-  public void addDeviceMissingFieldsException()
-      throws MissingFieldsException, InvalidFieldsValuesException {
+  public void addDeviceMissingFieldsException() {
     Map<String, Object> newDeviceFields = new HashMap<>();
     newDeviceFields.put("gatewayId", 1);
     newDeviceFields.put("frequency", 1);
@@ -422,12 +427,14 @@ public class DeviceServiceTest {
       fail();
     } catch(MissingFieldsException e) {
       assertTrue(true);
+    } catch (ConflictException | InvalidFieldsValuesException e) {
+      e.printStackTrace();
+      assertTrue(false);
     }
   }
 
   @Test
-  public void editDevice1Succesful()
-      throws MissingFieldsException, InvalidFieldsValuesException, ElementNotFoundException {
+  public void editDevice1Succesful() {
     Map<String, Object> newDeviceFields = new HashMap<>();
     newDeviceFields.put("gatewayId", 2);
     newDeviceFields.put("frequency", 2);
@@ -443,32 +450,36 @@ public class DeviceServiceTest {
           == editedDevice.getName()
           && (int)newDeviceFields.get("realDeviceId")
           == editedDevice.getRealDeviceId());
-    } catch(MissingFieldsException  | InvalidFieldsValuesException e) {
+    } catch(ElementNotFoundException | MissingFieldsException | InvalidFieldsValuesException | ConflictException e) {
       fail();
     }
   }
 
   @Test
-  public void editDevice1MissingFieldsException()
-      throws MissingFieldsException, InvalidFieldsValuesException, ElementNotFoundException {
+  public void editDevice1MissingFieldsException() {
     Map<String, Object> newDeviceFields = new HashMap<>();
     try {
       Device editedDevice = deviceService.editDevice(device1.getId(), newDeviceFields);
       fail();
     } catch(MissingFieldsException e) {
       assertTrue(true);
+    } catch (ConflictException | ElementNotFoundException | InvalidFieldsValuesException e) {
+      e.printStackTrace();
+      assertTrue(false);
     }
   }
 
   @Test
-  public void editNotExistingDeviceElementNotFoundException()
-      throws MissingFieldsException, InvalidFieldsValuesException, ElementNotFoundException {
+  public void editNotExistingDeviceElementNotFoundException() {
     Map<String, Object> newDeviceFields = new HashMap<>();
     try {
       Device editedDevice = deviceService.editDevice(10, newDeviceFields);
       fail();
     } catch(ElementNotFoundException e) {
       assertTrue(true);
+    } catch (ConflictException | MissingFieldsException | InvalidFieldsValuesException e) {
+      e.printStackTrace();
+      assertTrue(false);
     }
   }
 

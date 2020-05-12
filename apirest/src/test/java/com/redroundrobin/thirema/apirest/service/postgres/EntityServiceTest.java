@@ -1,5 +1,6 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
@@ -8,10 +9,18 @@ import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
+import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -20,6 +29,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
@@ -118,6 +128,7 @@ public class EntityServiceTest {
     });
     when(entityRepo.findById(anyInt())).thenAnswer(i -> allEntities.stream().filter(e -> i.getArgument(0).equals(e.getId()))
         .findFirst());
+    when(entityRepo.save(any(Entity.class))).thenAnswer(i -> i.getArgument(0));
 
     when(sensorRepo.findById(anyInt())).thenAnswer(i -> allSensors.stream().filter(s -> i.getArgument(0).equals(s.getId()))
         .findFirst());
@@ -174,10 +185,208 @@ public class EntityServiceTest {
     assertEquals(0, (long) entities.size());
   }
 
+
+
   @Test
   public void findEntityById() {
     Entity entity = entityService.findById(entity1.getId());
 
     assertNotNull(entity);
+  }
+
+
+
+  @Test
+  public void addEntitySuccessfull() {
+    String name = "nome";
+    String location = "locazione";
+
+    Map<String, Object> newEntityFields = new HashMap<>();
+    newEntityFields.put("name", name);
+    newEntityFields.put("location", location);
+
+    try {
+      Entity newEntity = entityService.addEntity(newEntityFields);
+
+      assertEquals(name, newEntity.getName());
+      assertEquals(location, newEntity.getLocation());
+    } catch (MissingFieldsException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    }
+  }
+
+  @Test
+  public void addEntityWithMissingFieldsException() {
+    String name = "nome";
+
+    Map<String, Object> newEntityFields = new HashMap<>();
+    newEntityFields.put("name", name);
+
+    try {
+      Entity newEntity = entityService.addEntity(newEntityFields);
+
+      assertEquals(name, newEntity.getName());
+      assertTrue(false);
+    } catch (MissingFieldsException e) {
+      e.printStackTrace();
+      assertTrue(true);
+    }
+  }
+
+
+
+  @Test
+  public void editEntitySuccessfull() {
+    String name = "nome";
+    String location = "locazione";
+
+    Map<String, Object> fieldsToEdit = new HashMap<>();
+    fieldsToEdit.put("name", name);
+    fieldsToEdit.put("location", location);
+
+    try {
+      Entity editedEntity = entityService.editEntity(entity2.getId(), fieldsToEdit);
+
+      assertEquals(entity2.getId(), editedEntity.getId());
+      assertEquals(name, editedEntity.getName());
+      assertEquals(location, editedEntity.getLocation());
+    } catch (MissingFieldsException | InvalidFieldsValuesException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    }
+  }
+
+  @Test
+  public void editEntityWithMissingFieldsException() {
+
+    Map<String, Object> fieldsToEdit = new HashMap<>();
+
+    try {
+      Entity editedEntity = entityService.editEntity(entity1.getId(), fieldsToEdit);
+
+      assertTrue(false);
+    } catch (MissingFieldsException e) {
+      assertTrue(true);
+    } catch (InvalidFieldsValuesException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    }
+  }
+
+  @Test
+  public void editEntityByNotExistentEntityIdThrowInvalidFieldsValuesException() {
+    String name = "nome";
+    String location = "locazione";
+
+    Map<String, Object> fieldsToEdit = new HashMap<>();
+    fieldsToEdit.put("name", name);
+    fieldsToEdit.put("location", location);
+
+    try {
+      Entity editedEntity = entityService.editEntity(10, fieldsToEdit);
+
+      assertTrue(false);
+    } catch (MissingFieldsException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    } catch (InvalidFieldsValuesException e) {
+      assertTrue(true);
+    }
+  }
+
+
+
+  @Test
+  public void deleteEntitySuccessfull() {
+    doNothing().when(userRepo).setDeletedByEntity(entity1);
+    doNothing().when(alertRepo).setDeletedByEntity(entity1);
+
+    try {
+      boolean deleted = entityService.deleteEntity(entity1.getId());
+
+      assertTrue(deleted);
+    } catch (ElementNotFoundException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    }
+  }
+
+  @Test
+  public void deleteEntitySimulateDbError() {
+    doNothing().when(userRepo).setDeletedByEntity(entity1);
+    doNothing().when(alertRepo).setDeletedByEntity(entity1);
+
+    Entity entity3Bis = new Entity(19, entity3.getName(), entity3.getLocation());
+    entity3Bis.setDeleted(true);
+
+    when(entityRepo.findById(entity3Bis.getId())).thenReturn(Optional.of(entity3Bis));
+    when(entityRepo.save(entity3Bis)).thenReturn(entity3);
+
+    try {
+      boolean deleted = entityService.deleteEntity(entity3Bis.getId());
+
+      assertFalse(deleted);
+    } catch (ElementNotFoundException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    }
+  }
+
+  @Test
+  public void deleteEntityByNotExistentEntityIdThrowElementNotFoundException() {
+
+    try {
+      boolean deleted = entityService.deleteEntity(10);
+
+      assertTrue(false);
+    } catch (ElementNotFoundException e) {
+      assertTrue(true);
+    }
+  }
+
+
+
+  @Test
+  public void enableOrDisableSensorToEntitySuccessfull() {
+    try {
+      Map<String, Object> fieldsToEdit = new HashMap<>();
+      List<Integer> list = new ArrayList<>();
+      list.add(sensor3.getId());
+      fieldsToEdit.put("toInsert", list);
+      fieldsToEdit.put("toDelete", list);
+      boolean edited = entityService.enableOrDisableSensorToEntity(entity1.getId(), fieldsToEdit);
+
+      assertTrue(edited);
+    } catch (ElementNotFoundException | MissingFieldsException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    }
+  }
+
+  @Test
+  public void enableOrDisableSensorToEntityThrowMissingFieldsException() {
+    try {
+      boolean edited = entityService.enableOrDisableSensorToEntity(entity1.getId(), Collections.emptyMap());
+
+      assertTrue(false);
+    } catch (ElementNotFoundException e) {
+      e.printStackTrace();
+      assertTrue(false);
+    } catch (MissingFieldsException e) {
+      assertTrue(true);
+    }
+  }
+
+  @Test
+  public void enableOrDisableSensorToEntityByNotExistentEntityIdThrowElementNotFoundException() {
+    try {
+      boolean edited = entityService.enableOrDisableSensorToEntity(10,
+          Collections.emptyMap());
+
+      assertTrue(false);
+    } catch (ElementNotFoundException | MissingFieldsException e) {
+      assertTrue(true);
+    }
   }
 }

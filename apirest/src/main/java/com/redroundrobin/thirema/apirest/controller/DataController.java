@@ -89,7 +89,7 @@ public class DataController extends CoreController {
       @RequestHeader(value = "Authorization") String authorization,
       @RequestParam(name = "sensors", required = false) Integer[] sensorIds,
       @RequestParam(name = "limit", required = false) Integer limit,
-      @RequestParam(name = "entity", required = false) Integer entityId) {
+      @RequestParam(name = "entityId", required = false) Integer entityId) {
     User user = this.getUserFromAuthorization(authorization);
 
     if (user.getType() == User.Role.ADMIN) {

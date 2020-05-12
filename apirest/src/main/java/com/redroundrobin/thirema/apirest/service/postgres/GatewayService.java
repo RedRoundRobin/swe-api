@@ -53,7 +53,8 @@ public class GatewayService {
 
   private String sentConfig(int gatewayId)
       throws JsonProcessingException { //eccezione di ObjectMapper()
-    if(!gatewayRepo.existsById(gatewayId)) {
+    Gateway gateway = gatewayRepo.findById(gatewayId).orElse(null);
+    if(gateway == null) {
       return null;
     } else {
       Gateway gateway = gatewayRepo.findById(gatewayId).get();
