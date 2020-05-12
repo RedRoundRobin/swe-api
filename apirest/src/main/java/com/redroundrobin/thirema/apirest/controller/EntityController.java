@@ -53,8 +53,8 @@ public class EntityController extends CoreController {
 
     if (userId != null) {
       if (loggedUser.getType() == User.Role.MOD) {
-        User user = userService.findById(userId);
-        userOk = user != null && user.getEntity().equals(loggedUser.getEntity());
+        List<Entity> entities = entityService.findAllByUserId(userId);
+        userOk = entities.contains(loggedUser.getEntity());
       } else {
         userOk = userId == loggedUser.getId();
       }

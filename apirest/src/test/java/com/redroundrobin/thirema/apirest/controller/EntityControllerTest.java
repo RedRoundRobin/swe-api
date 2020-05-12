@@ -55,11 +55,14 @@ public class EntityControllerTest {
   MockHttpServletRequest httpRequest;
 
   private final String userTokenWithBearer = "Bearer userToken";
+  private final String modTokenWithBearer = "Bearer modToken";
   private final String adminTokenWithBearer = "Bearer adminToken";
   private final String userToken = "userToken";
+  private final String modToken = "modToken";
   private final String adminToken = "adminToken";
 
   private User admin;
+  private User mod;
   private User user;
 
   private Entity entity1;
@@ -85,9 +88,12 @@ public class EntityControllerTest {
 
     // ----------------------------------------- Set Users --------------------------------------
     admin = new User(1, "admin", "admin", "admin", "pass", User.Role.ADMIN);
+    mod = new User(3, "mod", "mod", "mod", "pass", User.Role.MOD);
     user = new User(2, "user", "user", "user", "user", User.Role.USER);
 
     List<User> allUsers = new ArrayList<>();
+    allUsers.add(admin);
+    allUsers.add(mod);
     allUsers.add(user);
 
     // ----------------------------------------- Set Entities --------------------------------------
@@ -123,12 +129,15 @@ public class EntityControllerTest {
 
     // ------------------------------- Set entities to users -----------------------------------
     user.setEntity(entity1);
+    mod.setEntity(entity1);
 
     // Core Controller needed mock
     when(jwtUtil.extractUsername(userToken)).thenReturn(user.getEmail());
+    when(jwtUtil.extractUsername(modToken)).thenReturn(mod.getEmail());
     when(jwtUtil.extractUsername(adminToken)).thenReturn(admin.getEmail());
     when(jwtUtil.extractType(anyString())).thenReturn("webapp");
     when(userService.findByEmail(admin.getEmail())).thenReturn(admin);
+    when(userService.findByEmail(mod.getEmail())).thenReturn(mod);
     when(userService.findByEmail(user.getEmail())).thenReturn(user);
 
     when(entityService.findAll()).thenReturn(allEntities);
@@ -236,6 +245,14 @@ public class EntityControllerTest {
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertEquals(user.getEntity(), response.getBody().get(0));
+  }
+
+  @Test
+  public void getAllEntitiesByUserIdByMod() {
+    ResponseEntity<List<Entity>> response = entityController.getEntities(modTokenWithBearer, null, user.getId());
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(mod.getEntity(), response.getBody().get(0));
   }
 
   @Test
