@@ -173,6 +173,7 @@ public class UserController extends CoreController {
     User userToEdit = userService.findById(userId);
 
     if (userToEdit != null) {
+      boolean deleted = userToEdit.isDeleted();
 
       User user;
       try {
@@ -190,7 +191,13 @@ public class UserController extends CoreController {
             logService.createLog(editingUser.getId(), ip, "user.password_reset",
                 Integer.toString(userId));
           }
-          if (fieldsToEdit.keySet().stream().anyMatch(k -> !k.equals("password"))) {
+          if (fieldsToEdit.entrySet().stream().anyMatch(e -> e.getKey().equals("deleted")
+              && (boolean)e.getValue()) && !deleted) {
+            logService.createLog(editingUser.getId(), ip, "user.deleted",
+                Integer.toString(userId));
+          }
+          if (fieldsToEdit.entrySet().stream().anyMatch(e -> !e.getKey().equals("password")
+              && !(e.getKey().equals("deleted") && !deleted))) {
             logService.createLog(editingUser.getId(), ip, "user.edit",
                 Integer.toString(userId));
           }
