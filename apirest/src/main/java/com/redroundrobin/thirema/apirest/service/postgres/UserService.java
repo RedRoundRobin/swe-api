@@ -51,6 +51,17 @@ public class UserService implements UserDetailsService {
     this.viewRepo = viewRepository;
   }
 
+  private boolean editableTfa(User userToEdit, Map<String, Object> fieldsToEdit) {
+    if (fieldsToEdit.containsKey("tfa") && (boolean)fieldsToEdit.get("tfa")) {
+      return ((fieldsToEdit.containsKey("telegramName")
+          && userToEdit.getTelegramName() != null && !userToEdit.getTelegramName().isEmpty()
+          && !userToEdit.getTelegramName().equals(fieldsToEdit.get("telegramName")))
+          || userToEdit.getTelegramChat() == null || userToEdit.getTelegramChat().isEmpty());
+    } else {
+      return false;
+    }
+  }
+
   private boolean checkCreatableFields(Set<String> keys)
       throws MissingFieldsException {
     Set<String> creatable = new HashSet<>();
@@ -135,12 +146,10 @@ public class UserService implements UserDetailsService {
   private User editAndSave(User userToEdit, Map<String, Object> fieldsToEdit, boolean itself)
       throws ConflictException, InvalidFieldsValuesException {
 
-    if (fieldsToEdit.containsKey("tfa")
-        && (boolean)fieldsToEdit.get("tfa")
-        && (fieldsToEdit.containsKey("telegramName")
-        || userToEdit.getTelegramChat() == null || userToEdit.getTelegramChat().isEmpty())) {
+    if (editableTfa(userToEdit, fieldsToEdit)) {
       throw new ConflictException("TFA can't be edited because either telegramName is "
-          + "in the request or telegram chat not present");
+          + "in the request and different from the current telegramName or telegram chat is not "
+          + "present");
     }
 
     if (fieldsToEdit.containsKey("entityId")
