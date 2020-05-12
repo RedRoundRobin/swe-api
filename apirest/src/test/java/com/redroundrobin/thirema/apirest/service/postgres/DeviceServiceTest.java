@@ -143,46 +143,7 @@ public class DeviceServiceTest {
 
     when(deviceRepo.findById(anyInt())).thenAnswer(i -> allDevices.stream().filter(d -> i.getArgument(0).equals(d.getId()))
         .findFirst());
-  /*  when(deviceRepo.existsById(anyInt())).thenAnswer(i -> {
-      Device dev =
-          allDevices.stream().filter(d -> i.getArgument(0).equals(d.getId())).findFirst().orElse(null);
-      return (dev != null);
-    });*/
     doNothing().when(deviceRepo).delete(any(Device.class));
-    /* PROBLEMA delete  RESTITUISCE VOID...
-    when(deviceRepo.delete(any(Device.class))).thenAnswer(i -> {
-      Device dev = i.getArgument(0);
-      if (dev != null) {
-        for(Sensor s : allSensors) {
-          if(s.getDevice().getId() == dev.getId()) {
-            s.setDevice(null);
-          }
-        }
-        allDevices.remove(dev);
-      }
-    });*/
-    /*perche la soluzione sotto non è okay??*/
-  /*  when(deviceService.deleteDevice(anyInt())).thenAnswer(i -> {
-      Device dev =
-          allDevices.stream().filter(d -> i.getArgument(0).equals(d.getId()))
-              .findFirst().orElse(null);
-      if (dev != null) {
-        //deviceRepo.delete(device); done because couldn't find a way to mock a nested void method (delete)
-        for(Sensor s : allSensors) {
-          if(s.getDevice().getId() == dev.getId()) {
-            s.setDevice(null);
-          }
-        }
-        allDevices.remove(dev);
-        if (!deviceRepo.existsById((int)i.getArgument(0))) {
-          return true;
-        } else {
-          return false;
-        }
-      } else {
-        throw new ElementNotFoundException("");
-      }
-    });*/
     when(deviceRepo.findAll()).thenReturn(allDevices);
     when(deviceRepo.findAllByGateway(any(Gateway.class))).thenAnswer(i -> {
       Gateway gateway = i.getArgument(0);
@@ -523,12 +484,11 @@ public class DeviceServiceTest {
   }
 
   @Test
-  public void deleteDevice1Succesful() //don't like the way I've done it
+  public void deleteDevice1Succesful()
       throws ElementNotFoundException {
     try {
-      when(deviceRepo.existsById(anyInt())).thenReturn(false); //why twice?
+      when(deviceRepo.existsById(anyInt())).thenReturn(false);
       boolean deleted = deviceService.deleteDevice(device1.getId());
-     // assertFalse(allDevices.contains(device1)); couldn't do it like this...
       assertTrue(deleted);
     } catch (Exception e) {
       fail();
@@ -536,13 +496,12 @@ public class DeviceServiceTest {
   }
 
   @Test
-  public void deleteNotExistingDeviceNotSuccesful() //don't like the way I've done it
+  public void deleteNotExistingDeviceNotSuccesful()
       throws ElementNotFoundException {
     try {
       int notExistingId=10;
-      when(deviceRepo.existsById(anyInt())).thenReturn(false); //why twice?
+      when(deviceRepo.existsById(anyInt())).thenReturn(false);
       boolean deleted = deviceService.deleteDevice(notExistingId);
-      // assertFalse(allDevices.contains(device1)); couldn't do it like this...
       fail();
     } catch (Exception e) {
       assertTrue(true);

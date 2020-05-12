@@ -1,7 +1,5 @@
 package com.redroundrobin.thirema.apirest.controller;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.postgres.View;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
@@ -13,6 +11,7 @@ import com.redroundrobin.thirema.apirest.utils.exception.KeysNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,12 +52,11 @@ public class ViewController extends CoreController {
   
   @PostMapping(value = "")
   public ResponseEntity<View> createView(
-      @RequestHeader("Authorization") String authorization,  @RequestBody String rawNewView) {
+      @RequestHeader("Authorization") String authorization,  @RequestBody Map<String, String> rawNewView) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtUtil.extractUsername(token));
-    JsonObject jsonNewView = JsonParser.parseString(rawNewView).getAsJsonObject();
     try {
-      return ResponseEntity.ok(viewService.addView(jsonNewView, user));
+      return ResponseEntity.ok(viewService.addView(rawNewView, user));
     } catch (KeysNotFoundException | MissingFieldsException e) {
       logger.debug(e.toString());
       return new ResponseEntity(e, HttpStatus.BAD_REQUEST);

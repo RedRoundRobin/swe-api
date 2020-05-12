@@ -1,6 +1,5 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
-import com.google.gson.JsonObject;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.repository.postgres.AlertRepository;
@@ -18,6 +17,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -352,19 +352,19 @@ public class UserServiceTest {
   // serializeUser method tests
   @Test
   public void serializeUserByMod1SuccessfullTest() {
-    JsonObject fieldsToCreate = new JsonObject();
+    Map<String, Object> fieldsToCreate = new HashMap();
     String name = "marco";
     String surname = "franco";
-    String email = "email"; //controllo ben formata lato webapp
+    String email = "email";
     String password = "password";
     int type = 0;
     int entityId = 1;
-    fieldsToCreate.addProperty("name", name);
-    fieldsToCreate.addProperty("surname", surname);
-    fieldsToCreate.addProperty("email", email);
-    fieldsToCreate.addProperty("password", password);
-    fieldsToCreate.addProperty("type", type);
-    fieldsToCreate.addProperty("entityId", entityId);
+    fieldsToCreate.put("name", name);
+    fieldsToCreate.put("surname", surname);
+    fieldsToCreate.put("email", email);
+    fieldsToCreate.put("password", password);
+    fieldsToCreate.put("type", type);
+    fieldsToCreate.put("entityId", entityId);
 
     try {
       userService.addUser(fieldsToCreate, mod1);
@@ -376,19 +376,19 @@ public class UserServiceTest {
 
   @Test
   public void serializeUserByAdmin1SuccessfullTest() {
-    JsonObject fieldsToCreate = new JsonObject();
+    Map<String, Object> fieldsToCreate = new HashMap();
     String name = "marco";
     String surname = "franco";
-    String email = "email"; //controllo ben formata lato webapp
+    String email = "email";
     String password = "password";
     int type = 0;
     int entityId = 1;
-    fieldsToCreate.addProperty("name", name);
-    fieldsToCreate.addProperty("surname", surname);
-    fieldsToCreate.addProperty("email", email);
-    fieldsToCreate.addProperty("password", password);
-    fieldsToCreate.addProperty("type", type);
-    fieldsToCreate.addProperty("entityId", entityId);
+    fieldsToCreate.put("name", name);
+    fieldsToCreate.put("surname", surname);
+    fieldsToCreate.put("email", email);
+    fieldsToCreate.put("password", password);
+    fieldsToCreate.put("type", type);
+    fieldsToCreate.put("entityId", entityId);
 
     try {
       userService.addUser(fieldsToCreate, admin1);
@@ -400,19 +400,19 @@ public class UserServiceTest {
 
   @Test
   public void serializeMod1ByAdmin1SuccessfullTest() {
-    JsonObject fieldsToCreate = new JsonObject();
+    Map<String, Object> fieldsToCreate = new HashMap();
     String name = "marco";
     String surname = "franco";
     String email = "email"; //controllo ben formata lato webapp
     String password = "password";
     int type = 1;
     int entityId = 1;
-    fieldsToCreate.addProperty("name", name);
-    fieldsToCreate.addProperty("surname", surname);
-    fieldsToCreate.addProperty("email", email);
-    fieldsToCreate.addProperty("password", password);
-    fieldsToCreate.addProperty("type", type);
-    fieldsToCreate.addProperty("entityId", entityId);
+    fieldsToCreate.put("name", name);
+    fieldsToCreate.put("surname", surname);
+    fieldsToCreate.put("email", email);
+    fieldsToCreate.put("password", password);
+    fieldsToCreate.put("type", type);
+    fieldsToCreate.put("entityId", entityId);
 
     try {
       userService.addUser(fieldsToCreate, admin1);
@@ -424,19 +424,19 @@ public class UserServiceTest {
 
   @Test
   public void serializeUserByUser1ExceptionTest() {
-    JsonObject fieldsToCreate = new JsonObject();
+    Map<String, Object> fieldsToCreate = new HashMap();
     String name = "marco";
     String surname = "franco";
     String email = "email"; //controllo ben formata lato webapp
     String password = "password";
     int type = 0;
     int entityId = 1;
-    fieldsToCreate.addProperty("name", name);
-    fieldsToCreate.addProperty("surname", surname);
-    fieldsToCreate.addProperty("email", email);
-    fieldsToCreate.addProperty("password", password);
-    fieldsToCreate.addProperty("type", type);
-    fieldsToCreate.addProperty("entityId", entityId);
+    fieldsToCreate.put("name", name);
+    fieldsToCreate.put("surname", surname);
+    fieldsToCreate.put("email", email);
+    fieldsToCreate.put("password", password);
+    fieldsToCreate.put("type", type);
+    fieldsToCreate.put("entityId", entityId);
 
     try {
       userService.addUser(fieldsToCreate, user1);
@@ -448,19 +448,19 @@ public class UserServiceTest {
 
   @Test
   public void serializeUserByUser1ExceptionMissingFieldTest() {
-    JsonObject fieldsToCreate = new JsonObject();
+    Map<String, Object> fieldsToCreate = new HashMap();
     String name = "marco";
     String surname = "franco";
     String email = "email"; //controllo ben formata lato webapp
     String password = "password";
     int type = 0;
     int entityId = 1;
-    fieldsToCreate.addProperty("name", name);
-    fieldsToCreate.addProperty("surname", surname);
-    fieldsToCreate.addProperty("email", email);
-    fieldsToCreate.addProperty("password", password);
-    fieldsToCreate.addProperty("type", type);
-    fieldsToCreate.addProperty("entityId", entityId);
+    fieldsToCreate.put("name", name);
+    fieldsToCreate.put("surname", surname);
+    fieldsToCreate.put("email", email);
+    fieldsToCreate.put("password", password);
+    fieldsToCreate.put("type", type);
+    fieldsToCreate.put("entityId", entityId);
 
     try {
       userService.addUser(fieldsToCreate, user1);
@@ -472,19 +472,19 @@ public class UserServiceTest {
 
   @Test
   public void serializeAdmin2ByAdmin1UnsuccesfulTest() {
-    JsonObject fieldsToCreate = new JsonObject();
+    Map<String, Object> fieldsToCreate = new HashMap();
     String name = "marco";
     String surname = "franco";
     String email = "email"; //controllo ben formata lato webapp
     String password = "password";
     int type = 2;
     int entityId = 1;
-    fieldsToCreate.addProperty("name", name);
-    fieldsToCreate.addProperty("surname", surname);
-    fieldsToCreate.addProperty("email", email);
-    fieldsToCreate.addProperty("password", password);
-    fieldsToCreate.addProperty("type", type);
-    fieldsToCreate.addProperty("entityId", entityId);
+    fieldsToCreate.put("name", name);
+    fieldsToCreate.put("surname", surname);
+    fieldsToCreate.put("email", email);
+    fieldsToCreate.put("password", password);
+    fieldsToCreate.put("type", type);
+    fieldsToCreate.put("entityId", entityId);
 
     try {
       userService.addUser(fieldsToCreate, admin1);

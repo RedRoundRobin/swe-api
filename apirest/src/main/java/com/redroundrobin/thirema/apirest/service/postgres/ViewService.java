@@ -1,6 +1,5 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
-import com.google.gson.JsonObject;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.postgres.View;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
@@ -11,6 +10,7 @@ import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -75,13 +75,13 @@ public class ViewService {
     }
   }
 
-  public View addView(JsonObject rawViewToInsert, User insertingUser)
+  public View addView(Map<String, String> rawViewToInsert, User insertingUser)
       throws KeysNotFoundException, MissingFieldsException {
     if (!checkCreatableFields(rawViewToInsert.keySet())) {
       throw new MissingFieldsException("Some necessary fields are missing: cannot create view");
     }
 
-    View newView = new View(rawViewToInsert.get("name").getAsString(), insertingUser);
+    View newView = new View(rawViewToInsert.get("name"), insertingUser);
     return viewRepo.save(newView);
   }
 

@@ -1,6 +1,5 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
-import com.google.gson.JsonObject;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.postgres.View;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
@@ -12,7 +11,9 @@ import org.junit.runner.RunWith;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringRunner;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -112,8 +113,8 @@ public class ViewServiceTest {
 
   @Test
   public void serializeViewSuccesfulTest() {
-    JsonObject rawViewToInsert = new JsonObject();
-    rawViewToInsert.addProperty("name", "myView");
+    Map<String, String> rawViewToInsert = new HashMap();
+    rawViewToInsert.put("name", "myView");
 
     try {
       viewService.addView(rawViewToInsert, user1);
@@ -126,9 +127,9 @@ public class ViewServiceTest {
 
   @Test
   public void serializeViewKeysNotFoundExceptionTest() {
-    JsonObject rawViewToInsert = new JsonObject();
-    rawViewToInsert.addProperty("name", "myView");
-    rawViewToInsert.addProperty("id", 7);
+    Map<String, String> rawViewToInsert = new HashMap<>();
+    rawViewToInsert.put("name", "myView");
+    rawViewToInsert.put("id", "7"); //eventually parseInt
 
     try {
       viewService.addView(rawViewToInsert, user1);
@@ -145,7 +146,7 @@ public class ViewServiceTest {
   @Test
   public void serializeViewMissingFieldsExceptionTest() {
 
-    JsonObject rawViewToInsert = new JsonObject(); // empty json: {}
+    Map<String, String> rawViewToInsert = new HashMap<>(); // empty json: {}
 
     try {
       viewService.addView(rawViewToInsert, user1);

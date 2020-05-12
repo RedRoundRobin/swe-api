@@ -1,6 +1,5 @@
 package com.redroundrobin.thirema.apirest.controller;
 
-import com.google.gson.JsonObject;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
@@ -187,8 +186,8 @@ public class UserControllerTest {
       userToDelete.setDeleted(true);
       return userToDelete;
   });
-    when(userService.addUser(any(JsonObject.class), any(User.class))).thenAnswer(i -> {
-      JsonObject rawUserToInsert = i.getArgument(0);
+    when(userService.addUser(any(Map.class), any(User.class))).thenAnswer(i -> {
+      Map<String, Object> rawUserToInsert = i.getArgument(0);
       User insertingUser = i.getArgument(1);
       Set<String> creatable = new HashSet<>();
       creatable.add("name");
@@ -196,7 +195,7 @@ public class UserControllerTest {
       creatable.add("email");
       creatable.add("type");
       creatable.add("entityId");
-      creatable.add("password");  //SOLUZIONE TEMPORANEA: NON PREVISTA DA USE CASES
+      creatable.add("password");
 
       boolean onlyCreatableKeys = creatable.containsAll(rawUserToInsert.keySet());
 
@@ -210,14 +209,14 @@ public class UserControllerTest {
       Entity userToInsertEntity;
       if ((userToInsertEntity =
           allEntities.stream().filter(entity ->
-              entity.getId() == (rawUserToInsert.get("entityId")).getAsInt())
+              entity.getId() == ((int)rawUserToInsert.get("entityId")))
               .findFirst().orElse(null)) == null) {
         throw new InvalidFieldsValuesException("");
       }
 
       int userToInsertType;
       if ((userToInsertType =
-          rawUserToInsert.get("type").getAsInt()) == 2 ||
+          (int)rawUserToInsert.get("type")) == 2 ||
           userToInsertType != 1 && userToInsertType != 0) {
         throw new InvalidFieldsValuesException("");
       }
@@ -234,17 +233,17 @@ public class UserControllerTest {
       newUser.setEntity(userToInsertEntity);
       newUser.setType(User.Role.values()[userToInsertType]);
 
-      if (rawUserToInsert.get("name").getAsString() != null
-          || rawUserToInsert.get("surname").getAsString() != null
-          || rawUserToInsert.get("password").getAsString() != null) {
-        newUser.setName(rawUserToInsert.get("name").getAsString());
-        newUser.setSurname(rawUserToInsert.get("surname").getAsString());
-        newUser.setPassword(rawUserToInsert.get("password").getAsString());
+      if ((String)rawUserToInsert.get("name") != null
+          || (String)rawUserToInsert.get("surname") != null
+          || (String)rawUserToInsert.get("password") != null) {
+        newUser.setName((String)rawUserToInsert.get("name"));
+        newUser.setSurname((String)rawUserToInsert.get("surname"));
+        newUser.setPassword((String)rawUserToInsert.get("password"));
       } else {
         throw new InvalidFieldsValuesException("");
       }
 
-      String email = rawUserToInsert.get("email").getAsString();
+      String email = (String)rawUserToInsert.get("email");
       allUsers.stream().filter(user -> user.getEmail().equals(email)).count();
       if (email != null &&
               allUsers.stream().noneMatch(user -> user.getEmail().equals(email))) //email gia usata
@@ -648,15 +647,15 @@ public class UserControllerTest {
   @Test
   public void createUserSuccessfulByAdmin1Test() {
     String authorization = "Bearer "+admin1Token;
-    JsonObject jsonUser = new JsonObject();
-    jsonUser.addProperty("name", "marco");
-    jsonUser.addProperty("surname", "polo");
-    jsonUser.addProperty("email", "createUserSuccessfulByAdmin1");
-    jsonUser.addProperty("type",  0);
-    jsonUser.addProperty("entityId", 1);
-    jsonUser.addProperty("password", "password");
+    Map<String, Object> jsonUser = new HashMap<>();
+    jsonUser.put("name", "marco");
+    jsonUser.put("surname", "polo");
+    jsonUser.put("email", "createUserSuccessfulByAdmin1");
+    jsonUser.put("type",  0);
+    jsonUser.put("entityId", 1);
+    jsonUser.put("password", "password");
 
-    ResponseEntity<User> response = userController.createUser(authorization, jsonUser.toString(), httpRequest);
+    ResponseEntity<User> response = userController.createUser(authorization, jsonUser, httpRequest);
     assertSame(HttpStatus.OK, response.getStatusCode());
     assertNotNull(response.getBody());
   }
@@ -664,15 +663,15 @@ public class UserControllerTest {
   @Test
   public void createUserSuccessfullyByMod1Test() {
     String authorization = "Bearer "+mod1Token;
-    JsonObject jsonUser = new JsonObject();
-    jsonUser.addProperty("name", "marco");
-    jsonUser.addProperty("surname", "polo");
-    jsonUser.addProperty("email", "createUserSuccessfullyByMod1");
-    jsonUser.addProperty("type",  0);
-    jsonUser.addProperty("entityId", 1);
-    jsonUser.addProperty("password", "password");
+    Map<String, Object> jsonUser = new HashMap<>();
+    jsonUser.put("name", "marco");
+    jsonUser.put("surname", "polo");
+    jsonUser.put("email", "createUserSuccessfullyByMod1");
+    jsonUser.put("type",  0);
+    jsonUser.put("entityId", 1);
+    jsonUser.put("password", "password");
 
-    ResponseEntity<User> response = userController.createUser(authorization, jsonUser.toString(), httpRequest);
+    ResponseEntity<User> response = userController.createUser(authorization, jsonUser, httpRequest);
     assertSame(HttpStatus.OK, response.getStatusCode());
     assertNotNull(response.getBody());
   }
@@ -680,15 +679,15 @@ public class UserControllerTest {
   @Test
   public void createUserByMod1ConflictExceptionTest() {
     String authorization = "Bearer "+mod1Token;
-    JsonObject jsonUser = new JsonObject();
-    jsonUser.addProperty("name", "marco");
-    jsonUser.addProperty("surname", "polo");
-    jsonUser.addProperty("email", user1.getEmail());
-    jsonUser.addProperty("type",  0);
-    jsonUser.addProperty("entityId", 1);
-    jsonUser.addProperty("password", "password");
+    Map<String, Object> jsonUser = new HashMap<>();
+    jsonUser.put("name", "marco");
+    jsonUser.put("surname", "polo");
+    jsonUser.put("email", user1.getEmail());
+    jsonUser.put("type",  0);
+    jsonUser.put("entityId", 1);
+    jsonUser.put("password", "password");
 
-    ResponseEntity<User> response = userController.createUser(authorization, jsonUser.toString(), httpRequest);
+    ResponseEntity<User> response = userController.createUser(authorization, jsonUser, httpRequest);
     assertSame(HttpStatus.CONFLICT, response.getStatusCode());
     assertNull(response.getBody());
   }
@@ -696,15 +695,15 @@ public class UserControllerTest {
   @Test
   public void createUserByMod2NotAuthorizedExceptionTest() {
     String authorization = "Bearer "+mod2Token;
-    JsonObject jsonUser = new JsonObject();
-    jsonUser.addProperty("name", "marco");
-    jsonUser.addProperty("surname", "polo");
-    jsonUser.addProperty("email", "createUserByMod2");
-    jsonUser.addProperty("type",  0);
-    jsonUser.addProperty("entityId", 1);
-    jsonUser.addProperty("password", "password");
+    Map<String, Object> jsonUser = new HashMap<>();
+    jsonUser.put("name", "marco");
+    jsonUser.put("surname", "polo");
+    jsonUser.put("email", "createUserByMod2");
+    jsonUser.put("type",  0);
+    jsonUser.put("entityId", 1);
+    jsonUser.put("password", "password");
 
-    ResponseEntity<User> response = userController.createUser(authorization, jsonUser.toString(), httpRequest);
+    ResponseEntity<User> response = userController.createUser(authorization, jsonUser, httpRequest);
     assertSame(HttpStatus.FORBIDDEN, response.getStatusCode());
     assertNull(response.getBody());
   }
