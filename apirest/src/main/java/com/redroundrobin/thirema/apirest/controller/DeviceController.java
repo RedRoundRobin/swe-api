@@ -164,7 +164,7 @@ public class DeviceController extends CoreController {
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
       } catch (ConflictException ce) {
         logger.debug(ce.toString());
-        return new ResponseEntity(ce.getMessage(), HttpStatus.CONFLICT);
+        return new ResponseEntity(HttpStatus.CONFLICT);
       }
     } else {
       logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId()
@@ -193,7 +193,7 @@ public class DeviceController extends CoreController {
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
       } catch (ConflictException ce) {
         logger.debug(ce.toString());
-        return new ResponseEntity(ce.getMessage(), HttpStatus.CONFLICT);
+        return new ResponseEntity(HttpStatus.CONFLICT);
       }
     } else {
       logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId()
@@ -221,7 +221,7 @@ public class DeviceController extends CoreController {
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
       } catch (ConflictException ce) {
         logger.debug(ce.toString());
-        return new ResponseEntity(ce.getMessage(), HttpStatus.CONFLICT);
+        return new ResponseEntity(HttpStatus.CONFLICT);
       }
     } else {
       logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId()
@@ -250,7 +250,7 @@ public class DeviceController extends CoreController {
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
       } catch (ConflictException ce) {
         logger.debug(ce.toString());
-        return new ResponseEntity(ce.getMessage(), HttpStatus.CONFLICT);
+        return new ResponseEntity(HttpStatus.CONFLICT);
       }
     } else {
       logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId()

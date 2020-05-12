@@ -224,7 +224,7 @@ public class UserController extends CoreController {
         return new ResponseEntity(HttpStatus.FORBIDDEN);
       } catch (ConflictException ce) {
         logger.debug(ce.toString());
-        return new ResponseEntity(ce.getMessage(),HttpStatus.CONFLICT);
+        return new ResponseEntity(HttpStatus.CONFLICT);
       } catch (DataIntegrityViolationException dive) {
         logger.debug(dive.toString());
         if (dive.getMostSpecificCause().getMessage()
@@ -238,7 +238,7 @@ public class UserController extends CoreController {
             errorMessage = "The value of " + matcher.group(1) + " already exists";
           }
 
-          return new ResponseEntity(errorMessage,HttpStatus.CONFLICT);
+          return new ResponseEntity(HttpStatus.CONFLICT);
         }
       } catch (MissingFieldsException | InvalidFieldsValuesException nf) {
         logger.debug(nf.toString());
