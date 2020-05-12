@@ -57,7 +57,6 @@ public class GatewayService {
     if(gateway == null) {
       return null;
     } else {
-      Gateway gateway = gatewayRepo.findById(gatewayId).get();
       String gatewayConfigTopic = GatewaysProperties.getConfigTopicPrefix() + gateway.getName();
       ObjectMapper objectMapper = new ObjectMapper();
       ObjectNode jsonGatewayConfig = objectMapper.createObjectNode();
