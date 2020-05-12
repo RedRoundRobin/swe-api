@@ -173,6 +173,7 @@ public class UserController extends CoreController {
     User userToEdit = userService.findById(userId);
 
     if (userToEdit != null) {
+      boolean deleted = userToEdit.isDeleted();
 
       User user;
       try {
@@ -190,7 +191,13 @@ public class UserController extends CoreController {
             logService.createLog(editingUser.getId(), ip, "user.password_reset",
                 Integer.toString(userId));
           }
-          if (fieldsToEdit.keySet().stream().anyMatch(k -> !k.equals("password"))) {
+          if (fieldsToEdit.entrySet().stream().anyMatch(e -> e.getKey().equals("deleted")
+              && (boolean)e.getValue()) && !deleted) {
+            logService.createLog(editingUser.getId(), ip, "user.deleted",
+                Integer.toString(userId));
+          }
+          if (fieldsToEdit.entrySet().stream().anyMatch(e -> !e.getKey().equals("password")
+              && !(e.getKey().equals("deleted") && !deleted))) {
             logService.createLog(editingUser.getId(), ip, "user.edit",
                 Integer.toString(userId));
           }
@@ -217,7 +224,7 @@ public class UserController extends CoreController {
         return new ResponseEntity(HttpStatus.FORBIDDEN);
       } catch (ConflictException ce) {
         logger.debug(ce.toString());
-        return new ResponseEntity(ce.getMessage(),HttpStatus.CONFLICT);
+        return new ResponseEntity(HttpStatus.CONFLICT);
       } catch (DataIntegrityViolationException dive) {
         logger.debug(dive.toString());
         if (dive.getMostSpecificCause().getMessage()
@@ -231,7 +238,7 @@ public class UserController extends CoreController {
             errorMessage = "The value of " + matcher.group(1) + " already exists";
           }
 
-          return new ResponseEntity(errorMessage,HttpStatus.CONFLICT);
+          return new ResponseEntity(HttpStatus.CONFLICT);
         }
       } catch (MissingFieldsException | InvalidFieldsValuesException nf) {
         logger.debug(nf.toString());
