@@ -1,6 +1,5 @@
 package com.redroundrobin.thirema.apirest.controller;
 
-import com.google.gson.JsonObject;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.postgres.View;
@@ -21,7 +20,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -109,13 +110,13 @@ public class ViewControllerTest {
         return null;
       }
     });
-    when(viewService.addView(any(JsonObject.class), any(User.class))).thenAnswer(i -> {
-      JsonObject jsonViewToCreate = i.getArgument(0);
+    when(viewService.addView(any(Map.class), any(User.class))).thenAnswer(i -> {
+      Map<String, String> jsonViewToCreate = i.getArgument(0);
       User user = i.getArgument(1);
-      if(jsonViewToCreate.has("name") &&
+      if(jsonViewToCreate.containsKey("name") &&
           jsonViewToCreate.keySet().size() == 1) {
         View newView = new View();
-        newView.setName(jsonViewToCreate.get("name").getAsString());
+        newView.setName(jsonViewToCreate.get("name"));
         newView.setUser(user);
         allViews.add(newView);
         return newView;
@@ -187,10 +188,9 @@ public class ViewControllerTest {
   @Test
   public void createViewSuccesfulTest() {
     String authorization = "Bearer "+userToken;
-    JsonObject jsonViewToCreate = new JsonObject();
-    jsonViewToCreate.addProperty("name", "myView");
-    String rawViewToCreate = jsonViewToCreate.toString();
-    ResponseEntity<View> rsp  = viewController.createView(authorization, rawViewToCreate);
+    Map<String, String> jsonViewToCreate = new HashMap<String, String>();
+    jsonViewToCreate.put("name", "myView");
+    ResponseEntity<View> rsp  = viewController.createView(authorization, jsonViewToCreate);
     assertSame(HttpStatus.OK, rsp.getStatusCode());
     assertNotNull(rsp.getBody());
   }
@@ -199,9 +199,8 @@ public class ViewControllerTest {
   @Test
   public void createViewMissingFieldsExceptionTest() {
     String authorization = "Bearer "+userToken;
-    JsonObject jsonViewToCreate = new JsonObject(); // empty json
-    String rawViewToCreate = jsonViewToCreate.toString();
-    ResponseEntity<View> rsp  = viewController.createView(authorization, rawViewToCreate);
+    Map<String, String> jsonViewToCreate = new HashMap<String, String>(); // empty json
+    ResponseEntity<View> rsp  = viewController.createView(authorization, jsonViewToCreate);
     assertSame(HttpStatus.BAD_REQUEST, rsp.getStatusCode());
   }
 
@@ -209,11 +208,10 @@ public class ViewControllerTest {
   @Test
   public void createViewKeysNotFoundExceptionTest() {
     String authorization = "Bearer "+userToken;
-    JsonObject jsonViewToCreate = new JsonObject();
-    jsonViewToCreate.addProperty("name", "myView");
-    jsonViewToCreate.addProperty("surname", "mySurname");
-    String rawViewToCreate = jsonViewToCreate.toString();
-    ResponseEntity<View> rsp  = viewController.createView(authorization, rawViewToCreate);
+    Map<String, String> jsonViewToCreate = new HashMap<String, String>();
+    jsonViewToCreate.put("name", "myView");
+    jsonViewToCreate.put("surname", "mySurname");
+    ResponseEntity<View> rsp  = viewController.createView(authorization, jsonViewToCreate);
     assertSame(HttpStatus.BAD_REQUEST, rsp.getStatusCode());
   }
 
