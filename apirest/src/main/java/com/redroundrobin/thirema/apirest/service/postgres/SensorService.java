@@ -16,6 +16,7 @@ import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.ViewGraphRepository;
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
+import com.redroundrobin.thirema.apirest.utils.GatewaysProperties;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,7 +30,6 @@ import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesExce
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
@@ -47,9 +47,6 @@ public class SensorService {
   private final ViewGraphRepository viewGraphRepo;
 
   private final KafkaTemplate<String, String> kafkaTemplate;
-
-  @Value(value = "${gateways.topic.telegram.prefix}")
-  private String gatewayCommandsPrefix;
 
   private boolean checkAddEditFields(boolean edit, Map<String, Object> fields) {
     String[] editableOrCreatableFields = {"realSensorId", "deviceId", "cmdEnabled", "type"};
@@ -293,7 +290,7 @@ public class SensorService {
     }
 
     String gatewayConfigTopic =
-        gatewayCommandsPrefix + gateway.getName();
+        GatewaysProperties.getGatewayCommandsPrefix() + gateway.getName();
     ObjectMapper objectMapper = new ObjectMapper();
     ObjectNode jsonSensorCommand = objectMapper.createObjectNode();
     jsonSensorCommand.put("realSensorId", sensor.getRealSensorId());
