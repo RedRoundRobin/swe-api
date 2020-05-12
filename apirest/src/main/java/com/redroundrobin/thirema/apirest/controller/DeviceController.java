@@ -1,6 +1,5 @@
 package com.redroundrobin.thirema.apirest.controller;
 
-import com.redroundrobin.thirema.apirest.models.postgres.Alert;
 import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
@@ -13,10 +12,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import com.redroundrobin.thirema.apirest.utils.exception.ConflictException;
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
-import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -163,6 +162,9 @@ public class DeviceController extends CoreController {
       } catch (MissingFieldsException | InvalidFieldsValuesException fe) {
         logger.debug(fe.toString());
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
+      } catch (ConflictException ce) {
+        logger.debug(ce.toString());
+        return new ResponseEntity(ce.getMessage(), HttpStatus.CONFLICT);
       }
     } else {
       logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId()
@@ -189,6 +191,9 @@ public class DeviceController extends CoreController {
       } catch (MissingFieldsException | InvalidFieldsValuesException fe) {
         logger.debug(fe.toString());
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
+      } catch (ConflictException ce) {
+        logger.debug(ce.toString());
+        return new ResponseEntity(ce.getMessage(), HttpStatus.CONFLICT);
       }
     } else {
       logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId()
@@ -198,7 +203,7 @@ public class DeviceController extends CoreController {
   }
 
   @PutMapping(value = {"/{deviceId:.+}"})
-  public ResponseEntity<Device> editDevice(
+  public ResponseEntity editDevice(
       @RequestHeader("authorization") String authorization,
       @RequestBody Map<String, Object> fieldsToEdit,
       @PathVariable("deviceId") int deviceId,
@@ -214,6 +219,9 @@ public class DeviceController extends CoreController {
       } catch (MissingFieldsException | InvalidFieldsValuesException | ElementNotFoundException e) {
         logger.debug(e.toString());
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
+      } catch (ConflictException ce) {
+        logger.debug(ce.toString());
+        return new ResponseEntity(ce.getMessage(), HttpStatus.CONFLICT);
       }
     } else {
       logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId()
@@ -240,6 +248,9 @@ public class DeviceController extends CoreController {
       } catch (MissingFieldsException | InvalidFieldsValuesException | ElementNotFoundException e) {
         logger.debug(e.toString());
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
+      } catch (ConflictException ce) {
+        logger.debug(ce.toString());
+        return new ResponseEntity(ce.getMessage(), HttpStatus.CONFLICT);
       }
     } else {
       logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId()
