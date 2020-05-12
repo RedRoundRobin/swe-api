@@ -43,23 +43,45 @@ public class EntityController extends CoreController {
     this.entityService = entityService;
   }
 
+  private boolean checkPermission(User loggedUser, Integer sensorId, Integer userId) {
+    boolean sensorOk = true;
+    boolean userOk = true;
+
+    if (sensorId != null) {
+      sensorOk = loggedUser.getEntity().getSensors().stream().anyMatch(s -> s.getId() == sensorId);
+    }
+
+    if (userId != null) {
+      if (loggedUser.getType() == User.Role.MOD) {
+        User user = userService.findById(userId);
+        userOk = user != null && user.getEntity().equals(loggedUser.getEntity());
+      } else {
+        userOk = userId == loggedUser.getId();
+      }
+    }
+
+    return sensorOk && userOk;
+  }
+
   @GetMapping(value = {""})
   public ResponseEntity<List<Entity>> getEntities(
       @RequestHeader(value = "Authorization") String authorization,
       @RequestParam(name = "sensorId", required = false) Integer sensorId,
       @RequestParam(name = "userId", required = false) Integer userId) {
     User user = this.getUserFromAuthorization(authorization);
-    if (user.getType() == User.Role.ADMIN && sensorId == null && userId == null) {
-      return ResponseEntity.ok(entityService.findAll());
-    } else if (sensorId == null
-        && (user.getType() == User.Role.ADMIN || (userId != null && userId == user.getId()))) {
-      return ResponseEntity.ok(entityService.findAllByUserId(userId));
-    } else if (sensorId == null && user.getType() != User.Role.ADMIN && userId == null) {
+
+    if (user.getType() == User.Role.ADMIN) {
+      if (sensorId == null && userId == null) {
+        return ResponseEntity.ok(entityService.findAll());
+      } else if (sensorId != null) {
+        return ResponseEntity.ok(entityService.findAllBySensorId(sensorId));
+      } else if (userId != null) {
+        return ResponseEntity.ok(entityService.findAllByUserId(userId));
+      } else {
+        return ResponseEntity.ok(entityService.findAllBySensorIdAndUserId(sensorId, user.getId()));
+      }
+    } else if (checkPermission(user, sensorId, userId)) {
       return ResponseEntity.ok(entityService.findAllByUserId(user.getId()));
-    } else if (user.getType() == User.Role.ADMIN) {
-      return ResponseEntity.ok(entityService.findAllBySensorId(sensorId));
-    } else if (userId == null || userId == user.getId()) {
-      return ResponseEntity.ok(entityService.findAllBySensorIdAndUserId(sensorId, user.getId()));
     } else {
       return ResponseEntity.ok(Collections.emptyList());
     }
