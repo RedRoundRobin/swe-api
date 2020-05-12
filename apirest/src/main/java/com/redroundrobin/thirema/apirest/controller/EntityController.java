@@ -73,12 +73,12 @@ public class EntityController extends CoreController {
     if (user.getType() == User.Role.ADMIN) {
       if (sensorId == null && userId == null) {
         return ResponseEntity.ok(entityService.findAll());
-      } else if (sensorId != null) {
+      } else if (userId == null) {
         return ResponseEntity.ok(entityService.findAllBySensorId(sensorId));
-      } else if (userId != null) {
+      } else if (sensorId == null) {
         return ResponseEntity.ok(entityService.findAllByUserId(userId));
       } else {
-        return ResponseEntity.ok(entityService.findAllBySensorIdAndUserId(sensorId, user.getId()));
+        return ResponseEntity.ok(entityService.findAllBySensorIdAndUserId(sensorId, userId));
       }
     } else if (checkPermission(user, sensorId, userId)) {
       return ResponseEntity.ok(entityService.findAllByUserId(user.getId()));
