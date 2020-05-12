@@ -125,7 +125,6 @@ public class EntityControllerTest {
     user.setEntity(entity1);
 
     // Core Controller needed mock
-    user.setEntity(entity1);
     when(jwtUtil.extractUsername(userToken)).thenReturn(user.getEmail());
     when(jwtUtil.extractUsername(adminToken)).thenReturn(admin.getEmail());
     when(jwtUtil.extractType(anyString())).thenReturn("webapp");
@@ -149,7 +148,9 @@ public class EntityControllerTest {
       Sensor sensor = allSensors.stream()
           .filter(s -> i.getArgument(0).equals(s.getId()))
           .findFirst().orElse(null);
-      User user = allUsers.stream().filter(u -> i.getArgument(1).equals(u.getId())).findFirst().orElse(null);
+      User user = allUsers.stream()
+          .filter(u -> i.getArgument(1).equals(u.getId()))
+          .findFirst().orElse(null);
       if (sensor != null && user != null) {
         return allEntities.stream()
             .filter(e -> e.getSensors().contains(sensor) && user.getEntity().equals(e))
