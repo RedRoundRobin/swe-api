@@ -104,14 +104,16 @@ public class EntityService {
 
   public Entity addEntity(Map<String, Object> newEntityFields) throws MissingFieldsException {
     if (checkAddEditFields(false, newEntityFields)) {
-      Entity entity = new Entity((String)newEntityFields.get("name"), (String)newEntityFields.get("location"));
+      Entity entity = new Entity((String)newEntityFields.get("name"),
+          (String)newEntityFields.get("location"));
       return entityRepo.save(entity);
     } else {
       throw MissingFieldsException.defaultMessage();
     }
   }
 
-  public Entity editEntity(int entityId, Map<String, Object> fieldsToEdit) throws MissingFieldsException, InvalidFieldsValuesException {
+  public Entity editEntity(int entityId, Map<String, Object> fieldsToEdit)
+      throws MissingFieldsException, InvalidFieldsValuesException {
     Entity entity = entityRepo.findById(entityId).orElse(null);
     if (entity == null) {
       throw new InvalidFieldsValuesException("The entity with provided id is not found");
@@ -146,48 +148,44 @@ public class EntityService {
     }
   }
 
-  public boolean enableOrDisableSensorToEntity(int entityId, Map<String, Object> SensorsToEnableOrDisable)
-      throws ElementNotFoundException, JsonProcessingException {
+  public boolean enableOrDisableSensorToEntity(int entityId,
+                                               Map<String, Object> fieldsToEdit)
+      throws ElementNotFoundException, MissingFieldsException {
     Entity entityToEdit = entityRepo.findById(entityId).orElse(null);
     if(entityToEdit == null) {
       throw ElementNotFoundException.notFoundMessage("entity");
     }
 
+    if (!fieldsToEdit.containsKey("toInsert") || !fieldsToEdit.containsKey("toDelete")) {
+      throw MissingFieldsException.defaultMessage();
+    }/* else {
+      if (fieldsToEdit.containsKey("toInsert") && fieldsToEdit.get("toInsert") instanceof List)
+    }*/
+
     Set<Sensor> entitySensors = entityToEdit.getSensors();
-    logger.debug("EntityID: " + entityId);
-    logger.debug("SIZE: " + entitySensors.size());
-    List<Integer> sensorsToInsert = (ArrayList<Integer>)SensorsToEnableOrDisable.get("toInsert");
-    for(Integer sensorId : sensorsToInsert) {
-      logger.debug("AGGIUNTO: " + sensorId);
-      Sensor sensorToInsert = sensorRepo.findById(sensorId).orElse(null);
-      if (sensorToInsert != null && !entitySensors.contains(sensorToInsert)) {
-        entitySensors.add(sensorToInsert);
+
+    if (fieldsToEdit.containsKey("toInsert")) {
+      List<Integer> sensorsToInsert = (ArrayList<Integer>) fieldsToEdit.get("toInsert");
+      for (Integer sensorId : sensorsToInsert) {
+        Sensor sensorToInsert = sensorRepo.findById(sensorId).orElse(null);
+        if (sensorToInsert != null && !entitySensors.contains(sensorToInsert)) {
+          entitySensors.add(sensorToInsert);
+        }
       }
     }
 
-    List<Integer> sensorsToDelete = (ArrayList<Integer>)SensorsToEnableOrDisable.get("toDelete");
-    for(Integer sensorId : sensorsToDelete) {
-      Sensor sensorToDelete = sensorRepo.findById(sensorId).orElse(null);
-      if(sensorToDelete != null && entitySensors.contains(sensorToDelete)) {
-        entitySensors.remove(sensorToDelete);
-        logger.debug("RIMOSSO: " + sensorId);
+    if (fieldsToEdit.containsKey("toDelete")) {
+      List<Integer> sensorsToDelete = (ArrayList<Integer>) fieldsToEdit.get("toDelete");
+      for (Integer sensorId : sensorsToDelete) {
+        Sensor sensorToDelete = sensorRepo.findById(sensorId).orElse(null);
+        if (sensorToDelete != null && entitySensors.contains(sensorToDelete)) {
+          entitySensors.remove(sensorToDelete);
+        }
       }
     }
 
-    logger.debug("SIZE: " + entitySensors.size());
     entityToEdit.setSensors(entitySensors);
     entityRepo.save(entityToEdit);
     return true;
   }
-
-  public List<Sensor> getEntitySensorsEnabled(int entityId)
-      throws ElementNotFoundException {
-    Entity entity = entityRepo.findById(entityId).orElse(null);
-    if(entity == null)
-      throw ElementNotFoundException.notFoundMessage("entity");
-    List<Sensor> sensorsList = new ArrayList();
-    sensorsList.addAll(entity.getSensors());
-    return sensorsList;
-  }
-
 }
