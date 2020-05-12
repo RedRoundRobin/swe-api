@@ -1,21 +1,17 @@
 package com.redroundrobin.thirema.apirest.controller;
 
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
-import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.service.timescale.LogService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
-import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -116,6 +112,7 @@ public class EntityController extends CoreController {
     String ip = getIpAddress(httpRequest);
     User user = getUserFromAuthorization(authorization);
     if (user.getType() == User.Role.ADMIN
+        && fieldsToEditOrsensorsToEnableOrDisable.containsKey("enableOrDisableSensors")
         && (boolean)fieldsToEditOrsensorsToEnableOrDisable.get("enableOrDisableSensors")) {
       try {
         fieldsToEditOrsensorsToEnableOrDisable.remove("enableOrDisableSensors");
@@ -125,7 +122,7 @@ public class EntityController extends CoreController {
         } else {
           return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
         }
-      } catch (Exception enfe) {
+      } catch (MissingFieldsException | ElementNotFoundException enfe) {
         logger.debug(enfe.toString());
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
       }

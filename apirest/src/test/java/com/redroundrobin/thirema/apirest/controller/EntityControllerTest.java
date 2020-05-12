@@ -7,24 +7,32 @@ import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.service.timescale.LogService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
+import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
+import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
@@ -43,6 +51,8 @@ public class EntityControllerTest {
 
   @MockBean
   private EntityService entityService;
+
+  MockHttpServletRequest httpRequest;
 
   private final String userTokenWithBearer = "Bearer userToken";
   private final String adminTokenWithBearer = "Bearer adminToken";
@@ -67,8 +77,11 @@ public class EntityControllerTest {
   Set<Sensor> entity3Sensors;
 
   @Before
-  public void setUp() {
+  public void setUp() throws MissingFieldsException, InvalidFieldsValuesException {
     entityController = new EntityController(entityService, jwtUtil, logService, userService);
+
+    httpRequest = new MockHttpServletRequest();
+    httpRequest.setRemoteAddr("localhost");
 
     // ----------------------------------------- Set Users --------------------------------------
     admin = new User(1, "admin", "admin", "admin", "pass", User.Role.ADMIN);
@@ -160,6 +173,34 @@ public class EntityControllerTest {
     when(entityService.findById(anyInt())).thenAnswer(i -> {
       return allEntities.stream().filter(e -> i.getArgument(0).equals(e.getId())).findFirst().orElse(null);
     });
+    when(entityService.addEntity(any(Map.class))).thenAnswer(i -> {
+      Map<String, Object> newEntityFields = i.getArgument(0);
+      if (newEntityFields.containsKey("name") && newEntityFields.containsKey("location")) {
+        return new Entity((String)newEntityFields.get("name"), (String)newEntityFields.get("location"));
+      } else {
+        throw MissingFieldsException.defaultMessage();
+      }
+    });
+    when(entityService.editEntity(any(Integer.class), any(Map.class))).thenAnswer(i -> {
+      Integer entityId = i.getArgument(0);
+      Map<String, Object> newEntityFields = i.getArgument(1);
+      if (allEntities.stream().anyMatch(e -> entityId.equals(e.getId()))) {
+        if (!newEntityFields.containsKey("name") && !newEntityFields.containsKey("location")) {
+          throw MissingFieldsException.defaultMessage();
+        } else {
+          Entity entity = entityService.findById(entityId);
+          if (newEntityFields.containsKey("name")) {
+            entity.setName((String)newEntityFields.get("name"));
+          }
+          if (newEntityFields.containsKey("location")) {
+            entity.setLocation((String)newEntityFields.get("location"));
+          }
+          return entity;
+        }
+      } else {
+        throw new InvalidFieldsValuesException("Entity Id not found");
+      }
+    });
   }
 
   @Test
@@ -231,6 +272,211 @@ public class EntityControllerTest {
   @Test
   public void getEntityByIdByUserNotAllowerError403() {
     ResponseEntity<Entity> response = entityController.getEntity(userTokenWithBearer, entity3.getId());
+
+    assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+  }
+
+
+
+  @Test
+  public void addEntityByAdminSuccessfull() {
+    String name = "nome";
+    String location = "location";
+
+    Map<String, Object> newEntityFields = new HashMap<>();
+    newEntityFields.put("name", name);
+    newEntityFields.put("location", location);
+
+    ResponseEntity<Entity> response = entityController.addEntity(adminTokenWithBearer, newEntityFields, httpRequest);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(name, response.getBody().getName());
+    assertEquals(location, response.getBody().getLocation());
+  }
+
+  @Test
+  public void addEntityByUserNotAuthorizedError403() {
+    String name = "nome";
+    String location = "location";
+
+    Map<String, Object> newEntityFields = new HashMap<>();
+    newEntityFields.put("name", name);
+    newEntityFields.put("location", location);
+
+    ResponseEntity<Entity> response = entityController.addEntity(userTokenWithBearer, newEntityFields, httpRequest);
+
+    assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+  }
+
+  @Test
+  public void addEntityByAdminMissingFieldsError400() {
+    String name = "nome";
+    String location = "location";
+
+    Map<String, Object> newEntityFields = new HashMap<>();
+    newEntityFields.put("name", name);
+
+    ResponseEntity<Entity> response = entityController.addEntity(adminTokenWithBearer, newEntityFields, httpRequest);
+
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+  }
+
+
+
+  @Test
+  public void editEntityByAdminSuccessfull() {
+    String name = "nome";
+    String location = "locazione";
+
+    Map<String, Object> fieldsToEdit = new HashMap<>();
+    fieldsToEdit.put("name", name);
+    fieldsToEdit.put("location", location);
+
+    ResponseEntity<Entity> response = entityController.editEntity(adminTokenWithBearer, entity1.getId(), fieldsToEdit, httpRequest);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(name, response.getBody().getName());
+    assertEquals(location, response.getBody().getLocation());
+  }
+
+  @Test
+  public void editEntityByUserNotAuthorizedError403() {
+    String name = "nome";
+    String location = "location";
+
+    Map<String, Object> fieldsToEdit = new HashMap<>();
+    fieldsToEdit.put("name", name);
+    fieldsToEdit.put("location", location);
+
+    ResponseEntity<Entity> response = entityController.editEntity(userTokenWithBearer, entity1.getId(), fieldsToEdit, httpRequest);
+
+    assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+  }
+
+  @Test
+  public void editEntityByAdminByNotExistentEntityIdError400() {
+    String name = "nome";
+    String location = "location";
+
+    Map<String, Object> fieldsToEdit = new HashMap<>();
+    fieldsToEdit.put("name", name);
+    fieldsToEdit.put("location", location);
+
+    ResponseEntity<Entity> response = entityController.editEntity(adminTokenWithBearer, 9, fieldsToEdit, httpRequest);
+
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+  }
+
+  @Test
+  public void editEntitySensorsByAdminSuccessfull() {
+    Map<String, Object> fieldsToEdit = new HashMap<>();
+    fieldsToEdit.put("enableOrDisableSensors", true);
+    List<Integer> list = new ArrayList<>();
+    list.add(sensor3.getId());
+    fieldsToEdit.put("toInsert", list);
+    fieldsToEdit.put("toDelete", list);
+
+    try {
+      when(entityService.enableOrDisableSensorToEntity(entity1.getId(), fieldsToEdit)).thenReturn(true);
+    } catch (ElementNotFoundException e) {
+      e.printStackTrace();
+    } catch (MissingFieldsException e) {
+      e.printStackTrace();
+    }
+
+    ResponseEntity<Entity> response = entityController.editEntity(adminTokenWithBearer, entity1.getId(), fieldsToEdit, httpRequest);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+  }
+
+  @Test
+  public void editEntitySensorsByAdminWithMissingFieldsError400() {
+
+    Map<String, Object> fieldsToEdit = new HashMap<>();
+    fieldsToEdit.put("enableOrDisableSensors", true);
+    List<Integer> list = new ArrayList<>();
+    list.add(sensor3.getId());
+
+    try {
+      when(entityService.enableOrDisableSensorToEntity(entity1.getId(), fieldsToEdit)).thenThrow(MissingFieldsException.defaultMessage());
+    } catch (ElementNotFoundException e) {
+      e.printStackTrace();
+    } catch (MissingFieldsException e) {
+      e.printStackTrace();
+    }
+
+    ResponseEntity<Entity> response = entityController.editEntity(adminTokenWithBearer, entity1.getId(), fieldsToEdit, httpRequest);
+
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+  }
+
+  @Test
+  public void editEntitySensorsByAdminError500() {
+    Map<String, Object> fieldsToEdit = new HashMap<>();
+    fieldsToEdit.put("enableOrDisableSensors", true);
+    List<Integer> list = new ArrayList<>();
+    list.add(sensor3.getId());
+    fieldsToEdit.put("toInsert", list);
+    fieldsToEdit.put("toDelete", list);
+
+    try {
+      when(entityService.enableOrDisableSensorToEntity(entity1.getId(), fieldsToEdit)).thenReturn(false);
+    } catch (ElementNotFoundException e) {
+      e.printStackTrace();
+    } catch (MissingFieldsException e) {
+      e.printStackTrace();
+    }
+
+    ResponseEntity<Entity> response = entityController.editEntity(adminTokenWithBearer, entity1.getId(), fieldsToEdit, httpRequest);
+
+    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+  }
+
+
+
+  @Test
+  public void deleteEntityByAdminSuccessfull() {
+    try {
+      when(entityService.deleteEntity(any(Integer.class))).thenReturn(true);
+    } catch (ElementNotFoundException e) {
+      e.printStackTrace();
+    }
+
+    ResponseEntity response = entityController.deleteEntity(adminTokenWithBearer, entity1.getId(), httpRequest);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+  }
+
+  @Test
+  public void deleteEntityByAdminSimulateDbError409() {
+    try {
+      when(entityService.deleteEntity(any(Integer.class))).thenReturn(false);
+    } catch (ElementNotFoundException e) {
+      e.printStackTrace();
+    }
+
+    ResponseEntity response = entityController.deleteEntity(adminTokenWithBearer, entity1.getId(), httpRequest);
+
+    assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+  }
+
+  @Test
+  public void deleteEntityByAdminByNotExistentEntityIdError400() {
+    try {
+      when(entityService.deleteEntity(any(Integer.class))).thenThrow(new ElementNotFoundException(""));
+    } catch (ElementNotFoundException e) {
+      e.printStackTrace();
+    }
+
+    ResponseEntity response = entityController.deleteEntity(adminTokenWithBearer, 9, httpRequest);
+
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+  }
+
+  @Test
+  public void deleteEntityByUserError403() {
+
+    ResponseEntity response = entityController.deleteEntity(userTokenWithBearer, entity1.getId(), httpRequest);
 
     assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
   }
