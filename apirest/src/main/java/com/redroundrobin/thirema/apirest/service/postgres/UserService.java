@@ -1,6 +1,5 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
-import com.google.gson.JsonObject;
 import com.redroundrobin.thirema.apirest.models.postgres.Alert;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
@@ -392,7 +391,7 @@ public class UserService implements UserDetailsService {
         user.getEmail(), user.getPassword(), grantedAuthorities);
   }
 
-  public User addUser(JsonObject rawUserToInsert, User insertingUser)
+  public User addUser(Map<String, Object> rawUserToInsert, User insertingUser)
       throws MissingFieldsException, InvalidFieldsValuesException,
       ConflictException, NotAuthorizedException {
     if (!checkCreatableFields(rawUserToInsert.keySet())) {
@@ -401,37 +400,37 @@ public class UserService implements UserDetailsService {
 
     Entity userToInsertEntity;
     if ((userToInsertEntity = entityRepo.findById(
-        (rawUserToInsert.get("entityId")).getAsInt()).orElse(null)) == null) {
+        ((int)rawUserToInsert.get("entityId"))).orElse(null)) == null) {
       throw new InvalidFieldsValuesException("");
     }
 
     int userToInsertType;
-    if ((userToInsertType = rawUserToInsert.get("type").getAsInt()) != 2
+    if ((userToInsertType = (int)rawUserToInsert.get("type")) != 2
         && userToInsertType != 1 && userToInsertType != 0) {
       throw new InvalidFieldsValuesException("");
     }
 
     //qui so che entity_id dato esiste && so il tipo dello user che si vuole inserire
-    if ((userToInsertType = rawUserToInsert.get("type").getAsInt()) == 2 ||
+    if ((userToInsertType = (int)rawUserToInsert.get("type")) == 2 ||
         insertingUser.getType() == User.Role.USER
         || (insertingUser.getType() == User.Role.MOD
         && userToInsertEntity.getId() != insertingUser.getEntity().getId())) {
       throw new NotAuthorizedException("");
     }
 
-    String email = rawUserToInsert.get("email").getAsString();
-    if (rawUserToInsert.get("name").getAsString() == null
-        || rawUserToInsert.get("surname").getAsString() == null
-        || rawUserToInsert.get("password").getAsString() == null
+    String email = (String)rawUserToInsert.get("email");
+    if ((String)rawUserToInsert.get("name") == null
+        || (String)rawUserToInsert.get("surname") == null
+        || (String)rawUserToInsert.get("password") == null
         || email == null) {
       throw new InvalidFieldsValuesException("");
     } else if(userRepo.findByEmail(email) != null) {
       throw new ConflictException("");
     }
 
-    User newUser = new User(rawUserToInsert.get("name").getAsString(),
-        rawUserToInsert.get("surname").getAsString(), email,
-        rawUserToInsert.get("password").getAsString(), User.Role.values()[userToInsertType]);
+    User newUser = new User((String)rawUserToInsert.get("name"),
+        (String)rawUserToInsert.get("surname"), email,
+        (String)rawUserToInsert.get("password"), User.Role.values()[userToInsertType]);
 
     newUser.setEntity(userToInsertEntity);
 

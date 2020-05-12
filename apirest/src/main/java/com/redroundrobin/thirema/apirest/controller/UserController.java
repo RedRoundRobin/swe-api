@@ -1,7 +1,5 @@
 package com.redroundrobin.thirema.apirest.controller;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.service.timescale.LogService;
@@ -93,14 +91,13 @@ public class UserController extends CoreController {
   // Create new user
   @PostMapping(value = {""})
   public ResponseEntity<User> createUser(@RequestHeader("Authorization") String authorization,
-                                         @RequestBody String jsonStringUser,
+                                         @RequestBody Map<String, Object> jsonStringUser,
                                          HttpServletRequest httpRequest) {
     String ip = getIpAddress(httpRequest);
     User user = getUserFromAuthorization(authorization);
 
-    JsonObject jsonUser = JsonParser.parseString(jsonStringUser).getAsJsonObject();
     try {
-      User createdUser = userService.addUser(jsonUser, user);
+      User createdUser = userService.addUser(jsonStringUser, user);
       logService.createLog(user.getId(), ip, "user.created",
           Integer.toString(createdUser.getId()));
       return ResponseEntity.ok(createdUser);
