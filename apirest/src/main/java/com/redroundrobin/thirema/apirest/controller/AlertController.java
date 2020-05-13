@@ -54,7 +54,7 @@ public class AlertController extends CoreController {
     if (user.getType() == User.Role.ADMIN) {
       try {
         alertService.deleteAlertsBySensorId(sensorId);
-        logService.createLog(user.getId(), getIpAddress(httpRequest), "alert.deleted",
+        logService.createLog(user.getId(), getIpAddress(httpRequest), "alert.delete",
             "alerts with sensorId = " + sensorId);
         return new ResponseEntity(HttpStatus.OK);
       } catch (ElementNotFoundException e) {
@@ -137,7 +137,7 @@ public class AlertController extends CoreController {
     if (user.getType() == User.Role.ADMIN || user.getType() == User.Role.MOD) {
       try {
         Alert alert = alertService.addAlert(user, newAlertFields);
-        logService.createLog(user.getId(), getIpAddress(httpRequest), "alert.created",
+        logService.createLog(user.getId(), getIpAddress(httpRequest), "alert.add",
             Integer.toString(alert.getId()));
         return ResponseEntity.ok(alert);
       } catch (MissingFieldsException | InvalidFieldsValuesException fe) {
@@ -186,7 +186,7 @@ public class AlertController extends CoreController {
     if (user.getType() == User.Role.ADMIN || (user.getType() == User.Role.MOD)) {
       try {
         if (alertService.deleteAlert(user, alertId)) {
-          logService.createLog(user.getId(), getIpAddress(httpRequest), "alert.deleted",
+          logService.createLog(user.getId(), getIpAddress(httpRequest), "alert.delete",
               Integer.toString(alertId));
           return new ResponseEntity(HttpStatus.OK);
         } else {

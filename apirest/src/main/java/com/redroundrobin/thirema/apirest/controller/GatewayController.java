@@ -180,7 +180,7 @@ public class GatewayController extends CoreController {
     if (user.getType() == User.Role.ADMIN) {
       try {
         Gateway gateway = gatewayService.addGateway(newGatewayFields);
-        logService.createLog(user.getId(),ip,"gateway.created",
+        logService.createLog(user.getId(),ip,"gateway.add",
             Integer.toString(gateway.getId()));
         return ResponseEntity.ok(gateway);
       } catch (MissingFieldsException | InvalidFieldsValuesException e) {

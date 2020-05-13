@@ -156,7 +156,7 @@ public class DeviceController extends CoreController {
     if (user.getType() == User.Role.ADMIN) {
       try {
         Device device = deviceService.addDevice(newDeviceFields);
-        logService.createLog(user.getId(), getIpAddress(httpRequest), "device.created",
+        logService.createLog(user.getId(), getIpAddress(httpRequest), "device.add",
             Integer.toString(device.getId()));
         return ResponseEntity.ok(device);
       } catch (MissingFieldsException | InvalidFieldsValuesException fe) {
@@ -185,7 +185,7 @@ public class DeviceController extends CoreController {
       try {
         newSensorFields.put("deviceId", deviceId);
         Sensor sensor = sensorService.addSensor(newSensorFields);
-        logService.createLog(user.getId(), getIpAddress(httpRequest), "sensor.created",
+        logService.createLog(user.getId(), getIpAddress(httpRequest), "sensor.add",
             "D#" + deviceId + " - S@" + sensor.getRealSensorId());
         return ResponseEntity.ok(sensor);
       } catch (MissingFieldsException | InvalidFieldsValuesException fe) {
@@ -268,7 +268,7 @@ public class DeviceController extends CoreController {
     if (user.getType() == User.Role.ADMIN) {
       try {
         if (deviceService.deleteDevice(deviceId)) {
-          logService.createLog(user.getId(), getIpAddress(httpRequest), "device.deleted",
+          logService.createLog(user.getId(), getIpAddress(httpRequest), "device.delete",
               Integer.toString(deviceId));
           return new ResponseEntity<>(HttpStatus.OK);
         } else {
@@ -297,7 +297,7 @@ public class DeviceController extends CoreController {
     if (user.getType() == User.Role.ADMIN) {
       try {
         if (sensorService.deleteSensor(deviceId, realSensorId)) {
-          logService.createLog(user.getId(), getIpAddress(httpRequest), "sensor.deleted",
+          logService.createLog(user.getId(), getIpAddress(httpRequest), "sensor.delete",
               "D#" + deviceId + " - S@" + realSensorId);
           return new ResponseEntity<>(HttpStatus.OK);
         } else {

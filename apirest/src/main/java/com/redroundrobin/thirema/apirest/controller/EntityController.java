@@ -112,7 +112,7 @@ public class EntityController extends CoreController {
     if (user.getType() == User.Role.ADMIN) {
       try {
         Entity entity = entityService.addEntity(newEntityFields);
-        logService.createLog(user.getId(),ip,"entity.created",
+        logService.createLog(user.getId(),ip,"entity.add",
             Integer.toString(entity.getId()));
         return ResponseEntity.ok(entity);
       } catch (MissingFieldsException e) {
