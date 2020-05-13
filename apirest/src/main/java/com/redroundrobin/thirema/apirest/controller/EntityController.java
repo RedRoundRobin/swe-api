@@ -112,7 +112,7 @@ public class EntityController extends CoreController {
     if (user.getType() == User.Role.ADMIN) {
       try {
         Entity entity = entityService.addEntity(newEntityFields);
-        logService.createLog(user.getId(),ip,"entity.created",
+        logService.createLog(user.getId(),ip,"entity.add",
             Integer.toString(entity.getId()));
         return ResponseEntity.ok(entity);
       } catch (MissingFieldsException e) {
@@ -140,6 +140,8 @@ public class EntityController extends CoreController {
         fieldsToEditOrsensorsToEnableOrDisable.remove("enableOrDisableSensors");
         if (entityService.enableOrDisableSensorToEntity(entityId,
             fieldsToEditOrsensorsToEnableOrDisable)) {
+          logService.createLog(user.getId(),ip,"entity.assign_sensor",
+              Integer.toString(entityId));
           return new ResponseEntity(HttpStatus.OK);
         } else {
           return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
