@@ -386,7 +386,7 @@ public class EntityController extends CoreController {
 
   @Operation(
       summary = "Delete entity",
-      description = "The request return the entity that is been created if successfull",
+      description = "The request deletes the specified entity",
       responses = {
           @ApiResponse(
               responseCode = "200",

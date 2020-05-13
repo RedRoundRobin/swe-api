@@ -76,8 +76,28 @@ public class DeviceController extends CoreController {
                     Device.class))
             )),
         @ApiResponse(
+            responseCode = "400",
+            description = "There is an error in the request",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        ),
+        @ApiResponse(
             responseCode = "401",
             description = "The authentication failed",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Not authorized. Only admins can do it",
             content = @Content(
                 mediaType = "application/json",
                 examples = {
@@ -152,6 +172,16 @@ public class DeviceController extends CoreController {
                 schema = @Schema(implementation = Device.class)
             )),
         @ApiResponse(
+            responseCode = "400",
+            description = "There is an error in the request",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        ),
+        @ApiResponse(
             responseCode = "401",
             description = "The authentication failed",
             content = @Content(
@@ -201,8 +231,28 @@ public class DeviceController extends CoreController {
                         Sensor.class))
             )),
         @ApiResponse(
+            responseCode = "400",
+            description = "There is an error in the request",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        ),
+        @ApiResponse(
             responseCode = "401",
             description = "The authentication failed",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Not authorized. Only admins can do it",
             content = @Content(
                 mediaType = "application/json",
                 examples = {
@@ -257,6 +307,16 @@ public class DeviceController extends CoreController {
                 mediaType = "application/json",
                 schema = @Schema(implementation = Device.class)
             )),
+        @ApiResponse(
+            responseCode = "400",
+            description = "There is an error in the request",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        ),
         @ApiResponse(
             responseCode = "401",
             description = "The authentication failed",
@@ -506,6 +566,16 @@ public class DeviceController extends CoreController {
             )
         ),
         @ApiResponse(
+            responseCode = "403",
+            description = "Not authorized. Only admins can do it",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        ),
+        @ApiResponse(
             responseCode = "409",
             description = "Conflict. Database error",
             content = @Content(
@@ -574,6 +644,16 @@ public class DeviceController extends CoreController {
         @ApiResponse(
             responseCode = "401",
             description = "The authentication failed",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Not authorized. Only admins can do it",
             content = @Content(
                 mediaType = "application/json",
                 examples = {

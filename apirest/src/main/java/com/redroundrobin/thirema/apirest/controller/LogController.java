@@ -36,8 +36,8 @@ public class LogController extends CoreController {
   }
 
   @Operation(
-      summary = "Get entities",
-      description = "The request return a list of entities objects",
+      summary = "Get logs",
+      description = "The request return a list of logs objects",
       responses = {
           @ApiResponse(
               responseCode = "200",
@@ -46,6 +46,16 @@ public class LogController extends CoreController {
                   mediaType = "application/json",
                   array = @ArraySchema(schema = @Schema(implementation = Log.class))
               )),
+          @ApiResponse(
+              responseCode = "400",
+              description = "There is an error in the request",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
           @ApiResponse(
               responseCode = "401",
               description = "The authentication failed",
