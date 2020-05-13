@@ -338,6 +338,22 @@ public class UserService implements UserDetailsService {
     return userRepo.findByTelegramName(telegramName);
   }
 
+  private boolean isAuthorized(User user) {
+    if (!user.isDeleted()) {
+      if (user.getType() == User.Role.ADMIN) {
+        return true;
+      } else {
+        if (user.getEntity() != null) {
+          Entity entity = entityRepo.findById(user.getEntity().getId()).orElse(null);
+          if (entity != null && !entity.isDeleted()) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
   public User findByTelegramNameAndTelegramChat(String telegramName, String telegramChat) {
     return userRepo.findByTelegramNameAndTelegramChat(telegramName, telegramChat);
   }
@@ -356,9 +372,7 @@ public class UserService implements UserDetailsService {
     User user = this.findByEmail(email);
     if (user == null) {
       throw new UsernameNotFoundException("");
-    } else if (user.isDeleted() || (user.getType() != User.Role.ADMIN
-        && (user.getEntity() == null || (entityRepo.findById(user.getEntity().getId()).isPresent()
-        && entityRepo.findById(user.getEntity().getId()).get().isDeleted())))) {
+    } else if (!isAuthorized(user)) {
       throw new UserDisabledException("User has been deleted or don't have an entity");
     }
 
@@ -383,9 +397,7 @@ public class UserService implements UserDetailsService {
     User user = this.findByTelegramName(telegramName);
     if (user == null) {
       throw new UsernameNotFoundException("");
-    } else if (user.isDeleted() || (user.getType() != User.Role.ADMIN
-        && (user.getEntity() == null || (entityRepo.findById(user.getEntity().getId()).isPresent()
-        && entityRepo.findById(user.getEntity().getId()).get().isDeleted())))) {
+    } else if (!isAuthorized(user)) {
       throw new UserDisabledException("User has been deleted or don't have an entity");
     } else if (user.getTelegramChat() == null || user.getTelegramChat().isEmpty()) {
       throw new TelegramChatNotFoundException();
@@ -401,9 +413,7 @@ public class UserService implements UserDetailsService {
   @Override
   public UserDetails loadUserByUsername(String username) {
     User user = this.findByEmail(username);
-    if (user == null || (user.isDeleted() || (user.getType() != User.Role.ADMIN
-        && (user.getEntity() == null || (entityRepo.findById(user.getEntity().getId()).isPresent()
-        && entityRepo.findById(user.getEntity().getId()).get().isDeleted()))))) {
+    if (!isAuthorized(user)) {
       throw new UsernameNotFoundException("");
     }
 
