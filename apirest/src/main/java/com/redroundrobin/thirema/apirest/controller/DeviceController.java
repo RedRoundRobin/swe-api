@@ -186,7 +186,7 @@ public class DeviceController extends CoreController {
         newSensorFields.put("deviceId", deviceId);
         Sensor sensor = sensorService.addSensor(newSensorFields);
         logService.createLog(user.getId(), getIpAddress(httpRequest), "sensor.created",
-            Integer.toString(sensor.getId()));
+            "D#" + deviceId + " - S@" + sensor.getRealSensorId());
         return ResponseEntity.ok(sensor);
       } catch (MissingFieldsException | InvalidFieldsValuesException fe) {
         logger.debug(fe.toString());
@@ -243,7 +243,7 @@ public class DeviceController extends CoreController {
       try {
         Sensor sensor = sensorService.editSensor(realSensorId, deviceId, fieldsToEdit);
         logService.createLog(user.getId(), getIpAddress(httpRequest), "sensor.edit",
-            Integer.toString(realSensorId));
+            "D#" + deviceId + " - S@" + sensor.getRealSensorId());
         return ResponseEntity.ok(sensor);
       } catch (MissingFieldsException | InvalidFieldsValuesException | ElementNotFoundException e) {
         logger.debug(e.toString());
@@ -298,7 +298,7 @@ public class DeviceController extends CoreController {
       try {
         if (sensorService.deleteSensor(deviceId, realSensorId)) {
           logService.createLog(user.getId(), getIpAddress(httpRequest), "sensor.deleted",
-              Integer.toString(realSensorId));
+              "D#" + deviceId + " - S@" + realSensorId);
           return new ResponseEntity<>(HttpStatus.OK);
         } else {
           logger.debug("RESPONSE STATUS: INTERNAL_SERVER_ERROR. Alert " + realSensorId
