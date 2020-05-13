@@ -413,7 +413,7 @@ public class UserService implements UserDetailsService {
   @Override
   public UserDetails loadUserByUsername(String username) {
     User user = this.findByEmail(username);
-    if (!isAuthorized(user)) {
+    if (user == null || !isAuthorized(user)) {
       throw new UsernameNotFoundException("");
     }
 
