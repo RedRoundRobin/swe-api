@@ -140,6 +140,8 @@ public class EntityController extends CoreController {
         fieldsToEditOrsensorsToEnableOrDisable.remove("enableOrDisableSensors");
         if (entityService.enableOrDisableSensorToEntity(entityId,
             fieldsToEditOrsensorsToEnableOrDisable)) {
+          logService.createLog(user.getId(),ip,"entity.assign_sensor",
+              Integer.toString(entityId));
           return new ResponseEntity(HttpStatus.OK);
         } else {
           return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
