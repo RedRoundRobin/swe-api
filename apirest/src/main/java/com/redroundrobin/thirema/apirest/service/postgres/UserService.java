@@ -357,7 +357,8 @@ public class UserService implements UserDetailsService {
     if (user == null) {
       throw new UsernameNotFoundException("");
     } else if (user.isDeleted() || (user.getType() != User.Role.ADMIN
-        && (user.getEntity() == null || user.getEntity().isDeleted()))) {
+        && (user.getEntity() == null || (entityRepo.findById(user.getEntity().getId()).isPresent()
+        && entityRepo.findById(user.getEntity().getId()).get().isDeleted())))) {
       throw new UserDisabledException("User has been deleted or don't have an entity");
     }
 
@@ -383,7 +384,8 @@ public class UserService implements UserDetailsService {
     if (user == null) {
       throw new UsernameNotFoundException("");
     } else if (user.isDeleted() || (user.getType() != User.Role.ADMIN
-        && (user.getEntity() == null || user.getEntity().isDeleted()))) {
+        && (user.getEntity() == null || (entityRepo.findById(user.getEntity().getId()).isPresent()
+        && entityRepo.findById(user.getEntity().getId()).get().isDeleted())))) {
       throw new UserDisabledException("User has been deleted or don't have an entity");
     } else if (user.getTelegramChat() == null || user.getTelegramChat().isEmpty()) {
       throw new TelegramChatNotFoundException();
@@ -400,7 +402,8 @@ public class UserService implements UserDetailsService {
   public UserDetails loadUserByUsername(String username) {
     User user = this.findByEmail(username);
     if (user == null || (user.isDeleted() || (user.getType() != User.Role.ADMIN
-        && (user.getEntity() == null || user.getEntity().isDeleted())))) {
+        && (user.getEntity() == null || (entityRepo.findById(user.getEntity().getId()).isPresent()
+        && entityRepo.findById(user.getEntity().getId()).get().isDeleted()))))) {
       throw new UsernameNotFoundException("");
     }
 
