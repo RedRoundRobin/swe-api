@@ -157,7 +157,7 @@ public class DeviceController extends CoreController {
       try {
         Device device = deviceService.addDevice(newDeviceFields);
         logService.createLog(user.getId(), getIpAddress(httpRequest), "device.add",
-            Integer.toString(device.getId()));
+            "D#" + device.getId());
         return ResponseEntity.ok(device);
       } catch (MissingFieldsException | InvalidFieldsValuesException fe) {
         logger.debug(fe.toString());
@@ -214,7 +214,7 @@ public class DeviceController extends CoreController {
       try {
         Device device = deviceService.editDevice(deviceId, fieldsToEdit);
         logService.createLog(user.getId(), getIpAddress(httpRequest), "device.edit",
-            Integer.toString(deviceId));
+            "D#" + deviceId);
         return ResponseEntity.ok(device);
       } catch (MissingFieldsException | InvalidFieldsValuesException | ElementNotFoundException e) {
         logger.debug(e.toString());
@@ -269,7 +269,7 @@ public class DeviceController extends CoreController {
       try {
         if (deviceService.deleteDevice(deviceId)) {
           logService.createLog(user.getId(), getIpAddress(httpRequest), "device.delete",
-              Integer.toString(deviceId));
+              "D#" + deviceId);
           return new ResponseEntity<>(HttpStatus.OK);
         } else {
           logger.debug("RESPONSE STATUS: INTERNAL_SERVER_ERROR. Alert " + deviceId
