@@ -1,5 +1,6 @@
 package com.redroundrobin.thirema.apirest.controller;
 
+import com.redroundrobin.thirema.apirest.models.postgres.Alert;
 import com.redroundrobin.thirema.apirest.models.postgres.Device;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
@@ -17,8 +18,10 @@ import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundExceptio
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,12 +59,43 @@ public class DeviceController extends CoreController {
     this.sensorService = sensorService;
   }
 
-  @Operation(
-      summary = "See all the devices you have access to",
-      description = "This request allows you to see all the devices you have access to. You can"
-          + "also filter this research by either giving in input the entityId and/or the gatewayId,"
-          + "or by the cmdEnabled parameter. This last filter is available for administrators only."
-  })
+
+@Operation(
+    summary = "See a list of all the devices you have access to",
+    description = "This request allows you to see all the devices you have access to. You can"
+        + "also filter this research by either giving in input the entityId and/or the gatewayId,"
+        + "or by the cmdEnabled parameter. This last filter is available for administrators only.",
+    responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "The request is successfull",
+            content = @Content(
+                mediaType = "application/json",
+                array = @ArraySchema( schema =
+                @Schema( implementation =
+                    Device.class))
+            )),
+        @ApiResponse(
+            responseCode = "401",
+            description = "The authentication failed",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Server error",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        )
+    })
 
   // Get all devices optionally filtered by entityId
   @GetMapping(value = {""})
@@ -108,7 +142,36 @@ public class DeviceController extends CoreController {
 
 @Operation(
     summary = "See the details of a single device",
-    description = "This request allows you to see the details of a single device")
+    description = "This request allows you to see the details of a single device",
+    responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "The request is successfull",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = Device.class)
+            )),
+        @ApiResponse(
+            responseCode = "401",
+            description = "The authentication failed",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Server error",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        )
+    })
 
   // Get device by deviceId
   @GetMapping(value = {"/{deviceId:.+}"})
@@ -123,9 +186,41 @@ public class DeviceController extends CoreController {
     }
   }
 
+
 @Operation(
-    summary = "Get access to a single device",
-    description = "This request allows you to see all the sensors of a device")
+    summary = "Get access to the sensors of a single device",
+    description = "This request returns a list of all the sensors of a device",
+    responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "The request is successfull",
+            content = @Content(
+                mediaType = "application/json",
+                array = @ArraySchema( schema =
+                    @Schema( implementation =
+                        Sensor.class))
+            )),
+        @ApiResponse(
+            responseCode = "401",
+            description = "The authentication failed",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Server error",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        )
+    })
 
   // Get all sensors by deviceId
   @GetMapping(value = {"/{deviceId:.+}/sensors"})
@@ -150,9 +245,39 @@ public class DeviceController extends CoreController {
     }
   }
 
+
 @Operation(
     summary = "Get access to a single sensor of the given device",
-    description = "This request allows you to see the details of a single sensor connected to a device")
+    description = "This request allows you to see the details of a single sensor connected to a device",
+    responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "The request is successfull",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = Device.class)
+            )),
+        @ApiResponse(
+            responseCode = "401",
+            description = "The authentication failed",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Server error",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        )
+    })
 
   // Get sensor by deviceId and realSensorId
   @GetMapping(value = {"/{deviceId:.+}/sensors/{realSensorId:.+}"})
@@ -171,7 +296,67 @@ public class DeviceController extends CoreController {
 
 @Operation(
     summary = "Inserting a device in the database",
-    description = "This request is available for administrators only. It allows you to create a new device")
+    description = "This request is available for administrators only. It allows you to create"
+        + " a new device",
+    responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "The request is successfull",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = Device.class)
+            )),
+        @ApiResponse(
+            responseCode = "400",
+            description = "There is an error in the request",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "The authentication failed",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Not authorized",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        ),
+        @ApiResponse(
+            responseCode = "409",
+            description = "Conflict. Database error",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Server error",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        )
+    })
 
   @PostMapping(value = {""})
   public ResponseEntity<Device> createDevice(
@@ -200,10 +385,70 @@ public class DeviceController extends CoreController {
     }
   }
 
+
 @Operation(
     summary = "Inserting a sensor in the database",
     description = "This request is available for administrators only. It allows you to create"
-        + " a new sensor ant connect it to a device")
+        + " a new sensor ant connect it to a device",
+    responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "The request is successfull",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = Sensor.class)
+            )),
+        @ApiResponse(
+            responseCode = "400",
+            description = "There is an error in the request",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "The authentication failed",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Not authorized",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        ),
+        @ApiResponse(
+            responseCode = "409",
+            description = "Conflict. Database error",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Server error",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        )
+    })
 
   @PostMapping(value = {"/{deviceId:.+}/sensors"})
   public ResponseEntity<Sensor> createSensor(
@@ -234,10 +479,53 @@ public class DeviceController extends CoreController {
     }
   }
 
+
 @Operation(
     summary = "Editing a device",
     description = "This request is available for administrators only. It allows you to edit"
-        + " a device already saved in the database.")
+        + " a device already saved in the database.",
+    responses = {
+        @ApiResponse(
+            responseCode = "400",
+            description = "There is an error in the request",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "The authentication failed",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        ),
+        @ApiResponse(
+            responseCode = "409",
+            description = "Conflict. Database error",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Server error",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        )
+    })
 
   @PutMapping(value = {"/{deviceId:.+}"})
   public ResponseEntity editDevice(
@@ -267,10 +555,53 @@ public class DeviceController extends CoreController {
     }
   }
 
+
 @Operation(
     summary = "Editing a sensor",
     description = "This request is available for administrators only. It allows you to edit"
-        + " a sensor already saved in the database.")
+        + " a sensor already saved in the database.",
+    responses = {
+        @ApiResponse(
+            responseCode = "400",
+            description = "There is an error in the request",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "The authentication failed",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        ),
+        @ApiResponse(
+            responseCode = "409",
+            description = "Conflict. Database error",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Server error",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        )
+    })
 
   @PutMapping(value = {"/{deviceId:.+}/sensors/{realSensorId:.+}"})
   public ResponseEntity<Sensor> editSensor(
@@ -301,10 +632,63 @@ public class DeviceController extends CoreController {
     }
   }
 
+  
 @Operation(
     summary = "Deleting a device",
     description = "This request is available for administrators only. It allows you to delete"
-        + " a device from the database.")
+        + " a device from the database.",
+    responses = {
+        @ApiResponse(
+            responseCode = "400",
+            description = "There is an error in the request",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "The authentication failed",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Not authorized. Only admins can do it",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        ),
+        @ApiResponse(
+            responseCode = "409",
+            description = "Conflict. Database error",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Server error",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        )
+    })
 
   @DeleteMapping(value = {"/{deviceId:.+}"})
   public ResponseEntity deleteDevice(@RequestHeader("authorization") String authorization,
@@ -334,11 +718,63 @@ public class DeviceController extends CoreController {
     }
   }
 
-@Operation(
-    summary = "Deleting a sensor",
-    description = "This request is available for administrators only. It allows you to delete"
-        + " a sensor from the database.")
 
+  @Operation(
+      summary = "Deleting a sensor",
+      description = "This request is available for administrators only. It allows you to delete"
+          + " a sensor from the database.",
+      responses = {
+          @ApiResponse(
+              responseCode = "400",
+              description = "There is an error in the request",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "401",
+              description = "The authentication failed",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "403",
+              description = "Not authorized. Only admins can do it",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "409",
+              description = "Conflict. Database error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "500",
+              description = "Server error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          )
+      })
   @DeleteMapping(value = {"/{deviceId:.+}/sensors/{realSensorId:.+}"})
   public ResponseEntity deleteSensor(@RequestHeader("authorization") String authorization,
                                      @PathVariable("deviceId") int deviceId,
