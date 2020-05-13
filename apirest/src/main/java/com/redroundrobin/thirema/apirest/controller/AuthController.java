@@ -1,5 +1,6 @@
 package com.redroundrobin.thirema.apirest.controller;
 
+import com.fasterxml.jackson.databind.jsonschema.JsonSerializableSchema;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.TelegramService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
@@ -14,6 +15,21 @@ import java.util.Map;
 import java.util.Random;
 import javax.servlet.http.HttpServletRequest;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.enums.ParameterStyle;
+import io.swagger.v3.oas.annotations.extensions.Extension;
+import io.swagger.v3.oas.annotations.extensions.ExtensionProperty;
+import io.swagger.v3.oas.annotations.extensions.Extensions;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +67,86 @@ public class AuthController extends CoreController {
     rnd = new SecureRandom();
   }
 
+  @Operation(
+      summary = "Normal authentication",
+      description = "The request for get the authentication token used for other requests",
+      /*requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+          content = @Content(
+              schema = @Schema(
+                  example = "{\"username\":\"string\",\"password\":\"string\"}"
+              )
+          )
+      ),
+      parameters = {
+          @Parameter(
+              name = "username",
+              required = true,
+              schema = @Schema(type = "string")
+          ),
+          @Parameter(
+              name = "password",
+              required = true,
+              schema = @Schema(type = "string")
+          )
+      },*/
+      responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "The authentication is successfull",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject(
+                          name = "No tfa needed",
+                          value = "{\"token\":\"string\",\"user\":{\"name\":\"string\",\"surname\":\"string\",\"email\":\"string\",\"password\":\"string\",\"type\":\"USER|MOD|ADMIN\",\"telegramName\":\"string\",\"telegramChat\":\"string\",\"tfa\":\"true|false\",\"deleted\":\"true|false\",\"entity\":\"int\",\"userId\":\"int\"}}"
+                      ),
+                      @ExampleObject(
+                          name = "Tfa needed",
+                          value = "{\"token\":\"string\",\"tfa\":\"true\"}"
+                      )
+                  }
+              )),
+          @ApiResponse(
+              responseCode = "400",
+              description = "There is an error in the request",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "401",
+              description = "The authentication failed",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "403",
+              description = "Not authorized",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "500",
+              description = "Server error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          )
+      })
   @PostMapping(value = "/auth")
   public ResponseEntity<Map<String, Object>> authentication(
       @RequestBody Map<String, Object> request,
