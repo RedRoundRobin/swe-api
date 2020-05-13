@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import com.redroundrobin.thirema.apirest.utils.exception.ConflictException;
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
@@ -51,7 +52,7 @@ public class DeviceService {
   }
 
   private Device addEditDevice(Device device, Map<String, Object> fields)
-      throws InvalidFieldsValuesException {
+      throws InvalidFieldsValuesException, ConflictException {
     if (device == null) {
       device = new Device();
     }
@@ -61,7 +62,7 @@ public class DeviceService {
         case "frequency":
           try {
             device.setFrequency((int) entry.getValue());
-          } catch (NumberFormatException nfe) {
+          } catch (ClassCastException nfe) {
             throw new InvalidFieldsValuesException("The frequency provided is not valid");
           }
           break;
@@ -87,7 +88,7 @@ public class DeviceService {
         .findByGatewayAndRealDeviceId(device.getGateway(), device.getRealDeviceId());
     if (deviceWithSameGatewayAndRealDeviceId != null
         && !deviceWithSameGatewayAndRealDeviceId.equals(device)) {
-      throw new InvalidFieldsValuesException("The device with provided gateway and realDeviceId "
+      throw new ConflictException("The device with provided gateway and realDeviceId "
           + "already exists");
     }
 
@@ -156,7 +157,7 @@ public class DeviceService {
   }
 
   public Device addDevice(Map<String, Object> newDeviceFields) throws MissingFieldsException,
-      InvalidFieldsValuesException {
+      InvalidFieldsValuesException, ConflictException {
     if (checkAddEditFields(false, newDeviceFields)) {
       return addEditDevice(null, newDeviceFields);
     } else {
@@ -165,7 +166,7 @@ public class DeviceService {
   }
 
   public Device editDevice(int deviceId, Map<String, Object> newDeviceFields) throws MissingFieldsException,
-      InvalidFieldsValuesException, ElementNotFoundException {
+      InvalidFieldsValuesException, ElementNotFoundException, ConflictException {
     Device device = deviceRepo.findById(deviceId).orElse(null);
     if (device != null) {
       if (checkAddEditFields(true, newDeviceFields)) {

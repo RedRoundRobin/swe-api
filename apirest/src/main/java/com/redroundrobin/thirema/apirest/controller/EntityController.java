@@ -1,21 +1,17 @@
 package com.redroundrobin.thirema.apirest.controller;
 
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
-import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.EntityService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.service.timescale.LogService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
-import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -47,47 +43,49 @@ public class EntityController extends CoreController {
     this.entityService = entityService;
   }
 
+  private boolean checkPermission(User loggedUser, Integer sensorId, Integer userId) {
+    boolean sensorOk = true;
+    boolean userOk = true;
+
+    if (sensorId != null) {
+      sensorOk = loggedUser.getEntity().getSensors().stream().anyMatch(s -> s.getId() == sensorId);
+    }
+
+    if (userId != null) {
+      if (loggedUser.getType() == User.Role.MOD) {
+        List<Entity> entities = entityService.findAllByUserId(userId);
+        userOk = entities.contains(loggedUser.getEntity());
+      } else {
+        userOk = userId == loggedUser.getId();
+      }
+    }
+
+    return sensorOk && userOk;
+  }
+
   @GetMapping(value = {""})
   public ResponseEntity<List<Entity>> getEntities(
       @RequestHeader(value = "Authorization") String authorization,
-      @RequestParam(name = "sensor", required = false) Integer sensorId,
-      @RequestParam(name = "user", required = false) Integer userId) {
+      @RequestParam(name = "sensorId", required = false) Integer sensorId,
+      @RequestParam(name = "userId", required = false) Integer userId) {
     User user = this.getUserFromAuthorization(authorization);
-    if (user.getType() == User.Role.ADMIN && sensorId == null && userId == null) {
-      return ResponseEntity.ok(entityService.findAll());
-    } else if (sensorId == null
-        && (user.getType() == User.Role.ADMIN || (userId != null && userId == user.getId()))) {
-      return ResponseEntity.ok(entityService.findAllByUserId(userId));
-    } else if (sensorId == null && user.getType() != User.Role.ADMIN && userId == null) {
+
+    if (user.getType() == User.Role.ADMIN) {
+      if (sensorId == null && userId == null) {
+        return ResponseEntity.ok(entityService.findAll());
+      } else if (userId == null) {
+        return ResponseEntity.ok(entityService.findAllBySensorId(sensorId));
+      } else if (sensorId == null) {
+        return ResponseEntity.ok(entityService.findAllByUserId(userId));
+      } else {
+        return ResponseEntity.ok(entityService.findAllBySensorIdAndUserId(sensorId, userId));
+      }
+    } else if (checkPermission(user, sensorId, userId)) {
       return ResponseEntity.ok(entityService.findAllByUserId(user.getId()));
-    } else if (user.getType() == User.Role.ADMIN) {
-      return ResponseEntity.ok(entityService.findAllBySensorId(sensorId));
-    } else if (userId == null || userId == user.getId()) {
-      return ResponseEntity.ok(entityService.findAllBySensorIdAndUserId(sensorId, user.getId()));
     } else {
       return ResponseEntity.ok(Collections.emptyList());
     }
   }
-
- /* @GetMapping(value = {"/{entityId:.+}/sensors"})
-  public ResponseEntity<List<Sensor>> getSensorsEnabledForEntity(
-      @RequestHeader(value = "Authorization") String authorization,
-      @PathVariable(name = "entityId") Integer entityId) {
-    User user = this.getUserFromAuthorization(authorization);
-    if (user.getType() == User.Role.ADMIN) {
-      try {
-        return ResponseEntity.ok(entityService.getEntitySensorsEnabled(entityId));
-      } catch(ElementNotFoundException enfe) {
-        logger.debug("RESPONSE STATUS: BAD_REQUEST. The given entityId"
-            + " doen't match any entity in the database");
-        return new ResponseEntity(HttpStatus.BAD_REQUEST);
-      }
-    } else {
-      logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId()
-          + " is not an administrator or the entity Id is not the same as the user entity");
-      return new ResponseEntity(HttpStatus.FORBIDDEN);
-    }
-  }*/
 
   @GetMapping(value = {"/{entityId:.+}"})
   public ResponseEntity<Entity> getEntity(
@@ -136,18 +134,7 @@ public class EntityController extends CoreController {
     String ip = getIpAddress(httpRequest);
     User user = getUserFromAuthorization(authorization);
     if (user.getType() == User.Role.ADMIN
-        && !(boolean)fieldsToEditOrsensorsToEnableOrDisable.get("enableOrDisableSensors")) {
-      try {
-        Entity entity = entityService.editEntity(
-            entityId, fieldsToEditOrsensorsToEnableOrDisable);
-        logService.createLog(user.getId(),ip,"entity.edit",
-            Integer.toString(entity.getId()));
-        return ResponseEntity.ok(entity);
-      } catch (MissingFieldsException | InvalidFieldsValuesException e) {
-        logger.debug(e.toString());
-        return new ResponseEntity(HttpStatus.BAD_REQUEST);
-      }
-    } else if(user.getType() == User.Role.ADMIN
+        && fieldsToEditOrsensorsToEnableOrDisable.containsKey("enableOrDisableSensors")
         && (boolean)fieldsToEditOrsensorsToEnableOrDisable.get("enableOrDisableSensors")) {
       try {
         fieldsToEditOrsensorsToEnableOrDisable.remove("enableOrDisableSensors");
@@ -157,8 +144,19 @@ public class EntityController extends CoreController {
         } else {
           return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
         }
-      } catch (Exception /*| ElementNotFoundException | JsonProcessingException*/ enfe) { //mettere l'eccezione Json in punto giusto!!
+      } catch (MissingFieldsException | ElementNotFoundException enfe) {
         logger.debug(enfe.toString());
+        return new ResponseEntity(HttpStatus.BAD_REQUEST);
+      }
+    } else if(user.getType() == User.Role.ADMIN) {
+      try {
+        Entity entity = entityService.editEntity(
+            entityId, fieldsToEditOrsensorsToEnableOrDisable);
+        logService.createLog(user.getId(),ip,"entity.edit",
+            Integer.toString(entity.getId()));
+        return ResponseEntity.ok(entity);
+      } catch (MissingFieldsException | InvalidFieldsValuesException e) {
+        logger.debug(e.toString());
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
       }
     } else {

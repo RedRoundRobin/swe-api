@@ -60,6 +60,7 @@ public class Sensor implements Serializable {
     this.sensorId = sensorId;
     this.type = type;
     this.realSensorId = realSensorId;
+    this.cmdEnabled = false; //valore default a db
   }
 
   @JsonProperty(value = "sensorId")

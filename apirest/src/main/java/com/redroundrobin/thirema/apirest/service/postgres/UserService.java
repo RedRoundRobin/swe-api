@@ -1,12 +1,13 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
-import com.google.gson.JsonObject;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import com.redroundrobin.thirema.apirest.models.postgres.Alert;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.repository.postgres.AlertRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
+import com.redroundrobin.thirema.apirest.repository.postgres.ViewRepository;
 import com.redroundrobin.thirema.apirest.utils.exception.ConflictException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
@@ -38,16 +39,30 @@ public class UserService implements UserDetailsService {
 
   private final EntityRepository entityRepo;
 
+  private final ViewRepository viewRepo;
+
   @Autowired
   public UserService(UserRepository userRepository, AlertRepository alertRepository,
-                     EntityRepository entityRepository) {
+                     EntityRepository entityRepository, ViewRepository viewRepository) {
     this.userRepo = userRepository;
     this.alertRepo = alertRepository;
     this.entityRepo = entityRepository;
+    this.viewRepo = viewRepository;
+  }
+
+  private boolean editableTfa(User userToEdit, Map<String, Object> fieldsToEdit) {
+    if (fieldsToEdit.containsKey("tfa") && (boolean)fieldsToEdit.get("tfa")) {
+      return ((fieldsToEdit.containsKey("telegramName")
+          && userToEdit.getTelegramName() != null && !userToEdit.getTelegramName().isEmpty()
+          && !userToEdit.getTelegramName().equals(fieldsToEdit.get("telegramName")))
+          || userToEdit.getTelegramChat() == null || userToEdit.getTelegramChat().isEmpty());
+    } else {
+      return false;
+    }
   }
 
   private boolean checkCreatableFields(Set<String> keys)
-      throws InvalidFieldsValuesException {
+      throws MissingFieldsException {
     Set<String> creatable = new HashSet<>();
     creatable.add("name");
     creatable.add("surname");
@@ -59,7 +74,7 @@ public class UserService implements UserDetailsService {
     boolean onlyCreatableKeys = creatable.containsAll(keys);
 
     if (!onlyCreatableKeys) {
-      throw new InvalidFieldsValuesException("");
+      throw MissingFieldsException.defaultMessage();
     }
 
     return creatable.size() == keys.size();
@@ -127,14 +142,13 @@ public class UserService implements UserDetailsService {
     }
   }
 
-  private User editAndSave(User userToEdit, Map<String, Object> fieldsToEdit)
+  private User editAndSave(User userToEdit, Map<String, Object> fieldsToEdit, boolean itself)
       throws ConflictException, InvalidFieldsValuesException {
-    if (fieldsToEdit.containsKey("tfa")
-        && (boolean)fieldsToEdit.get("tfa")
-        && (fieldsToEdit.containsKey("telegramName")
-        || userToEdit.getTelegramChat() == null || userToEdit.getTelegramChat().isEmpty())) {
+
+    if (editableTfa(userToEdit, fieldsToEdit)) {
       throw new ConflictException("TFA can't be edited because either telegramName is "
-          + "in the request or telegram chat not present");
+          + "in the request and different from the current telegramName or telegram chat is not "
+          + "present");
     }
 
     if (fieldsToEdit.containsKey("entityId")
@@ -173,12 +187,17 @@ public class UserService implements UserDetailsService {
           break;
         case "tfa":
           userToEdit.setTfa((boolean) value);
-          if (!(boolean) value) {
+          if (!itself && !(boolean) value) {
             userToEdit.setTelegramChat(null);
           }
           break;
         case "entityId":
-          userToEdit.setEntity(entityRepo.findById((int)fieldsToEdit.get("entityId")).orElse(null));
+          if (userToEdit.getEntity().getId() != (int)fieldsToEdit.get("entityId")) {
+            userToEdit.setDisabledAlerts(Collections.emptySet());
+            viewRepo.deleteAllByUserId(userToEdit.getId());
+            userToEdit.setEntity(entityRepo.findById((int) fieldsToEdit.get("entityId"))
+                .orElse(null));
+          }
           break;
         case "deleted":
           userToEdit.setDeleted((boolean) value);
@@ -218,7 +237,7 @@ public class UserService implements UserDetailsService {
       throw new NotAuthorizedException(
           "You are not allowed to edit some of the specified fields");
     } else {
-      return this.editAndSave(userToEdit, fieldsToEdit);
+      return this.editAndSave(userToEdit, fieldsToEdit, itself);
     }
   }
 
@@ -231,7 +250,7 @@ public class UserService implements UserDetailsService {
       throw new NotAuthorizedException(
           "You are not allowed to edit some of the specified fields");
     } else {
-      return this.editAndSave(userToEdit, fieldsToEdit);
+      return this.editAndSave(userToEdit, fieldsToEdit, itself);
     }
   }
 
@@ -243,7 +262,7 @@ public class UserService implements UserDetailsService {
       throw new NotAuthorizedException(
           "You are not allowed to edit some of the specified fields");
     } else {
-      return this.editAndSave(userToEdit, fieldsToEdit);
+      return this.editAndSave(userToEdit, fieldsToEdit, true);
     }
   }
 
@@ -392,7 +411,7 @@ public class UserService implements UserDetailsService {
         user.getEmail(), user.getPassword(), grantedAuthorities);
   }
 
-  public User addUser(JsonObject rawUserToInsert, User insertingUser)
+  public User addUser(Map<String, Object> rawUserToInsert, User insertingUser)
       throws MissingFieldsException, InvalidFieldsValuesException,
       ConflictException, NotAuthorizedException {
     if (!checkCreatableFields(rawUserToInsert.keySet())) {
@@ -401,38 +420,37 @@ public class UserService implements UserDetailsService {
 
     Entity userToInsertEntity;
     if ((userToInsertEntity = entityRepo.findById(
-        (rawUserToInsert.get("entityId")).getAsInt()).orElse(null)) == null) {
+        ((int)rawUserToInsert.get("entityId"))).orElse(null)) == null) {
       throw new InvalidFieldsValuesException("");
     }
 
     int userToInsertType;
-    if ((userToInsertType = rawUserToInsert.get("type").getAsInt()) == 2
-        || userToInsertType != 1 && userToInsertType != 0) {
+    if ((userToInsertType = (int)rawUserToInsert.get("type")) != 2
+        && userToInsertType != 1 && userToInsertType != 0) {
       throw new InvalidFieldsValuesException("");
     }
 
     //qui so che entity_id dato esiste && so il tipo dello user che si vuole inserire
-    if (insertingUser.getType() == User.Role.USER
+    if ((userToInsertType = (int)rawUserToInsert.get("type")) == 2 ||
+        insertingUser.getType() == User.Role.USER
         || (insertingUser.getType() == User.Role.MOD
         && userToInsertEntity.getId() != insertingUser.getEntity().getId())) {
       throw new NotAuthorizedException("");
     }
 
-    User newUser;
-
-    String email = rawUserToInsert.get("email").getAsString();
-    if (rawUserToInsert.get("name").getAsString() != null
-        || rawUserToInsert.get("surname").getAsString() != null
-        || rawUserToInsert.get("password").getAsString() != null
-        || email != null && userRepo.findByEmail(email) == null) {
-      newUser = new User(rawUserToInsert.get("name").getAsString(),
-          rawUserToInsert.get("surname").getAsString(), email,
-          rawUserToInsert.get("password").getAsString(), User.Role.values()[userToInsertType]);
-    } else if (email != null && userRepo.findByEmail(email) != null) {
-      throw new ConflictException("");
-    } else {
+    String email = (String)rawUserToInsert.get("email");
+    if ((String)rawUserToInsert.get("name") == null
+        || (String)rawUserToInsert.get("surname") == null
+        || (String)rawUserToInsert.get("password") == null
+        || email == null) {
       throw new InvalidFieldsValuesException("");
+    } else if(userRepo.findByEmail(email) != null) {
+      throw new ConflictException("");
     }
+
+    User newUser = new User((String)rawUserToInsert.get("name"),
+        (String)rawUserToInsert.get("surname"), email,
+        (String)rawUserToInsert.get("password"), User.Role.values()[userToInsertType]);
 
     newUser.setEntity(userToInsertEntity);
 

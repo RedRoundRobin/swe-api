@@ -6,7 +6,10 @@ import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.repository.postgres.DeviceRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.GatewayRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
+import com.redroundrobin.thirema.apirest.utils.GatewaysProperties;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -25,7 +28,6 @@ import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundExceptio
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
@@ -38,29 +40,28 @@ public class GatewayService {
 
   private final KafkaTemplate<String, String> kafkaTemplate;
 
-  @Value(value = "${gateways.maxStoredPackets}")
-  private int maxStoredPackets;
+  private boolean checkAddEditFields(boolean edit, Map<String, Object> fields) {
+    List<String> allowedFields = new ArrayList<>();
+    allowedFields.add("name");
 
-  @Value(value = "${gateways.topic.telegram.prefix}")
-  private String gatewayCommandsPrefix;
-
-  @Value(value = "${gateways.maxStoringTime}")
-  private int maxStoringTime;
-
-  @Value(value = "${gateways.topic.prefix}")
-  private String prefix;
+    if (edit) {
+      return fields.keySet().stream().anyMatch(allowedFields::contains);
+    } else {
+      return fields.containsKey("name");
+    }
+  }
 
   private String sentConfig(int gatewayId)
       throws JsonProcessingException { //eccezione di ObjectMapper()
-    if(!gatewayRepo.existsById(gatewayId)) {
+    Gateway gateway = gatewayRepo.findById(gatewayId).orElse(null);
+    if(gateway == null) {
       return null;
     } else {
-      Gateway gateway = gatewayRepo.findById(gatewayId).get();
-      String gatewayConfigTopic = prefix + gateway.getName();
+      String gatewayConfigTopic = GatewaysProperties.getConfigTopicPrefix() + gateway.getName();
       ObjectMapper objectMapper = new ObjectMapper();
       ObjectNode jsonGatewayConfig = objectMapper.createObjectNode();
-      jsonGatewayConfig.put("maxStoredPackets", getMaxStoredPackets());
-      jsonGatewayConfig.put("maxStoringTime", getMaxStoringTime());
+      jsonGatewayConfig.put("maxStoredPackets", GatewaysProperties.getMaxStoredPackets());
+      jsonGatewayConfig.put("maxStoringTime", GatewaysProperties.getMaxStoringTime());
       ArrayNode devicesConfig = jsonGatewayConfig.putArray("devices");
       List<Device> devices = (List<Device>)deviceRepo.findAllByGatewayId(gatewayId);
       for(Device device: devices) {
@@ -79,6 +80,8 @@ public class GatewayService {
         devicesConfig.add(completeDevice);
       }
       kafkaTemplate.send(gatewayConfigTopic, jsonGatewayConfig.toString());
+      gateway.setLastSent(Timestamp.from(Instant.now()));
+      gatewayRepo.save(gateway);
       return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString((JsonNode)jsonGatewayConfig);
     }
   }
@@ -115,16 +118,6 @@ public class GatewayService {
   public Gateway findByIdAndEntityId(int id, int entityId) {
     return gatewayRepo.findByIdAndEntityId(id, entityId);
   }
-
-  public int getMaxStoredPackets() {
-    return maxStoredPackets;
-  }
-
-  public int getMaxStoringTime() {
-    return maxStoringTime;
-  }
-
-  public String getPrefix() { return prefix; }
 
   public String sendGatewayConfigToKafka(int gatewayId)
       throws InvalidFieldsValuesException, JsonProcessingException {
@@ -182,14 +175,4 @@ public class GatewayService {
     }
   }
 
-  private boolean checkAddEditFields(boolean edit, Map<String, Object> fields) {
-    List<String> allowedFields = new ArrayList<>();
-    allowedFields.add("name");
-
-    if (edit) {
-      return fields.keySet().stream().anyMatch(allowedFields::contains);
-    } else {
-      return fields.containsKey("name");
-    }
-  }
 }

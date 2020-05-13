@@ -1,6 +1,5 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.redroundrobin.thirema.apirest.models.postgres.Alert;
@@ -14,22 +13,20 @@ import com.redroundrobin.thirema.apirest.repository.postgres.DeviceRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.ViewGraphRepository;
+import com.redroundrobin.thirema.apirest.utils.exception.ConflictException;
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
+import com.redroundrobin.thirema.apirest.utils.GatewaysProperties;
 
+import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
+import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
-import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
-import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
-import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
@@ -48,9 +45,6 @@ public class SensorService {
 
   private final KafkaTemplate<String, String> kafkaTemplate;
 
-  @Value(value = "${gateways.topic.telegram.prefix}")
-  private String gatewayCommandsPrefix;
-
   private boolean checkAddEditFields(boolean edit, Map<String, Object> fields) {
     String[] editableOrCreatableFields = {"realSensorId", "deviceId", "cmdEnabled", "type"};
     List<String> allowedFields = new ArrayList<>();
@@ -63,7 +57,8 @@ public class SensorService {
     } else {
       boolean flag = false;
       for(int i=0; i<editableOrCreatableFields.length && !flag; i++) {
-        if(!fields.containsKey(editableOrCreatableFields[i])) {
+        if(!fields.containsKey(editableOrCreatableFields[i])
+            && !editableOrCreatableFields[i].equals("cmdEnabled")) {
           flag = true;
         }
       }
@@ -72,7 +67,7 @@ public class SensorService {
   }
 
   private Sensor addEditSensor(Sensor sensor, Map<String, Object> fields)
-      throws InvalidFieldsValuesException {
+      throws InvalidFieldsValuesException, ConflictException {
     if (sensor == null) {
       sensor = new Sensor();
     }
@@ -104,7 +99,7 @@ public class SensorService {
         .findByDeviceAndRealSensorId(sensor.getDevice(), sensor.getRealSensorId());
     if (sensorWithSameDeviceAndRealSensorId != null
         && !sensorWithSameDeviceAndRealSensorId.equals(sensor)) { //mi sembra ridondante 2^ parte controllo...
-      throw new InvalidFieldsValuesException("The sensor with provided device and realSensorId "
+      throw new ConflictException("The sensor with provided device and realSensorId "
           + "already exists");
     }
 
@@ -219,7 +214,7 @@ public class SensorService {
   }
 
   public Sensor addSensor(Map<String, Object> newSensorFields) throws MissingFieldsException,
-      InvalidFieldsValuesException {
+      InvalidFieldsValuesException, ConflictException {
     if (checkAddEditFields(false, newSensorFields)) {
       return addEditSensor(null, newSensorFields);
     } else {
@@ -228,7 +223,7 @@ public class SensorService {
   }
 
   public Sensor editSensor(int realSensorId, int deviceId, Map<String, Object> newSensorFields)
-      throws MissingFieldsException, InvalidFieldsValuesException, ElementNotFoundException {
+      throws MissingFieldsException, InvalidFieldsValuesException, ElementNotFoundException, ConflictException {
     Device device = deviceRepo.findById(deviceId).orElse(null);
     if (device == null) {
       throw ElementNotFoundException.notFoundMessage("device");
@@ -272,12 +267,12 @@ public class SensorService {
           + "or it's value is not correct");
     }
 
-    if(!sensorRepo.existsById(sensorId)) {
+    Sensor sensor = sensorRepo.findById(sensorId).orElse(null);
+    if(sensor == null) {
       throw new ElementNotFoundException("The given sensorId doesn't match "
           + "any sensor in the database");
     }
 
-    Sensor sensor = sensorRepo.findById(sensorId).get();
     if(!sensor.getCmdEnabled()) {
       throw new NotAuthorizedException("The sensor with the sensorId given"
           + "is not allowed to receive commands");
@@ -292,7 +287,7 @@ public class SensorService {
     }
 
     String gatewayConfigTopic =
-        gatewayCommandsPrefix + gateway.getName();
+        GatewaysProperties.getGatewayCommandsPrefix() + gateway.getName();
     ObjectMapper objectMapper = new ObjectMapper();
     ObjectNode jsonSensorCommand = objectMapper.createObjectNode();
     jsonSensorCommand.put("realSensorId", sensor.getRealSensorId());
