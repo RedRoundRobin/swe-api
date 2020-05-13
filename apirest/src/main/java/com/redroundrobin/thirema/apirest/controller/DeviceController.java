@@ -16,6 +16,10 @@ import com.redroundrobin.thirema.apirest.utils.exception.ConflictException;
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +55,13 @@ public class DeviceController extends CoreController {
     this.deviceService = deviceService;
     this.sensorService = sensorService;
   }
+
+  @Operation(
+      summary = "See all the devices you have access to",
+      description = "This request allows you to see all the devices you have access to. You can"
+          + "also filter this research by either giving in input the entityId and/or the gatewayId,"
+          + "or by the cmdEnabled parameter. This last filter is available for administrators only."
+  })
 
   // Get all devices optionally filtered by entityId
   @GetMapping(value = {""})
@@ -95,6 +106,10 @@ public class DeviceController extends CoreController {
   }
 
 
+@Operation(
+    summary = "See the details of a single device",
+    description = "This request allows you to see the details of a single device")
+
   // Get device by deviceId
   @GetMapping(value = {"/{deviceId:.+}"})
   public ResponseEntity<Device> getDevice(@RequestHeader("Authorization") String authorization,
@@ -107,6 +122,10 @@ public class DeviceController extends CoreController {
           deviceService.findByIdAndEntityId(deviceId, user.getEntity().getId()));
     }
   }
+
+@Operation(
+    summary = "Get access to a single device",
+    description = "This request allows you to see all the sensors of a device")
 
   // Get all sensors by deviceId
   @GetMapping(value = {"/{deviceId:.+}/sensors"})
@@ -131,6 +150,10 @@ public class DeviceController extends CoreController {
     }
   }
 
+@Operation(
+    summary = "Get access to a single sensor of the given device",
+    description = "This request allows you to see the details of a single sensor connected to a device")
+
   // Get sensor by deviceId and realSensorId
   @GetMapping(value = {"/{deviceId:.+}/sensors/{realSensorId:.+}"})
   public ResponseEntity<Sensor> getSensorByDevice(
@@ -145,6 +168,10 @@ public class DeviceController extends CoreController {
           realSensorId, user.getEntity().getId()));
     }
   }
+
+@Operation(
+    summary = "Inserting a device in the database",
+    description = "This request is available for administrators only. It allows you to create a new device")
 
   @PostMapping(value = {""})
   public ResponseEntity<Device> createDevice(
@@ -172,6 +199,11 @@ public class DeviceController extends CoreController {
       return new ResponseEntity(HttpStatus.FORBIDDEN);
     }
   }
+
+@Operation(
+    summary = "Inserting a sensor in the database",
+    description = "This request is available for administrators only. It allows you to create"
+        + " a new sensor ant connect it to a device")
 
   @PostMapping(value = {"/{deviceId:.+}/sensors"})
   public ResponseEntity<Sensor> createSensor(
@@ -202,6 +234,11 @@ public class DeviceController extends CoreController {
     }
   }
 
+@Operation(
+    summary = "Editing a device",
+    description = "This request is available for administrators only. It allows you to edit"
+        + " a device already saved in the database.")
+
   @PutMapping(value = {"/{deviceId:.+}"})
   public ResponseEntity editDevice(
       @RequestHeader("authorization") String authorization,
@@ -229,6 +266,11 @@ public class DeviceController extends CoreController {
       return new ResponseEntity(HttpStatus.FORBIDDEN);
     }
   }
+
+@Operation(
+    summary = "Editing a sensor",
+    description = "This request is available for administrators only. It allows you to edit"
+        + " a sensor already saved in the database.")
 
   @PutMapping(value = {"/{deviceId:.+}/sensors/{realSensorId:.+}"})
   public ResponseEntity<Sensor> editSensor(
@@ -259,6 +301,11 @@ public class DeviceController extends CoreController {
     }
   }
 
+@Operation(
+    summary = "Deleting a device",
+    description = "This request is available for administrators only. It allows you to delete"
+        + " a device from the database.")
+
   @DeleteMapping(value = {"/{deviceId:.+}"})
   public ResponseEntity deleteDevice(@RequestHeader("authorization") String authorization,
                                     @PathVariable("deviceId") int deviceId,
@@ -286,6 +333,11 @@ public class DeviceController extends CoreController {
       return new ResponseEntity<>(HttpStatus.FORBIDDEN);
     }
   }
+
+@Operation(
+    summary = "Deleting a sensor",
+    description = "This request is available for administrators only. It allows you to delete"
+        + " a sensor from the database.")
 
   @DeleteMapping(value = {"/{deviceId:.+}/sensors/{realSensorId:.+}"})
   public ResponseEntity deleteSensor(@RequestHeader("authorization") String authorization,
