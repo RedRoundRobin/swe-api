@@ -1,5 +1,6 @@
 package com.redroundrobin.thirema.apirest.controller;
 
+import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.timescale.Log;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
@@ -8,6 +9,12 @@ import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import java.util.Collections;
 import java.util.List;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -27,6 +34,49 @@ public class LogController extends CoreController {
   public LogController(JwtUtil jwtUtil, LogService logService, UserService userService) {
     super(jwtUtil, logService, userService);
   }
+
+  @Operation(
+      summary = "Get entities",
+      description = "The request return a list of entities objects",
+      responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "The request is successfull",
+              content = @Content(
+                  mediaType = "application/json",
+                  array = @ArraySchema(schema = @Schema(implementation = Log.class))
+              )),
+          @ApiResponse(
+              responseCode = "401",
+              description = "The authentication failed",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "403",
+              description = "Not authorized",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "500",
+              description = "Server error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          )
+      })
 
   @GetMapping(value = "")
   public ResponseEntity<List<Log>> getLogs(
