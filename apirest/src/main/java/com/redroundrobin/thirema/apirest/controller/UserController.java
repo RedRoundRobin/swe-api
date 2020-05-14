@@ -229,7 +229,7 @@ public class UserController extends CoreController {
 
     try {
       User createdUser = userService.addUser(jsonStringUser, user);
-      logService.createLog(user.getId(), ip, "user.created",
+      logService.createLog(user.getId(), ip, "user.add",
           Integer.toString(createdUser.getId()));
       return ResponseEntity.ok(createdUser);
     } catch (MissingFieldsException | InvalidFieldsValuesException e) {
@@ -308,7 +308,7 @@ public class UserController extends CoreController {
 
     try {
       User deletedUser = userService.deleteUser(user, userToDeleteId);
-      logService.createLog(user.getId(), ip, "user.deleted",
+      logService.createLog(user.getId(), ip, "user.delete",
           Integer.toString(deletedUser.getId()));
       return ResponseEntity.ok(deletedUser);
     } catch (NotAuthorizedException e) {
@@ -526,7 +526,7 @@ public class UserController extends CoreController {
           }
           if (fieldsToEdit.entrySet().stream().anyMatch(e -> e.getKey().equals("deleted")
               && (boolean)e.getValue()) && !deleted) {
-            logService.createLog(editingUser.getId(), ip, "user.deleted",
+            logService.createLog(editingUser.getId(), ip, "user.delete",
                 Integer.toString(userId));
           }
           if (fieldsToEdit.entrySet().stream().anyMatch(e -> !e.getKey().equals("password")
