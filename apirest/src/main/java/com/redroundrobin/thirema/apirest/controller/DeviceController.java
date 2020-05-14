@@ -63,12 +63,12 @@ public class DeviceController extends CoreController {
 @Operation(
     summary = "See a list of all the devices you have access to",
     description = "This request allows you to see all the devices you have access to. You can"
-        + "also filter this research by either giving in input the entityId and/or the gatewayId,"
-        + "or by the cmdEnabled parameter. This last filter is available for administrators only.",
+        + " also filter this research by either giving in input the entityId and/or the gatewayId,"
+        + " or by the cmdEnabled parameter. This last filter is available for administrators only.",
     responses = {
         @ApiResponse(
             responseCode = "200",
-            description = "The request is successfull",
+            description = "The request is successful",
             content = @Content(
                 mediaType = "application/json",
                 array = @ArraySchema( schema =
@@ -233,7 +233,7 @@ public class DeviceController extends CoreController {
     responses = {
         @ApiResponse(
             responseCode = "200",
-            description = "The request is successfull",
+            description = "The request is successful",
             content = @Content(
                 mediaType = "application/json",
                 array = @ArraySchema( schema =
@@ -315,7 +315,7 @@ public class DeviceController extends CoreController {
             description = "The request is successfull",
             content = @Content(
                 mediaType = "application/json",
-                schema = @Schema(implementation = Device.class)
+                schema = @Schema(implementation = Sensor.class)
             )),
         @ApiResponse(
             responseCode = "400",
@@ -566,6 +566,21 @@ public class DeviceController extends CoreController {
         + " a device already saved in the database.",
     responses = {
         @ApiResponse(
+            responseCode = "200",
+            description = "The request is successful",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject(
+                        name = "Success",
+                        value = "{\"gatewayId\": \"int\"},"
+                            + "{\"frequency\": \"int\"},"
+                            + "{\"realDeviceId\": \"int\"},"
+                            + "{\"name\": \"String\"},"
+                            + + "{\"deviceId\": \"int\"}"
+                    )
+            )),
+        @ApiResponse(
             responseCode = "400",
             description = "There is an error in the request",
             content = @Content(
@@ -651,6 +666,21 @@ public class DeviceController extends CoreController {
     description = "This request is available for administrators only. It allows you to edit"
         + " a sensor already saved in the database.",
     responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "The request is successful",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                @ExampleObject(
+                    name = "Success",
+                    value = "{\"sensorId\": \"int\"},"
+                        + "{\"realSensorId\": \"int\"},"
+                        + "{\"cmdEnabled\": \"boolean\"},"
+                        + "{\"type\": \"String\"},"
+                        + + "{\"deviceId\": \"int\"}"
+                )
+            )),
         @ApiResponse(
             responseCode = "400",
             description = "There is an error in the request",
@@ -739,6 +769,12 @@ public class DeviceController extends CoreController {
         + " a device from the database.",
     responses = {
         @ApiResponse(
+            responseCode = "200",
+            description = "The request is successful",
+            content = @Content(
+                mediaType = "application/json"
+            )),
+        @ApiResponse(
             responseCode = "400",
             description = "There is an error in the request",
             content = @Content(
@@ -824,6 +860,12 @@ public class DeviceController extends CoreController {
       description = "This request is available for administrators only. It allows you to delete"
           + " a sensor from the database.",
       responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "The request is successful",
+              content = @Content(
+                  mediaType = "application/json"
+              )),
           @ApiResponse(
               responseCode = "400",
               description = "There is an error in the request",
