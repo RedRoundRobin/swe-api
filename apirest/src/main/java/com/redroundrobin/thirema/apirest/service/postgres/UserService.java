@@ -71,6 +71,8 @@ public class UserService implements UserDetailsService {
     creatable.add("entityId");
     creatable.add("password");
     creatable.add("telegramName");
+    creatable.add("deleted");
+    creatable.add("tfa");
 
     boolean onlyCreatableKeys = creatable.containsAll(keys);
 
@@ -78,9 +80,11 @@ public class UserService implements UserDetailsService {
       throw MissingFieldsException.defaultMessage();
     }
 
-    return creatable.size() == keys.size()
-        || (creatable.size() == keys.size() - 1
-        && !creatable.contains("telegramName"));
+    return creatable.contains("name")
+        && creatable.contains("surname")
+        && creatable.contains("password")
+        && creatable.contains("email")
+        && creatable.contains("type") ;
   }
 
   private boolean checkEditableFields(User.Role role, boolean itself, Set<String> keys)
@@ -421,22 +425,25 @@ public class UserService implements UserDetailsService {
       throw new MissingFieldsException("");
     }
 
-    Entity userToInsertEntity;
-    if ((userToInsertEntity = entityRepo.findById(
-        ((int)rawUserToInsert.get("entityId"))).orElse(null)) == null) {
-      throw new InvalidFieldsValuesException("");
-    }
-
     int userToInsertType;
     if ((userToInsertType = (int)rawUserToInsert.get("type")) != 2
         && userToInsertType != 1 && userToInsertType != 0) {
       throw new InvalidFieldsValuesException("");
     }
 
-    //qui so che entity_id dato esiste && so il tipo dello user che si vuole inserire
-    if ((userToInsertType = (int)rawUserToInsert.get("type")) == 2 ||
+    Entity userToInsertEntity = null;
+    if (rawUserToInsert.containsKey("entityId")
+        && rawUserToInsert.get("entityId") != null
+        && (userToInsertEntity = entityRepo.findById(
+        ((int)rawUserToInsert.get("entityId"))).orElse(null)) == null) {
+      throw new InvalidFieldsValuesException("");
+    }
+
+    //qui so che entity_id o null o esiste nel db && so il tipo dello user che si vuole inserire
+    if ((int)rawUserToInsert.get("type") == 2 ||
         insertingUser.getType() == User.Role.USER
         || (insertingUser.getType() == User.Role.MOD
+        && userToInsertEntity != null
         && userToInsertEntity.getId() != insertingUser.getEntity().getId())) {
       throw new NotAuthorizedException("");
     }
@@ -454,17 +461,27 @@ public class UserService implements UserDetailsService {
     User newUser = new User((String)rawUserToInsert.get("name"),
         (String)rawUserToInsert.get("surname"), email,
         (String)rawUserToInsert.get("password"), User.Role.values()[userToInsertType]);
-
     newUser.setEntity(userToInsertEntity);
 
+    String telegramName;
     if(rawUserToInsert.containsKey("telegramName")
-        && userRepo.findByTelegramName(
+        && userRepo.findByTelegramName(telegramName =
         (String)rawUserToInsert.get("telegramName")) != null) {
       throw new ConflictException("");
     } else if(rawUserToInsert.containsKey("telegramName")
-        && userRepo.findByTelegramName(
+        && userRepo.findByTelegramName(telegramName =
         (String)rawUserToInsert.get("telegramName")) == null) {
-      newUser.setTelegramName((String)rawUserToInsert.get("telegramName"));
+      newUser.setTelegramName(telegramName);
+    }
+
+    boolean deleted=false;
+    if(rawUserToInsert.containsKey("deleted")) {
+      newUser.setDeleted(deleted);
+    }
+
+    boolean tfa=false;
+    if(tfa = rawUserToInsert.containsKey("tfa")) {
+      newUser.setTfa(tfa);
     }
 
     return userRepo.save(newUser);
