@@ -241,7 +241,7 @@ public class GatewayServiceTest {
 
     assertEquals(gateway1, gateway);
   }
-
+/*
   @Test
   public void sendGateway1ConfigToKafkaSuccesful()
       throws InvalidFieldsValuesException, JsonProcessingException {
@@ -261,7 +261,7 @@ public class GatewayServiceTest {
 
     assertEquals(expectedConfig, actualConfig);
   }
-
+*/
   @Test
   public void addGatewaySuccesful()
       throws MissingFieldsException, InvalidFieldsValuesException {
@@ -301,7 +301,7 @@ public class GatewayServiceTest {
       assertTrue(true);
     }
   }
-
+/*
   @Test
   public void editGatewayWithAlreadyExistingRealDeviceIdAndGatewayIdException()
       throws MissingFieldsException, InvalidFieldsValuesException {
@@ -316,7 +316,7 @@ public class GatewayServiceTest {
       assertTrue(true);
     }
   }
-
+*/
   @Test
   public void editGateway1Succesful()
       throws MissingFieldsException, InvalidFieldsValuesException, ElementNotFoundException {
