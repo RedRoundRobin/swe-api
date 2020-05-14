@@ -180,6 +180,7 @@ public class EntityService {
         Sensor sensorToDelete = sensorRepo.findById(sensorId).orElse(null);
         if (sensorToDelete != null && entitySensors.contains(sensorToDelete)) {
           entitySensors.remove(sensorToDelete);
+          alertRepo.deleteAlertsBySensor(sensorToDelete);
         }
       }
     }

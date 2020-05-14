@@ -130,6 +130,8 @@ public class EntityServiceTest {
         .findFirst());
     when(entityRepo.save(any(Entity.class))).thenAnswer(i -> i.getArgument(0));
 
+    doNothing().when(alertRepo).deleteAlertsBySensor(any(Sensor.class));
+
     when(sensorRepo.findById(anyInt())).thenAnswer(i -> allSensors.stream().filter(s -> i.getArgument(0).equals(s.getId()))
         .findFirst());
 
