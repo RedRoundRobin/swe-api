@@ -609,7 +609,7 @@ public class GatewayController extends CoreController {
                               + "\"sensors\": [{\"sensorId\": \"int\", \"cmdEnabled\": \"boolean\"},"
                               + "{\"sensorId\": \"int\", \"cmdEnabled\": \"boolean\"}]},"
                               + "{\"deviceId\": \"int\", \"frequency\": \"int\","
-                              + "\"sensors\": [{\"sensorId\": \"int\", \"cmdEnabled\": \"boolean\"}]}]}";
+                              + "\"sensors\": [{\"sensorId\": \"int\", \"cmdEnabled\": \"boolean\"}]}]}"
                       )
                   }
               )),
