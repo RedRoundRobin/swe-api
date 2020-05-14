@@ -11,6 +11,7 @@ import com.redroundrobin.thirema.apirest.service.postgres.GatewayService;
 import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.service.timescale.LogService;
+import com.redroundrobin.thirema.apirest.utils.GatewaysProperties;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import java.util.ArrayList;
@@ -91,6 +92,16 @@ public class GatewayController extends CoreController {
           @ApiResponse(
               responseCode = "401",
               description = "The authentication failed",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "403",
+              description = "Not authorized",
               content = @Content(
                   mediaType = "application/json",
                   examples = {
@@ -582,12 +593,26 @@ public class GatewayController extends CoreController {
       responses = {
           @ApiResponse(
               responseCode = "200",
-              description = "The request is successfull",
+              description = "The request is successful",
               content = @Content(
                   mediaType = "application/json",
-                  schema = @Schema(implementation = Object.class)
-              )
-          ),
+                  examples = {
+                      @ExampleObject(
+                          name = "Success edit",
+                          value = "{\"name\": \"String\"}"
+                      ),
+                      @ExampleObject(
+                          name = "Sent new configuration",
+                          value = "{\"maxStoredPackets\": \"int\","
+                              + "\"maxStoringTime\": \"int\","
+                              + "\"devices\": [{\"deviceId\": \"int\", \"frequency\": \"int\","
+                              + "\"sensors\": [{\"sensorId\": \"int\", \"cmdEnabled\": \"boolean\"},"
+                              + "{\"sensorId\": \"int\", \"cmdEnabled\": \"boolean\"}]},"
+                              + "{\"deviceId\": \"int\", \"frequency\": \"int\","
+                              + "\"sensors\": [{\"sensorId\": \"int\", \"cmdEnabled\": \"boolean\"}]}]}";
+                      )
+                  }
+              )),
           @ApiResponse(
               responseCode = "400",
               description = "There is an error in the request",
