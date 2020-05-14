@@ -125,7 +125,7 @@ public class AlertController extends CoreController {
       responses = {
           @ApiResponse(
               responseCode = "200",
-              description = "The request is successfull",
+              description = "The request is successful",
               content = @Content(
                   mediaType = "application/json",
                   examples = {
@@ -232,7 +232,7 @@ public class AlertController extends CoreController {
       responses = {
           @ApiResponse(
               responseCode = "200",
-              description = "The request is successfull",
+              description = "The request is successful",
               content = @Content(
                   mediaType = "application/json",
                   schema = @Schema(implementation = Alert.class)
@@ -300,11 +300,11 @@ public class AlertController extends CoreController {
   @Operation(
       summary = "Create alert",
       description = "The request return an object corresponding to the alert created if"
-          + " successfull",
+          + " successful",
       responses = {
           @ApiResponse(
               responseCode = "200",
-              description = "The request is successfull",
+              description = "The request is successful",
               content = @Content(
                   mediaType = "application/json",
                   schema = @Schema(implementation = Alert.class)
@@ -376,11 +376,11 @@ public class AlertController extends CoreController {
   @Operation(
       summary = "Edit alert",
       description = "The request return an object corresponding to the alert edited if"
-          + " successfull",
+          + " successful",
       responses = {
           @ApiResponse(
               responseCode = "200",
-              description = "The request is successfull",
+              description = "The request is successful",
               content = @Content(
                   mediaType = "application/json",
                   schema = @Schema(implementation = Alert.class)
@@ -459,7 +459,7 @@ public class AlertController extends CoreController {
       responses = {
           @ApiResponse(
               responseCode = "200",
-              description = "The request is successfull",
+              description = "The request is successful",
               content = @Content(
                   mediaType = "application/json"
               )),
@@ -540,7 +540,7 @@ public class AlertController extends CoreController {
       responses = {
           @ApiResponse(
               responseCode = "200",
-              description = "The request is successfull",
+              description = "The request is successful",
               content = @Content(
                   mediaType = "application/json"
               )),

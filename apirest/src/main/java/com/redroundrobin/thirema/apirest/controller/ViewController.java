@@ -55,7 +55,7 @@ public class ViewController extends CoreController {
       responses = {
           @ApiResponse(
               responseCode = "200",
-              description = "The request is successfull",
+              description = "The request is successful",
               content = @Content(
                   mediaType = "application/json",
                   array = @ArraySchema(schema = @Schema(implementation = View.class))
@@ -110,11 +110,11 @@ public class ViewController extends CoreController {
 
   @Operation(
       summary = "Create view",
-      description = "The request return the view that is been created if successfull",
+      description = "The request return the view that is been created if successful",
       responses = {
           @ApiResponse(
               responseCode = "200",
-              description = "The request is successfull",
+              description = "The request is successful",
               content = @Content(
                   mediaType = "application/json",
                   schema = @Schema(implementation = View.class)
@@ -176,11 +176,11 @@ public class ViewController extends CoreController {
 
   @Operation(
       summary = "Delete view",
-      description = "The request is successfull if the view is been deleted",
+      description = "The request is successful if the view is been deleted",
       responses = {
           @ApiResponse(
               responseCode = "200",
-              description = "The delete is successfull",
+              description = "The delete is successful",
               content = @Content(
                   mediaType = "application/json"
               )
@@ -251,7 +251,7 @@ public class ViewController extends CoreController {
       responses = {
           @ApiResponse(
               responseCode = "200",
-              description = "The request is successfull",
+              description = "The request is successful",
               content = @Content(
                   mediaType = "application/json",
                   schema = @Schema(implementation = View.class)

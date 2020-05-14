@@ -166,7 +166,7 @@ public class DeviceController extends CoreController {
     responses = {
         @ApiResponse(
             responseCode = "200",
-            description = "The request is successfull",
+            description = "The request is successful",
             content = @Content(
                 mediaType = "application/json",
                 schema = @Schema(implementation = Device.class)
@@ -312,7 +312,7 @@ public class DeviceController extends CoreController {
     responses = {
         @ApiResponse(
             responseCode = "200",
-            description = "The request is successfull",
+            description = "The request is successful",
             content = @Content(
                 mediaType = "application/json",
                 schema = @Schema(implementation = Sensor.class)
@@ -381,7 +381,7 @@ public class DeviceController extends CoreController {
     responses = {
         @ApiResponse(
             responseCode = "200",
-            description = "The request is successfull",
+            description = "The request is successful",
             content = @Content(
                 mediaType = "application/json",
                 schema = @Schema(implementation = Device.class)
@@ -473,7 +473,7 @@ public class DeviceController extends CoreController {
     responses = {
         @ApiResponse(
             responseCode = "200",
-            description = "The request is successfull",
+            description = "The request is successful",
             content = @Content(
                 mediaType = "application/json",
                 schema = @Schema(implementation = Sensor.class)

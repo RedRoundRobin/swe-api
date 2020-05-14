@@ -57,7 +57,7 @@ public class ViewGraphController extends CoreController {
       responses = {
           @ApiResponse(
               responseCode = "200",
-              description = "The request is successfull",
+              description = "The request is successful",
               content = @Content(
                   mediaType = "application/json",
                   array = @ArraySchema(schema = @Schema(implementation = ViewGraph.class))
@@ -134,7 +134,7 @@ public class ViewGraphController extends CoreController {
       responses = {
           @ApiResponse(
               responseCode = "200",
-              description = "The request is successfull",
+              description = "The request is successful",
               content = @Content(
                   mediaType = "application/json",
                   schema = @Schema(implementation = ViewGraph.class)
@@ -204,11 +204,11 @@ public class ViewGraphController extends CoreController {
 
   @Operation(
       summary = "Create viewGraph",
-      description = "The request return the viewGraph that is been created if successfull",
+      description = "The request return the viewGraph that is been created if successful",
       responses = {
           @ApiResponse(
               responseCode = "200",
-              description = "The request is successfull",
+              description = "The request is successful",
               content = @Content(
                   mediaType = "application/json",
                   schema = @Schema(implementation = ViewGraph.class)
@@ -270,11 +270,11 @@ public class ViewGraphController extends CoreController {
 
   @Operation(
       summary = "Edit viewGraph",
-      description = "The request return the viewGraph that is been edited if successfull",
+      description = "The request return the viewGraph that is been edited if successful",
       responses = {
           @ApiResponse(
               responseCode = "200",
-              description = "The request is successfull",
+              description = "The request is successful",
               content = @Content(
                   mediaType = "application/json",
                   schema = @Schema(implementation = ViewGraph.class)
@@ -346,11 +346,11 @@ public class ViewGraphController extends CoreController {
 
   @Operation(
       summary = "Delete viewGraph",
-      description = "The request is successfull if the viewGraph is been deleted",
+      description = "The request is successful if the viewGraph is been deleted",
       responses = {
           @ApiResponse(
               responseCode = "200",
-              description = "The delete is successfull",
+              description = "The delete is successful",
               content = @Content(
                   mediaType = "application/json"
               )

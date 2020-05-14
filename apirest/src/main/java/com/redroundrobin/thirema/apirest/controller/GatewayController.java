@@ -74,7 +74,7 @@ public class GatewayController extends CoreController {
       responses = {
           @ApiResponse(
               responseCode = "200",
-              description = "The request is successfull",
+              description = "The request is successful",
               content = @Content(
                   mediaType = "application/json",
                   array = @ArraySchema(schema = @Schema(implementation = Gateway.class))
@@ -158,7 +158,7 @@ public class GatewayController extends CoreController {
       responses = {
           @ApiResponse(
               responseCode = "200",
-              description = "The request is successfull",
+              description = "The request is successful",
               content = @Content(
                   mediaType = "application/json",
                   schema = @Schema(implementation = Gateway.class)
@@ -228,7 +228,7 @@ public class GatewayController extends CoreController {
       responses = {
           @ApiResponse(
               responseCode = "200",
-              description = "The request is successfull",
+              description = "The request is successful",
               content = @Content(
                   mediaType = "application/json",
                   array = @ArraySchema(schema = @Schema(implementation = Device.class))
@@ -297,7 +297,7 @@ public class GatewayController extends CoreController {
       responses = {
           @ApiResponse(
               responseCode = "200",
-              description = "The request is successfull",
+              description = "The request is successful",
               content = @Content(
                   mediaType = "application/json",
                   schema = @Schema(implementation = Device.class)
@@ -441,7 +441,7 @@ public class GatewayController extends CoreController {
       responses = {
           @ApiResponse(
               responseCode = "200",
-              description = "The request is successfull",
+              description = "The request is successful",
               content = @Content(
                   mediaType = "application/json",
                   schema = @Schema(implementation = Device.class)
