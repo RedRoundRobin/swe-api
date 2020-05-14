@@ -192,6 +192,16 @@ public class DeviceController extends CoreController {
             )
         ),
         @ApiResponse(
+            responseCode = "403",
+            description = "Not authorized. Only admins can do it",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        ),
+        @ApiResponse(
             responseCode = "500",
             description = "Server error",
             content = @Content(
@@ -320,6 +330,16 @@ public class DeviceController extends CoreController {
         @ApiResponse(
             responseCode = "401",
             description = "The authentication failed",
+            content = @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject()
+                }
+            )
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Not authorized. Only admins can do it",
             content = @Content(
                 mediaType = "application/json",
                 examples = {
