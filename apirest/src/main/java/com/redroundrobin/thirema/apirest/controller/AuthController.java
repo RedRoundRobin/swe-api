@@ -92,7 +92,7 @@ public class AuthController extends CoreController {
       responses = {
           @ApiResponse(
               responseCode = "200",
-              description = "The authentication is successfull",
+              description = "The authentication is successful",
               content = @Content(
                   mediaType = "application/json",
                   examples = {
@@ -233,7 +233,7 @@ public class AuthController extends CoreController {
       responses = {
           @ApiResponse(
               responseCode = "200",
-              description = "The authentication is successfull",
+              description = "The authentication is successful",
               content = @Content(
                   mediaType = "application/json",
                   examples = {
@@ -347,7 +347,7 @@ public class AuthController extends CoreController {
       responses = {
           @ApiResponse(
               responseCode = "200",
-              description = "The request is successfull. It returns as code: <br/>"
+              description = "The request is successful. It returns as code: <br/>"
                   + "\"0\" - the telegramName is not associated with anybody<br/>"
                   + "\"1\" - the telegramName is associated with somebody and the telegramChat "
                   + "will be setted<br/>"

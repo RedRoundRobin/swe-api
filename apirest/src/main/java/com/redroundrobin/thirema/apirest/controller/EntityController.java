@@ -76,7 +76,7 @@ public class EntityController extends CoreController {
       responses = {
           @ApiResponse(
               responseCode = "200",
-              description = "The request is successfull",
+              description = "The request is successful",
               content = @Content(
                   mediaType = "application/json",
                   array = @ArraySchema(schema = @Schema(implementation = Entity.class))
@@ -153,7 +153,7 @@ public class EntityController extends CoreController {
       responses = {
           @ApiResponse(
               responseCode = "200",
-              description = "The request is successfull",
+              description = "The request is successful",
               content = @Content(
                   mediaType = "application/json",
                   schema = @Schema(implementation = Entity.class)
@@ -216,11 +216,11 @@ public class EntityController extends CoreController {
 
   @Operation(
       summary = "Create entity",
-      description = "The request return the entity that is been created if successfull",
+      description = "The request return the entity that is been created if successful",
       responses = {
           @ApiResponse(
               responseCode = "200",
-              description = "The request is successfull",
+              description = "The request is successful",
               content = @Content(
                   mediaType = "application/json",
                   schema = @Schema(implementation = Entity.class)
@@ -293,11 +293,11 @@ public class EntityController extends CoreController {
 
   @Operation(
       summary = "Edit entities",
-      description = "The request return the entity that is been edited if successfull",
+      description = "The request return the entity that is been edited if successful",
       responses = {
           @ApiResponse(
               responseCode = "200",
-              description = "The request is successfull",
+              description = "The request is successful",
               content = @Content(
                   mediaType = "application/json",
                   schema = @Schema(implementation = Entity.class)
@@ -390,7 +390,7 @@ public class EntityController extends CoreController {
       responses = {
           @ApiResponse(
               responseCode = "200",
-              description = "The request is successfull",
+              description = "The request is successful",
               content = @Content(
                   mediaType = "application/json"
               )),
