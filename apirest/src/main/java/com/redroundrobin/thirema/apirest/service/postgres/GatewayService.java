@@ -156,11 +156,12 @@ public class GatewayService {
       throw new InvalidFieldsValuesException("The gateway with provided id is not found");
     } else {
       if (checkAddEditFields(true, fieldsToEdit)) {
-        if (gatewayRepo.findByName((String)fieldsToEdit.get("name")) == null) {
+        if (gatewayRepo.findByName((String)fieldsToEdit.get("name")) == null
+            || ((String)fieldsToEdit.get("name")).equals(gateway.getName())) {
           gateway.setName((String)fieldsToEdit.get("name"));
           return gatewayRepo.save(gateway);
         } else {
-          throw new InvalidFieldsValuesException("The gateway with provided name already exists");
+          throw new InvalidFieldsValuesException("There is already a gateway with the provided name!");
         }
       } else {
         throw MissingFieldsException.defaultMessage();

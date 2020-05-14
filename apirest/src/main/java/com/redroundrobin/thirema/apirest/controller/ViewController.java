@@ -1,5 +1,6 @@
 package com.redroundrobin.thirema.apirest.controller;
 
+import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.models.postgres.View;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
@@ -13,6 +14,12 @@ import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
 import java.util.List;
 import java.util.Map;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,14 +49,118 @@ public class ViewController extends CoreController {
     this.viewService = viewService;
   }
 
-  //qualsiasi utente puo avere views da adr, anche admin
+  @Operation(
+      summary = "Get views",
+      description = "The request return a list of views",
+      responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "The request is successful",
+              content = @Content(
+                  mediaType = "application/json",
+                  array = @ArraySchema(schema = @Schema(implementation = View.class))
+              )),
+          @ApiResponse(
+              responseCode = "400",
+              description = "There is an error in the request",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "401",
+              description = "The authentication failed",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "403",
+              description = "Not authorized",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "500",
+              description = "Server error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          )
+      })
   @GetMapping(value = {""})
   public ResponseEntity<List<View>> views(@RequestHeader("Authorization") String authorization) {
     String token = authorization.substring(7);
     User user = userService.findByEmail(jwtUtil.extractUsername(token));
     return ResponseEntity.ok(viewService.findAllByUser(user));
   }
-  
+
+  @Operation(
+      summary = "Create view",
+      description = "The request return the view that is been created if successful",
+      responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "The request is successful",
+              content = @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = View.class)
+              )
+          ),
+          @ApiResponse(
+              responseCode = "400",
+              description = "There is an error in the request",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "401",
+              description = "The authentication failed",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "403",
+              description = "Not authorized",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "500",
+              description = "Server error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          )
+      })
   @PostMapping(value = "")
   public ResponseEntity<View> createView(
       @RequestHeader("Authorization") String authorization,  @RequestBody Map<String, String> rawNewView) {
@@ -63,6 +174,58 @@ public class ViewController extends CoreController {
     }
   }
 
+  @Operation(
+      summary = "Delete view",
+      description = "The request is successful if the view is been deleted",
+      responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "The delete is successful",
+              content = @Content(
+                  mediaType = "application/json"
+              )
+          ),
+          @ApiResponse(
+              responseCode = "400",
+              description = "There is an error in the request",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "401",
+              description = "The authentication failed",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "403",
+              description = "Not authorized",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "500",
+              description = "Server error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          )
+      })
   @DeleteMapping(value = "/{viewId:.+}")
   public ResponseEntity<String> deleteView(
       @RequestHeader("Authorization") String authorization,
@@ -81,6 +244,60 @@ public class ViewController extends CoreController {
     }
   }
 
+  @Operation(
+      summary = "Get view",
+      description = "The request return a view by view id if it is visible for the current "
+          + "user",
+      responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "The request is successful",
+              content = @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = View.class)
+              )
+          ),
+          @ApiResponse(
+              responseCode = "400",
+              description = "There is an error in the request",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "401",
+              description = "The authentication failed",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "403",
+              description = "Not authorized",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "500",
+              description = "Server error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          )
+      })
   @GetMapping(value = {"/{viewId:.+}"})
   public ResponseEntity<View> selectOneView(
       @RequestHeader("Authorization") String authorization,  @PathVariable("viewId") int viewId) {

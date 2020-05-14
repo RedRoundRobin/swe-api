@@ -299,7 +299,7 @@ public class GatewayServiceTest {
       assertTrue(true);
     }
   }
-
+/*
   @Test
   public void editGatewayWithAlreadyExistingRealDeviceIdAndGatewayIdException()
       throws MissingFieldsException, InvalidFieldsValuesException {
@@ -314,7 +314,7 @@ public class GatewayServiceTest {
       assertTrue(true);
     }
   }
-
+*/
   @Test
   public void editGateway1Succesful()
       throws MissingFieldsException, InvalidFieldsValuesException, ElementNotFoundException {

@@ -1,5 +1,8 @@
 package com.redroundrobin.thirema.apirest.controller;
 
+import com.redroundrobin.thirema.apirest.models.postgres.Device;
+import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
+import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.service.timescale.LogService;
@@ -17,6 +20,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +54,63 @@ public class UserController extends CoreController {
   public UserController(JwtUtil jwtUtil, LogService logService, UserService userService) {
     super(jwtUtil, logService, userService);
   }
+
+  @Operation(
+      summary = "Get access to the users ",
+      description = "This request returns a list of all the users to which"
+          + " you have access, and you can use different parameters to filter"
+          + " the search result set.",
+      responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "The request is successful",
+              content = @Content(
+                  mediaType = "application/json",
+                  array = @ArraySchema( schema =
+                  @Schema( implementation =
+                      User.class))
+              )),
+          @ApiResponse(
+              responseCode = "400",
+              description = "There is an error in the request",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "401",
+              description = "The authentication failed",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "403",
+              description = "Not authorized. Only admins can do it",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "500",
+              description = "Server error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          )
+      })
 
   // Get all users
   @GetMapping(value = {""})
@@ -88,6 +154,71 @@ public class UserController extends CoreController {
     return new ResponseEntity(HttpStatus.FORBIDDEN);
   }
 
+  @Operation(
+      summary = "Create user",
+      description = "The request returns the user that has been created, if this "
+          + "operation was successful",
+      responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "The request is successful",
+              content = @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = User.class)
+              )
+          ),
+          @ApiResponse(
+              responseCode = "400",
+              description = "There is an error in the request",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "401",
+              description = "The authentication failed",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "403",
+              description = "Not authorized",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "409",
+              description = "Conflict. Database error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "500",
+              description = "Server error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          )
+      })
+
   // Create new user
   @PostMapping(value = {""})
   public ResponseEntity<User> createUser(@RequestHeader("Authorization") String authorization,
@@ -113,6 +244,61 @@ public class UserController extends CoreController {
     }
   }
 
+  @Operation(
+      summary = "Deleting a user",
+      description = "It allows you to logically delete a user from the database.",
+      responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "Request successful",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "400",
+              description = "There is an error in the request",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "401",
+              description = "The authentication failed",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "403",
+              description = "Not authorized. Only admins can do it",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "500",
+              description = "Server error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          )
+      })
   @DeleteMapping(value = {"/{userid:.+}"})
   public ResponseEntity<User> deleteUser(@RequestHeader("Authorization") String authorization,
                                          @PathVariable("userid") int userToDeleteId,
@@ -134,6 +320,60 @@ public class UserController extends CoreController {
     }
   }
 
+  @Operation(
+      summary = "Get access to a single user",
+      description = "This request allows you to see the details of the  user "
+          + " who is identified with the given id",
+      responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "The request is successful",
+              content = @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = User.class)
+              )),
+          @ApiResponse(
+              responseCode = "400",
+              description = "There is an error in the request",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "401",
+              description = "The authentication failed",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "403",
+              description = "Not authorized. Only admins can do it",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "500",
+              description = "Server error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          )
+      })
+
   // Get user by userId
   @GetMapping(value = {"/{userid:.+}"})
   public ResponseEntity user(@RequestHeader("Authorization") String authorization,
@@ -154,6 +394,102 @@ public class UserController extends CoreController {
     }
     return new ResponseEntity(HttpStatus.FORBIDDEN);
   }
+
+  @Operation(
+      summary = "Editing a user",
+      description = "It allows you to edit a user already saved in the database and returns "
+          + "the user edited with it's new edited values.",
+      responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "The request is successful",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject(
+                          name = "Success 1",
+                          summary = "Success",
+                          description = "Normal user edit",
+                          value = "{\"user\":{\"userId\":\"int\","
+                              + "\"name\":\"String\","
+                              + "\"surname\":\"String\","
+                              + "\"email\":\"String\","
+                              + "\"password\":\"String\","
+                              + "\"type\":\"0 | 1 | 2\","
+                              + "\"telegramName\":\"String\","
+                              + "\"tfa\":\"boolean\","
+                              + "\"deleted\":\"boolean\","
+                              + "\"entityId\":\"int\"}}"
+                      ),
+                      @ExampleObject(
+                          name = "Success 2",
+                          summary = "Success current user email changed",
+                          value = "{\"user\":{\"userId\":\"int\","
+                              + "\"name\":\"String\","
+                              + "\"surname\":\"String\","
+                              + "\"email\":\"String\","
+                              + "\"password\":\"String\","
+                              + "\"type\":\"0 | 1 | 2\","
+                              + "\"telegramName\":\"String\","
+                              + "\"tfa\":\"boolean\","
+                              + "\"deleted\":\"boolean\","
+                              + "\"entityId\":\"int\"},\"token\":\"String\"}",
+                          description = "The current logged user email is been updated so the "
+                              + "new authorization token is returned with the edited user object"
+                      )
+                  }
+              )),
+          @ApiResponse(
+              responseCode = "400",
+              description = "There is an error in the request",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "401",
+              description = "The authentication failed",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "403",
+              description = "Not authorized. Only admins can do it",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "409",
+              description = "Conflict. Database error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "500",
+              description = "Server error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          )
+      })
 
   // Edit user by userId and a map with data to edit
   @PutMapping(value = {"/{userid:.+}"})
