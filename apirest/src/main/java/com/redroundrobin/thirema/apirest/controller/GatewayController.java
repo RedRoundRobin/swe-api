@@ -509,7 +509,7 @@ public class GatewayController extends CoreController {
 
   @Operation(
       summary = "Create gateway",
-      description = "The request returns the gateway that hass been created, if this "
+      description = "The request returns the gateway that has been created, if this "
           + "operation was successful",
       responses = {
           @ApiResponse(

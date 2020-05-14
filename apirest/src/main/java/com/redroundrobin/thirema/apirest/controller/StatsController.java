@@ -49,7 +49,7 @@ public class StatsController extends CoreController {
       summary = "Get stats values",
       description = "The request return a map containing"
           + " couples \"key-list of values\" where the key is a stat name and"
-          + " the list of values is an integer. Generic users and moderators"
+          + " the list of values is an integer. Members and moderators"
           + " can see more stats than an admin related to the entity to which they"
           + " belong",
       responses = {
@@ -67,7 +67,7 @@ public class StatsController extends CoreController {
                               + "\"entitiesNumber\": \"int\"}"
                       ),
                       @ExampleObject(
-                          name = "Success user/moderator",
+                          name = "Success member/moderator",
                           value = "{\"activeMembers\": \"int\","
                               + "\"entityActiveMembers\": \"int\","
                               + "\"registeredUsers\":  \"int\","
