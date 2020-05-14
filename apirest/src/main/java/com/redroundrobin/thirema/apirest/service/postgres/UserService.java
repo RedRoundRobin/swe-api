@@ -476,14 +476,12 @@ public class UserService implements UserDetailsService {
       newUser.setTelegramName(telegramName);
     }
 
-    boolean deleted=false;
     if(rawUserToInsert.containsKey("deleted")) {
-      newUser.setDeleted(deleted);
+      newUser.setDeleted((boolean)rawUserToInsert.get("deleted"));
     }
 
-    boolean tfa=false;
-    if(tfa = rawUserToInsert.containsKey("tfa")) {
-      newUser.setTfa(tfa);
+    if(rawUserToInsert.containsKey("tfa")) {
+      newUser.setTfa((boolean)rawUserToInsert.get("tfa"));
     }
 
     return userRepo.save(newUser);
