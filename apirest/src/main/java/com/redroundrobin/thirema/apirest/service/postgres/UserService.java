@@ -463,14 +463,16 @@ public class UserService implements UserDetailsService {
         (String)rawUserToInsert.get("password"), User.Role.values()[userToInsertType]);
     newUser.setEntity(userToInsertEntity);
 
-    String telegramName;
+    String telegramName = null;
     if(rawUserToInsert.containsKey("telegramName")
-        && userRepo.findByTelegramName(telegramName =
-        (String)rawUserToInsert.get("telegramName")) != null) {
+        && (telegramName =
+        (String)rawUserToInsert.get("telegramName")) != null
+        && userRepo.findByTelegramName(telegramName) != null) {
       throw new ConflictException("");
     } else if(rawUserToInsert.containsKey("telegramName")
-        && userRepo.findByTelegramName(telegramName =
-        (String)rawUserToInsert.get("telegramName")) == null) {
+        && (telegramName =
+        (String)rawUserToInsert.get("telegramName")) != null
+        && userRepo.findByTelegramName(telegramName) == null) {
       newUser.setTelegramName(telegramName);
     }
 
