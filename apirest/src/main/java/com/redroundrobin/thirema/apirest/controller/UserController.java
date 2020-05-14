@@ -198,6 +198,16 @@ public class UserController extends CoreController {
               )
           ),
           @ApiResponse(
+              responseCode = "409",
+              description = "Conflict. Database error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
               responseCode = "500",
               description = "Server error",
               content = @Content(
@@ -236,9 +246,18 @@ public class UserController extends CoreController {
 
   @Operation(
       summary = "Deleting a user",
-      description = "This request is available for administrators only. It allows you to delete"
-          + " a user from the database.",
+      description = "It allows you to logically delete a user from the database.",
       responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "Request successful",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
           @ApiResponse(
               responseCode = "400",
               description = "There is an error in the request",
@@ -280,7 +299,6 @@ public class UserController extends CoreController {
               )
           )
       })
-
   @DeleteMapping(value = {"/{userid:.+}"})
   public ResponseEntity<User> deleteUser(@RequestHeader("Authorization") String authorization,
                                          @PathVariable("userid") int userToDeleteId,
@@ -379,9 +397,8 @@ public class UserController extends CoreController {
 
   @Operation(
       summary = "Editing a user",
-      description = "This request is available for administrators only. It allows you to edit"
-          + " a user already saved in the database and returns the user edited with it's new"
-          + " edited values.",
+      description = "It allows you to edit a user already saved in the database and returns "
+          + "the user edited with it's new edited values.",
       responses = {
           @ApiResponse(
               responseCode = "200",
@@ -390,17 +407,35 @@ public class UserController extends CoreController {
                   mediaType = "application/json",
                   examples = {
                       @ExampleObject(
-                          name = "Success",
-                          value = "{\"user:\"[{\"userId\": \"int\","
-                              + "\"name\": \"String\","
-                              + "\"surname\":  \"String\","
-                              + "\"email\": \"String\","
-                              + "\"password\": \"int\","
-                              + "\"type\": \" 0 | 1 | 2\","
-                              + "\"telegramName\": \"String\","
-                              + "\"tfa\": \"boolean\","
-                              + "\"deleted\": \"boolean\","
-                              + "\"entityId\": \"int\"}]}"
+                          name = "Success 1",
+                          summary = "Success",
+                          description = "Normal user edit",
+                          value = "{\"user\":{\"userId\":\"int\","
+                              + "\"name\":\"String\","
+                              + "\"surname\":\"String\","
+                              + "\"email\":\"String\","
+                              + "\"password\":\"String\","
+                              + "\"type\":\"0 | 1 | 2\","
+                              + "\"telegramName\":\"String\","
+                              + "\"tfa\":\"boolean\","
+                              + "\"deleted\":\"boolean\","
+                              + "\"entityId\":\"int\"}}"
+                      ),
+                      @ExampleObject(
+                          name = "Success 2",
+                          summary = "Success current user email changed",
+                          value = "{\"user\":{\"userId\":\"int\","
+                              + "\"name\":\"String\","
+                              + "\"surname\":\"String\","
+                              + "\"email\":\"String\","
+                              + "\"password\":\"String\","
+                              + "\"type\":\"0 | 1 | 2\","
+                              + "\"telegramName\":\"String\","
+                              + "\"tfa\":\"boolean\","
+                              + "\"deleted\":\"boolean\","
+                              + "\"entityId\":\"int\"},\"token\":\"String\"}",
+                          description = "The current logged user email is been updated so the "
+                              + "new authorization token is returned with the edited user object"
                       )
                   }
               )),
