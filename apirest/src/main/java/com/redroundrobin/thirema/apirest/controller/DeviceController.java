@@ -573,12 +573,13 @@ public class DeviceController extends CoreController {
                 examples = {
                     @ExampleObject(
                         name = "Success",
-                        value = "{\"gatewayId\": \"int\"},"
-                            + "{\"frequency\": \"int\"},"
-                            + "{\"realDeviceId\": \"int\"},"
-                            + "{\"name\": \"String\"},"
-                            + + "{\"deviceId\": \"int\"}"
+                        value = "{\"gatewayId\": \"int\","
+                            + "\"frequency\": \"int\","
+                            + "\"realDeviceId\": \"int\","
+                            + "\"name\": \"String\","
+                            + "\"deviceId\": \"int\"}"
                     )
+                }
             )),
         @ApiResponse(
             responseCode = "400",
@@ -674,12 +675,12 @@ public class DeviceController extends CoreController {
                 examples = {
                 @ExampleObject(
                     name = "Success",
-                    value = "{\"sensorId\": \"int\"},"
-                        + "{\"realSensorId\": \"int\"},"
-                        + "{\"cmdEnabled\": \"boolean\"},"
-                        + "{\"type\": \"String\"},"
-                        + + "{\"deviceId\": \"int\"}"
-                )
+                    value = "{\"sensorId\": \"int\","
+                        + "\"realSensorId\": \"int\","
+                        + "\"cmdEnabled\": \"boolean\","
+                        + "\"type\": \"String\","
+                        + "\"deviceId\": \"int\"}"
+                )}
             )),
         @ApiResponse(
             responseCode = "400",

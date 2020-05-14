@@ -70,6 +70,7 @@ public class UserService implements UserDetailsService {
     creatable.add("type");
     creatable.add("entityId");
     creatable.add("password");
+    creatable.add("telegramName");
 
     boolean onlyCreatableKeys = creatable.containsAll(keys);
 
@@ -77,7 +78,9 @@ public class UserService implements UserDetailsService {
       throw MissingFieldsException.defaultMessage();
     }
 
-    return creatable.size() == keys.size();
+    return creatable.size() == keys.size()
+        || (creatable.size() == keys.size() - 1
+        && !creatable.contains("telegramName"));
   }
 
   private boolean checkEditableFields(User.Role role, boolean itself, Set<String> keys)
@@ -453,6 +456,16 @@ public class UserService implements UserDetailsService {
         (String)rawUserToInsert.get("password"), User.Role.values()[userToInsertType]);
 
     newUser.setEntity(userToInsertEntity);
+
+    if(rawUserToInsert.containsKey("telegramName")
+        && userRepo.findByTelegramName(
+        (String)rawUserToInsert.get("telegramName")) != null) {
+      throw new ConflictException("");
+    } else if(rawUserToInsert.containsKey("telegramName")
+        && userRepo.findByTelegramName(
+        (String)rawUserToInsert.get("telegramName")) == null) {
+      newUser.setTelegramName((String)rawUserToInsert.get("telegramName"));
+    }
 
     return userRepo.save(newUser);
   }
