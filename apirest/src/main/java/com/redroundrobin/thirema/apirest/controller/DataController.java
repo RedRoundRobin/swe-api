@@ -11,7 +11,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -104,16 +103,16 @@ public class DataController extends CoreController {
                   mediaType = "application/json",
                   examples = {
                       @ExampleObject(
-                          name = "Success",
+                          //name = "Success",
                           value = "{\"1\":[{\"time\": \"timestamp\","
                               + "\"realSensorId\": \"int\",\"realDeviceId\": \"int\","
                               + "\"gatewayId\": \"String\",\"value\": \"double\"},"
-                              + "\"time\": \"timestamp\","
+                              + "{\"time\": \"timestamp\","
                               + "\"realSensorId\": \"int\",\"realDeviceId\": \"int\","
-                              + "\"gatewayId\": \"String\",\"value\": \"double\"}\n}],"
+                              + "\"gatewayId\": \"String\",\"value\": \"double\"}],"
                               + "\"2\":[{\"time\": \"timestamp\","
                               + "\"realSensorId\": \"int\",\"realDeviceId\": \"int\","
-                              + "\"gatewayId\": \"String\",\"value\": \"double\"}]}]}"
+                              + "\"gatewayId\": \"String\",\"value\": \"double\"}]}"
                       )
                   }
               )),
@@ -176,16 +175,22 @@ public class DataController extends CoreController {
 
   @Operation(
       summary = "Get last sensor value",
-      description = "The request return the last value record reletad to the  sensor"
+      description = "The request return the last value record related to the  sensor"
           + " that is identified by the given id.",
       responses = {
           @ApiResponse(
               responseCode = "200",
-              description = "The request is successfull",
+              description = "The request is successful",
               content = @Content(
                   mediaType = "application/json",
-                  schema = @Schema(implementation = Sensor.class)
-              )),
+                  examples = {
+                      @ExampleObject(
+                          value = "{\"time\": \"timestamp\","
+                              + "\"realSensorId\": \"int\",\"realDeviceId\": \"int\","
+                              + "\"gatewayId\": \"String\",\"value\": \"double\"}"
+                      )
+                })
+              ),
           @ApiResponse(
               responseCode = "400",
               description = "There is an error in the request",
