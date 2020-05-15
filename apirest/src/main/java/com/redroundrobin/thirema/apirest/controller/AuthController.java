@@ -8,12 +8,15 @@ import com.redroundrobin.thirema.apirest.utils.CustomAuthenticationManager;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import com.redroundrobin.thirema.apirest.utils.exception.TelegramChatNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.UserDisabledException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import javax.servlet.http.HttpServletRequest;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +54,93 @@ public class AuthController extends CoreController {
     rnd = new SecureRandom();
   }
 
+  @Operation(
+      summary = "Normal authentication",
+      description = "The request for get the authentication token used for other requests",
+      /*requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+          content = @Content(
+              schema = @Schema(
+                  example = "{\"username\":\"string\",\"password\":\"string\"}"
+              )
+          )
+      ),
+      parameters = {
+          @Parameter(
+              name = "username",
+              required = true,
+              schema = @Schema(type = "string")
+          ),
+          @Parameter(
+              name = "password",
+              required = true,
+              schema = @Schema(type = "string")
+          )
+      },*/
+      responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "The authentication is successful",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject(
+                          name = "No tfa needed",
+                          value = "{\"token\":\"string\",\"user\":{\"name\":\"string\","
+                              + "\"surname\":\"string\",\"email\":\"string\","
+                              + "\"password\":\"string\",\"type\":\"USER|MOD|ADMIN\","
+                              + "\"telegramName\":\"string\",\"telegramChat\":\"string\","
+                              + "\"tfa\":\"boolean\",\"deleted\":\"boolean\","
+                              + "\"entity\":\"int\",\"userId\":\"int\"}}"
+                      ),
+                      @ExampleObject(
+                          name = "Tfa needed",
+                          description = "The token furnished will be available for 5 minutes only"
+                              + " for confirm the authentication with the tfa using /auth/tfa",
+                          value = "{\"token\":\"string\",\"tfa\":\"true\"}"
+                      )
+                  }
+              )),
+          @ApiResponse(
+              responseCode = "400",
+              description = "There is an error in the request",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "401",
+              description = "The authentication failed",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "403",
+              description = "Not authorized",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "500",
+              description = "Server error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          )
+      })
   @PostMapping(value = "/auth")
   public ResponseEntity<Map<String, Object>> authentication(
       @RequestBody Map<String, Object> request,
@@ -123,6 +213,69 @@ public class AuthController extends CoreController {
     return ResponseEntity.ok(response);
   }
 
+  @Operation(
+      summary = "Tfa authentication",
+      description = "The request for get the authentication token used for other requests using"
+          + " the tfa code and the previous token for the authorization",
+      responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "The authentication is successful",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject(
+                          name = "Tfa correct",
+                          value = "{\"token\":\"string\",\"user\":{\"name\":\"string\","
+                              + "\"surname\":\"string\",\"email\":\"string\","
+                              + "\"password\":\"string\",\"type\":\"USER|MOD|ADMIN\","
+                              + "\"telegramName\":\"string\",\"telegramChat\":\"string\","
+                              + "\"tfa\":\"boolean\",\"deleted\":\"boolean\","
+                              + "\"entity\":\"int\",\"userId\":\"int\"}}"
+                      )
+                  }
+              )),
+          @ApiResponse(
+              responseCode = "400",
+              description = "There is an error in the request",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "401",
+              description = "The authentication failed",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "403",
+              description = "Not authorized",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "500",
+              description = "Server error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          )
+      })
   @PostMapping(value = "/auth/tfa")
   public ResponseEntity<Map<String, Object>> tfaAuthentication(
       @RequestBody Map<String, Object> request,
@@ -179,7 +332,69 @@ public class AuthController extends CoreController {
     }
   }
 
-  //funzione di controllo username Telegram e salvataggio chatID
+  @Operation(
+      summary = "Telegram authentication",
+      description = "The request for get the authentication token used for other requests for "
+          + "telegram",
+      responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "The request is successful. It returns as code: <br/>"
+                  + "\"0\" - the telegramName is not associated with anybody<br/>"
+                  + "\"1\" - the telegramName is associated with somebody and the telegramChat "
+                  + "will be setted<br/>"
+                  + "\"2\" - the telegramName is associated with somebody and the telegramChat "
+                  + "is present and the same as the request",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject(
+                          name = "Success",
+                          value = "{\"token\":\"string\",\"code\":\"0 | 1 | 2\"}"
+                      )
+                  }
+              )),
+          @ApiResponse(
+              responseCode = "400",
+              description = "There is an error in the request",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "401",
+              description = "The authentication failed",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "403",
+              description = "Not authorized",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "500",
+              description = "Server error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          )
+      })
   @PostMapping(value = {"/auth/telegram"})
   public ResponseEntity<Map<String, Object>> telegramAuthentication(
       @RequestBody Map<String, Object> request,

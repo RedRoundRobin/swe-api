@@ -1,9 +1,8 @@
 package com.redroundrobin.thirema.apirest.service;
 
+import com.redroundrobin.thirema.apirest.controller.AlertController;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
-
-import com.redroundrobin.thirema.apirest.controller.AlertController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;

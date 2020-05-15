@@ -32,4 +32,8 @@ public interface AlertRepository extends CrudRepository<Alert, Integer> {
   @Modifying
   @Query("UPDATE Alert a SET a.deleted = true WHERE a.entity = :entity")
   void setDeletedByEntity(Entity entity);
+
+  @Transactional
+  @Modifying
+  void deleteAlertsBySensor(Sensor s);
 }

@@ -10,6 +10,11 @@ import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundExceptio
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -46,6 +51,51 @@ public class AlertController extends CoreController {
     this.alertService = alertService;
   }
 
+  @Operation(
+      summary = "Delete alerts by sensorId",
+      description = "The request for delete an alert by sensorId",
+      responses = {
+          @ApiResponse(
+              responseCode = "400",
+              description = "There is an error in the request",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "401",
+              description = "The authentication failed",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "403",
+              description = "Not authorized. Only admins can do it",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "500",
+              description = "Server error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          )
+      })
   @DeleteMapping(value = {""})
   public ResponseEntity deleteAlerts(@RequestHeader(value = "Authorization") String authorization,
                                      @RequestParam(name = "sensorId") Integer sensorId,
@@ -54,7 +104,7 @@ public class AlertController extends CoreController {
     if (user.getType() == User.Role.ADMIN) {
       try {
         alertService.deleteAlertsBySensorId(sensorId);
-        logService.createLog(user.getId(), getIpAddress(httpRequest), "alert.deleted",
+        logService.createLog(user.getId(), getIpAddress(httpRequest), "alert.delete",
             "alerts with sensorId = " + sensorId);
         return new ResponseEntity(HttpStatus.OK);
       } catch (ElementNotFoundException e) {
@@ -62,11 +112,77 @@ public class AlertController extends CoreController {
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
       }
     } else {
-      logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId() + " is not an Administrator.");
+      logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId() + " is not "
+          + "an Administrator.");
       return new ResponseEntity(HttpStatus.FORBIDDEN);
     }
   }
 
+  @Operation(
+      summary = "Get alerts",
+      description = "The request return an object with enabled and disabled list of the alerts "
+          + "visible by the current user. If admin all alerts will be in enabled",
+      responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "The request is successful",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject(
+                          name = "Success",
+                          value = "{\"enabled\":[{\"threshold\": \"double\"," 
+                              + "\"type\": \"0 | 1 | 2\",\"deleted\": \"boolean\","
+                              + "\"entity\": \"int\",\"sensor\": \"int\"," 
+                              + "\"lastSent\": \"timestamp\",\"alertId\": \"int\"\n}]," 
+                              + "\"disabled\":[{\"threshold\": \"double\","
+                              + "\"type\": \"0 | 1 | 2\",\"deleted\": \"boolean\","
+                              + "\"entity\": \"int\",\"sensor\": \"int\","
+                              + "\"lastSent\": \"timestamp\",\"alertId\": \"int\"}]}"
+                      )
+                  }
+              )),
+          @ApiResponse(
+              responseCode = "400",
+              description = "There is an error in the request",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "401",
+              description = "The authentication failed",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "403",
+              description = "Not authorized",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "500",
+              description = "Server error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          )
+      })
   @GetMapping(value = {""})
   public ResponseEntity<Map<String,List<Alert>>> getAlerts(
       @RequestHeader(value = "Authorization") String authorization,
@@ -109,6 +225,59 @@ public class AlertController extends CoreController {
     return ResponseEntity.ok(response);
   }
 
+  @Operation(
+      summary = "Get single alert",
+      description = "The request return the alert with corresponding id as alertId if visible "
+          + "by the current user.",
+      responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "The request is successful",
+              content = @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = Alert.class)
+              )),
+          @ApiResponse(
+              responseCode = "400",
+              description = "There is an error in the request",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "401",
+              description = "The authentication failed",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "403",
+              description = "Not authorized",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "500",
+              description = "Server error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          )
+      })
   @GetMapping(value = {"/{alertId:.+}"})
   public ResponseEntity<Alert> getAlert(
       @RequestHeader(value = "Authorization") String authorization,
@@ -128,6 +297,59 @@ public class AlertController extends CoreController {
     }
   }
 
+  @Operation(
+      summary = "Create alert",
+      description = "The request return an object corresponding to the alert created if"
+          + " successful",
+      responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "The request is successful",
+              content = @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = Alert.class)
+              )),
+          @ApiResponse(
+              responseCode = "400",
+              description = "There is an error in the request",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "401",
+              description = "The authentication failed",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "403",
+              description = "Not authorized",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "500",
+              description = "Server error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          )
+      })
   @PostMapping(value = {""})
   public ResponseEntity<Alert> createAlert(
       @RequestHeader("authorization") String authorization,
@@ -137,7 +359,7 @@ public class AlertController extends CoreController {
     if (user.getType() == User.Role.ADMIN || user.getType() == User.Role.MOD) {
       try {
         Alert alert = alertService.addAlert(user, newAlertFields);
-        logService.createLog(user.getId(), getIpAddress(httpRequest), "alert.created",
+        logService.createLog(user.getId(), getIpAddress(httpRequest), "alert.add",
             Integer.toString(alert.getId()));
         return ResponseEntity.ok(alert);
       } catch (MissingFieldsException | InvalidFieldsValuesException fe) {
@@ -151,6 +373,59 @@ public class AlertController extends CoreController {
     }
   }
 
+  @Operation(
+      summary = "Edit alert",
+      description = "The request return an object corresponding to the alert edited if"
+          + " successful",
+      responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "The request is successful",
+              content = @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = Alert.class)
+              )),
+          @ApiResponse(
+              responseCode = "400",
+              description = "There is an error in the request",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "401",
+              description = "The authentication failed",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "403",
+              description = "Not authorized",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "500",
+              description = "Server error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          )
+      })
   @PutMapping(value = {"/{alertId:.+}"})
   public ResponseEntity<Alert> editAlert(
       @RequestHeader("authorization") String authorization,
@@ -178,6 +453,57 @@ public class AlertController extends CoreController {
     return new ResponseEntity(HttpStatus.FORBIDDEN);
   }
 
+  @Operation(
+      summary = "Delete alert by id",
+      description = "The request for delete an alert by its id",
+      responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "The request is successful",
+              content = @Content(
+                  mediaType = "application/json"
+              )),
+          @ApiResponse(
+              responseCode = "400",
+              description = "There is an error in the request",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "401",
+              description = "The authentication failed",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "403",
+              description = "Not authorized",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "500",
+              description = "Server error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          )
+      })
   @DeleteMapping(value = {"/{alertId:.+}"})
   public ResponseEntity deleteAlert(@RequestHeader("authorization") String authorization,
                                     @PathVariable("alertId") int alertId,
@@ -186,7 +512,7 @@ public class AlertController extends CoreController {
     if (user.getType() == User.Role.ADMIN || (user.getType() == User.Role.MOD)) {
       try {
         if (alertService.deleteAlert(user, alertId)) {
-          logService.createLog(user.getId(), getIpAddress(httpRequest), "alert.deleted",
+          logService.createLog(user.getId(), getIpAddress(httpRequest), "alert.delete",
               Integer.toString(alertId));
           return new ResponseEntity(HttpStatus.OK);
         } else {
@@ -208,6 +534,57 @@ public class AlertController extends CoreController {
     return new ResponseEntity(HttpStatus.FORBIDDEN);
   }
 
+  @Operation(
+      summary = "Enable/disable alert for user",
+      description = "The request for enable/disable user alert by alert id",
+      responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "The request is successful",
+              content = @Content(
+                  mediaType = "application/json"
+              )),
+          @ApiResponse(
+              responseCode = "400",
+              description = "There is an error in the request",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "401",
+              description = "The authentication failed",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "403",
+              description = "Not authorized",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "500",
+              description = "Server error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          )
+      })
   @PostMapping("/{alertId:.+}")
   public ResponseEntity disableUserAlert(
       @RequestHeader("authorization") String authorization,

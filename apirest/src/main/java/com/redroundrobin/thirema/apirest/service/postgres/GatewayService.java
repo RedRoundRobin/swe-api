@@ -1,33 +1,25 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
-import com.redroundrobin.thirema.apirest.models.postgres.Device;
-import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
-import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
-import com.redroundrobin.thirema.apirest.repository.postgres.DeviceRepository;
-import com.redroundrobin.thirema.apirest.repository.postgres.GatewayRepository;
-import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
-import com.redroundrobin.thirema.apirest.utils.GatewaysProperties;
-
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
-
-
+import com.redroundrobin.thirema.apirest.models.postgres.Device;
+import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
+import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
+import com.redroundrobin.thirema.apirest.repository.postgres.DeviceRepository;
+import com.redroundrobin.thirema.apirest.repository.postgres.GatewayRepository;
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
@@ -39,6 +31,15 @@ public class GatewayService {
   private final DeviceRepository deviceRepo;
 
   private final KafkaTemplate<String, String> kafkaTemplate;
+
+  @Value(value = "${gateways.maxStoredPackets}")
+  private int maxStoredPackets;
+
+  @Value(value = "${gateways.maxStoringTime}")
+  private int maxStoringTime;
+
+  @Value(value = "${gateways.topic.config.prefix}")
+  private String configTopicPrefix;
 
   private boolean checkAddEditFields(boolean edit, Map<String, Object> fields) {
     List<String> allowedFields = new ArrayList<>();
@@ -54,23 +55,24 @@ public class GatewayService {
   private String sentConfig(int gatewayId)
       throws JsonProcessingException { //eccezione di ObjectMapper()
     Gateway gateway = gatewayRepo.findById(gatewayId).orElse(null);
-    if(gateway == null) {
+    if (gateway == null) {
       return null;
     } else {
-      String gatewayConfigTopic = GatewaysProperties.getConfigTopicPrefix() + gateway.getName();
+      String gatewayConfigTopic = configTopicPrefix + gateway.getName();
+      System.out.println(gatewayConfigTopic);
       ObjectMapper objectMapper = new ObjectMapper();
       ObjectNode jsonGatewayConfig = objectMapper.createObjectNode();
-      jsonGatewayConfig.put("maxStoredPackets", GatewaysProperties.getMaxStoredPackets());
-      jsonGatewayConfig.put("maxStoringTime", GatewaysProperties.getMaxStoringTime());
+      jsonGatewayConfig.put("maxStoredPackets", maxStoredPackets);
+      jsonGatewayConfig.put("maxStoringTime", maxStoringTime);
       ArrayNode devicesConfig = jsonGatewayConfig.putArray("devices");
       List<Device> devices = (List<Device>)deviceRepo.findAllByGatewayId(gatewayId);
-      for(Device device: devices) {
+      for (Device device: devices) {
         ObjectNode completeDevice = objectMapper.createObjectNode();
         completeDevice.put("deviceId", device.getRealDeviceId());
         completeDevice.put("frequency", device.getFrequency());
         ArrayNode sensorsConfig = objectMapper.createArrayNode();
         List<Sensor> sensors = (List<Sensor>)deviceRepo.findAllByDeviceId(device.getId());
-        for(Sensor sensor: sensors) {
+        for (Sensor sensor: sensors) {
           ObjectNode completeSensor = objectMapper.createObjectNode();
           completeSensor.put("sensorId", sensor.getRealSensorId());
           completeSensor.put("cmdEnabled", sensor.getCmdEnabled());
@@ -82,7 +84,8 @@ public class GatewayService {
       kafkaTemplate.send(gatewayConfigTopic, jsonGatewayConfig.toString());
       gateway.setLastSent(Timestamp.from(Instant.now()));
       gatewayRepo.save(gateway);
-      return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString((JsonNode)jsonGatewayConfig);
+      return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(
+          (JsonNode)jsonGatewayConfig);
     }
   }
 
@@ -122,7 +125,7 @@ public class GatewayService {
   public String sendGatewayConfigToKafka(int gatewayId)
       throws InvalidFieldsValuesException, JsonProcessingException {
     String jsonGatewayConfig = sentConfig(gatewayId);
-    if(jsonGatewayConfig == null) {
+    if (jsonGatewayConfig == null) {
       throw new InvalidFieldsValuesException("");
     }
     return jsonGatewayConfig;
@@ -142,18 +145,20 @@ public class GatewayService {
     }
   }
 
-  public Gateway editGateway(int gatewayId, Map<String, Object> fieldsToEdit) throws MissingFieldsException,
-      InvalidFieldsValuesException {
+  public Gateway editGateway(int gatewayId, Map<String, Object> fieldsToEdit)
+      throws MissingFieldsException, InvalidFieldsValuesException {
     Gateway gateway = gatewayRepo.findById(gatewayId).orElse(null);
     if (gateway == null) {
       throw new InvalidFieldsValuesException("The gateway with provided id is not found");
     } else {
       if (checkAddEditFields(true, fieldsToEdit)) {
-        if (gatewayRepo.findByName((String)fieldsToEdit.get("name")) == null) {
+        if (gatewayRepo.findByName((String)fieldsToEdit.get("name")) == null
+            || ((String)fieldsToEdit.get("name")).equals(gateway.getName())) {
           gateway.setName((String)fieldsToEdit.get("name"));
           return gatewayRepo.save(gateway);
         } else {
-          throw new InvalidFieldsValuesException("The gateway with provided name already exists");
+          throw new InvalidFieldsValuesException("There is already a gateway "
+              + "with the provided name!");
         }
       } else {
         throw MissingFieldsException.defaultMessage();

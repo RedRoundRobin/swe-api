@@ -15,11 +15,9 @@ import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.ViewGraphRepository;
 import com.redroundrobin.thirema.apirest.utils.exception.ConflictException;
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
-import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
-import com.redroundrobin.thirema.apirest.utils.GatewaysProperties;
-
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
+import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -27,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
@@ -45,10 +44,13 @@ public class SensorService {
 
   private final KafkaTemplate<String, String> kafkaTemplate;
 
+  @Value(value = "${gateways.topic.telegram.prefix}")
+  private String gatewayCommandsPrefix;
+
   private boolean checkAddEditFields(boolean edit, Map<String, Object> fields) {
     String[] editableOrCreatableFields = {"realSensorId", "deviceId", "cmdEnabled", "type"};
     List<String> allowedFields = new ArrayList<>();
-    for(int i=0; i<editableOrCreatableFields.length; i++) {
+    for (int i = 0; i < editableOrCreatableFields.length; i++) {
       allowedFields.add(editableOrCreatableFields[i]);
     }
 
@@ -56,8 +58,8 @@ public class SensorService {
       return fields.keySet().stream().anyMatch(allowedFields::contains);
     } else {
       boolean flag = false;
-      for(int i=0; i<editableOrCreatableFields.length && !flag; i++) {
-        if(!fields.containsKey(editableOrCreatableFields[i])
+      for (int i = 0; i < editableOrCreatableFields.length && !flag; i++) {
+        if (!fields.containsKey(editableOrCreatableFields[i])
             && !editableOrCreatableFields[i].equals("cmdEnabled")) {
           flag = true;
         }
@@ -98,7 +100,7 @@ public class SensorService {
     Sensor sensorWithSameDeviceAndRealSensorId = sensorRepo
         .findByDeviceAndRealSensorId(sensor.getDevice(), sensor.getRealSensorId());
     if (sensorWithSameDeviceAndRealSensorId != null
-        && !sensorWithSameDeviceAndRealSensorId.equals(sensor)) { //mi sembra ridondante 2^ parte controllo...
+        && !sensorWithSameDeviceAndRealSensorId.equals(sensor)) {
       throw new ConflictException("The sensor with provided device and realSensorId "
           + "already exists");
     }
@@ -223,12 +225,13 @@ public class SensorService {
   }
 
   public Sensor editSensor(int realSensorId, int deviceId, Map<String, Object> newSensorFields)
-      throws MissingFieldsException, InvalidFieldsValuesException, ElementNotFoundException, ConflictException {
+      throws MissingFieldsException, InvalidFieldsValuesException, ElementNotFoundException,
+      ConflictException {
     Device device = deviceRepo.findById(deviceId).orElse(null);
     if (device == null) {
       throw ElementNotFoundException.notFoundMessage("device");
     }
-    Sensor sensor = sensorRepo.findByDeviceAndRealSensorId(device, realSensorId);/*.orElse(null);!!*/
+    Sensor sensor = sensorRepo.findByDeviceAndRealSensorId(device, realSensorId);
     if (sensor == null) {
       throw ElementNotFoundException.notFoundMessage("sensor");
     }
@@ -240,17 +243,17 @@ public class SensorService {
   }
 
   public boolean deleteSensor(int deviceId, int realSensorId) throws ElementNotFoundException {
-  Device device = deviceRepo.findById(deviceId).orElse(null);
-  if (device == null) {
-    throw ElementNotFoundException.notFoundMessage("device");
-  }
-  Sensor sensor = sensorRepo.findByDeviceAndRealSensorId(device, realSensorId);/*.orElse(null);!!*/
-  if (sensor == null) {
-    throw ElementNotFoundException.notFoundMessage("sensor");
-  }
-  int sensorId = sensor.getId();
-  sensorRepo.delete(sensor);
-  return !sensorRepo.existsById(sensorId);
+    Device device = deviceRepo.findById(deviceId).orElse(null);
+    if (device == null) {
+      throw ElementNotFoundException.notFoundMessage("device");
+    }
+    Sensor sensor = sensorRepo.findByDeviceAndRealSensorId(device, realSensorId);
+    if (sensor == null) {
+      throw ElementNotFoundException.notFoundMessage("sensor");
+    }
+    int sensorId = sensor.getId();
+    sensorRepo.delete(sensor);
+    return !sensorRepo.existsById(sensorId);
   }
 
   private boolean checkTelegramCommandFields(Set<String> keys) {
@@ -261,38 +264,37 @@ public class SensorService {
 
   public String sendTelegramCommandToSensor(int sensorId, Map<String,Object> keys)
       throws ElementNotFoundException, NotAuthorizedException {
-    if(!checkTelegramCommandFields(keys.keySet()) ||
-        (int)keys.get("data") < 0 || (int)keys.get("data") > 1) {
+    if (!checkTelegramCommandFields(keys.keySet())
+        || (int)keys.get("data") < 0 || (int)keys.get("data") > 1) {
       throw new ElementNotFoundException("The data field is missing, its not the only field given"
           + "or it's value is not correct");
     }
 
     Sensor sensor = sensorRepo.findById(sensorId).orElse(null);
-    if(sensor == null) {
+    if (sensor == null) {
       throw new ElementNotFoundException("The given sensorId doesn't match "
           + "any sensor in the database");
     }
 
-    if(!sensor.getCmdEnabled()) {
+    if (!sensor.getCmdEnabled()) {
       throw new NotAuthorizedException("The sensor with the sensorId given"
           + "is not allowed to receive commands");
     }
     Device device = null;
     Gateway gateway = null;
-    if((device = deviceRepo.findBySensors(sensor)) == null
+    if ((device = deviceRepo.findBySensors(sensor)) == null
         || (gateway = device.getGateway()) == null) {
       throw new ElementNotFoundException(" The sensor given is "
           + "not connected to a device or it's device "
           + "is not connected to a gateway");
     }
 
-    String gatewayConfigTopic =
-        GatewaysProperties.getGatewayCommandsPrefix() + gateway.getName();
     ObjectMapper objectMapper = new ObjectMapper();
     ObjectNode jsonSensorCommand = objectMapper.createObjectNode();
     jsonSensorCommand.put("realSensorId", sensor.getRealSensorId());
     jsonSensorCommand.put("realDeviceId", device.getRealDeviceId());
     jsonSensorCommand.put("data", (int)keys.get("data"));
+    String gatewayConfigTopic = gatewayCommandsPrefix + gateway.getName();
     kafkaTemplate.send(gatewayConfigTopic, jsonSensorCommand.toString());
     return jsonSensorCommand.toString();
   }

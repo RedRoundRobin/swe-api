@@ -6,13 +6,18 @@ import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.service.timescale.LogService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
+import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
+import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
-import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
-import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
+import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,8 +31,6 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import javax.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping(value = {"/sensors"})
@@ -44,7 +47,58 @@ public class SensorController extends CoreController {
     this.sensorService = sensorService;
   }
 
-  // Get all sensors also with entity id if provided
+  @Operation(
+      summary = "Get sensors",
+      description = "The request return a list of sensors",
+      responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "The request is successful",
+              content = @Content(
+                  mediaType = "application/json",
+                  array = @ArraySchema(schema = @Schema(implementation = Sensor.class))
+              )),
+          @ApiResponse(
+              responseCode = "400",
+              description = "There is an error in the request",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "401",
+              description = "The authentication failed",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "403",
+              description = "Not authorized",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "500",
+              description = "Server error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          )
+      })
   @GetMapping(value = {""})
   public ResponseEntity<List<Sensor>> getSensors(
       @RequestHeader(value = "Authorization") String authorization,
@@ -65,7 +119,60 @@ public class SensorController extends CoreController {
     }
   }
 
-  // Get all sensors also with entity id if provided
+  @Operation(
+      summary = "Get sensor",
+      description = "The request return a sensor by sensor id if it is visible for the current "
+          + "user",
+      responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "The request is successful",
+              content = @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = Sensor.class)
+              )
+          ),
+          @ApiResponse(
+              responseCode = "400",
+              description = "There is an error in the request",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "401",
+              description = "The authentication failed",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "403",
+              description = "Not authorized",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "500",
+              description = "Server error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          )
+      })
   @GetMapping(value = {"/{sensorId:.+}"})
   public ResponseEntity<Sensor> getSensor(
       @RequestHeader(value = "Authorization") String authorization,
@@ -79,8 +186,64 @@ public class SensorController extends CoreController {
     }
   }
 
+  @Operation(
+      summary = "Send command to a sensor",
+      description = "The request return a string that correspond to the command sent",
+      responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "The request is successful",
+              content = @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(
+                      example = "{\"realSensorId\":\"int\",\"realDeviceId\":\"int\","
+                          + "\"data\":\"int\"}"
+                  )
+              )
+          ),
+          @ApiResponse(
+              responseCode = "400",
+              description = "There is an error in the request",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "401",
+              description = "The authentication failed",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "403",
+              description = "Not authorized",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "500",
+              description = "Server error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          )
+      })
   @PutMapping(value = {"/{sensorId:.+}"})
-  public ResponseEntity<String> sendCommandToSensorToGAtewayThroughToKafka(
+  public ResponseEntity<String> sendCommandToSensor(
       @RequestHeader(value = "Authorization") String authorization,
       @PathVariable("sensorId") int sensorId,
       @RequestBody Map<String, Object> commandFields,
@@ -93,7 +256,7 @@ public class SensorController extends CoreController {
         logService.createLog(user.getId(), ip, "sensor.input",
             Integer.toString(sensorId));
         return ResponseEntity.ok(cmd);
-      } catch(ElementNotFoundException | NotAuthorizedException e) {
+      } catch (ElementNotFoundException | NotAuthorizedException e) {
         logger.debug("RESPONSE STATUS: FORBIDDEN." + e.getMessage());
         return new ResponseEntity(HttpStatus.FORBIDDEN);
       }

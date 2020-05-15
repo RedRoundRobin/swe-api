@@ -9,9 +9,16 @@ import com.redroundrobin.thirema.apirest.utils.JwtUtil;
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -26,8 +33,6 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import javax.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/entities")
@@ -63,6 +68,58 @@ public class EntityController extends CoreController {
     return sensorOk && userOk;
   }
 
+  @Operation(
+      summary = "Get entities",
+      description = "The request return a list of entities objects",
+      responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "The request is successful",
+              content = @Content(
+                  mediaType = "application/json",
+                  array = @ArraySchema(schema = @Schema(implementation = Entity.class))
+              )),
+          @ApiResponse(
+              responseCode = "400",
+              description = "There is an error in the request",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "401",
+              description = "The authentication failed",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "403",
+              description = "Not authorized",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "500",
+              description = "Server error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          )
+      })
   @GetMapping(value = {""})
   public ResponseEntity<List<Entity>> getEntities(
       @RequestHeader(value = "Authorization") String authorization,
@@ -87,6 +144,60 @@ public class EntityController extends CoreController {
     }
   }
 
+  @Operation(
+      summary = "Get entity",
+      description = "The request return an entity by entity id if it is visible for the current "
+          + "user",
+      responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "The request is successful",
+              content = @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = Entity.class)
+              )
+          ),
+          @ApiResponse(
+              responseCode = "400",
+              description = "There is an error in the request",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "401",
+              description = "The authentication failed",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "403",
+              description = "Not authorized",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "500",
+              description = "Server error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          )
+      })
   @GetMapping(value = {"/{entityId:.+}"})
   public ResponseEntity<Entity> getEntity(
       @RequestHeader(value = "Authorization") String authorization,
@@ -101,6 +212,59 @@ public class EntityController extends CoreController {
     }
   }
 
+  @Operation(
+      summary = "Create entity",
+      description = "The request return the entity that is been created if successful",
+      responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "The request is successful",
+              content = @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = Entity.class)
+              )
+          ),
+          @ApiResponse(
+              responseCode = "400",
+              description = "There is an error in the request",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "401",
+              description = "The authentication failed",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "403",
+              description = "Not authorized",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "500",
+              description = "Server error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          )
+      })
   @PostMapping(value = {""})
   public ResponseEntity<Entity> addEntity(
       @RequestHeader(value = "Authorization") String authorization,
@@ -112,7 +276,7 @@ public class EntityController extends CoreController {
     if (user.getType() == User.Role.ADMIN) {
       try {
         Entity entity = entityService.addEntity(newEntityFields);
-        logService.createLog(user.getId(),ip,"entity.created",
+        logService.createLog(user.getId(),ip,"entity.add",
             Integer.toString(entity.getId()));
         return ResponseEntity.ok(entity);
       } catch (MissingFieldsException e) {
@@ -125,6 +289,59 @@ public class EntityController extends CoreController {
     }
   }
 
+  @Operation(
+      summary = "Edit entities",
+      description = "The request return the entity that is been edited if successful",
+      responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "The request is successful",
+              content = @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = Entity.class)
+              )
+          ),
+          @ApiResponse(
+              responseCode = "400",
+              description = "There is an error in the request",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "401",
+              description = "The authentication failed",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "403",
+              description = "Not authorized",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "500",
+              description = "Server error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          )
+      })
   @PutMapping(value = {"/{entityId:.+}"})
   public ResponseEntity<Entity> editEntity(
       @RequestHeader(value = "Authorization") String authorization,
@@ -140,6 +357,8 @@ public class EntityController extends CoreController {
         fieldsToEditOrsensorsToEnableOrDisable.remove("enableOrDisableSensors");
         if (entityService.enableOrDisableSensorToEntity(entityId,
             fieldsToEditOrsensorsToEnableOrDisable)) {
+          logService.createLog(user.getId(),ip,"entity.assign_sensor",
+              Integer.toString(entityId));
           return new ResponseEntity(HttpStatus.OK);
         } else {
           return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -148,7 +367,7 @@ public class EntityController extends CoreController {
         logger.debug(enfe.toString());
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
       }
-    } else if(user.getType() == User.Role.ADMIN) {
+    } else if (user.getType() == User.Role.ADMIN) {
       try {
         Entity entity = entityService.editEntity(
             entityId, fieldsToEditOrsensorsToEnableOrDisable);
@@ -165,6 +384,67 @@ public class EntityController extends CoreController {
     }
   }
 
+  @Operation(
+      summary = "Delete entity",
+      description = "The request deletes the specified entity",
+      responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "The request is successful",
+              content = @Content(
+                  mediaType = "application/json"
+              )),
+          @ApiResponse(
+              responseCode = "400",
+              description = "There is an error in the request",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "401",
+              description = "The authentication failed",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "403",
+              description = "Not authorized",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "409",
+              description = "Database error during the delete",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "500",
+              description = "Server error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          )
+      })
   @DeleteMapping(value = {"/{entityId:.+}"})
   public ResponseEntity deleteEntity(
       @RequestHeader(value = "Authorization") String authorization,

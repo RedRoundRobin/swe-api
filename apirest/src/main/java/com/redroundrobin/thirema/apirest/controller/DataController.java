@@ -6,11 +6,14 @@ import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.service.timescale.LogService;
 import com.redroundrobin.thirema.apirest.service.timescale.SensorService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,6 +87,75 @@ public class DataController extends CoreController {
     this.timescaleSensorService = timescaleSensorService;
   }
 
+  @Operation(
+      summary = "Get sensors values",
+      description = "The request return a map containing"
+          + " couples \"key-list of values\" where the key is a sensor id and"
+          + " the list of values is made of the records of values "
+          + " related to the sensor with that id",
+      responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "The request is successful",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject(
+                          //name = "Success",
+                          value = "{\"1\":[{\"time\": \"timestamp\","
+                              + "\"realSensorId\": \"int\",\"realDeviceId\": \"int\","
+                              + "\"gatewayId\": \"String\",\"value\": \"double\"},"
+                              + "{\"time\": \"timestamp\","
+                              + "\"realSensorId\": \"int\",\"realDeviceId\": \"int\","
+                              + "\"gatewayId\": \"String\",\"value\": \"double\"}],"
+                              + "\"2\":[{\"time\": \"timestamp\","
+                              + "\"realSensorId\": \"int\",\"realDeviceId\": \"int\","
+                              + "\"gatewayId\": \"String\",\"value\": \"double\"}]}"
+                      )
+                  }
+              )),
+          @ApiResponse(
+              responseCode = "400",
+              description = "There is an error in the request",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "401",
+              description = "The authentication failed",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "403",
+              description = "Not authorized",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "500",
+              description = "Server error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          )
+      })
+
   @GetMapping(value = {""})
   public ResponseEntity<Map<Integer, List<Sensor>>> getSensorsValues(
       @RequestHeader(value = "Authorization") String authorization,
@@ -98,6 +170,66 @@ public class DataController extends CoreController {
       return ResponseEntity.ok(getSensorsValuesByUser(user, sensorIds, limit, entityId));
     }
   }
+
+  @Operation(
+      summary = "Get last sensor value",
+      description = "The request return the last value record related to the  sensor"
+          + " that is identified by the given id.",
+      responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "The request is successful",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject(
+                          value = "{\"time\": \"timestamp\","
+                              + "\"realSensorId\": \"int\",\"realDeviceId\": \"int\","
+                              + "\"gatewayId\": \"String\",\"value\": \"double\"}"
+                      )
+                })
+              ),
+          @ApiResponse(
+              responseCode = "400",
+              description = "There is an error in the request",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "401",
+              description = "The authentication failed",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "403",
+              description = "Not authorized",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          ),
+          @ApiResponse(
+              responseCode = "500",
+              description = "Server error",
+              content = @Content(
+                  mediaType = "application/json",
+                  examples = {
+                      @ExampleObject()
+                  }
+              )
+          )
+      })
 
   @GetMapping(value = {"/{sensorId:.+}"})
   public ResponseEntity<Sensor> getLastSensorValue(
