@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.redroundrobin</groupId>
     <artifactId>apirest</artifactId>
-    <version>v1.0.0-rc</version>
+    <version>v1.0.0-stable</version>
     <name>apirest</name>
     <description>API Rest service for ThiReMa</description>
 
