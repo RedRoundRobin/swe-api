@@ -6,7 +6,6 @@ import com.redroundrobin.thirema.apirest.models.timescale.Log;
 import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
 import com.redroundrobin.thirema.apirest.repository.timescale.LogRepository;
-
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.stream.Collectors;

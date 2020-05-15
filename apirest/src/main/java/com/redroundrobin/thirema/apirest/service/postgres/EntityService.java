@@ -1,6 +1,5 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
-import com.redroundrobin.thirema.apirest.models.postgres.Alert;
 import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
@@ -8,25 +7,14 @@ import com.redroundrobin.thirema.apirest.repository.postgres.AlertRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.UserRepository;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
-import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -152,15 +140,13 @@ public class EntityService {
                                                Map<String, Object> fieldsToEdit)
       throws ElementNotFoundException, MissingFieldsException {
     Entity entityToEdit = entityRepo.findById(entityId).orElse(null);
-    if(entityToEdit == null) {
+    if (entityToEdit == null) {
       throw ElementNotFoundException.notFoundMessage("entity");
     }
 
     if (!fieldsToEdit.containsKey("toInsert") || !fieldsToEdit.containsKey("toDelete")) {
       throw MissingFieldsException.defaultMessage();
-    }/* else {
-      if (fieldsToEdit.containsKey("toInsert") && fieldsToEdit.get("toInsert") instanceof List)
-    }*/
+    }
 
     Set<Sensor> entitySensors = entityToEdit.getSensors();
 

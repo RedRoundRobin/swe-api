@@ -84,7 +84,7 @@ public class UserService implements UserDetailsService {
         && creatable.contains("surname")
         && creatable.contains("password")
         && creatable.contains("email")
-        && creatable.contains("type") ;
+        && creatable.contains("type");
   }
 
   private boolean checkEditableFields(User.Role role, boolean itself, Set<String> keys)
@@ -234,7 +234,8 @@ public class UserService implements UserDetailsService {
     return userRepo.save(userToDelete);
   }
 
-  private User editByAdministrator(User userToEdit, Map<String, Object> fieldsToEdit, boolean itself)
+  private User editByAdministrator(User userToEdit, Map<String, Object> fieldsToEdit,
+                                   boolean itself)
       throws InvalidFieldsValuesException, MissingFieldsException, NotAuthorizedException,
       ConflictException {
 
@@ -453,8 +454,7 @@ public class UserService implements UserDetailsService {
     }
 
     //qui so che entity_id o null o esiste nel db && so il tipo dello user che si vuole inserire
-    if ((int)rawUserToInsert.get("type") == 2 ||
-        insertingUser.getType() == User.Role.USER
+    if ((int)rawUserToInsert.get("type") == 2 || insertingUser.getType() == User.Role.USER
         || (insertingUser.getType() == User.Role.MOD
         && userToInsertEntity != null
         && userToInsertEntity.getId() != insertingUser.getEntity().getId())) {
@@ -467,7 +467,7 @@ public class UserService implements UserDetailsService {
         || (String)rawUserToInsert.get("password") == null
         || email == null) {
       throw new InvalidFieldsValuesException("");
-    } else if(userRepo.findByEmail(email) != null) {
+    } else if (userRepo.findByEmail(email) != null) {
       throw new ConflictException("");
     }
 
@@ -477,23 +477,23 @@ public class UserService implements UserDetailsService {
     newUser.setEntity(userToInsertEntity);
 
     String telegramName = null;
-    if(rawUserToInsert.containsKey("telegramName")
+    if (rawUserToInsert.containsKey("telegramName")
         && (telegramName =
         (String)rawUserToInsert.get("telegramName")) != null
         && userRepo.findByTelegramName(telegramName) != null) {
       throw new ConflictException("");
-    } else if(rawUserToInsert.containsKey("telegramName")
+    } else if (rawUserToInsert.containsKey("telegramName")
         && (telegramName =
         (String)rawUserToInsert.get("telegramName")) != null
         && userRepo.findByTelegramName(telegramName) == null) {
       newUser.setTelegramName(telegramName);
     }
 
-    if(rawUserToInsert.containsKey("deleted")) {
+    if (rawUserToInsert.containsKey("deleted")) {
       newUser.setDeleted((boolean)rawUserToInsert.get("deleted"));
     }
 
-    if(rawUserToInsert.containsKey("tfa")) {
+    if (rawUserToInsert.containsKey("tfa")) {
       newUser.setTfa((boolean)rawUserToInsert.get("tfa"));
     }
 
