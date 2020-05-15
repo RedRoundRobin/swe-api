@@ -10,17 +10,16 @@ import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundExceptio
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
 import com.redroundrobin.thirema.apirest.utils.exception.NotAuthorizedException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import javax.servlet.http.HttpServletRequest;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -113,7 +112,8 @@ public class AlertController extends CoreController {
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
       }
     } else {
-      logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId() + " is not an Administrator.");
+      logger.debug("RESPONSE STATUS: FORBIDDEN. User " + user.getId() + " is not "
+          + "an Administrator.");
       return new ResponseEntity(HttpStatus.FORBIDDEN);
     }
   }
@@ -132,11 +132,11 @@ public class AlertController extends CoreController {
                       @ExampleObject(
                           name = "Success",
                           value = "{\"enabled\":[{\"threshold\": \"double\"," 
-                              + "\"type\": \"0 | 1 | 2\",\"deleted\": \"true | false\"," 
+                              + "\"type\": \"0 | 1 | 2\",\"deleted\": \"boolean\","
                               + "\"entity\": \"int\",\"sensor\": \"int\"," 
                               + "\"lastSent\": \"timestamp\",\"alertId\": \"int\"\n}]," 
                               + "\"disabled\":[{\"threshold\": \"double\","
-                              + "\"type\": \"0 | 1 | 2\",\"deleted\": \"true | false\","
+                              + "\"type\": \"0 | 1 | 2\",\"deleted\": \"boolean\","
                               + "\"entity\": \"int\",\"sensor\": \"int\","
                               + "\"lastSent\": \"timestamp\",\"alertId\": \"int\"}]}"
                       )

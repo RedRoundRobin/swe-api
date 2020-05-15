@@ -1,25 +1,20 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
-import com.redroundrobin.thirema.apirest.models.postgres.Alert;
 import com.redroundrobin.thirema.apirest.models.postgres.Device;
-import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
-import com.redroundrobin.thirema.apirest.models.postgres.User;
 import com.redroundrobin.thirema.apirest.repository.postgres.DeviceRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.EntityRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.GatewayRepository;
 import com.redroundrobin.thirema.apirest.repository.postgres.SensorRepository;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
 import com.redroundrobin.thirema.apirest.utils.exception.ConflictException;
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -165,8 +160,9 @@ public class DeviceService {
     }
   }
 
-  public Device editDevice(int deviceId, Map<String, Object> newDeviceFields) throws MissingFieldsException,
-      InvalidFieldsValuesException, ElementNotFoundException, ConflictException {
+  public Device editDevice(int deviceId, Map<String, Object> newDeviceFields)
+      throws MissingFieldsException, InvalidFieldsValuesException, ElementNotFoundException,
+      ConflictException {
     Device device = deviceRepo.findById(deviceId).orElse(null);
     if (device != null) {
       if (checkAddEditFields(true, newDeviceFields)) {

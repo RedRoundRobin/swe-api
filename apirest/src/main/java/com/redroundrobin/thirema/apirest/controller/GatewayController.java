@@ -2,7 +2,6 @@ package com.redroundrobin.thirema.apirest.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.redroundrobin.thirema.apirest.models.postgres.Device;
-import com.redroundrobin.thirema.apirest.models.postgres.Entity;
 import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
 import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
 import com.redroundrobin.thirema.apirest.models.postgres.User;
@@ -12,11 +11,6 @@ import com.redroundrobin.thirema.apirest.service.postgres.SensorService;
 import com.redroundrobin.thirema.apirest.service.postgres.UserService;
 import com.redroundrobin.thirema.apirest.service.timescale.LogService;
 import com.redroundrobin.thirema.apirest.utils.JwtUtil;
-import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
@@ -26,6 +20,10 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,8 +39,6 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import javax.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping(value = {"/gateways"})
@@ -152,8 +148,8 @@ public class GatewayController extends CoreController {
 
   @Operation(
       summary = "Get gateway",
-      description = "The request return a gateway by the gateway id if it is visible for the current "
-          + "user",
+      description = "The request return a gateway by the gateway id if it is visible for the "
+          + "current user",
       responses = {
           @ApiResponse(
               responseCode = "200",
@@ -291,8 +287,9 @@ public class GatewayController extends CoreController {
 
   @Operation(
       summary = "Get device",
-      description = "The request returns the device with the specified realDeviceId if it is connected to"
-          + "the gateway with the specified gatewayId and if it is visible for the current user",
+      description = "The request returns the device with the specified realDeviceId if it is "
+          + "connected to the gateway with the specified gatewayId and if it is visible for "
+          + "the current user",
       responses = {
           @ApiResponse(
               responseCode = "200",
@@ -363,8 +360,8 @@ public class GatewayController extends CoreController {
 
   @Operation(
       summary = "Get sensors' list",
-      description = "The request returns the sensors connected to the device with the given realDeviceId, "
-          + "only if it is connected to the gateway with the given gatewayId.",
+      description = "The request returns the sensors connected to the device with the given "
+          + "realDeviceId, only if it is connected to the gateway with the given gatewayId.",
       responses = {
           @ApiResponse(
               responseCode = "200",
@@ -436,7 +433,8 @@ public class GatewayController extends CoreController {
       summary = "Get sensor",
       description = "The request returns the sensor with the specified realSensorId, which is"
           + "connected to the device with the specified realDeviceId, which is connected to"
-          + "the gateway with the specified gatewayId, and only if it is visible for the current user",
+          + "the gateway with the specified gatewayId, and only if it is visible for the current "
+          + "user",
       responses = {
           @ApiResponse(
               responseCode = "200",
@@ -605,10 +603,12 @@ public class GatewayController extends CoreController {
                           value = "{\"maxStoredPackets\": \"int\","
                               + "\"maxStoringTime\": \"int\","
                               + "\"devices\": [{\"deviceId\": \"int\", \"frequency\": \"int\","
-                              + "\"sensors\": [{\"sensorId\": \"int\", \"cmdEnabled\": \"boolean\"},"
+                              + "\"sensors\": [{\"sensorId\": \"int\", "
+                              + "\"cmdEnabled\": \"boolean\"},"
                               + "{\"sensorId\": \"int\", \"cmdEnabled\": \"boolean\"}]},"
                               + "{\"deviceId\": \"int\", \"frequency\": \"int\","
-                              + "\"sensors\": [{\"sensorId\": \"int\", \"cmdEnabled\": \"boolean\"}]}]}"
+                              + "\"sensors\": [{\"sensorId\": \"int\", "
+                              + "\"cmdEnabled\": \"boolean\"}]}]}"
                       )
                   }
               )),
@@ -664,7 +664,7 @@ public class GatewayController extends CoreController {
 
     if (user.getType() == User.Role.ADMIN) {
       try {
-        if(newGatewayFields.containsKey("reconfig")
+        if (newGatewayFields.containsKey("reconfig")
             && ((boolean)newGatewayFields.get("reconfig"))) {
           logService.createLog(user.getId(),ip,"gateway.reconfig",
               Integer.toString(gatewayId));

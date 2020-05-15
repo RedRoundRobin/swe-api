@@ -1,28 +1,23 @@
 package com.redroundrobin.thirema.apirest.service.postgres;
 
-import com.redroundrobin.thirema.apirest.models.postgres.Device;
-import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
-import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
-import com.redroundrobin.thirema.apirest.repository.postgres.DeviceRepository;
-import com.redroundrobin.thirema.apirest.repository.postgres.GatewayRepository;
-
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
-
-
+import com.redroundrobin.thirema.apirest.models.postgres.Device;
+import com.redroundrobin.thirema.apirest.models.postgres.Gateway;
+import com.redroundrobin.thirema.apirest.models.postgres.Sensor;
+import com.redroundrobin.thirema.apirest.repository.postgres.DeviceRepository;
+import com.redroundrobin.thirema.apirest.repository.postgres.GatewayRepository;
 import com.redroundrobin.thirema.apirest.utils.exception.ElementNotFoundException;
 import com.redroundrobin.thirema.apirest.utils.exception.InvalidFieldsValuesException;
 import com.redroundrobin.thirema.apirest.utils.exception.MissingFieldsException;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -60,7 +55,7 @@ public class GatewayService {
   private String sentConfig(int gatewayId)
       throws JsonProcessingException { //eccezione di ObjectMapper()
     Gateway gateway = gatewayRepo.findById(gatewayId).orElse(null);
-    if(gateway == null) {
+    if (gateway == null) {
       return null;
     } else {
       String gatewayConfigTopic = configTopicPrefix + gateway.getName();
@@ -71,13 +66,13 @@ public class GatewayService {
       jsonGatewayConfig.put("maxStoringTime", maxStoringTime);
       ArrayNode devicesConfig = jsonGatewayConfig.putArray("devices");
       List<Device> devices = (List<Device>)deviceRepo.findAllByGatewayId(gatewayId);
-      for(Device device: devices) {
+      for (Device device: devices) {
         ObjectNode completeDevice = objectMapper.createObjectNode();
         completeDevice.put("deviceId", device.getRealDeviceId());
         completeDevice.put("frequency", device.getFrequency());
         ArrayNode sensorsConfig = objectMapper.createArrayNode();
         List<Sensor> sensors = (List<Sensor>)deviceRepo.findAllByDeviceId(device.getId());
-        for(Sensor sensor: sensors) {
+        for (Sensor sensor: sensors) {
           ObjectNode completeSensor = objectMapper.createObjectNode();
           completeSensor.put("sensorId", sensor.getRealSensorId());
           completeSensor.put("cmdEnabled", sensor.getCmdEnabled());
@@ -89,7 +84,8 @@ public class GatewayService {
       kafkaTemplate.send(gatewayConfigTopic, jsonGatewayConfig.toString());
       gateway.setLastSent(Timestamp.from(Instant.now()));
       gatewayRepo.save(gateway);
-      return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString((JsonNode)jsonGatewayConfig);
+      return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(
+          (JsonNode)jsonGatewayConfig);
     }
   }
 
@@ -129,7 +125,7 @@ public class GatewayService {
   public String sendGatewayConfigToKafka(int gatewayId)
       throws InvalidFieldsValuesException, JsonProcessingException {
     String jsonGatewayConfig = sentConfig(gatewayId);
-    if(jsonGatewayConfig == null) {
+    if (jsonGatewayConfig == null) {
       throw new InvalidFieldsValuesException("");
     }
     return jsonGatewayConfig;
@@ -149,8 +145,8 @@ public class GatewayService {
     }
   }
 
-  public Gateway editGateway(int gatewayId, Map<String, Object> fieldsToEdit) throws MissingFieldsException,
-      InvalidFieldsValuesException {
+  public Gateway editGateway(int gatewayId, Map<String, Object> fieldsToEdit)
+      throws MissingFieldsException, InvalidFieldsValuesException {
     Gateway gateway = gatewayRepo.findById(gatewayId).orElse(null);
     if (gateway == null) {
       throw new InvalidFieldsValuesException("The gateway with provided id is not found");
@@ -161,7 +157,8 @@ public class GatewayService {
           gateway.setName((String)fieldsToEdit.get("name"));
           return gatewayRepo.save(gateway);
         } else {
-          throw new InvalidFieldsValuesException("There is already a gateway with the provided name!");
+          throw new InvalidFieldsValuesException("There is already a gateway "
+              + "with the provided name!");
         }
       } else {
         throw MissingFieldsException.defaultMessage();

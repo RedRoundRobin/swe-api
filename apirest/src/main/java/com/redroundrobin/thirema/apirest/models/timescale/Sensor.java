@@ -2,7 +2,6 @@ package com.redroundrobin.thirema.apirest.models.timescale;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.sql.Timestamp;
 import java.time.Instant;
 import javax.persistence.Column;
